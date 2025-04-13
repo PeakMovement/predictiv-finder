@@ -61,6 +61,29 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Custom health app colors
+				health: {
+					teal: {
+						light: '#7DDFD8',
+						DEFAULT: '#4ECDC4',
+						dark: '#2EBDB5'
+					},
+					purple: {
+						light: '#8A83FF',
+						DEFAULT: '#6C63FF',
+						dark: '#5046FF'
+					},
+					orange: {
+						light: '#FFAA8E',
+						DEFAULT: '#FF8A65',
+						dark: '#FF6C3E'
+					},
+					blue: {
+						light: '#F7F9FC',
+						DEFAULT: '#E4E9F2',
+						dark: '#1A2A50'
+					}
 				}
 			},
 			borderRadius: {
@@ -84,11 +107,29 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-soft': {
+					'0%, 100%': {
+						opacity: '1'
+					},
+					'50%': {
+						opacity: '0.8'
+					}
+				},
+				'float-soft': {
+					'0%, 100%': {
+						transform: 'translateY(0)'
+					},
+					'50%': {
+						transform: 'translateY(-10px)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-soft': 'pulse-soft 3s ease-in-out infinite',
+				'float-soft': 'float-soft 6s ease-in-out infinite'
 			}
 		}
 	},
