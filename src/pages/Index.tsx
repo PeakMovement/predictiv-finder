@@ -2,13 +2,13 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
-import ServiceCategorySelector from "@/components/ServiceCategorySelector";
+import EnhancedCategorySelection from "@/components/EnhancedCategorySelection";
 import CategoryQuestionnaire from "@/components/CategoryQuestionnaire";
 import AIAssistantInput from "@/components/AIAssistantInput";
 import PractitionerList from "@/components/PractitionerList";
 import AIPlansDisplay from "@/components/AIPlansDisplay";
 import HelpButton from "@/components/HelpButton";
-import { ServiceCategory, UserCriteria, Practitioner, AIHealthPlan } from "@/types";
+import { ServiceCategory, DetailedUserCriteria, Practitioner, AIHealthPlan } from "@/types";
 import { PRACTITIONERS, EXAMPLE_AI_PLANS } from "@/data/mockData";
 
 type AppStage = 
@@ -21,18 +21,25 @@ type AppStage =
 
 const Index = () => {
   const [stage, setStage] = useState<AppStage>('home');
-  const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | undefined>();
-  const [userCriteria, setUserCriteria] = useState<UserCriteria>({});
+  const [selectedCategories, setSelectedCategories] = useState<ServiceCategory[]>([]);
+  const [userCriteria, setUserCriteria] = useState<DetailedUserCriteria>({
+    categories: [],
+    budget: {
+      monthly: 2000,
+      preferredSetup: 'not-sure',
+      flexibleBudget: false
+    }
+  });
   const [userQuery, setUserQuery] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiPlans, setAiPlans] = useState<AIHealthPlan[]>([]);
 
-  const getMatchingPractitioners = (criteria: UserCriteria): Practitioner[] => {
+  const getMatchingPractitioners = (criteria: DetailedUserCriteria): Practitioner[] => {
     return PRACTITIONERS.filter(p => {
-      if (criteria.category && p.serviceType !== criteria.category) {
+      if (criteria.categories && !criteria.categories.includes(p.serviceType)) {
         return false;
       }
-      if (criteria.budget && p.pricePerSession > criteria.budget) {
+      if (criteria.budget && criteria.budget.monthly && p.pricePerSession > criteria.budget.monthly) {
         return false;
       }
       if (criteria.location && !p.location.toLowerCase().includes(criteria.location.toLowerCase())) {
@@ -55,12 +62,23 @@ const Index = () => {
     setIsGenerating(false);
   };
 
-  const handleCategorySelect = (category: ServiceCategory) => {
-    setSelectedCategory(category);
+  const handleCategoryToggle = (category: ServiceCategory) => {
+    setSelectedCategories(prev => 
+      prev.includes(category) 
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    );
+  };
+
+  const handleCategoryContinue = () => {
+    setUserCriteria(prev => ({
+      ...prev,
+      categories: selectedCategories
+    }));
     setStage('category-questionnaire');
   };
 
-  const handleQuestionnaireSubmit = (criteria: UserCriteria) => {
+  const handleQuestionnaireSubmit = (criteria: DetailedUserCriteria) => {
     setUserCriteria(criteria);
     setStage('practitioner-list');
   };
@@ -83,8 +101,15 @@ const Index = () => {
 
   const resetToHome = () => {
     setStage('home');
-    setSelectedCategory(undefined);
-    setUserCriteria({});
+    setSelectedCategories([]);
+    setUserCriteria({
+      categories: [],
+      budget: {
+        monthly: 2000,
+        preferredSetup: 'not-sure',
+        flexibleBudget: false
+      }
+    });
     setUserQuery('');
   };
 
@@ -120,8 +145,7 @@ const Index = () => {
                 animate={{ y: 0 }}
                 transition={{ delay: 0.3 }}
               >
-                Find the right health and wellness professionals based on your goals, 
-                or let our AI assistant create a custom plan just for you.
+                Let's build your complete health, fitness, and wellness journey — tailored to your goals and budget.
               </motion.p>
               
               <motion.div 
@@ -136,7 +160,7 @@ const Index = () => {
                   size="lg"
                 >
                   <span className="emoji-icon">🔍</span>
-                  I Know Who I Need
+                  I Know What I Need
                 </Button>
                 <Button 
                   onClick={() => setStage('ai-input')}
@@ -182,29 +206,14 @@ const Index = () => {
           )}
           
           {stage === 'category-selector' && (
-            <motion.div
-              key="category-selector"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="py-8"
-            >
-              <div className="flex items-center mb-8">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={resetToHome} 
-                  className="mr-2"
-                >
-                  ←
-                </Button>
-                <h2 className="text-3xl font-bold">Find Your Health Professional</h2>
-              </div>
-              <ServiceCategorySelector onSelectCategory={handleCategorySelect} />
-            </motion.div>
+            <EnhancedCategorySelection
+              selectedCategories={selectedCategories}
+              onCategoryToggle={handleCategoryToggle}
+              onContinue={handleCategoryContinue}
+            />
           )}
           
-          {stage === 'category-questionnaire' && selectedCategory && (
+          {stage === 'category-questionnaire' && selectedCategories.length > 0 && (
             <motion.div
               key="questionnaire"
               initial={{ opacity: 0 }}
@@ -213,7 +222,7 @@ const Index = () => {
               className="py-8"
             >
               <CategoryQuestionnaire 
-                category={selectedCategory} 
+                categories={selectedCategories}
                 onSubmit={handleQuestionnaireSubmit}
                 onBack={() => setStage('category-selector')}
               />

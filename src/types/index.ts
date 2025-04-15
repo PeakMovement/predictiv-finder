@@ -1,4 +1,3 @@
-
 export type ServiceCategory = 
   | 'dietician'
   | 'personal-trainer'
@@ -7,6 +6,8 @@ export type ServiceCategory =
   | 'coaching';
 
 export type ServiceMode = 'online' | 'in-person' | 'both';
+
+export type FitnessLevel = 'beginner' | 'intermediate' | 'advanced';
 
 export type GoalType = string;
 
@@ -46,4 +47,38 @@ export interface UserCriteria {
   location?: string;
   mode?: ServiceMode[];
   description?: string;
+}
+
+export interface DetailedUserCriteria {
+  categories: ServiceCategory[];
+  fitness?: {
+    level: FitnessLevel;
+    goal: string;
+    injuries: string;
+    trainingStyle: string;
+  };
+  nutrition?: {
+    goal: string;
+    restrictions: string[];
+    struggles: string[];
+    previousDietitian: boolean;
+  };
+  health?: {
+    conditions: string;
+    recovery: string;
+    pain: string;
+    openToReferrals: boolean;
+  };
+  recovery?: {
+    weeklyTime: number;
+    currentRoutine: string[];
+    mindfulness: boolean;
+  };
+  budget: {
+    monthly: number;
+    preferredSetup: 'once-off' | 'monthly' | 'not-sure';
+    flexibleBudget: boolean;
+  };
+  location?: string;
+  mode?: ServiceMode[];
 }
