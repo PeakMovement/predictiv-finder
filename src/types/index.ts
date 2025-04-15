@@ -41,9 +41,13 @@ export interface AIHealthPlan {
 }
 
 export interface UserCriteria {
-  category?: ServiceCategory;
+  categories: ServiceCategory[];
   goal?: string;
-  budget?: number;
+  budget: {
+    monthly: number;
+    preferredSetup: 'once-off' | 'monthly' | 'not-sure';
+    flexibleBudget: boolean;
+  };
   location?: string;
   mode?: ServiceMode[];
   description?: string;
