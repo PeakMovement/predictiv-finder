@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { motion } from 'framer-motion';
-import { ServiceCategory, ServiceMode, DetailedUserCriteria } from '@/types';
+import { ServiceCategory, ServiceMode, DetailedUserCriteria, FitnessLevel } from '@/types';
 import { GOALS_BY_CATEGORY } from '@/data/mockData';
 
 interface CategoryQuestionnaireProps {
@@ -21,15 +21,25 @@ export const CategoryQuestionnaire = ({
   onSubmit,
   onBack 
 }: CategoryQuestionnaireProps) => {
-  const [budget, setBudget] = useState({
+  const [budget, setBudget] = useState<{
+    monthly: number;
+    preferredSetup: 'once-off' | 'monthly' | 'not-sure';
+    flexibleBudget: boolean;
+  }>({
     monthly: 500,
-    preferredSetup: 'not-sure' as const,
+    preferredSetup: 'not-sure',
     flexibleBudget: false
   });
+  
   const [location, setLocation] = useState<string>('');
   const [modes, setModes] = useState<ServiceMode[]>([]);
-  const [fitnessInfo, setFitnessInfo] = useState({
-    level: 'beginner' as const,
+  const [fitnessInfo, setFitnessInfo] = useState<{
+    level: FitnessLevel;
+    goal: string;
+    injuries: string;
+    trainingStyle: string;
+  }>({
+    level: 'beginner',
     goal: '',
     injuries: '',
     trainingStyle: ''
@@ -76,8 +86,8 @@ export const CategoryQuestionnaire = ({
             <Label>What's your fitness level?</Label>
             <Select 
               value={fitnessInfo.level} 
-              onValueChange={(value: 'beginner' | 'intermediate' | 'advanced') => 
-                setFitnessInfo(prev => ({ ...prev, level: value }))
+              onValueChange={(value: FitnessLevel) => 
+                setFitnessInfo({...fitnessInfo, level: value})
               }
             >
               <SelectTrigger>
@@ -98,7 +108,7 @@ export const CategoryQuestionnaire = ({
               max={2000}
               min={100}
               step={50}
-              onValueChange={(values) => setBudget(prev => ({ ...prev, monthly: values[0] }))}
+              onValueChange={(values) => setBudget({...budget, monthly: values[0]})}
               className="py-4"
             />
             <div className="flex justify-between text-sm text-gray-500">
@@ -113,7 +123,7 @@ export const CategoryQuestionnaire = ({
             <Select 
               value={budget.preferredSetup} 
               onValueChange={(value: 'once-off' | 'monthly' | 'not-sure') => 
-                setBudget(prev => ({ ...prev, preferredSetup: value }))
+                setBudget({...budget, preferredSetup: value})
               }
             >
               <SelectTrigger>

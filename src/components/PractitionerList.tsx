@@ -33,8 +33,9 @@ export const PractitionerList = ({
     );
   });
 
-  const categoryName = criteria.category 
-    ? criteria.category.charAt(0).toUpperCase() + criteria.category.slice(1).replace('-', ' ')
+  // Get the first category for display purposes (since we now support multiple)
+  const categoryName = criteria.categories && criteria.categories.length > 0
+    ? criteria.categories[0].charAt(0).toUpperCase() + criteria.categories[0].slice(1).replace('-', ' ')
     : '';
 
   return (
@@ -76,7 +77,7 @@ export const PractitionerList = ({
             )}
             {criteria.budget && (
               <div className="bg-health-purple/20 text-health-purple-dark px-3 py-1 rounded-full text-sm">
-                Budget: R{criteria.budget}
+                Budget: R{criteria.budget.monthly}
               </div>
             )}
             {criteria.location && (
