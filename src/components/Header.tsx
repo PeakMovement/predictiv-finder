@@ -18,7 +18,7 @@ export const Header = () => {
           🧠
         </motion.div>
         <h1 className="text-xl font-bold bg-gradient-to-r from-health-teal to-health-purple bg-clip-text text-transparent">
-          HealthFlow AI
+          Predictiv. Health
         </h1>
       </div>
       

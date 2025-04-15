@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,6 @@ import HelpButton from "@/components/HelpButton";
 import { ServiceCategory, UserCriteria, Practitioner, AIHealthPlan } from "@/types";
 import { PRACTITIONERS, EXAMPLE_AI_PLANS } from "@/data/mockData";
 
-// Define application flow stages
 type AppStage = 
   | 'home'
   | 'category-selector' 
@@ -29,10 +27,8 @@ const Index = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiPlans, setAiPlans] = useState<AIHealthPlan[]>([]);
 
-  // Mock API for fetching practitioners based on criteria
   const getMatchingPractitioners = (criteria: UserCriteria): Practitioner[] => {
     return PRACTITIONERS.filter(p => {
-      // Apply filtering logic based on criteria
       if (criteria.category && p.serviceType !== criteria.category) {
         return false;
       }
@@ -52,10 +48,8 @@ const Index = () => {
     });
   };
 
-  // Mock AI plan generation
   const generateAIPlans = async (query: string) => {
     setIsGenerating(true);
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 2000));
     setAiPlans(EXAMPLE_AI_PLANS);
     setIsGenerating(false);
@@ -78,13 +72,11 @@ const Index = () => {
   };
 
   const handleSelectPractitioner = (practitioner: Practitioner) => {
-    // In a real app, this would navigate to booking or detailed view
     console.log('Selected practitioner:', practitioner);
     alert(`You've selected ${practitioner.name}. In a complete app, this would take you to a booking page.`);
   };
 
   const handleSelectPlan = (plan: AIHealthPlan) => {
-    // In a real app, this would navigate to a plan details page
     console.log('Selected plan:', plan);
     alert(`You've selected the ${plan.name}. In a complete app, this would let you book the included services.`);
   };
