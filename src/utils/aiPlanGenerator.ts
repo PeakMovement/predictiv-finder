@@ -52,15 +52,15 @@ const budgetKeywords = [
 
 // Intensity-related keywords
 const intensityKeywords = [
-  { term: "gentle", intensity: "low" },
-  { term: "easy", intensity: "low" },
-  { term: "beginner", intensity: "low" },
-  { term: "moderate", intensity: "medium" },
-  { term: "regular", intensity: "medium" },
-  { term: "intermediate", intensity: "medium" },
-  { term: "intense", intensity: "high" },
-  { term: "advanced", intensity: "high" },
-  { term: "hardcore", intensity: "high" },
+  { term: "gentle", intensity: "low" as const },
+  { term: "easy", intensity: "low" as const },
+  { term: "beginner", intensity: "low" as const },
+  { term: "moderate", intensity: "medium" as const },
+  { term: "regular", intensity: "medium" as const },
+  { term: "intermediate", intensity: "medium" as const },
+  { term: "intense", intensity: "high" as const },
+  { term: "advanced", intensity: "high" as const },
+  { term: "hardcore", intensity: "high" as const },
 ];
 
 // Timeframe keywords
@@ -267,7 +267,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
       services: services,
       totalCost: totalCost,
       planType: planType,
-      timeFrame: options.timeframe || '8 weeks'
+      timeFrame: options.timeFrame || '8 weeks'
     });
   });
   
