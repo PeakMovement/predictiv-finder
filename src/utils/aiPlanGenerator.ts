@@ -1,3 +1,4 @@
+
 import { AIHealthPlan, ServiceCategory } from "@/types";
 
 interface PlanOptions {
@@ -248,7 +249,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
 
     // If not enough categories, add a complementary one
     if (planCategories.length < 2 && planType !== 'progressive') {
-      const complementaryCategories = {
+      const complementaryCategories: Record<ServiceCategory, ServiceCategory> = {
         'dietician': 'personal-trainer',
         'personal-trainer': 'dietician',
         'biokineticist': 'physiotherapist',
