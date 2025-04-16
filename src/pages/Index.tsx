@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,8 @@ import AIPlansDisplay from "@/components/AIPlansDisplay";
 import HelpButton from "@/components/HelpButton";
 import { ServiceCategory, DetailedUserCriteria, Practitioner, AIHealthPlan } from "@/types";
 import { PRACTITIONERS } from "@/data/mockData";
-import { generateCustomAIPlans } from "@/utils/aiPlanGenerator";
+import { generateCustomAIPlans, findAlternativeCategories } from "@/utils/aiPlanGenerator";
+import { useToast } from "@/hooks/use-toast";
 
 type AppStage = 
   | 'home'
@@ -34,6 +36,7 @@ const Index = () => {
   const [userQuery, setUserQuery] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiPlans, setAiPlans] = useState<AIHealthPlan[]>([]);
+  const { toast } = useToast();
 
   const getMatchingPractitioners = (criteria: DetailedUserCriteria): Practitioner[] => {
     return PRACTITIONERS.filter(p => {

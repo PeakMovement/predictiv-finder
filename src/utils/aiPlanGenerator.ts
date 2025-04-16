@@ -289,13 +289,8 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
       services: services,
       totalCost: totalCost,
       planType: planType,
-      timeFrame: options.timeFrame || '8 weeks'
+      timeFrame: options.timeframe || '8 weeks'
     });
-  });
-
-  // Modify the final section to use the correct timeframe property
-  plans.forEach(plan => {
-    plan.timeFrame = options.timeframe || '8 weeks';
   });
 
   return plans;
