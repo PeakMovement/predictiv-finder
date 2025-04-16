@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -76,11 +75,27 @@ const Index = () => {
     );
   };
 
-  const handleCategoryContinue = () => {
-    setUserCriteria(prev => ({
-      ...prev,
-      categories: selectedCategories
-    }));
+  const handleCategorySubmit = (categories: ServiceCategory[]) => {
+    if (categories.length === 0) {
+      const alternatives = findAlternativeCategories([]);
+      toast({
+        title: "Consider these options",
+        description: `We recommend exploring ${alternatives.map(c => c.replace('-', ' ')).join(' or ')} to start your wellness journey.`,
+        variant: "default",
+      });
+      return;
+    }
+
+    if (categories.length < 2) {
+      const alternatives = findAlternativeCategories(categories);
+      toast({
+        title: "Additional recommendations",
+        description: `Consider adding ${alternatives.map(c => c.replace('-', ' ')).join(' or ')} to optimize your wellness plan.`,
+        variant: "default",
+      });
+    }
+
+    setSelectedCategories(categories);
     setStage('category-questionnaire');
   };
 
@@ -215,7 +230,7 @@ const Index = () => {
             <EnhancedCategorySelection
               selectedCategories={selectedCategories}
               onCategoryToggle={handleCategoryToggle}
-              onContinue={handleCategoryContinue}
+              onContinue={handleCategorySubmit}
             />
           )}
           
@@ -300,6 +315,42 @@ const Index = () => {
       </main>
       
       <HelpButton />
+      
+      <div className="fixed bottom-4 right-4 flex gap-2">
+        <Button 
+          variant="outline"
+          onClick={resetToHome}
+          className="bg-white/90 dark:bg-gray-800/90"
+        >
+          Start Over
+        </Button>
+        {stage !== 'home' && (
+          <Button 
+            variant="outline"
+            onClick={() => {
+              switch(stage) {
+                case 'category-questionnaire':
+                  setStage('category-selector');
+                  break;
+                case 'practitioner-list':
+                  setStage('category-questionnaire');
+                  break;
+                case 'ai-plans':
+                  setStage('ai-input');
+                  break;
+                case 'ai-input':
+                  resetToHome();
+                  break;
+                default:
+                  resetToHome();
+              }
+            }}
+            className="bg-white/90 dark:bg-gray-800/90"
+          >
+            Go Back
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

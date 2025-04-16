@@ -1,8 +1,7 @@
-
 import { AIHealthPlan, ServiceCategory } from "@/types";
 
 interface PlanOptions {
-  costFactor?: number;  // 0.5 = cheaper, 1.5 = more expensive
+  costFactor?: number;
   intensity?: "low" | "medium" | "high";
   timeframe?: string;
   focus?: ServiceCategory[];
@@ -40,12 +39,12 @@ const healthKeywords = [
   { term: "energy", category: "dietician", priority: 1 },
 ];
 
-// Budget-related keywords
+// Budget-related keywords with more precise factors
 const budgetKeywords = [
-  { term: "cheap", factor: 0.6 },
-  { term: "affordable", factor: 0.7 },
+  { term: "cheap", factor: 0.5 },
+  { term: "affordable", factor: 0.6 },
   { term: "budget", factor: 0.7 },
-  { term: "expensive", factor: 1.3 },
+  { term: "expensive", factor: 1.4 },
   { term: "premium", factor: 1.4 },
   { term: "high-end", factor: 1.5 },
 ];
@@ -159,39 +158,62 @@ export const analyzeUserInput = (input: string): PlanOptions => {
   return options;
 };
 
-// Generate custom AI health plans based on the analysis
+export const findAlternativeCategories = (selectedCategories: ServiceCategory[]): ServiceCategory[] => {
+  const complementaryPairs: Record<ServiceCategory, ServiceCategory[]> = {
+    'dietician': ['personal-trainer', 'coaching'],
+    'personal-trainer': ['dietician', 'physiotherapist'],
+    'physiotherapist': ['personal-trainer', 'biokineticist'],
+    'biokineticist': ['physiotherapist', 'coaching'],
+    'coaching': ['dietician', 'personal-trainer']
+  };
+
+  if (selectedCategories.length === 0) {
+    return ['coaching', 'dietician']; // Default holistic health approach
+  }
+
+  const alternatives: ServiceCategory[] = [];
+  selectedCategories.forEach(category => {
+    const complements = complementaryPairs[category] || [];
+    complements.forEach(complement => {
+      if (!selectedCategories.includes(complement) && !alternatives.includes(complement)) {
+        alternatives.push(complement);
+      }
+    });
+  });
+
+  return alternatives.slice(0, 2); // Return top 2 alternatives
+};
+
 export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   const options = analyzeUserInput(userQuery);
-  
-  // Create plans based on options
   const plans: AIHealthPlan[] = [];
-  
+
   // Plan types
   const planTypes: ('best-fit' | 'high-impact' | 'progressive')[] = ['best-fit', 'high-impact', 'progressive'];
-  
-  // Build base prices based on focus areas and cost factor
+
+  // Base prices adjusted for cost-effectiveness
   const basePrices: Record<ServiceCategory, number> = {
-    'dietician': 400 * (options.costFactor || 1),
-    'personal-trainer': 450 * (options.costFactor || 1),
-    'biokineticist': 500 * (options.costFactor || 1),
-    'physiotherapist': 550 * (options.costFactor || 1),
-    'coaching': 350 * (options.costFactor || 1)
+    'dietician': 300 * (options.costFactor || 1),
+    'personal-trainer': 350 * (options.costFactor || 1),
+    'biokineticist': 400 * (options.costFactor || 1),
+    'physiotherapist': 400 * (options.costFactor || 1),
+    'coaching': 250 * (options.costFactor || 1)
   };
-  
-  // Session counts based on intensity
+
+  // Session counts optimized for each plan type
   const sessionCounts = {
-    low: { primary: 4, secondary: 2 },
-    medium: { primary: 6, secondary: 4 },
-    high: { primary: 8, secondary: 6 }
+    low: { primary: 2, secondary: 1 },
+    medium: { primary: 4, secondary: 2 },
+    high: { primary: 6, secondary: 4 }
   };
-  
-  // Description templates
+
+  // Description templates updated for holistic health approach
   const descTemplates = {
-    'best-fit': "Balanced plan focused on {focus} with {intensity} intensity over {timeframe}.",
-    'high-impact': "Intensive focus on {focus} with accelerated results over {timeframe}.",
-    'progressive': "Gradual progression from {focus} to full wellness over {timeframe}."
+    'best-fit': "Budget-optimized wellness plan focusing on {focus} over {timeframe}.",
+    'high-impact': "Accelerated wellness program with intensive {focus} over {timeframe}.",
+    'progressive': "Long-term holistic health journey emphasizing {focus} over {timeframe}."
   };
-  
+
   // Service descriptions
   const serviceDesc: Record<ServiceCategory, string> = {
     'dietician': "Personalized nutrition guidance and meal planning",
@@ -200,12 +222,12 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     'physiotherapist': "Targeted therapy for pain relief and recovery",
     'coaching': "Motivation and wellness strategy sessions"
   };
-  
+
   // Generate the three plan types
   planTypes.forEach((planType, index) => {
     // Determine which categories to include
     let planCategories = [...options.focus];
-    
+
     // If not enough categories, add a complementary one
     if (planCategories.length < 2 && planType !== 'progressive') {
       const complementaryCategories: Record<ServiceCategory, ServiceCategory> = {
@@ -215,21 +237,21 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
         'physiotherapist': 'personal-trainer',
         'coaching': 'dietician'
       };
-      
+
       const primaryCategory = planCategories[0];
       if (primaryCategory) {
         planCategories.push(complementaryCategories[primaryCategory]);
       }
     }
-    
+
     // For progressive plan, focus on primary category first, then add others
     if (planType === 'progressive' && planCategories.length > 1) {
       planCategories = [planCategories[0]];
     }
-    
+
     // Calculate session counts
     const counts = sessionCounts[options.intensity || 'medium'];
-    
+
     // Build services array
     const services = planCategories.map((category, idx) => {
       const isMainFocus = idx === 0;
@@ -240,25 +262,25 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
         description: serviceDesc[category]
       };
     });
-    
+
     // Calculate total cost
     const totalCost = services.reduce((sum, service) => 
       sum + (service.price * service.sessions), 0);
-    
+
     // Create plan description
     const planFocus = services.map(s => s.type.replace('-', ' ')).join(' and ');
     const planDesc = descTemplates[planType]
       .replace('{focus}', planFocus)
       .replace('{intensity}', options.intensity || 'medium')
       .replace('{timeframe}', options.timeframe || '8 weeks');
-    
+
     // Create plan name
     const planName = planType === 'best-fit' 
       ? 'Tailored Wellness Plan' 
       : planType === 'high-impact' 
         ? 'Accelerated Results Plan' 
         : 'Progressive Development Plan';
-    
+
     // Create the plan
     plans.push({
       id: `plan-${index + 1}`,
@@ -270,6 +292,11 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
       timeFrame: options.timeFrame || '8 weeks'
     });
   });
-  
+
+  // Modify the final section to use the correct timeframe property
+  plans.forEach(plan => {
+    plan.timeFrame = options.timeframe || '8 weeks';
+  });
+
   return plans;
 };

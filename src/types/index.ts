@@ -86,3 +86,10 @@ export interface DetailedUserCriteria {
   location?: string;
   mode?: ServiceMode[];
 }
+
+export interface CategorySelectionProps {
+  selectedCategories: ServiceCategory[];
+  onCategoryToggle: (category: ServiceCategory) => void;
+  onContinue: (categories: ServiceCategory[]) => void;
+  suggestedCategories?: ServiceCategory[];
+}
