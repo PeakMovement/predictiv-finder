@@ -14,12 +14,25 @@ export const AIAssistantInput = ({
   isLoading = false 
 }: AIAssistantInputProps) => {
   const [input, setInput] = useState('');
+  const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
+
+  const guidePrompts = [
+    "What health or wellness challenges are you facing?",
+    "What's your monthly budget for health services?",
+    "When would you like to achieve your health goals?",
+    "Do you prefer online or in-person services?",
+    "Any specific preferences or constraints we should know about?"
+  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim()) {
       onSubmit(input);
     }
+  };
+
+  const handleNextPrompt = () => {
+    setCurrentPromptIndex((prev) => (prev + 1) % guidePrompts.length);
   };
 
   return (
@@ -37,11 +50,22 @@ export const AIAssistantInput = ({
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <Textarea
-              placeholder="Describe your health or fitness situation in your own words, and we'll build you a custom plan."
+              placeholder={guidePrompts[currentPromptIndex]}
               className="min-h-32 text-base"
               value={input}
               onChange={(e) => setInput(e.target.value)}
             />
+            <div className="mt-2 flex justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleNextPrompt}
+                className="text-sm text-gray-500"
+              >
+                Show another prompt ↻
+              </Button>
+            </div>
           </div>
           
           <div className="flex justify-end">
@@ -66,7 +90,7 @@ export const AIAssistantInput = ({
         </form>
         
         <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-          <p className="mb-2"><strong>Example:</strong> "I've injured my knee but want to start running again. I only have R1200 to spend."</p>
+          <p className="mb-2"><strong>Example:</strong> "I have chronic back pain and anxiety. My budget is R1000 per month, and I'd like to see improvements within 3 months. I prefer in-person sessions."</p>
           <div className="text-xs opacity-75">Your data is used only to create your personalized plan and is never shared with third parties.</div>
         </div>
       </motion.div>

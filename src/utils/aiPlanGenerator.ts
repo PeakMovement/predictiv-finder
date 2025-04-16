@@ -188,17 +188,35 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   const options = analyzeUserInput(userQuery);
   const plans: AIHealthPlan[] = [];
 
+  // Adjust base prices based on budget factor
+  const basePrices = {
+    'dietician': 300,
+    'personal-trainer': 350,
+    'biokineticist': 400,
+    'physiotherapist': 400,
+    'coaching': 250
+  };
+
+  // Extract budget from query if mentioned
+  const budgetMatch = userQuery.match(/R?(\d+)(?:\s*(?:per|a|\/)\s*(?:month|session|week))?/i);
+  const userBudget = budgetMatch ? parseInt(budgetMatch[1]) : 1000; // Default budget
+
+  // Calculate adjusted prices based on user's budget
+  const adjustPriceForBudget = (basePrice: number, planType: string) => {
+    switch(planType) {
+      case 'best-fit':
+        return Math.min(basePrice, userBudget / 4); // Ensure it fits within 25% of budget
+      case 'high-impact':
+        return Math.min(basePrice * 1.2, userBudget / 2); // Premium but within 50% of budget
+      case 'progressive':
+        return Math.min(basePrice * 0.8, userBudget / 3); // Most affordable option
+      default:
+        return basePrice;
+    }
+  };
+
   // Plan types
   const planTypes: ('best-fit' | 'high-impact' | 'progressive')[] = ['best-fit', 'high-impact', 'progressive'];
-
-  // Base prices adjusted for cost-effectiveness
-  const basePrices: Record<ServiceCategory, number> = {
-    'dietician': 300 * (options.costFactor || 1),
-    'personal-trainer': 350 * (options.costFactor || 1),
-    'biokineticist': 400 * (options.costFactor || 1),
-    'physiotherapist': 400 * (options.costFactor || 1),
-    'coaching': 250 * (options.costFactor || 1)
-  };
 
   // Session counts optimized for each plan type
   const sessionCounts = {
@@ -230,7 +248,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
 
     // If not enough categories, add a complementary one
     if (planCategories.length < 2 && planType !== 'progressive') {
-      const complementaryCategories: Record<ServiceCategory, ServiceCategory> = {
+      const complementaryCategories = {
         'dietician': 'personal-trainer',
         'personal-trainer': 'dietician',
         'biokineticist': 'physiotherapist',
@@ -255,10 +273,15 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     // Build services array
     const services = planCategories.map((category, idx) => {
       const isMainFocus = idx === 0;
+      const basePrice = basePrices[category];
+      const adjustedPrice = adjustPriceForBudget(basePrice, planType);
+      
       return {
         type: category,
-        price: Math.round(basePrices[category]),
-        sessions: isMainFocus ? counts.primary : counts.secondary,
+        price: Math.round(adjustedPrice),
+        sessions: isMainFocus ? 
+          (planType === 'high-impact' ? 6 : planType === 'progressive' ? 3 : 4) :
+          (planType === 'high-impact' ? 4 : 2),
         description: serviceDesc[category]
       };
     });
