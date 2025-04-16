@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,8 @@ import PractitionerList from "@/components/PractitionerList";
 import AIPlansDisplay from "@/components/AIPlansDisplay";
 import HelpButton from "@/components/HelpButton";
 import { ServiceCategory, DetailedUserCriteria, Practitioner, AIHealthPlan } from "@/types";
-import { PRACTITIONERS, EXAMPLE_AI_PLANS } from "@/data/mockData";
+import { PRACTITIONERS } from "@/data/mockData";
+import { generateCustomAIPlans } from "@/utils/aiPlanGenerator";
 
 type AppStage = 
   | 'home'
@@ -57,8 +59,12 @@ const Index = () => {
 
   const generateAIPlans = async (query: string) => {
     setIsGenerating(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setAiPlans(EXAMPLE_AI_PLANS);
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+    
+    // Generate custom plans based on user query
+    const customPlans = generateCustomAIPlans(query);
+    setAiPlans(customPlans);
+    
     setIsGenerating(false);
   };
 

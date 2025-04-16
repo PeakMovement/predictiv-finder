@@ -51,6 +51,13 @@ export const AIPlansDisplay = ({
     );
   }
 
+  // Extract key focus areas from the plans for display
+  const focusAreas = Array.from(new Set(
+    plans.flatMap(plan => plan.services.map(service => 
+      service.type.replace('-', ' ')
+    ))
+  ));
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -72,6 +79,12 @@ export const AIPlansDisplay = ({
       <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg mb-6">
         <h3 className="font-medium mb-2">Based on your request:</h3>
         <p className="text-gray-700 dark:text-gray-300 italic">"{userQuery}"</p>
+        
+        {focusAreas.length > 0 && (
+          <div className="mt-3">
+            <p className="text-sm text-health-purple font-medium">Primary focus areas: {focusAreas.join(', ')}</p>
+          </div>
+        )}
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
