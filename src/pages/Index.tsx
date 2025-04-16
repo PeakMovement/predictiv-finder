@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import { ServiceCategory, DetailedUserCriteria, Practitioner, AIHealthPlan } fro
 import { PRACTITIONERS } from "@/data/mockData";
 import { generateCustomAIPlans, findAlternativeCategories } from "@/utils/aiPlanGenerator";
 import { useToast } from "@/hooks/use-toast";
+import PlanDetailsView from "@/components/PlanDetailsView";
 
 type AppStage = 
   | 'home'
@@ -20,7 +20,8 @@ type AppStage =
   | 'category-questionnaire' 
   | 'practitioner-list'
   | 'ai-input'
-  | 'ai-plans';
+  | 'ai-plans'
+  | 'plan-details';
 
 const Index = () => {
   const [stage, setStage] = useState<AppStage>('home');
@@ -36,6 +37,7 @@ const Index = () => {
   const [userQuery, setUserQuery] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiPlans, setAiPlans] = useState<AIHealthPlan[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<AIHealthPlan | null>(null);
   const { toast } = useToast();
 
   const getMatchingPractitioners = (criteria: DetailedUserCriteria): Practitioner[] => {
@@ -63,7 +65,6 @@ const Index = () => {
     setIsGenerating(true);
     await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
     
-    // Generate custom plans based on user query
     const customPlans = generateCustomAIPlans(query);
     setAiPlans(customPlans);
     
@@ -120,7 +121,8 @@ const Index = () => {
 
   const handleSelectPlan = (plan: AIHealthPlan) => {
     console.log('Selected plan:', plan);
-    alert(`You've selected the ${plan.name}. In a complete app, this would let you book the included services.`);
+    setSelectedPlan(plan);
+    setStage('plan-details');
   };
 
   const resetToHome = () => {
@@ -233,7 +235,7 @@ const Index = () => {
             <EnhancedCategorySelection
               selectedCategories={selectedCategories}
               onCategoryToggle={handleCategoryToggle}
-              onContinue={handleCategorySubmit}
+              onContinue={() => handleCategorySubmit(selectedCategories)}
             />
           )}
           
@@ -314,6 +316,22 @@ const Index = () => {
               />
             </motion.div>
           )}
+
+          {stage === 'plan-details' && selectedPlan && (
+            <motion.div
+              key="plan-details"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="py-8"
+            >
+              <PlanDetailsView 
+                plan={selectedPlan}
+                userQuery={userQuery}
+                onBack={() => setStage('ai-plans')}
+              />
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
       
@@ -343,6 +361,9 @@ const Index = () => {
                   break;
                 case 'ai-input':
                   resetToHome();
+                  break;
+                case 'plan-details':
+                  setStage('ai-plans');
                   break;
                 default:
                   resetToHome();
