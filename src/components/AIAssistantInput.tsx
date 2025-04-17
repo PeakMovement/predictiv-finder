@@ -1,100 +1,148 @@
 
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/hooks/use-toast';
+import { BrainCircuit, MessageSquare, Sparkles, Clock, DollarSign, Target } from 'lucide-react';
 
 interface AIAssistantInputProps {
   onSubmit: (input: string) => void;
   isLoading?: boolean;
 }
 
+const promptExamples = [
+  {
+    title: "I need help with my back pain",
+    content: "I've been experiencing lower back pain for 3 weeks, especially when sitting. My budget is around R1000/month, and I'd prefer something close to Sandton.",
+    icon: <MessageSquare className="w-4 h-4" />
+  },
+  {
+    title: "Weight loss journey",
+    content: "I want to lose 10kg in the next 3 months. I have R1500/month to spend and I'm looking for a combination of nutrition advice and exercise support.",
+    icon: <Target className="w-4 h-4" />
+  },
+  {
+    title: "Marathon training",
+    content: "I'm training for my first marathon in 4 months and need help with conditioning, recovery, and injury prevention. My budget is R2000/month.",
+    icon: <Clock className="w-4 h-4" />
+  },
+  {
+    title: "Stress and anxiety management",
+    content: "Looking for affordable ways to manage my stress and anxiety. I can spend about R800 monthly and would prefer online options.",
+    icon: <DollarSign className="w-4 h-4" />
+  }
+];
+
+const tipItems = [
+  "Include your specific goal (e.g., weight loss, pain relief, performance)",
+  "Mention any relevant health conditions or injuries",
+  "Tell us your monthly budget for health services",
+  "Let us know your location or if you prefer online options",
+  "Share your timeline (how quickly you need results)"
+];
+
 export const AIAssistantInput = ({ 
   onSubmit, 
   isLoading = false 
 }: AIAssistantInputProps) => {
   const [input, setInput] = useState('');
-  const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
+  const { toast } = useToast();
 
-  const guidePrompts = [
-    "What health or wellness challenges are you facing?",
-    "What's your monthly budget for health services?",
-    "When would you like to achieve your health goals?",
-    "Do you prefer online or in-person services?",
-    "Any specific preferences or constraints we should know about?"
-  ];
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (input.trim()) {
-      onSubmit(input);
+  const handleSubmit = () => {
+    if (input.trim().length < 10) {
+      toast({
+        title: "Input too short",
+        description: "Please provide more details about your needs",
+        variant: "destructive",
+      });
+      return;
     }
+    
+    onSubmit(input);
   };
 
-  const handleNextPrompt = () => {
-    setCurrentPromptIndex((prev) => (prev + 1) % guidePrompts.length);
+  const handleExampleClick = (example: string) => {
+    setInput(example);
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
-      <motion.div 
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md"
-      >
-        <h2 className="text-2xl font-semibold mb-4 flex items-center">
-          <span className="emoji-icon">🧠</span> AI Health Assistant
-        </h2>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full max-w-3xl mx-auto"
+    >
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <BrainCircuit className="w-6 h-6 text-health-purple" />
+          <h2 className="text-xl font-semibold">Tell us what you're looking for</h2>
+        </div>
         
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
+        <div className="flex gap-6 mb-6 flex-col md:flex-row">
+          <div className="md:w-2/3">
             <Textarea
-              placeholder={guidePrompts[currentPromptIndex]}
-              className="min-h-32 text-base"
+              placeholder="Describe your health goals, challenges, or what you're looking to improve..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              className="h-64 mb-4"
             />
-            <div className="mt-2 flex justify-end">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleNextPrompt}
-                className="text-sm text-gray-500"
+            
+            <div className="flex justify-end">
+              <Button 
+                onClick={handleSubmit} 
+                disabled={isLoading}
+                className="bg-health-purple hover:bg-health-purple-dark flex items-center gap-2"
               >
-                Show another prompt ↻
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-opacity-50 border-t-transparent rounded-full" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Create My Plan
+                  </>
+                )}
               </Button>
             </div>
           </div>
           
-          <div className="flex justify-end">
-            <Button 
-              type="submit"
-              disabled={!input.trim() || isLoading}
-              className="bg-health-purple hover:bg-health-purple-dark text-white"
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Analyzing...
-                </>
-              ) : (
-                <>Build My Health Plan</>
-              )}
-            </Button>
+          <div className="md:w-1/3">
+            <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg mb-4">
+              <h3 className="font-medium text-sm mb-2 text-health-purple">Tips for better results:</h3>
+              <ul className="text-xs space-y-2 text-gray-600 dark:text-gray-300">
+                {tipItems.map((tip, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <span className="text-health-teal mt-0.5">•</span>
+                    <span>{tip}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-medium text-sm mb-2">Try an example:</h3>
+              <div className="space-y-2">
+                {promptExamples.map((example, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    className="w-full justify-start text-left h-auto py-2 px-3"
+                    onClick={() => handleExampleClick(example.content)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="text-health-purple">{example.icon}</div>
+                      <div className="truncate">{example.title}</div>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            </div>
           </div>
-        </form>
-        
-        <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-          <p className="mb-2"><strong>Example:</strong> "I have chronic back pain and anxiety. My budget is R1000 per month, and I'd like to see improvements within 3 months. I prefer in-person sessions."</p>
-          <div className="text-xs opacity-75">Your data is used only to create your personalized plan and is never shared with third parties.</div>
         </div>
-      </motion.div>
-    </div>
+      </div>
+    </motion.div>
   );
 };
 

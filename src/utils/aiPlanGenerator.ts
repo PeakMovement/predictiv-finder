@@ -7,10 +7,14 @@ interface PlanOptions {
   timeframe?: string;
   focus?: ServiceCategory[];
   preferOnline?: boolean;
+  budget?: number;
+  goal?: string;
+  obstacle?: string;
 }
 
-// Keywords to detect in user input
+// Keywords to detect in user input for health categories
 const healthKeywords = [
+  // Physiotherapy related
   { term: "injured", category: "physiotherapist", priority: 2 },
   { term: "injury", category: "physiotherapist", priority: 2 },
   { term: "pain", category: "physiotherapist", priority: 2 },
@@ -21,6 +25,8 @@ const healthKeywords = [
   { term: "neck pain", category: "physiotherapist", priority: 3 },
   { term: "knee", category: "physiotherapist", priority: 2 },
   { term: "posture", category: "physiotherapist", priority: 2 },
+  
+  // Personal Training related
   { term: "running", category: "personal-trainer", priority: 2 },
   { term: "strength", category: "personal-trainer", priority: 2 },
   { term: "muscle", category: "personal-trainer", priority: 1 },
@@ -28,16 +34,35 @@ const healthKeywords = [
   { term: "training", category: "personal-trainer", priority: 1 },
   { term: "exercise", category: "personal-trainer", priority: 1 },
   { term: "fitness", category: "personal-trainer", priority: 1 },
+  { term: "toned", category: "personal-trainer", priority: 2 },
+  { term: "marathon", category: "personal-trainer", priority: 3 },
+  
+  // Dietician related
   { term: "weight loss", category: "dietician", priority: 2 },
   { term: "nutrition", category: "dietician", priority: 2 },
   { term: "diet", category: "dietician", priority: 2 },
   { term: "eating", category: "dietician", priority: 1 },
   { term: "food", category: "dietician", priority: 1 },
+  { term: "weight gain", category: "dietician", priority: 3 },
+  { term: "energy", category: "dietician", priority: 1 },
+  { term: "meal", category: "dietician", priority: 2 },
+  
+  // Coaching related
   { term: "mental", category: "coaching", priority: 2 },
   { term: "motivation", category: "coaching", priority: 2 },
   { term: "goals", category: "coaching", priority: 1 },
-  { term: "weight gain", category: "dietician", priority: 3 },
-  { term: "energy", category: "dietician", priority: 1 },
+  { term: "stress", category: "coaching", priority: 2 },
+  { term: "anxiety", category: "coaching", priority: 2 },
+  { term: "mindset", category: "coaching", priority: 2 },
+  { term: "routine", category: "coaching", priority: 1 },
+  
+  // Biokineticist related
+  { term: "mobility", category: "biokineticist", priority: 2 },
+  { term: "rehabilitation", category: "biokineticist", priority: 2 },
+  { term: "movement", category: "biokineticist", priority: 1 },
+  { term: "assessment", category: "biokineticist", priority: 1 },
+  { term: "chronic", category: "biokineticist", priority: 2 },
+  { term: "conditioning", category: "biokineticist", priority: 2 },
 ];
 
 // Budget-related keywords with more precise factors
@@ -70,6 +95,10 @@ const timeframeKeywords = [
   { term: "long term", timeframe: "12 weeks" },
   { term: "long-term", timeframe: "12 weeks" },
   { term: "sustainable", timeframe: "12 weeks" },
+  { term: "months", timeframe: "12 weeks" },
+  { term: "month", timeframe: "4 weeks" },
+  { term: "weeks", timeframe: "4 weeks" },
+  { term: "weekly", timeframe: "4 weeks" },
 ];
 
 // Online preference keywords
@@ -81,6 +110,46 @@ const onlineKeywords = [
   { term: "face to face", preference: false },
 ];
 
+// Goal extraction keywords
+const goalKeywords = [
+  { term: "lose weight", goal: "weight loss" },
+  { term: "weight loss", goal: "weight loss" },
+  { term: "get stronger", goal: "strength improvement" },
+  { term: "build muscle", goal: "muscle building" },
+  { term: "tone up", goal: "body toning" },
+  { term: "run", goal: "running performance" },
+  { term: "marathon", goal: "marathon training" },
+  { term: "back pain", goal: "back pain relief" },
+  { term: "stress", goal: "stress management" },
+  { term: "anxiety", goal: "anxiety reduction" },
+  { term: "posture", goal: "posture improvement" },
+  { term: "mobility", goal: "improved mobility" },
+  { term: "energy", goal: "increased energy" },
+  { term: "rehabilitation", goal: "rehabilitation" },
+  { term: "recovery", goal: "injury recovery" },
+];
+
+// Obstacle extraction keywords
+const obstacleKeywords = [
+  { term: "busy", obstacle: "time constraints" },
+  { term: "no time", obstacle: "time constraints" },
+  { term: "little time", obstacle: "time constraints" },
+  { term: "limited time", obstacle: "time constraints" },
+  { term: "motivation", obstacle: "lack of motivation" },
+  { term: "budget", obstacle: "budget constraints" },
+  { term: "cheap", obstacle: "budget constraints" },
+  { term: "affordable", obstacle: "budget constraints" },
+  { term: "injury", obstacle: "injury" },
+  { term: "pain", obstacle: "pain" },
+  { term: "distance", obstacle: "location limitations" },
+  { term: "far", obstacle: "location limitations" },
+  { term: "knowledge", obstacle: "lack of knowledge" },
+  { term: "not sure", obstacle: "lack of knowledge" },
+  { term: "limited access", obstacle: "access limitations" },
+  { term: "discipline", obstacle: "lack of discipline" },
+  { term: "consistency", obstacle: "consistency challenges" },
+];
+
 // Analyze user input and determine plan options
 export const analyzeUserInput = (input: string): PlanOptions => {
   const lowerInput = input.toLowerCase();
@@ -89,7 +158,10 @@ export const analyzeUserInput = (input: string): PlanOptions => {
     intensity: "medium",
     timeframe: "8 weeks",
     focus: [],
-    preferOnline: false
+    preferOnline: false,
+    budget: 1000, // Default budget
+    goal: undefined,
+    obstacle: undefined
   };
 
   // Detect focus areas by category
@@ -109,15 +181,16 @@ export const analyzeUserInput = (input: string): PlanOptions => {
     }
   });
 
-  // Get top 2 categories based on scores
+  // Get top categories based on scores
   const sortedCategories = Object.entries(categoryScores)
     .sort((a, b) => b[1] - a[1])
     .filter(([_, score]) => score > 0)
     .map(([category]) => category as ServiceCategory);
 
+  // Get at least 3 categories if possible
   options.focus = sortedCategories.length > 0 ? 
-    sortedCategories.slice(0, 2) : 
-    ['personal-trainer', 'dietician']; // Default if no clear focus
+    sortedCategories.slice(0, 3) : 
+    ['personal-trainer', 'dietician', 'coaching']; // Default if no clear focus
 
   // Check for budget keywords
   budgetKeywords.forEach(keyword => {
@@ -152,7 +225,24 @@ export const analyzeUserInput = (input: string): PlanOptions => {
   if (budgetMatch) {
     const extractedBudget = parseInt(budgetMatch[1]);
     if (extractedBudget > 0) {
-      options.costFactor = extractedBudget < 500 ? 0.6 : extractedBudget > 1000 ? 1.3 : 1.0;
+      options.budget = extractedBudget;
+      options.costFactor = extractedBudget < 500 ? 0.6 : extractedBudget > 1500 ? 1.3 : 1.0;
+    }
+  }
+
+  // Extract goal
+  for (const keyword of goalKeywords) {
+    if (lowerInput.includes(keyword.term)) {
+      options.goal = keyword.goal;
+      break;
+    }
+  }
+
+  // Extract obstacle
+  for (const keyword of obstacleKeywords) {
+    if (lowerInput.includes(keyword.term)) {
+      options.obstacle = keyword.obstacle;
+      break;
     }
   }
 
@@ -185,122 +275,307 @@ export const findAlternativeCategories = (selectedCategories: ServiceCategory[])
   return alternatives.slice(0, 2); // Return top 2 alternatives
 };
 
+// New function to create more balanced service combinations
+const createBalancedServiceCombination = (
+  categories: ServiceCategory[], 
+  budget: number, 
+  planType: 'best-fit' | 'high-impact' | 'progressive',
+  goal?: string,
+  obstacle?: string
+): {
+  type: ServiceCategory,
+  price: number,
+  sessions: number,
+  description: string
+}[] => {
+  // Service base prices and minimum effective sessions
+  const serviceInfo: Record<ServiceCategory, {basePrice: number, minSessions: number, maxSessions: number, digitalOption?: {price: number, description: string}}> = {
+    'dietician': {
+      basePrice: 350, 
+      minSessions: 1, 
+      maxSessions: 4,
+      digitalOption: {
+        price: 250,
+        description: "Personalized meal plan & nutrition guide"
+      }
+    },
+    'personal-trainer': {
+      basePrice: 300, 
+      minSessions: 1, 
+      maxSessions: 8,
+      digitalOption: {
+        price: 200,
+        description: "Custom workout program with video tutorials"
+      }
+    },
+    'physiotherapist': {
+      basePrice: 400, 
+      minSessions: 1, 
+      maxSessions: 4,
+      digitalOption: {
+        price: 250,
+        description: "Rehab program with exercise videos"
+      }
+    },
+    'biokineticist': {
+      basePrice: 450, 
+      minSessions: 1, 
+      maxSessions: 4,
+      digitalOption: {
+        price: 300,
+        description: "Specialized movement program"
+      }
+    },
+    'coaching': {
+      basePrice: 300, 
+      minSessions: 1, 
+      maxSessions: 4,
+      digitalOption: {
+        price: 200,
+        description: "Guided mindset & accountability program"
+      }
+    }
+  };
+
+  // Adjust session distribution based on plan type
+  const distributionRatios = {
+    'best-fit': {primary: 0.4, secondary: 0.3, tertiary: 0.3},
+    'high-impact': {primary: 0.5, secondary: 0.3, tertiary: 0.2},
+    'progressive': {primary: 0.6, secondary: 0.4, tertiary: 0}
+  };
+
+  const ratio = distributionRatios[planType];
+  
+  // Sort categories by relevance to goal if available
+  if (goal) {
+    const goalRelevance: Partial<Record<string, ServiceCategory[]>> = {
+      'weight loss': ['dietician', 'personal-trainer', 'coaching'],
+      'muscle building': ['personal-trainer', 'dietician', 'biokineticist'],
+      'rehabilitation': ['physiotherapist', 'biokineticist', 'personal-trainer'],
+      'back pain relief': ['physiotherapist', 'biokineticist', 'personal-trainer'],
+      'running performance': ['personal-trainer', 'physiotherapist', 'dietician'],
+      'marathon training': ['personal-trainer', 'physiotherapist', 'dietician'],
+      'stress management': ['coaching', 'dietician', 'personal-trainer'],
+      'anxiety reduction': ['coaching', 'personal-trainer', 'dietician'],
+      'posture improvement': ['physiotherapist', 'biokineticist', 'personal-trainer'],
+      'injury recovery': ['physiotherapist', 'biokineticist', 'coaching']
+    };
+
+    const relevantOrder = goalRelevance[goal];
+    if (relevantOrder) {
+      // Reorder categories based on goal relevance if they exist in our options
+      categories = [...categories].sort((a, b) => {
+        const aIndex = relevantOrder.indexOf(a);
+        const bIndex = relevantOrder.indexOf(b);
+        // Categories not in the list go to the end
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+      });
+    }
+  }
+
+  // Ensure we have at least 2 categories
+  if (categories.length < 2) {
+    const alternatives = findAlternativeCategories(categories);
+    categories = [...categories, ...alternatives].slice(0, 3);
+  }
+
+  // Calculate budget distribution
+  const services = [];
+  let remainingBudget = budget;
+  
+  // Function to get personalized service description
+  const getServiceDescription = (category: ServiceCategory, isSession: boolean, goal?: string, obstacle?: string): string => {
+    const baseDescriptions: Record<ServiceCategory, string> = {
+      'dietician': isSession ? "Nutrition consultation & diet planning" : "Personalized meal plan",
+      'personal-trainer': isSession ? "Guided workout session" : "Custom workout program",
+      'physiotherapist': isSession ? "Therapeutic assessment & treatment" : "Rehabilitation program",
+      'biokineticist': isSession ? "Movement therapy session" : "Movement optimization plan",
+      'coaching': isSession ? "Wellness strategy & motivation session" : "Mindset & accountability program"
+    };
+    
+    // If we have goal and obstacle, enhance the description
+    if (goal && category) {
+      const goalDescriptions: Record<string, Partial<Record<ServiceCategory, string>>> = {
+        'weight loss': {
+          'dietician': isSession ? "Weight loss nutrition consultation" : "Customized weight loss meal plan",
+          'personal-trainer': isSession ? "Fat-burning workout session" : "Progressive weight loss training program"
+        },
+        'back pain relief': {
+          'physiotherapist': isSession ? "Back pain assessment & treatment" : "Back pain relief program", 
+          'biokineticist': isSession ? "Spine mobility & strength session" : "Back strengthening program"
+        },
+        'marathon training': {
+          'personal-trainer': isSession ? "Runner's conditioning session" : "Marathon preparation program",
+          'physiotherapist': isSession ? "Runner's biomechanics assessment" : "Running form optimization guide"
+        },
+        'stress management': {
+          'coaching': isSession ? "Stress reduction coaching session" : "Comprehensive stress management plan"
+        }
+      };
+      
+      if (goalDescriptions[goal] && goalDescriptions[goal][category]) {
+        return goalDescriptions[goal][category] as string;
+      }
+    }
+    
+    return baseDescriptions[category];
+  };
+  
+  // Primary service allocation (with specific category)
+  const primaryCategory = categories[0];
+  const primaryBudget = Math.floor(budget * ratio.primary);
+  const primaryServiceInfo = serviceInfo[primaryCategory];
+  
+  // Determine if we should use sessions or digital options based on budget and obstacles
+  let primaryIsDigital = false;
+  
+  // If obstacle is time or location constraints, prefer digital
+  if (obstacle && (obstacle === 'time constraints' || obstacle === 'location limitations')) {
+    primaryIsDigital = true;
+  }
+  
+  // But if budget allows for at least one session and digital isn't required, choose sessions
+  if (primaryServiceInfo.basePrice <= primaryBudget && !primaryIsDigital) {
+    const possibleSessions = Math.min(
+      Math.floor(primaryBudget / primaryServiceInfo.basePrice),
+      primaryServiceInfo.maxSessions
+    );
+    
+    const sessions = Math.max(primaryServiceInfo.minSessions, possibleSessions);
+    const cost = sessions * primaryServiceInfo.basePrice;
+    
+    services.push({
+      type: primaryCategory,
+      price: primaryServiceInfo.basePrice,
+      sessions: sessions,
+      description: getServiceDescription(primaryCategory, true, goal, obstacle)
+    });
+    
+    remainingBudget -= cost;
+  } 
+  // Use digital option if available
+  else if (primaryServiceInfo.digitalOption) {
+    services.push({
+      type: primaryCategory,
+      price: primaryServiceInfo.digitalOption.price,
+      sessions: 1,
+      description: primaryServiceInfo.digitalOption.description
+    });
+    
+    remainingBudget -= primaryServiceInfo.digitalOption.price;
+  }
+  
+  // Secondary service if budget and categories allow
+  if (remainingBudget > 0 && categories.length > 1) {
+    const secondaryCategory = categories[1];
+    const secondaryBudget = Math.floor(budget * ratio.secondary);
+    const secondaryServiceInfo = serviceInfo[secondaryCategory];
+    
+    // If we can afford at least one session
+    if (secondaryServiceInfo.basePrice <= secondaryBudget) {
+      const possibleSessions = Math.min(
+        Math.floor(secondaryBudget / secondaryServiceInfo.basePrice),
+        secondaryServiceInfo.maxSessions
+      );
+      
+      const sessions = Math.max(1, possibleSessions);
+      const cost = sessions * secondaryServiceInfo.basePrice;
+      
+      services.push({
+        type: secondaryCategory,
+        price: secondaryServiceInfo.basePrice,
+        sessions: sessions,
+        description: getServiceDescription(secondaryCategory, true, goal, obstacle)
+      });
+      
+      remainingBudget -= cost;
+    } 
+    // Use digital option if available
+    else if (secondaryServiceInfo.digitalOption && secondaryServiceInfo.digitalOption.price <= remainingBudget) {
+      services.push({
+        type: secondaryCategory,
+        price: secondaryServiceInfo.digitalOption.price,
+        sessions: 1,
+        description: secondaryServiceInfo.digitalOption.description
+      });
+      
+      remainingBudget -= secondaryServiceInfo.digitalOption.price;
+    }
+  }
+  
+  // Tertiary service if budget and categories allow
+  if (remainingBudget > 200 && categories.length > 2 && planType !== 'progressive') {
+    const tertiaryCategory = categories[2];
+    const tertiaryServiceInfo = serviceInfo[tertiaryCategory];
+    
+    // If we can afford a session
+    if (tertiaryServiceInfo.basePrice <= remainingBudget) {
+      services.push({
+        type: tertiaryCategory,
+        price: tertiaryServiceInfo.basePrice,
+        sessions: 1,
+        description: getServiceDescription(tertiaryCategory, true, goal, obstacle)
+      });
+    } 
+    // Use digital option if available
+    else if (tertiaryServiceInfo.digitalOption && tertiaryServiceInfo.digitalOption.price <= remainingBudget) {
+      services.push({
+        type: tertiaryCategory,
+        price: tertiaryServiceInfo.digitalOption.price,
+        sessions: 1,
+        description: tertiaryServiceInfo.digitalOption.description
+      });
+    }
+  }
+  
+  return services;
+};
+
 export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   const options = analyzeUserInput(userQuery);
   const plans: AIHealthPlan[] = [];
 
-  // Adjust base prices based on budget factor
-  const basePrices = {
-    'dietician': 300,
-    'personal-trainer': 350,
-    'biokineticist': 400,
-    'physiotherapist': 400,
-    'coaching': 250
-  };
-
-  // Extract budget from query if mentioned
-  const budgetMatch = userQuery.match(/R?(\d+)(?:\s*(?:per|a|\/)\s*(?:month|session|week))?/i);
-  const userBudget = budgetMatch ? parseInt(budgetMatch[1]) : 1000; // Default budget
-
-  // Calculate adjusted prices based on user's budget
-  const adjustPriceForBudget = (basePrice: number, planType: string) => {
-    switch(planType) {
-      case 'best-fit':
-        return Math.min(basePrice, userBudget / 4); // Ensure it fits within 25% of budget
-      case 'high-impact':
-        return Math.min(basePrice * 1.2, userBudget / 2); // Premium but within 50% of budget
-      case 'progressive':
-        return Math.min(basePrice * 0.8, userBudget / 3); // Most affordable option
-      default:
-        return basePrice;
-    }
-  };
-
   // Plan types
   const planTypes: ('best-fit' | 'high-impact' | 'progressive')[] = ['best-fit', 'high-impact', 'progressive'];
 
-  // Session counts optimized for each plan type
-  const sessionCounts = {
-    low: { primary: 2, secondary: 1 },
-    medium: { primary: 4, secondary: 2 },
-    high: { primary: 6, secondary: 4 }
-  };
-
   // Description templates updated for holistic health approach
   const descTemplates = {
-    'best-fit': "Budget-optimized wellness plan focusing on {focus} over {timeframe}.",
-    'high-impact': "Accelerated wellness program with intensive {focus} over {timeframe}.",
-    'progressive': "Long-term holistic health journey emphasizing {focus} over {timeframe}."
-  };
-
-  // Service descriptions
-  const serviceDesc: Record<ServiceCategory, string> = {
-    'dietician': "Personalized nutrition guidance and meal planning",
-    'personal-trainer': "Customized exercise sessions focused on your goals",
-    'biokineticist': "Specialized movement therapy and rehabilitation",
-    'physiotherapist': "Targeted therapy for pain relief and recovery",
-    'coaching': "Motivation and wellness strategy sessions"
+    'best-fit': "Budget-optimized wellness plan focusing on {focus} over {timeframe}, designed to address {goal}.",
+    'high-impact': "Accelerated wellness program with intensive {focus} over {timeframe}, targeting {goal}.",
+    'progressive': "Long-term holistic health journey emphasizing {focus} over {timeframe}, supporting {goal}."
   };
 
   // Generate the three plan types
   planTypes.forEach((planType, index) => {
-    // Determine which categories to include
-    let planCategories = [...options.focus];
-
-    // If not enough categories, add a complementary one
-    if (planCategories.length < 2 && planType !== 'progressive') {
-      const complementaryCategories: Record<ServiceCategory, ServiceCategory> = {
-        'dietician': 'personal-trainer',
-        'personal-trainer': 'dietician',
-        'biokineticist': 'physiotherapist',
-        'physiotherapist': 'personal-trainer',
-        'coaching': 'dietician'
-      };
-
-      const primaryCategory = planCategories[0];
-      if (primaryCategory) {
-        planCategories.push(complementaryCategories[primaryCategory]);
-      }
-    }
-
-    // For progressive plan, focus on primary category first, then add others
-    if (planType === 'progressive' && planCategories.length > 1) {
-      planCategories = [planCategories[0]];
-    }
-
-    // Calculate session counts
-    const counts = sessionCounts[options.intensity || 'medium'];
-
-    // Build services array
-    const services = planCategories.map((category, idx) => {
-      const isMainFocus = idx === 0;
-      const basePrice = basePrices[category];
-      const adjustedPrice = adjustPriceForBudget(basePrice, planType);
-      
-      return {
-        type: category,
-        price: Math.round(adjustedPrice),
-        sessions: isMainFocus ? 
-          (planType === 'high-impact' ? 6 : planType === 'progressive' ? 3 : 4) :
-          (planType === 'high-impact' ? 4 : 2),
-        description: serviceDesc[category]
-      };
-    });
+    // Build services array using the new balanced approach
+    const services = createBalancedServiceCombination(
+      options.focus || [], 
+      options.budget || 1000, 
+      planType,
+      options.goal,
+      options.obstacle
+    );
 
     // Calculate total cost
     const totalCost = services.reduce((sum, service) => 
       sum + (service.price * service.sessions), 0);
 
+    // Ensure we have a reasonable goal description
+    const goalDescription = options.goal || 
+      (options.focus?.length ? `${options.focus[0].replace('-', ' ')} improvement` : "overall wellness");
+
     // Create plan description
-    const planFocus = services.map(s => s.type.replace('-', ' ')).join(' and ');
+    const planFocus = services.map(s => s.type.replace('-', ' ')).join(', ');
     const planDesc = descTemplates[planType]
       .replace('{focus}', planFocus)
-      .replace('{intensity}', options.intensity || 'medium')
-      .replace('{timeframe}', options.timeframe || '8 weeks');
+      .replace('{timeframe}', options.timeframe || '8 weeks')
+      .replace('{goal}', goalDescription);
 
     // Create plan name
     const planName = planType === 'best-fit' 
-      ? 'Tailored Wellness Plan' 
+      ? 'Balanced Wellness Plan' 
       : planType === 'high-impact' 
         ? 'Accelerated Results Plan' 
         : 'Progressive Development Plan';
