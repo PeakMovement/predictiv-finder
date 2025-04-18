@@ -28,24 +28,38 @@ export const PractitionerCard = ({
 }: PractitionerCardProps) => {
   const getScoreColor = (score?: number) => {
     if (!score) return 'text-gray-400';
-    if (score >= 90) return 'text-green-500';
-    if (score >= 70) return 'text-health-teal';
-    if (score >= 50) return 'text-amber-500';
+    if (score >= 85) return 'text-green-500';
+    if (score >= 65) return 'text-health-teal';
+    if (score >= 45) return 'text-amber-500';
     return 'text-orange-500';
   };
 
   const getScoreText = (score?: number) => {
     if (!score) return 'Unknown';
-    if (score >= 90) return 'Perfect match';
-    if (score >= 70) return 'Great match';
-    if (score >= 50) return 'Good match';
-    return 'Partial match';
+    if (score >= 85) return 'Excellent match';
+    if (score >= 65) return 'Good match';
+    if (score >= 45) return 'Partial match';
+    return 'Possible option';
   };
 
   const getMatchIcon = (score?: number) => {
     if (!score) return <AlertCircle className="w-4 h-4" />;
-    if (score >= 70) return <Check className="w-4 h-4" />;
+    if (score >= 65) return <Check className="w-4 h-4" />;
+    if (score >= 45) return <AlertCircle className="w-4 h-4" />;
     return <AlertTriangle className="w-4 h-4" />;
+  };
+
+  // Format price tag with info about session length
+  const getPriceDisplay = () => {
+    const baseText = `R${practitioner.pricePerSession}`;
+    if (practitioner.serviceType === 'coaching') {
+      return `${baseText}/session`;
+    } else if (practitioner.serviceType === 'dietician') {
+      return `${baseText}/consultation`;
+    } else if (practitioner.serviceType === 'physiotherapist' || practitioner.serviceType === 'biokineticist') {
+      return `${baseText}/session`;
+    }
+    return `${baseText}/session`;
   };
 
   return (
@@ -53,11 +67,17 @@ export const PractitionerCard = ({
       whileHover={{ y: -5 }}
       className={`
         bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden relative
-        ${matchScore && matchScore < 70 ? 'border border-amber-300' : ''}
+        ${matchScore && matchScore < 65 ? 'border border-amber-300' : ''}
+        ${matchScore && matchScore < 45 ? 'border border-orange-300' : ''}
       `}
     >
       {matchScore !== undefined && (
-        <div className={`absolute top-2 right-2 z-10 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${matchScore >= 70 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+        <div className={`absolute top-2 right-2 z-10 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 
+          ${matchScore >= 85 ? 'bg-green-100 text-green-700' : 
+           matchScore >= 65 ? 'bg-health-teal/20 text-health-teal-dark' : 
+           matchScore >= 45 ? 'bg-amber-100 text-amber-700' : 
+           'bg-orange-100 text-orange-700'}`}
+        >
           {getMatchIcon(matchScore)}
           <span>{getScoreText(matchScore)}</span>
         </div>
@@ -77,7 +97,7 @@ export const PractitionerCard = ({
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-lg font-semibold">{practitioner.name}</h3>
-                <p className="text-health-purple text-sm">{practitioner.serviceType.replace('-', ' ')}</p>
+                <p className="text-health-purple text-sm capitalize">{practitioner.serviceType.replace('-', ' ')}</p>
               </div>
               <div className="flex items-center">
                 <Star className="w-4 h-4 text-yellow-400 fill-current" />
@@ -99,7 +119,7 @@ export const PractitionerCard = ({
               )}
               
               <div className="font-medium text-health-purple">
-                R{practitioner.pricePerSession}/session
+                {getPriceDisplay()}
               </div>
             </div>
           </div>
@@ -114,6 +134,14 @@ export const PractitionerCard = ({
                 {tag}
               </Badge>
             ))}
+            {practitioner.serviceTags.length > 3 && (
+              <Badge
+                variant="outline"
+                className="text-xs py-0 bg-gray-100 border-gray-200 text-gray-500"
+              >
+                +{practitioner.serviceTags.length - 3} more
+              </Badge>
+            )}
           </div>
           
           {matchReasons && matchReasons.length > 0 && (
@@ -123,10 +151,11 @@ export const PractitionerCard = ({
                   <TooltipTrigger className="flex items-center gap-1 underline underline-offset-2 decoration-dotted">
                     <span className={getScoreColor(matchScore)}>Why this match?</span>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-xs">
-                    <ul className="list-disc list-inside">
+                  <TooltipContent side="bottom" className="max-w-xs p-3">
+                    <div className="font-medium mb-1">Match details:</div>
+                    <ul className="list-disc list-inside space-y-1">
                       {matchReasons.map((reason, index) => (
-                        <li key={index}>{reason}</li>
+                        <li key={index} className="text-xs">{reason}</li>
                       ))}
                     </ul>
                   </TooltipContent>

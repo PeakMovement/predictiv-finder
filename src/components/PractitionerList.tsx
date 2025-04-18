@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,7 @@ import { Practitioner, UserCriteria } from '@/types';
 import PractitionerCard from './PractitionerCard';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { PRACTITIONERS } from '@/data/mockData';
 
 interface PractitionerListProps {
   practitioners: Practitioner[];
@@ -62,6 +64,8 @@ export const PractitionerList = ({
   const [activeFilters, setActiveFilters] = useState<FilterOption[]>([]);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [practitionersWithScores, setPractitionersWithScores] = useState<PractitionerWithMatchScore[]>([]);
+  const [showAllProfessionals, setShowAllProfessionals] = useState(false);
+  const [expandedSearchCriteria, setExpandedSearchCriteria] = useState(false);
 
   const { toast } = useToast();
   
@@ -75,23 +79,29 @@ export const PractitionerList = ({
     'mental-health': 'Mental Health'
   };
 
-  useEffect(() => {
-    const scoredPractitioners = practitioners.map(practitioner => {
+  // This function will score all practitioners, not just those in the current category
+  const scoreAllPractitioners = () => {
+    // Include all practitioners, not just those filtered by category
+    const allProfessionals = showAllProfessionals ? PRACTITIONERS : practitioners;
+    
+    const scoredPractitioners = allProfessionals.map(practitioner => {
       let score = 100;
       const reasons: string[] = [];
       
+      // More lenient budget matching
       if (criteria.budget && criteria.budget.monthly) {
         const budgetDifference = practitioner.pricePerSession - criteria.budget.monthly;
         if (budgetDifference > 0) {
+          // Less severe penalties for being over budget
           const percentOver = (budgetDifference / criteria.budget.monthly) * 100;
           if (percentOver > 50) {
-            score -= 50;
+            score -= 30; // Reduced from 50
             reasons.push(`R${budgetDifference} over your budget`);
           } else if (percentOver > 20) {
-            score -= 25;
+            score -= 15; // Reduced from 25
             reasons.push(`R${budgetDifference} over your budget`);
           } else {
-            score -= 10;
+            score -= 5; // Reduced from 10
             reasons.push(`Slightly over your budget (R${budgetDifference})`);
           }
         } else {
@@ -99,23 +109,47 @@ export const PractitionerList = ({
         }
       }
       
+      // More lenient location matching
       if (criteria.location && !practitioner.location.toLowerCase().includes(criteria.location.toLowerCase())) {
-        score -= 15;
-        reasons.push('Different location than requested');
+        // Check if the location is in the same province/region
+        const practitionerRegion = practitioner.location.split(',').length > 1 
+          ? practitioner.location.split(',')[1].trim().toLowerCase() 
+          : '';
+        
+        const criteriaRegion = criteria.location.split(',').length > 1 
+          ? criteria.location.split(',')[1].trim().toLowerCase() 
+          : '';
+        
+        if (practitionerRegion && criteriaRegion && practitionerRegion === criteriaRegion) {
+          score -= 5; // Small penalty for same region but different city
+          reasons.push('In the same region as your preferred location');
+        } else {
+          score -= 10; // Reduced from 15
+          reasons.push('Different location than requested, but available');
+        }
       } else if (criteria.location) {
         reasons.push('In your preferred location');
       }
       
+      // More lenient mode matching
       if (criteria.mode?.includes('online') && !practitioner.isOnline) {
-        score -= 25;
+        score -= 15; // Reduced from 25
         reasons.push('In-person only (you preferred online)');
       } else if (criteria.mode?.includes('in-person') && practitioner.isOnline) {
-        score -= 25;
+        score -= 15; // Reduced from 25
         reasons.push('Online only (you preferred in-person)');
       }
       
+      // Consider the practitioner's service type if criteria includes categories
+      if (criteria.categories && criteria.categories.length > 0 && 
+          !criteria.categories.includes(practitioner.serviceType)) {
+        score -= 20; // Penalty for different service type, but don't exclude entirely
+        reasons.push(`Different professional type than requested (${practitioner.serviceType})`);
+      }
+      
+      // Price range filter is still applied but with less impact
       if (practitioner.pricePerSession < priceRange[0] || practitioner.pricePerSession > priceRange[1]) {
-        score -= 20;
+        score -= 10; // Reduced from 20
       }
       
       return {
@@ -127,16 +161,24 @@ export const PractitionerList = ({
     
     scoredPractitioners.sort((a, b) => b.matchScore - a.matchScore);
     setPractitionersWithScores(scoredPractitioners);
-  }, [practitioners, criteria, priceRange]);
+  };
+
+  useEffect(() => {
+    scoreAllPractitioners();
+  }, [practitioners, criteria, priceRange, showAllProfessionals]);
 
   const filteredPractitioners = practitionersWithScores.filter(p => {
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = 
       p.name.toLowerCase().includes(searchLower) ||
       p.serviceTags.some(tag => tag.toLowerCase().includes(searchLower)) ||
-      p.location.toLowerCase().includes(searchLower);
+      p.location.toLowerCase().includes(searchLower) ||
+      p.serviceType.toLowerCase().includes(searchLower);
     
-    const matchesPrice = p.pricePerSession >= priceRange[0] && p.pricePerSession <= priceRange[1];
+    // More lenient price filtering when expanded search is active
+    const matchesPrice = expandedSearchCriteria 
+      ? true  // Don't filter by price when expanded search is active
+      : (p.pricePerSession >= priceRange[0] && p.pricePerSession <= priceRange[1]);
     
     return matchesSearch && matchesPrice;
   });
@@ -158,28 +200,76 @@ export const PractitionerList = ({
   };
 
   const expandSearchOptions = () => {
+    setExpandedSearchCriteria(true);
     const currentMax = priceRange[1];
-    const newMax = Math.floor(currentMax * 1.25);
+    const newMax = Math.floor(currentMax * 1.5);
     setPriceRange([priceRange[0], newMax]);
     
     toast({
       title: "Search range expanded",
-      description: `We've increased your maximum price to R${newMax} to show more options.`,
+      description: `We've increased your maximum price to R${newMax} and are showing professionals from all categories.`,
+      variant: "default",
+    });
+    
+    // Show all professionals when search is expanded
+    setShowAllProfessionals(true);
+  };
+
+  const suggestOnlineOptions = () => {
+    setExpandedSearchCriteria(true);
+    toast({
+      title: "Showing online options",
+      description: "Online consultations are often more affordable and accessible. We've highlighted these for you.",
+      variant: "default",
+    });
+    
+    // Show all professionals when search is expanded
+    setShowAllProfessionals(true);
+  };
+
+  const includeNearbyLocations = () => {
+    setExpandedSearchCriteria(true);
+    toast({
+      title: "Search area expanded",
+      description: "We've expanded your search to include nearby locations and all professional types.",
+      variant: "default",
+    });
+    
+    // Show all professionals when search is expanded
+    setShowAllProfessionals(true);
+  };
+
+  const showAllOptions = () => {
+    setExpandedSearchCriteria(true);
+    setShowAllProfessionals(true);
+    
+    toast({
+      title: "Showing all professionals",
+      description: "We're now showing all professionals regardless of category, location, or price range.",
       variant: "default",
     });
   };
 
-  const suggestOnlineOptions = () => {
+  const resetFilters = () => {
+    setSearchQuery('');
+    setExpandedSearchCriteria(false);
+    setShowAllProfessionals(false);
+    setPriceRange([0, 2000]);
+    setSelectedGoals([]);
+    setActiveFilters([]);
+    
     toast({
-      title: "Consider online options",
-      description: "Online consultations are often more affordable and accessible. We've highlighted these for you.",
+      title: "Filters reset",
+      description: "We've reset all filters to show options based on your original criteria.",
       variant: "default",
     });
+    
+    scoreAllPractitioners();
   };
 
   const categoryName = criteria.categories && criteria.categories.length > 0
     ? criteria.categories[0].charAt(0).toUpperCase() + criteria.categories[0].slice(1).replace('-', ' ')
-    : '';
+    : 'Health';
 
   return (
     <motion.div
@@ -198,7 +288,9 @@ export const PractitionerList = ({
             >
               ←
             </Button>
-            <h2 className="text-2xl font-semibold">{categoryName} Professionals</h2>
+            <h2 className="text-2xl font-semibold">
+              {showAllProfessionals ? 'Health Professionals' : `${categoryName} Professionals`}
+            </h2>
           </div>
           
           <Button 
@@ -213,6 +305,12 @@ export const PractitionerList = ({
         
         <div className="flex items-center justify-between flex-wrap gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <div className="flex flex-wrap gap-2">
+            {expandedSearchCriteria && (
+              <div className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                <span>Expanded search</span>
+              </div>
+            )}
             {criteria.goal && (
               <div className="bg-health-teal/20 text-health-teal-dark px-3 py-1 rounded-full text-sm">
                 Goal: {criteria.goal}
@@ -285,6 +383,17 @@ export const PractitionerList = ({
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuGroup>
+                {expandedSearchCriteria && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="flex items-center justify-between cursor-pointer text-red-500"
+                      onClick={resetFilters}
+                    >
+                      <span>Reset All Filters</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -329,6 +438,7 @@ export const PractitionerList = ({
           </div>
         )}
         
+        {/* Show results always, even if the filtered list is empty originally */}
         {filteredPractitioners.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredPractitioners.map(practitioner => (
@@ -349,79 +459,84 @@ export const PractitionerList = ({
             </div>
             
             <p className="mb-6 text-gray-600 dark:text-gray-300">
-              We couldn't find professionals that perfectly match your criteria, but we have some alternatives that might work for you.
+              We couldn't find professionals that perfectly match your criteria, but we have several options to help you find suitable alternatives.
             </p>
             
-            <Accordion type="single" collapsible className="mb-6">
-              <AccordionItem value="alternatives">
-                <AccordionTrigger className="text-health-purple">View Alternative Options</AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-4 mt-2">
-                    <div className="p-4 bg-white dark:bg-gray-700 rounded-lg">
-                      <h4 className="font-medium mb-2 flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-health-purple" />
-                        <span>Expand Your Search Area</span>
-                      </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                        Broaden your search to include professionals from nearby areas.
-                      </p>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="text-health-purple border-health-purple/50"
-                        onClick={() => {
-                          toast({
-                            title: "Search area expanded",
-                            description: "We've expanded your search to include nearby locations.",
-                            variant: "default",
-                          });
-                        }}
-                      >
-                        Include Nearby Locations
-                      </Button>
-                    </div>
-                    
-                    <div className="p-4 bg-white dark:bg-gray-700 rounded-lg">
-                      <h4 className="font-medium mb-2 flex items-center gap-2">
-                        <Video className="h-4 w-4 text-health-teal" />
-                        <span>Consider Online Options</span>
-                      </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                        Virtual consultations are often more accessible and can be more affordable.
-                      </p>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="text-health-teal border-health-teal/50"
-                        onClick={suggestOnlineOptions}
-                      >
-                        Show Online Practitioners
-                      </Button>
-                    </div>
-                    
-                    <div className="p-4 bg-white dark:bg-gray-700 rounded-lg">
-                      <h4 className="font-medium mb-2 flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-health-orange" />
-                        <span>Adjust Your Budget Range</span>
-                      </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                        {criteria.budget?.monthly 
-                          ? `Your current budget is R${criteria.budget.monthly}. Increasing it slightly may open up more options.`
-                          : 'Adjusting your budget range can help you find more matching professionals.'}
-                      </p>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="text-health-orange border-health-orange/50"
-                        onClick={expandSearchOptions}
-                      >
-                        Increase Budget Range
-                      </Button>
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+            <div className="space-y-4 mt-2 mb-6">
+              <div className="p-4 bg-white dark:bg-gray-700 rounded-lg">
+                <h4 className="font-medium mb-2 flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-health-purple" />
+                  <span>Expand Your Search Area</span>
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                  Broaden your search to include professionals from nearby areas.
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="text-health-purple border-health-purple/50"
+                  onClick={includeNearbyLocations}
+                >
+                  Include Nearby Locations
+                </Button>
+              </div>
+              
+              <div className="p-4 bg-white dark:bg-gray-700 rounded-lg">
+                <h4 className="font-medium mb-2 flex items-center gap-2">
+                  <Video className="h-4 w-4 text-health-teal" />
+                  <span>Consider Online Options</span>
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                  Virtual consultations are often more accessible and can be more affordable.
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="text-health-teal border-health-teal/50"
+                  onClick={suggestOnlineOptions}
+                >
+                  Show Online Practitioners
+                </Button>
+              </div>
+              
+              <div className="p-4 bg-white dark:bg-gray-700 rounded-lg">
+                <h4 className="font-medium mb-2 flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-health-orange" />
+                  <span>Adjust Your Budget Range</span>
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                  {criteria.budget?.monthly 
+                    ? `Your current budget is R${criteria.budget.monthly}. Increasing it slightly may open up more options.`
+                    : 'Adjusting your budget range can help you find more matching professionals.'}
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="text-health-orange border-health-orange/50"
+                  onClick={expandSearchOptions}
+                >
+                  Increase Budget Range
+                </Button>
+              </div>
+              
+              <div className="p-4 bg-white dark:bg-gray-700 rounded-lg">
+                <h4 className="font-medium mb-2 flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span>See All Available Professionals</span>
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                  View all professionals regardless of exact match to your criteria.
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="text-green-600 border-green-600/50"
+                  onClick={showAllOptions}
+                >
+                  Show All Professionals
+                </Button>
+              </div>
+            </div>
             
             <div className="bg-health-purple/10 p-4 rounded-lg mb-4">
               <h3 className="font-medium mb-2 text-health-purple">Get a Custom AI Plan Instead</h3>
