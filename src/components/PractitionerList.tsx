@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -79,77 +78,52 @@ export const PractitionerList = ({
     'mental-health': 'Mental Health'
   };
 
-  // This function will score all practitioners, not just those in the current category
   const scoreAllPractitioners = () => {
-    // Include all practitioners, not just those filtered by category
     const allProfessionals = showAllProfessionals ? PRACTITIONERS : practitioners;
     
     const scoredPractitioners = allProfessionals.map(practitioner => {
       let score = 100;
       const reasons: string[] = [];
       
-      // More lenient budget matching
       if (criteria.budget && criteria.budget.monthly) {
         const budgetDifference = practitioner.pricePerSession - criteria.budget.monthly;
-        if (budgetDifference > 0) {
-          // Less severe penalties for being over budget
-          const percentOver = (budgetDifference / criteria.budget.monthly) * 100;
-          if (percentOver > 50) {
-            score -= 30; // Reduced from 50
-            reasons.push(`R${budgetDifference} over your budget`);
-          } else if (percentOver > 20) {
-            score -= 15; // Reduced from 25
-            reasons.push(`R${budgetDifference} over your budget`);
-          } else {
-            score -= 5; // Reduced from 10
-            reasons.push(`Slightly over your budget (R${budgetDifference})`);
-          }
-        } else {
-          reasons.push('Within your budget');
+        const percentageDifference = (budgetDifference / criteria.budget.monthly) * 100;
+        
+        if (percentageDifference > 50) {
+          score -= 20;
+          reasons.push(`Slightly above budget (R${Math.round(budgetDifference)} more)`);
+        } else if (percentageDifference > 25) {
+          score -= 10;
+          reasons.push(`Within extended budget range`);
         }
       }
       
-      // More lenient location matching
-      if (criteria.location && !practitioner.location.toLowerCase().includes(criteria.location.toLowerCase())) {
-        // Check if the location is in the same province/region
-        const practitionerRegion = practitioner.location.split(',').length > 1 
-          ? practitioner.location.split(',')[1].trim().toLowerCase() 
-          : '';
-        
-        const criteriaRegion = criteria.location.split(',').length > 1 
-          ? criteria.location.split(',')[1].trim().toLowerCase() 
-          : '';
-        
-        if (practitionerRegion && criteriaRegion && practitionerRegion === criteriaRegion) {
-          score -= 5; // Small penalty for same region but different city
-          reasons.push('In the same region as your preferred location');
-        } else {
-          score -= 10; // Reduced from 15
-          reasons.push('Different location than requested, but available');
+      if (criteria.location) {
+        const locationMatch = practitioner.location.toLowerCase().includes(criteria.location.toLowerCase());
+        if (!locationMatch) {
+          score -= 15;
+          reasons.push(`Alternative location option`);
         }
-      } else if (criteria.location) {
-        reasons.push('In your preferred location');
       }
       
-      // More lenient mode matching
-      if (criteria.mode?.includes('online') && !practitioner.isOnline) {
-        score -= 15; // Reduced from 25
-        reasons.push('In-person only (you preferred online)');
-      } else if (criteria.mode?.includes('in-person') && practitioner.isOnline) {
-        score -= 15; // Reduced from 25
-        reasons.push('Online only (you preferred in-person)');
+      if (criteria.categories && criteria.categories.length > 0) {
+        const serviceTypeMatch = criteria.categories.some(cat => 
+          practitioner.serviceType.toLowerCase().includes(cat.toLowerCase())
+        );
+        if (!serviceTypeMatch) {
+          score -= 20;
+          reasons.push(`Related professional type`);
+        }
       }
       
-      // Consider the practitioner's service type if criteria includes categories
-      if (criteria.categories && criteria.categories.length > 0 && 
-          !criteria.categories.includes(practitioner.serviceType)) {
-        score -= 20; // Penalty for different service type, but don't exclude entirely
-        reasons.push(`Different professional type than requested (${practitioner.serviceType})`);
-      }
-      
-      // Price range filter is still applied but with less impact
-      if (practitioner.pricePerSession < priceRange[0] || practitioner.pricePerSession > priceRange[1]) {
-        score -= 10; // Reduced from 20
+      if (criteria.mode) {
+        const onlineMatch = criteria.mode.includes('online') && practitioner.isOnline;
+        const inPersonMatch = criteria.mode.includes('in-person') && !practitioner.isOnline;
+        
+        if (!onlineMatch && !inPersonMatch) {
+          score -= 10;
+          reasons.push(`Alternative consultation method`);
+        }
       }
       
       return {
@@ -175,9 +149,8 @@ export const PractitionerList = ({
       p.location.toLowerCase().includes(searchLower) ||
       p.serviceType.toLowerCase().includes(searchLower);
     
-    // More lenient price filtering when expanded search is active
     const matchesPrice = expandedSearchCriteria 
-      ? true  // Don't filter by price when expanded search is active
+      ? true 
       : (p.pricePerSession >= priceRange[0] && p.pricePerSession <= priceRange[1]);
     
     return matchesSearch && matchesPrice;
@@ -211,7 +184,6 @@ export const PractitionerList = ({
       variant: "default",
     });
     
-    // Show all professionals when search is expanded
     setShowAllProfessionals(true);
   };
 
@@ -223,7 +195,6 @@ export const PractitionerList = ({
       variant: "default",
     });
     
-    // Show all professionals when search is expanded
     setShowAllProfessionals(true);
   };
 
@@ -235,7 +206,6 @@ export const PractitionerList = ({
       variant: "default",
     });
     
-    // Show all professionals when search is expanded
     setShowAllProfessionals(true);
   };
 
@@ -438,7 +408,6 @@ export const PractitionerList = ({
           </div>
         )}
         
-        {/* Show results always, even if the filtered list is empty originally */}
         {filteredPractitioners.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredPractitioners.map(practitioner => (
