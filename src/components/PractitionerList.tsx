@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -78,83 +79,153 @@ export const PractitionerList = ({
     'mental-health': 'Mental Health'
   };
 
+  // Immediately show all professionals if locationRadius is 'anywhere'
+  useEffect(() => {
+    if (criteria.locationRadius === 'anywhere') {
+      setShowAllProfessionals(true);
+    }
+  }, [criteria]);
+
   const scoreAllPractitioners = () => {
-    const allProfessionals = showAllProfessionals ? PRACTITIONERS : practitioners;
+    // Always show all professionals, but score them differently
+    const allProfessionals = PRACTITIONERS;
     
     const scoredPractitioners = allProfessionals.map(practitioner => {
       let score = 100;
       const reasons: string[] = [];
       
+      // BUDGET SCORING - Less strict
       if (criteria.budget && criteria.budget.monthly) {
         const budgetDifference = practitioner.pricePerSession - criteria.budget.monthly;
-        const percentageDifference = (budgetDifference / criteria.budget.monthly) * 100;
         
-        if (percentageDifference > 50) {
-          score -= 20;
-          reasons.push(`Slightly above budget (R${Math.round(budgetDifference)} more)`);
-        } else if (percentageDifference > 25) {
-          score -= 10;
-          reasons.push(`Within extended budget range`);
+        // Apply a more forgiving penalty for budget
+        if (budgetDifference > 0) {
+          // If over budget, apply a smaller penalty
+          const percentageOver = (budgetDifference / criteria.budget.monthly) * 100;
+          
+          if (percentageOver > 50) {
+            score -= 15; // Reduced from 20
+            reasons.push(`Above budget (R${Math.round(budgetDifference)} more)`);
+          } else if (percentageOver > 25) {
+            score -= 5; // Reduced from 10
+            reasons.push(`Slightly above budget`);
+          } else {
+            // Within 25% of budget - no penalty
+            reasons.push(`Within budget range`);
+          }
+        } else {
+          // Under budget is good
+          reasons.push(`Within your budget`);
         }
       }
       
-      if (criteria.location) {
+      // LOCATION SCORING - Based on radius setting
+      if (criteria.location && criteria.location.length > 0) {
         const locationMatch = practitioner.location.toLowerCase().includes(criteria.location.toLowerCase());
+        
         if (!locationMatch) {
-          score -= 15;
-          reasons.push(`Alternative location option`);
+          // Check the locationRadius setting
+          if (criteria.locationRadius === 'exact') {
+            score -= 25; // Much higher penalty for exact match requirement
+            reasons.push(`Different location`);
+          } else if (criteria.locationRadius === 'nearby') {
+            score -= 10; // Lower penalty for nearby
+            reasons.push(`Alternative location`);
+          } else {
+            // 'anywhere' - very minor penalty
+            score -= 5;
+            reasons.push(`Location available`);
+          }
+        } else {
+          reasons.push(`In your location`);
         }
       }
       
+      // CATEGORY SCORING - Less strict
       if (criteria.categories && criteria.categories.length > 0) {
-        const serviceTypeMatch = criteria.categories.some(cat => 
-          practitioner.serviceType.toLowerCase().includes(cat.toLowerCase())
+        const categoryMatch = criteria.categories.some(cat => 
+          practitioner.serviceType.toLowerCase() === cat.toLowerCase()
         );
-        if (!serviceTypeMatch) {
-          score -= 20;
-          reasons.push(`Related professional type`);
+        
+        const relatedCategoryMatch = criteria.categories.some(cat => {
+          // Define related categories (e.g., personal-trainer and biokineticist are related)
+          if (cat === 'personal-trainer' && 
+              (practitioner.serviceType === 'biokineticist' || practitioner.serviceType === 'coaching')) {
+            return true;
+          }
+          if (cat === 'biokineticist' && 
+              (practitioner.serviceType === 'personal-trainer' || practitioner.serviceType === 'coaching')) {
+            return true;
+          }
+          if (cat === 'coaching' && 
+              (practitioner.serviceType === 'personal-trainer' || practitioner.serviceType === 'biokineticist')) {
+            return true;
+          }
+          return false;
+        });
+        
+        if (!categoryMatch) {
+          if (relatedCategoryMatch) {
+            score -= 10; // Smaller penalty for related category
+            reasons.push(`Related professional type`);
+          } else {
+            score -= 15; // Reduced from 20
+            reasons.push(`Different professional type`);
+          }
+        } else {
+          reasons.push(`Exact professional type you wanted`);
         }
       }
       
-      if (criteria.mode) {
+      // MODE SCORING - Less strict
+      if (criteria.mode && criteria.mode.length > 0) {
         const onlineMatch = criteria.mode.includes('online') && practitioner.isOnline;
         const inPersonMatch = criteria.mode.includes('in-person') && !practitioner.isOnline;
         
         if (!onlineMatch && !inPersonMatch) {
-          score -= 10;
+          score -= 5; // Reduced from 10
           reasons.push(`Alternative consultation method`);
+        } else {
+          reasons.push(`Preferred consultation method`);
         }
       }
       
       return {
         ...practitioner,
-        matchScore: Math.max(0, score),
+        matchScore: Math.max(10, score), // Minimum score of 10 instead of 0
         reasons
       };
     });
     
+    // Sort by match score, but never filter out professionals completely
     scoredPractitioners.sort((a, b) => b.matchScore - a.matchScore);
     setPractitionersWithScores(scoredPractitioners);
   };
 
   useEffect(() => {
     scoreAllPractitioners();
-  }, [practitioners, criteria, priceRange, showAllProfessionals]);
+  }, [criteria, priceRange, showAllProfessionals]);
 
   const filteredPractitioners = practitionersWithScores.filter(p => {
+    // Text search filtering
     const searchLower = searchQuery.toLowerCase();
-    const matchesSearch = 
+    const matchesSearch = searchQuery === '' || 
       p.name.toLowerCase().includes(searchLower) ||
       p.serviceTags.some(tag => tag.toLowerCase().includes(searchLower)) ||
       p.location.toLowerCase().includes(searchLower) ||
       p.serviceType.toLowerCase().includes(searchLower);
     
-    const matchesPrice = expandedSearchCriteria 
-      ? true 
-      : (p.pricePerSession >= priceRange[0] && p.pricePerSession <= priceRange[1]);
+    // Price range filtering - but only if we're showing search panel
+    const matchesPrice = !showFilterPanel || 
+      (p.pricePerSession >= priceRange[0] && p.pricePerSession <= priceRange[1]);
     
     return matchesSearch && matchesPrice;
   });
+
+  // Always ensure we show at least some results
+  const resultsToShow = filteredPractitioners.length > 0 
+    ? filteredPractitioners 
+    : practitionersWithScores.slice(0, 6); // Show at least top 6 matches if filters are too strict
 
   const handleToggleGoal = (goal: GoalOption) => {
     setSelectedGoals(prev => 
@@ -292,8 +363,13 @@ export const PractitionerList = ({
               </div>
             )}
             {criteria.location && (
-              <div className="bg-health-orange/20 text-health-orange-dark px-3 py-1 rounded-full text-sm">
-                Location: {criteria.location}
+              <div className="bg-health-orange/20 text-health-orange-dark px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                <span>
+                  {criteria.location} 
+                  {criteria.locationRadius === 'nearby' && " (+ nearby)"}
+                  {criteria.locationRadius === 'anywhere' && " (anywhere)"}
+                </span>
               </div>
             )}
           </div>
@@ -408,9 +484,9 @@ export const PractitionerList = ({
           </div>
         )}
         
-        {filteredPractitioners.length > 0 ? (
+        {resultsToShow.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredPractitioners.map(practitioner => (
+            {resultsToShow.map(practitioner => (
               <PractitionerCard 
                 key={practitioner.id} 
                 practitioner={practitioner} 

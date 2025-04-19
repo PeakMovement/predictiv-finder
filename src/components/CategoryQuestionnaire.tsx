@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { motion } from 'framer-motion';
 import { ServiceCategory, ServiceMode, DetailedUserCriteria, FitnessLevel } from '@/types';
 import { GOALS_BY_CATEGORY } from '@/data/mockData';
@@ -32,6 +33,7 @@ export const CategoryQuestionnaire = ({
   });
   
   const [location, setLocation] = useState<string>('');
+  const [locationRadius, setLocationRadius] = useState<'exact' | 'nearby' | 'anywhere'>('nearby');
   const [modes, setModes] = useState<ServiceMode[]>([]);
   const [fitnessInfo, setFitnessInfo] = useState<{
     level: FitnessLevel;
@@ -55,6 +57,7 @@ export const CategoryQuestionnaire = ({
       categories,
       budget,
       location,
+      locationRadius,
       mode: modes,
       fitness: fitnessInfo
     };
@@ -146,6 +149,28 @@ export const CategoryQuestionnaire = ({
               onChange={(e) => setLocation(e.target.value)}
               required
             />
+            
+            <div className="mt-3">
+              <Label className="mb-2 block">Search radius</Label>
+              <RadioGroup 
+                value={locationRadius} 
+                onValueChange={(value: 'exact' | 'nearby' | 'anywhere') => setLocationRadius(value)}
+                className="flex flex-col space-y-1"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="exact" id="r1" />
+                  <Label htmlFor="r1" className="cursor-pointer">Exact location only</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="nearby" id="r2" />
+                  <Label htmlFor="r2" className="cursor-pointer">Include nearby areas (default)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="anywhere" id="r3" />
+                  <Label htmlFor="r3" className="cursor-pointer">Show all professionals</Label>
+                </div>
+              </RadioGroup>
+            </div>
           </div>
           
           <div className="space-y-2">

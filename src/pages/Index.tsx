@@ -41,24 +41,9 @@ const Index = () => {
   const { toast } = useToast();
 
   const getMatchingPractitioners = (criteria: DetailedUserCriteria): Practitioner[] => {
-    return PRACTITIONERS.filter(p => {
-      if (criteria.categories && !criteria.categories.includes(p.serviceType)) {
-        return false;
-      }
-      if (criteria.budget && criteria.budget.monthly && p.pricePerSession > criteria.budget.monthly) {
-        return false;
-      }
-      if (criteria.location && !p.location.toLowerCase().includes(criteria.location.toLowerCase())) {
-        return false;
-      }
-      if (criteria.mode?.includes('online') && !p.isOnline) {
-        return false;
-      }
-      if (criteria.mode?.includes('in-person') && p.isOnline) {
-        return false;
-      }
-      return true;
-    });
+    // Start with all practitioners and use the scoring function in PractitionerList 
+    // to sort them rather than filtering them out completely
+    return PRACTITIONERS;
   };
 
   const generateAIPlans = async (query: string) => {

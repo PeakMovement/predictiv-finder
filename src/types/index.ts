@@ -1,3 +1,4 @@
+
 export type ServiceCategory = 
   | 'dietician'
   | 'personal-trainer'
@@ -49,6 +50,7 @@ export interface UserCriteria {
     flexibleBudget: boolean;
   };
   location?: string;
+  locationRadius?: 'exact' | 'nearby' | 'anywhere';
   mode?: ServiceMode[];
   description?: string;
 }
@@ -84,6 +86,7 @@ export interface DetailedUserCriteria {
     flexibleBudget: boolean;
   };
   location?: string;
+  locationRadius?: 'exact' | 'nearby' | 'anywhere';
   mode?: ServiceMode[];
 }
 
