@@ -10,7 +10,7 @@ export const PHYSIOTHERAPISTS: Practitioner[] = [
     location: "Durban, KwaZulu-Natal",
     isOnline: false,
     availability: "Mon-Fri, 9am-5pm",
-    imageUrl: "/placeholder.svg",
+    imageUrl: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop",
     bio: "As a physiotherapist with 5 years of experience in musculoskeletal rehab, my dance background has given me unique insights into movement and rehabilitation. I bring energy and patience to every session, focusing on post-operative care and comprehensive recovery programs.",
     rating: 4.7
   },

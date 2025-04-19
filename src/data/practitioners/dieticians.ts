@@ -10,7 +10,7 @@ export const DIETICIANS: Practitioner[] = [
     location: "Pretoria, Gauteng",
     isOnline: true,
     availability: "Mon-Fri, by appointment",
-    imageUrl: "/placeholder.svg",
+    imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop",
     bio: "With 7 years in clinical dietetics, I specialize in child nutrition and food allergies. My interest grew from managing my sibling's food intolerances, making me particularly understanding of family dietary challenges. I'm patient and family-oriented, working to make nutrition accessible and practical for children and their families.",
     rating: 4.8
   },
@@ -23,7 +23,7 @@ export const DIETICIANS: Practitioner[] = [
     location: "Cape Town, Western Cape",
     isOnline: true,
     availability: "Mon-Fri, flexible hours",
-    imageUrl: "/placeholder.svg",
+    imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop",
     bio: "With 20 years of experience in hospital and private settings, I bring a research-driven approach to nutrition. My work in ICU nutrition inspired my holistic perspective on health. I specialize in gastrointestinal disorders and evidence-based weight management strategies.",
     rating: 4.9
   },

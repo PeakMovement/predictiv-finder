@@ -1,8 +1,9 @@
-
 import { useState } from 'react';
+import { MapPin } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -46,6 +47,7 @@ export const CategoryQuestionnaire = ({
     injuries: '',
     trainingStyle: ''
   });
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   const handleModeToggle = (mode: ServiceMode) => {
     setModes(prev => prev.includes(mode) ? prev.filter(m => m !== mode) : [...prev, mode]);
@@ -62,6 +64,35 @@ export const CategoryQuestionnaire = ({
       fitness: fitnessInfo
     };
     onSubmit(criteria);
+  };
+
+  const getCurrentLocation = () => {
+    setIsGettingLocation(true);
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const response = await fetch(
+              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&localityLanguage=en`
+            );
+            const data = await response.json();
+            setLocation(data.city || data.locality || "");
+            toast.success("Location updated successfully");
+          } catch (error) {
+            toast.error("Could not get your location. Please enter it manually.");
+          } finally {
+            setIsGettingLocation(false);
+          }
+        },
+        (error) => {
+          toast.error("Please allow location access or enter your location manually");
+          setIsGettingLocation(false);
+        }
+      );
+    } else {
+      toast.error("Location is not supported by your browser");
+      setIsGettingLocation(false);
+    }
   };
 
   return (
@@ -142,14 +173,27 @@ export const CategoryQuestionnaire = ({
           
           <div className="space-y-2">
             <Label htmlFor="location">Where are you located?</Label>
-            <Input
-              id="location"
-              placeholder="City or area"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              required
-            />
-            
+            <div className="flex gap-2">
+              <Input
+                id="location"
+                placeholder="City or area"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                required
+                className="flex-1"
+              />
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={getCurrentLocation}
+                disabled={isGettingLocation}
+                className="flex items-center gap-2"
+              >
+                <MapPin className="w-4 h-4" />
+                {isGettingLocation ? "Getting location..." : "Use my location"}
+              </Button>
+            </div>
+
             <div className="mt-3">
               <Label className="mb-2 block">Search radius</Label>
               <RadioGroup 

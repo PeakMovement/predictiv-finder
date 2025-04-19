@@ -10,7 +10,7 @@ export const BIOKINETICISTS: Practitioner[] = [
     location: "Johannesburg, Gauteng",
     isOnline: true,
     availability: "Mon-Fri, 8am-6pm",
-    imageUrl: "/placeholder.svg",
+    imageUrl: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&h=400&fit=crop",
     bio: "With 6 years of experience specializing in cardiac rehabilitation and athletic performance, I combine scientific principles with practical training methods. My background in gym training has shaped my approach to helping clients achieve their fitness goals safely and effectively.",
     rating: 4.8
   },

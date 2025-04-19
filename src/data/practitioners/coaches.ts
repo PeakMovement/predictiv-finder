@@ -10,7 +10,7 @@ export const COACHES: Practitioner[] = [
     location: "Johannesburg, Gauteng",
     isOnline: true,
     availability: "Mon-Sat, flexible hours",
-    imageUrl: "/placeholder.svg",
+    imageUrl: "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=400&h=400&fit=crop",
     bio: "With 9 years of coaching experience from beginners to marathoners, my passion for running began in township races. I've coached numerous Two Oceans finishers and believe in making running accessible to everyone.",
     rating: 4.9
   },
