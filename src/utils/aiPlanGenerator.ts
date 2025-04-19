@@ -1,4 +1,3 @@
-
 import { AIHealthPlan, ServiceCategory } from "@/types";
 
 interface PlanOptions {
@@ -277,8 +276,8 @@ export const findAlternativeCategories = (selectedCategories: ServiceCategory[])
 
 // New function to create more balanced service combinations
 const createBalancedServiceCombination = (
-  categories: ServiceCategory[], 
-  budget: number, 
+  categories: ServiceCategory[],
+  budget: number,
   planType: 'best-fit' | 'high-impact' | 'progressive',
   goal?: string,
   obstacle?: string
@@ -349,16 +348,19 @@ const createBalancedServiceCombination = (
   // Sort categories by relevance to goal if available
   if (goal) {
     const goalRelevance: Partial<Record<string, ServiceCategory[]>> = {
-      'weight loss': ['dietician', 'personal-trainer', 'coaching'],
-      'muscle building': ['personal-trainer', 'dietician', 'biokineticist'],
-      'rehabilitation': ['physiotherapist', 'biokineticist', 'personal-trainer'],
-      'back pain relief': ['physiotherapist', 'biokineticist', 'personal-trainer'],
-      'running performance': ['personal-trainer', 'physiotherapist', 'dietician'],
-      'marathon training': ['personal-trainer', 'physiotherapist', 'dietician'],
-      'stress management': ['coaching', 'dietician', 'personal-trainer'],
-      'anxiety reduction': ['coaching', 'personal-trainer', 'dietician'],
-      'posture improvement': ['physiotherapist', 'biokineticist', 'personal-trainer'],
-      'injury recovery': ['physiotherapist', 'biokineticist', 'coaching']
+      'weight loss': ['personal-trainer', 'dietician', 'coaching'],
+      'muscle building': ['personal-trainer', 'coaching', 'dietician'],
+      'rehabilitation': ['physiotherapist', 'biokineticist', 'coaching'],
+      'back pain relief': ['physiotherapist', 'biokineticist', 'coaching'],
+      'running performance': ['coaching', 'personal-trainer', 'physiotherapist'],
+      'marathon training': ['coaching', 'personal-trainer', 'dietician'],
+      'stress management': ['coaching', 'personal-trainer', 'dietician'],
+      'strength improvement': ['personal-trainer', 'coaching', 'biokineticist'],
+      'posture improvement': ['physiotherapist', 'biokineticist', 'coaching'],
+      'injury recovery': ['physiotherapist', 'biokineticist', 'coaching'],
+      'general fitness': ['personal-trainer', 'coaching', 'dietician'],
+      'strength training': ['personal-trainer', 'coaching', 'biokineticist'],
+      'online coaching': ['coaching', 'personal-trainer', 'dietician']
     };
 
     const relevantOrder = goalRelevance[goal];
@@ -432,7 +434,7 @@ const createBalancedServiceCombination = (
   let primaryIsDigital = false;
   
   // If obstacle is time or location constraints, prefer digital
-  if (obstacle && (obstacle === 'time constraints' || obstacle === 'location limitations')) {
+  if (obstacle && (obstacle === 'location limitations' || obstacle === 'time constraints')) {
     primaryIsDigital = true;
   }
   
@@ -542,9 +544,9 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
 
   // Description templates updated for holistic health approach
   const descTemplates = {
-    'best-fit': "Budget-optimized wellness plan focusing on {focus} over {timeframe}, designed to address {goal}.",
-    'high-impact': "Accelerated wellness program with intensive {focus} over {timeframe}, targeting {goal}.",
-    'progressive': "Long-term holistic health journey emphasizing {focus} over {timeframe}, supporting {goal}."
+    'best-fit': "Balanced wellness plan combining {focus} over {timeframe}, with flexible in-person and online options to achieve {goal}.",
+    'high-impact': "Intensive program featuring {focus} over {timeframe}, utilizing both virtual and in-person sessions for {goal}.",
+    'progressive': "Gradual approach with {focus} over {timeframe}, mixing online coaching and in-person support for {goal}."
   };
 
   // Generate the three plan types
