@@ -10,6 +10,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface PractitionerCardProps {
   practitioner: Practitioner;
@@ -60,6 +68,12 @@ export const PractitionerCard = ({
       return `${baseText}/session`;
     }
     return `${baseText}/session`;
+  };
+
+  // Log the practitioner when selected for debugging
+  const handleSelectPractitioner = () => {
+    console.log("Selected practitioner:", practitioner);
+    onSelect(practitioner);
   };
 
   return (
@@ -166,13 +180,98 @@ export const PractitionerCard = ({
           
           <div className="mt-auto flex items-center justify-between">
             <p className="text-xs text-gray-500">{practitioner.availability}</p>
-            <Button 
-              onClick={() => onSelect(practitioner)}
-              className="bg-health-purple hover:bg-health-purple-dark text-sm"
-              size="sm"
-            >
-              View Profile
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button 
+                  onClick={handleSelectPractitioner}
+                  className="bg-health-purple hover:bg-health-purple-dark text-sm"
+                  size="sm"
+                >
+                  View Profile
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center justify-between">
+                    <span>{practitioner.name}</span>
+                    <div className="flex items-center">
+                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                      <span className="ml-1 text-sm">{practitioner.rating}</span>
+                    </div>
+                  </DialogTitle>
+                  <DialogDescription className="capitalize">
+                    {practitioner.serviceType.replace('-', ' ')}
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="col-span-1">
+                    <div className="rounded-lg overflow-hidden mb-4">
+                      <img 
+                        src={practitioner.imageUrl} 
+                        alt={practitioner.name} 
+                        className="w-full object-cover aspect-square"
+                        onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg' }}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center text-sm mb-2">
+                      <MapPin className="w-4 h-4 mr-2 text-gray-500" />
+                      <span>{practitioner.location}</span>
+                    </div>
+                    
+                    {practitioner.isOnline && (
+                      <div className="flex items-center text-sm mb-4 text-health-teal">
+                        <Video className="w-4 h-4 mr-2" />
+                        <span>Available for online consultations</span>
+                      </div>
+                    )}
+                    
+                    <Button className="w-full bg-health-purple hover:bg-health-purple-dark mt-4">
+                      Book a Consultation
+                    </Button>
+                  </div>
+                  
+                  <div className="col-span-2">
+                    <div className="mb-4">
+                      <h4 className="font-medium text-lg mb-2">Specialties</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {practitioner.serviceTags.map(specialty => (
+                          <Badge
+                            key={specialty}
+                            variant="outline"
+                            className="bg-health-purple/10 text-health-purple border-health-purple/20"
+                          >
+                            {specialty}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <h4 className="font-medium text-lg mb-2">Availability</h4>
+                      <p className="text-gray-700 dark:text-gray-300">
+                        {practitioner.availability}
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium text-lg mb-2">About Me</h4>
+                      <p className="text-gray-700 dark:text-gray-300">
+                        {practitioner.bio}
+                      </p>
+                    </div>
+                    
+                    <div className="mt-4">
+                      <h4 className="font-medium text-lg mb-2">Price</h4>
+                      <p className="text-xl font-semibold text-health-purple">
+                        {getPriceDisplay()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
