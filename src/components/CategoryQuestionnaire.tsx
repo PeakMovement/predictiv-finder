@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ServiceCategory, DetailedUserCriteria } from '@/types';
+import { ServiceCategory, DetailedUserCriteria, ServiceMode } from '@/types';
 
 interface CategoryQuestionnaireProps {
   categories: ServiceCategory[];
@@ -16,9 +17,9 @@ interface CategoryQuestionnaireProps {
 
 export const CategoryQuestionnaire = ({ categories: selectedCategories, onSubmit, onBack }: CategoryQuestionnaireProps) => {
   const [budget, setBudget] = useState<number>(2000);
-  const [budgetPreference, setBudgetPreference] = useState<'session' | 'monthly' | 'not-sure'>('not-sure');
+  const [budgetPreference, setBudgetPreference] = useState<'once-off' | 'monthly' | 'not-sure'>('not-sure');
   const [isFlexibleBudget, setIsFlexibleBudget] = useState(false);
-  const [selectedModes, setSelectedModes] = useState<string[]>([]);
+  const [selectedModes, setSelectedModes] = useState<ServiceMode[]>([]);
   const [location, setLocation] = useState<string>('');
   const [locationRadius, setLocationRadius] = useState<'exact' | 'nearby' | 'anywhere'>('anywhere');
   const [useCurrentLocation, setUseCurrentLocation] = useState(false);
@@ -81,13 +82,13 @@ export const CategoryQuestionnaire = ({ categories: selectedCategories, onSubmit
             onChange={(e) => setBudget(Number(e.target.value))}
           />
           
-          <Select value={budgetPreference} onValueChange={(value: 'session' | 'monthly' | 'not-sure') => setBudgetPreference(value)}>
+          <Select value={budgetPreference} onValueChange={(value: 'once-off' | 'monthly' | 'not-sure') => setBudgetPreference(value)}>
             <SelectTrigger>
               <SelectValue placeholder="Budget Preference" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="monthly">Monthly Budget</SelectItem>
-              <SelectItem value="session">Per Session</SelectItem>
+              <SelectItem value="once-off">Per Session</SelectItem>
               <SelectItem value="not-sure">Not Sure</SelectItem>
             </SelectContent>
           </Select>
@@ -134,6 +135,21 @@ export const CategoryQuestionnaire = ({ categories: selectedCategories, onSubmit
                 }
               />
               <Label htmlFor="in-person">In-Person</Label>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="both"
+                checked={selectedModes.includes('both')}
+                onCheckedChange={() =>
+                  setSelectedModes(prev =>
+                    prev.includes('both')
+                      ? prev.filter(mode => mode !== 'both')
+                      : [...prev, 'both']
+                  )
+                }
+              />
+              <Label htmlFor="both">Both</Label>
             </div>
           </div>
         </div>
