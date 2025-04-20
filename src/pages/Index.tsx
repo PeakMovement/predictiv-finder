@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
+import RotatingWords from "@/components/RotatingWords";
 import EnhancedCategorySelection from "@/components/EnhancedCategorySelection";
 import CategoryQuestionnaire from "@/components/CategoryQuestionnaire";
 import AIAssistantInput from "@/components/AIAssistantInput";
@@ -126,7 +127,7 @@ const Index = () => {
     <div className="min-h-screen bg-health-blue-light dark:bg-gray-900">
       <Header />
       
-      <main className="container max-w-6xl mx-auto px-4 py-8">
+      <main className="container max-w-6xl mx-auto px-4 py-8 safe-area-pb">
         <AnimatePresence mode="wait">
           {stage === 'home' && (
             <motion.div
@@ -134,19 +135,26 @@ const Index = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-center py-16"
+              className="text-center py-8 md:py-16"
             >
-              <motion.h1 
-                className="text-4xl md:text-5xl font-bold mb-6"
+              <motion.div 
+                className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 px-4"
                 initial={{ y: -20 }}
                 animate={{ y: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                Your Path to Wellness,&nbsp;
+                Your Path to{' '}
+                <div className="h-[1.5em] relative inline-flex items-center">
+                  <RotatingWords
+                    words={['Wellness', 'Health', 'Fitness', 'Nutrition']}
+                    className="inline-block min-w-[150px] text-left"
+                  />
+                </div>
+                <br className="md:hidden" />
                 <span className="bg-gradient-to-r from-health-teal to-health-purple bg-clip-text text-transparent">
                   Personalized
                 </span>
-              </motion.h1>
+              </motion.div>
               
               <motion.p 
                 className="text-xl text-gray-600 dark:text-gray-300 mb-12 max-w-2xl mx-auto"
