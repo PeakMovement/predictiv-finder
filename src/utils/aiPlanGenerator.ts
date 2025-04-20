@@ -8,16 +8,28 @@ import { AIHealthPlan } from '@/types';
 // Function to generate custom AI health plans based on user text input
 export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   // Analyze the input to extract conditions and service categories
-  const { medicalConditions, suggestedCategories } = analyzeUserInput(userQuery);
+  const { medicalConditions, suggestedCategories, budget } = analyzeUserInput(userQuery);
   
-  // Create three plans at different budget tiers
+  // Create plans, respecting user's budget if provided
   const plans: AIHealthPlan[] = [];
   
-  const budgetTiers = [
+  let budgetTiers = [
     { name: 'low', budget: 800 },
     { name: 'medium', budget: 2000 },
     { name: 'high', budget: 4000 }
   ];
+  
+  // If user specified a budget, create custom tiers around that budget
+  if (budget) {
+    // Create a low tier at exactly the user's budget
+    const userBudget = Math.max(400, budget); // Ensure minimum viable budget
+    
+    budgetTiers = [
+      { name: 'low', budget: userBudget },
+      { name: 'medium', budget: Math.floor(userBudget * 1.5) },
+      { name: 'high', budget: Math.floor(userBudget * 2.5) }
+    ];
+  }
   
   budgetTiers.forEach(tier => {
     const budgetTierObj = determineBudgetTier(tier.budget);

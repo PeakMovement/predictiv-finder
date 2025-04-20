@@ -27,6 +27,14 @@ const SYMPTOM_TO_CONDITION: Record<string, string[]> = {
   'stomach': ['stomach issues'],
   'digestive': ['stomach issues'],
   'gut': ['stomach issues'],
+  'stomach pain': ['stomach issues'],
+  "doesn't feel good": ['stomach issues'],
+  'nausea': ['stomach issues'],
+  'vomiting': ['stomach issues'],
+  'diarrhea': ['stomach issues'],
+  'constipation': ['stomach issues'],
+  'bloating': ['stomach issues'],
+  'indigestion': ['stomach issues'],
   'knee': ['knee pain'],
   'back': ['back pain'],
   'spine': ['back pain']
@@ -47,16 +55,31 @@ const GOAL_TO_SERVICES: Record<string, ServiceCategory[]> = {
   'stress': ['coaching', 'physiotherapist'],
   'performance': ['personal-trainer', 'coaching', 'physiotherapist'],
   'rehabilitation': ['physiotherapist', 'personal-trainer'],
-  'endurance': ['personal-trainer', 'coaching']
+  'endurance': ['personal-trainer', 'coaching'],
+  'stomach pain': ['gastroenterology', 'family-medicine'],
+  'stomach issues': ['gastroenterology', 'family-medicine'],
+  'digestive problems': ['gastroenterology', 'family-medicine']
 };
 
 export const analyzeUserInput = (input: string): {
   medicalConditions: string[];
   suggestedCategories: ServiceCategory[];
+  budget?: number;
 } => {
   const inputLower = input.toLowerCase();
   const medicalConditions: string[] = [];
   const serviceCategories = new Set<ServiceCategory>();
+  let extractedBudget: number | undefined = undefined;
+
+  // Extract budget from input
+  const budgetMatches = inputLower.match(/r\s*(\d+)/i) || 
+                          inputLower.match(/pay\s*r\s*(\d+)/i) || 
+                          inputLower.match(/budget.*?(\d+)/i) ||
+                          inputLower.match(/afford.*?(\d+)/i);
+  
+  if (budgetMatches && budgetMatches[1]) {
+    extractedBudget = parseInt(budgetMatches[1], 10);
+  }
 
   // Check for medical conditions from symptoms
   Object.entries(SYMPTOM_TO_CONDITION).forEach(([symptom, conditions]) => {
@@ -91,14 +114,24 @@ export const analyzeUserInput = (input: string): {
     services.forEach(service => serviceCategories.add(service));
   });
 
+  // Check if user explicitly mentions doctor
+  if (inputLower.includes('doctor') || inputLower.includes('physician')) {
+    serviceCategories.add('family-medicine');
+    
+    // If stomach issues are detected, add gastroenterology
+    if (medicalConditions.includes('stomach issues')) {
+      serviceCategories.add('gastroenterology');
+    }
+  }
+
   // If no services found, add default ones
   if (serviceCategories.size === 0 && medicalConditions.length === 0) {
-    serviceCategories.add('dietician');
-    serviceCategories.add('personal-trainer');
+    serviceCategories.add('family-medicine');
   }
 
   return {
     medicalConditions,
-    suggestedCategories: Array.from(serviceCategories)
+    suggestedCategories: Array.from(serviceCategories),
+    budget: extractedBudget
   };
 };
