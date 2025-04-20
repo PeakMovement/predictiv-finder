@@ -1,10 +1,29 @@
-
 export type ServiceCategory = 
   | 'dietician'
   | 'personal-trainer'
   | 'biokineticist'
   | 'physiotherapist'
-  | 'coaching';
+  | 'coaching'
+  | 'family-medicine'
+  | 'internal-medicine'
+  | 'pediatrics'
+  | 'cardiology'
+  | 'dermatology'
+  | 'orthopedics'
+  | 'neurology'
+  | 'gastroenterology'
+  | 'obstetrics-gynecology'
+  | 'emergency-medicine'
+  | 'psychiatry'
+  | 'anesthesiology'
+  | 'endocrinology'
+  | 'urology'
+  | 'oncology'
+  | 'neurosurgery'
+  | 'infectious-disease'
+  | 'radiology'
+  | 'geriatric-medicine'
+  | 'plastic-surgery';
 
 export type ServiceMode = 'online' | 'in-person' | 'both';
 
@@ -24,6 +43,8 @@ export interface Practitioner {
   imageUrl: string;
   bio: string;
   rating: number;
+  maxPrice?: number;
+  specialtyNotes?: string;
 }
 
 export interface AIHealthPlan {

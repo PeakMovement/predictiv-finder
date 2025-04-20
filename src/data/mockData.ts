@@ -2,9 +2,11 @@ import { DIETICIANS } from './practitioners/dieticians';
 import { PHYSIOTHERAPISTS } from './practitioners/physiotherapists';
 import { BIOKINETICISTS } from './practitioners/biokineticists';
 import { COACHES } from './practitioners/coaches';
+import { DOCTORS } from './practitioners/doctors';
 import { AIHealthPlan } from '@/types';
 
 export const PRACTITIONERS = [
+  ...DOCTORS,
   ...DIETICIANS,
   ...PHYSIOTHERAPISTS,
   ...BIOKINETICISTS,
