@@ -176,7 +176,9 @@ export const analyzeUserInput = (input: string): PlanOptions => {
     'infectious-disease': 0,
     'radiology': 0,
     'geriatric-medicine': 0,
-    'plastic-surgery': 0
+    'plastic-surgery': 0,
+    'rheumatology': 0,
+    'pain-management': 0
   };
 
   healthKeywords.forEach(keyword => {
