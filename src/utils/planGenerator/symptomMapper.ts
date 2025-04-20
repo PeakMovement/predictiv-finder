@@ -1,4 +1,3 @@
-
 import { ServiceCategory } from "./types";
 
 export interface SymptomMapping {
@@ -6,6 +5,7 @@ export interface SymptomMapping {
   specialties: ServiceCategory[];
   priority: number;
   secondary?: ServiceCategory[];
+  keywords?: string[];
 }
 
 export const SYMPTOM_MAPPINGS: Record<string, SymptomMapping> = {
@@ -13,7 +13,12 @@ export const SYMPTOM_MAPPINGS: Record<string, SymptomMapping> = {
   "stomach pain": {
     primary: "gastroenterology",
     specialties: ["gastroenterology", "internal-medicine", "family-medicine"],
-    priority: 1.0
+    priority: 1.0,
+    keywords: [
+      "hurt", "hurting", "ache", "aching", 
+      "cramp", "cramping", "discomfort",
+      "bloated", "bloating", "upset stomach"
+    ]
   },
   "nausea": {
     primary: "gastroenterology",
@@ -138,10 +143,18 @@ export const identifySymptoms = (userInput: string): string[] => {
   const inputLower = userInput.toLowerCase();
   
   // First, check for exact matches
-  Object.keys(SYMPTOM_MAPPINGS).forEach(symptom => {
+  Object.entries(SYMPTOM_MAPPINGS).forEach(([symptom, mapping]) => {
+    // Check main symptom name
     if (inputLower.includes(symptom)) {
       symptoms.push(symptom);
     }
+    
+    // Check additional keywords if defined
+    mapping.keywords?.forEach(keyword => {
+      if (inputLower.includes(keyword)) {
+        symptoms.push(symptom);
+      }
+    });
   });
 
   // Check for common phrases indicating discomfort
@@ -164,7 +177,7 @@ export const identifySymptoms = (userInput: string): string[] => {
     }
   });
   
-  return symptoms;
+  return Array.from(new Set(symptoms)); // Remove duplicates
 };
 
 export const getProfessionalsForSymptoms = (symptoms: string[]): ServiceCategory[] => {
@@ -196,4 +209,3 @@ export const getProfessionalsForSymptoms = (symptoms: string[]): ServiceCategory
   return Array.from(professionals)
     .sort((a, b) => (priorityMap.get(b) || 0) - (priorityMap.get(a) || 0));
 };
-
