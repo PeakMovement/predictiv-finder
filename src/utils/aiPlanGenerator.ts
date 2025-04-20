@@ -307,7 +307,6 @@ const createBalancedServiceCombination = (
   sessions: number,
   description: string
 }[] => {
-  // Service base prices and minimum effective sessions
   const serviceInfo: Partial<Record<ServiceCategory, {
     basePrice: number;
     minSessions: number;
@@ -359,9 +358,8 @@ const createBalancedServiceCombination = (
         description: "Guided mindset & accountability program"
       }
     }
-  } as const;
+  };
 
-  // Adjust session distribution based on plan type
   const distributionRatios = {
     'best-fit': {primary: 0.4, secondary: 0.3, tertiary: 0.3},
     'high-impact': {primary: 0.5, secondary: 0.3, tertiary: 0.2},
@@ -370,7 +368,6 @@ const createBalancedServiceCombination = (
 
   const ratio = distributionRatios[planType];
   
-  // Sort categories by relevance to goal if available
   if (goal) {
     const goalRelevance: Partial<Record<string, ServiceCategory[]>> = {
       'weight loss': ['personal-trainer', 'dietician', 'coaching'],
@@ -390,11 +387,9 @@ const createBalancedServiceCombination = (
 
     const relevantOrder = goalRelevance[goal];
     if (relevantOrder) {
-      // Reorder categories based on goal relevance if they exist in our options
       categories = [...categories].sort((a, b) => {
         const aIndex = relevantOrder.indexOf(a);
         const bIndex = relevantOrder.indexOf(b);
-        // Categories not in the list go to the end
         if (aIndex === -1) return 1;
         if (bIndex === -1) return -1;
         return aIndex - bIndex;
@@ -402,19 +397,15 @@ const createBalancedServiceCombination = (
     }
   }
 
-  // Ensure we have at least 2 categories
   if (categories.length < 2) {
     const alternatives = findAlternativeCategories(categories);
     categories = [...categories, ...alternatives].slice(0, 3);
   }
 
-  // Calculate budget distribution
   const services = [];
   let remainingBudget = budget;
   
-  // Function to get personalized service description
   const getServiceDescription = (category: ServiceCategory, isSession: boolean, goal?: string, obstacle?: string): string => {
-    // Create a base set of descriptions for the main categories we're actively using
     const baseDescriptions: Partial<Record<ServiceCategory, string>> = {
       'dietician': isSession ? "Nutrition consultation & diet planning" : "Personalized meal plan",
       'personal-trainer': isSession ? "Guided workout session" : "Custom workout program",
@@ -423,7 +414,6 @@ const createBalancedServiceCombination = (
       'coaching': isSession ? "Wellness strategy & motivation session" : "Mindset & accountability program"
     };
     
-    // If we have goal and obstacle, enhance the description
     if (goal && category) {
       const goalDescriptions: Record<string, Partial<Record<ServiceCategory, string>>> = {
         'weight loss': {
@@ -448,26 +438,21 @@ const createBalancedServiceCombination = (
       }
     }
     
-    // Return the base description if available, otherwise provide a default
     return baseDescriptions[category] || 
            (isSession ? "Professional consultation session" : "Personalized health program");
   };
   
-  // Primary service allocation (with specific category)
   const primaryCategory = categories[0];
   const primaryBudget = Math.floor(budget * ratio.primary);
   const primaryServiceInfo = serviceInfo[primaryCategory];
   
-  // Determine if we should use sessions or digital options based on budget and obstacles
   let primaryIsDigital = false;
   
-  // If obstacle is time or location constraints, prefer digital
   if (obstacle && (obstacle === 'location limitations' || obstacle === 'time constraints')) {
     primaryIsDigital = true;
   }
   
-  // But if budget allows for at least one session and digital isn't required, choose sessions
-  if (primaryServiceInfo.basePrice <= primaryBudget && !primaryIsDigital) {
+  if (primaryServiceInfo && primaryServiceInfo.basePrice <= primaryBudget && !primaryIsDigital) {
     const possibleSessions = Math.min(
       Math.floor(primaryBudget / primaryServiceInfo.basePrice),
       primaryServiceInfo.maxSessions
@@ -485,8 +470,7 @@ const createBalancedServiceCombination = (
     
     remainingBudget -= cost;
   } 
-  // Use digital option if available
-  else if (primaryServiceInfo.digitalOption) {
+  else if (primaryServiceInfo && primaryServiceInfo.digitalOption) {
     services.push({
       type: primaryCategory,
       price: primaryServiceInfo.digitalOption.price,
@@ -497,13 +481,11 @@ const createBalancedServiceCombination = (
     remainingBudget -= primaryServiceInfo.digitalOption.price;
   }
   
-  // Secondary service if budget and categories allow
   if (remainingBudget > 0 && categories.length > 1) {
     const secondaryCategory = categories[1];
     const secondaryBudget = Math.floor(budget * ratio.secondary);
     const secondaryServiceInfo = serviceInfo[secondaryCategory];
     
-    // If we can afford at least one session
     if (secondaryServiceInfo.basePrice <= secondaryBudget) {
       const possibleSessions = Math.min(
         Math.floor(secondaryBudget / secondaryServiceInfo.basePrice),
@@ -522,7 +504,6 @@ const createBalancedServiceCombination = (
       
       remainingBudget -= cost;
     } 
-    // Use digital option if available
     else if (secondaryServiceInfo.digitalOption && secondaryServiceInfo.digitalOption.price <= remainingBudget) {
       services.push({
         type: secondaryCategory,
@@ -535,12 +516,10 @@ const createBalancedServiceCombination = (
     }
   }
   
-  // Tertiary service if budget and categories allow
   if (remainingBudget > 200 && categories.length > 2 && planType !== 'progressive') {
     const tertiaryCategory = categories[2];
     const tertiaryServiceInfo = serviceInfo[tertiaryCategory];
     
-    // If we can afford a session
     if (tertiaryServiceInfo.basePrice <= remainingBudget) {
       services.push({
         type: tertiaryCategory,
@@ -549,7 +528,6 @@ const createBalancedServiceCombination = (
         description: getServiceDescription(tertiaryCategory, true, goal, obstacle)
       });
     } 
-    // Use digital option if available
     else if (tertiaryServiceInfo.digitalOption && tertiaryServiceInfo.digitalOption.price <= remainingBudget) {
       services.push({
         type: tertiaryCategory,
@@ -567,19 +545,15 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   const options = analyzeUserInput(userQuery);
   const plans: AIHealthPlan[] = [];
 
-  // Plan types
   const planTypes: ('best-fit' | 'high-impact' | 'progressive')[] = ['best-fit', 'high-impact', 'progressive'];
 
-  // Description templates updated for holistic health approach
   const descTemplates = {
     'best-fit': "Balanced wellness plan combining {focus} over {timeframe}, with flexible in-person and online options to achieve {goal}.",
     'high-impact': "Intensive program featuring {focus} over {timeframe}, utilizing both virtual and in-person sessions for {goal}.",
     'progressive': "Gradual approach with {focus} over {timeframe}, mixing online coaching and in-person support for {goal}."
   };
 
-  // Generate the three plan types
   planTypes.forEach((planType, index) => {
-    // Build services array using the new balanced approach
     const services = createBalancedServiceCombination(
       options.focus || [], 
       options.budget || 1000, 
@@ -588,29 +562,24 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
       options.obstacle
     );
 
-    // Calculate total cost
     const totalCost = services.reduce((sum, service) => 
       sum + (service.price * service.sessions), 0);
 
-    // Ensure we have a reasonable goal description
     const goalDescription = options.goal || 
       (options.focus?.length ? `${options.focus[0].replace('-', ' ')} improvement` : "overall wellness");
 
-    // Create plan description
     const planFocus = services.map(s => s.type.replace('-', ' ')).join(', ');
     const planDesc = descTemplates[planType]
       .replace('{focus}', planFocus)
       .replace('{timeframe}', options.timeframe || '8 weeks')
       .replace('{goal}', goalDescription);
 
-    // Create plan name
     const planName = planType === 'best-fit' 
       ? 'Balanced Wellness Plan' 
       : planType === 'high-impact' 
         ? 'Accelerated Results Plan' 
         : 'Progressive Development Plan';
 
-    // Create the plan
     plans.push({
       id: `plan-${index + 1}`,
       name: planName,
