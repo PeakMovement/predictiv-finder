@@ -1,4 +1,5 @@
-import { AIHealthPlan, ServiceCategory, Practitioner } from "@/types";
+
+import { AIHealthPlan, ServiceCategory, Practitioner, UserCriteria } from "@/types";
 import { PRACTITIONERS } from '@/data/mockData';
 
 interface PlanOptions {
@@ -10,6 +11,25 @@ interface PlanOptions {
   budget?: number;
   goal?: string;
   obstacle?: string;
+  location?: string;
+}
+
+// Budget tiers for plan generation
+enum BudgetTier {
+  Low = "low",         // R500-R1,000/month
+  Medium = "medium",   // R1,500-R2,500/month
+  High = "high"        // R3,500-R5,000/month
+}
+
+// Goal categories to help with professional allocation
+enum GoalCategory {
+  WeightLoss = "weight loss",
+  MuscleGain = "muscle gain",
+  GeneralFitness = "general fitness",
+  Rehabilitation = "rehabilitation",
+  ChronicCondition = "chronic condition",
+  Performance = "performance",
+  Running = "running"
 }
 
 const healthKeywords = [
@@ -23,8 +43,18 @@ const healthKeywords = [
   { term: "neck pain", category: "physiotherapist", priority: 3 },
   { term: "knee", category: "physiotherapist", priority: 2 },
   { term: "posture", category: "physiotherapist", priority: 2 },
+  { term: "shoulder", category: "physiotherapist", priority: 2 },
+  { term: "wrist", category: "physiotherapist", priority: 2 },
+  { term: "ankle", category: "physiotherapist", priority: 2 },
   
-  { term: "running", category: "personal-trainer", priority: 2 },
+  { term: "running", category: "coaching", priority: 2 },
+  { term: "marathon", category: "coaching", priority: 3 },
+  { term: "half-marathon", category: "coaching", priority: 3 },
+  { term: "cardio", category: "coaching", priority: 2 },
+  { term: "run", category: "coaching", priority: 2 },
+  { term: "runner", category: "coaching", priority: 2 },
+  { term: "jog", category: "coaching", priority: 2 },
+  
   { term: "strength", category: "personal-trainer", priority: 2 },
   { term: "muscle", category: "personal-trainer", priority: 1 },
   { term: "gym", category: "personal-trainer", priority: 1 },
@@ -32,7 +62,9 @@ const healthKeywords = [
   { term: "exercise", category: "personal-trainer", priority: 1 },
   { term: "fitness", category: "personal-trainer", priority: 1 },
   { term: "toned", category: "personal-trainer", priority: 2 },
-  { term: "marathon", category: "personal-trainer", priority: 3 },
+  { term: "strong", category: "personal-trainer", priority: 2 },
+  { term: "weights", category: "personal-trainer", priority: 2 },
+  { term: "lifting", category: "personal-trainer", priority: 2 },
   
   { term: "weight loss", category: "dietician", priority: 2 },
   { term: "nutrition", category: "dietician", priority: 2 },
@@ -42,6 +74,9 @@ const healthKeywords = [
   { term: "weight gain", category: "dietician", priority: 3 },
   { term: "energy", category: "dietician", priority: 1 },
   { term: "meal", category: "dietician", priority: 2 },
+  { term: "vegan", category: "dietician", priority: 2 },
+  { term: "vegetarian", category: "dietician", priority: 2 },
+  { term: "protein", category: "dietician", priority: 2 },
   
   { term: "mental", category: "coaching", priority: 2 },
   { term: "motivation", category: "coaching", priority: 2 },
@@ -57,6 +92,17 @@ const healthKeywords = [
   { term: "assessment", category: "biokineticist", priority: 1 },
   { term: "chronic", category: "biokineticist", priority: 2 },
   { term: "conditioning", category: "biokineticist", priority: 2 },
+  
+  { term: "diabetes", category: "family-medicine", priority: 3 },
+  { term: "blood pressure", category: "family-medicine", priority: 3 },
+  { term: "hypertension", category: "family-medicine", priority: 3 },
+  { term: "asthma", category: "family-medicine", priority: 3 },
+  { term: "thyroid", category: "family-medicine", priority: 3 },
+  { term: "chronic fatigue", category: "family-medicine", priority: 3 },
+  { term: "cholesterol", category: "family-medicine", priority: 3 },
+  { term: "heart", category: "family-medicine", priority: 3 },
+  { term: "doctor", category: "family-medicine", priority: 2 },
+  { term: "medical", category: "family-medicine", priority: 2 },
 ];
 
 const budgetKeywords = [
@@ -90,6 +136,8 @@ const timeframeKeywords = [
   { term: "month", timeframe: "4 weeks" },
   { term: "weeks", timeframe: "4 weeks" },
   { term: "weekly", timeframe: "4 weeks" },
+  { term: "6 months", timeframe: "24 weeks" },
+  { term: "3 months", timeframe: "12 weeks" },
 ];
 
 const onlineKeywords = [
@@ -100,6 +148,19 @@ const onlineKeywords = [
   { term: "face to face", preference: false },
 ];
 
+const locationKeywords = [
+  { term: "sea point", location: "Sea Point" },
+  { term: "camps bay", location: "Camps Bay" },
+  { term: "observatory", location: "Observatory" },
+  { term: "claremont", location: "Claremont" },
+  { term: "constantia", location: "Constantia" },
+  { term: "mitchells plain", location: "Mitchell's Plain" },
+  { term: "woodstock", location: "Woodstock" },
+  { term: "table view", location: "Table View" },
+  { term: "bellville", location: "Bellville" },
+  { term: "durbanville", location: "Durbanville" },
+];
+
 const goalKeywords = [
   { term: "lose weight", goal: "weight loss" },
   { term: "weight loss", goal: "weight loss" },
@@ -108,6 +169,7 @@ const goalKeywords = [
   { term: "tone up", goal: "body toning" },
   { term: "run", goal: "running performance" },
   { term: "marathon", goal: "marathon training" },
+  { term: "half-marathon", goal: "half-marathon training" },
   { term: "back pain", goal: "back pain relief" },
   { term: "stress", goal: "stress management" },
   { term: "anxiety", goal: "anxiety reduction" },
@@ -116,6 +178,26 @@ const goalKeywords = [
   { term: "energy", goal: "increased energy" },
   { term: "rehabilitation", goal: "rehabilitation" },
   { term: "recovery", goal: "injury recovery" },
+  { term: "chronic fatigue", goal: "fatigue management" },
+  { term: "diabetes", goal: "diabetes management" },
+  { term: "blood pressure", goal: "blood pressure control" },
+  { term: "asthma", goal: "asthma management" },
+];
+
+const healthConditionKeywords = [
+  { term: "knee", condition: "knee issue" },
+  { term: "back pain", condition: "back pain" },
+  { term: "diabetes", condition: "diabetes" },
+  { term: "asthma", condition: "asthma" },
+  { term: "blood pressure", condition: "hypertension" },
+  { term: "hypertension", condition: "hypertension" },
+  { term: "anxiety", condition: "anxiety" },
+  { term: "depression", condition: "depression" },
+  { term: "shoulder", condition: "shoulder issue" },
+  { term: "wrist", condition: "wrist issue" },
+  { term: "ankle", condition: "ankle issue" },
+  { term: "chronic fatigue", condition: "chronic fatigue" },
+  { term: "thyroid", condition: "thyroid issue" },
 ];
 
 const obstacleKeywords = [
@@ -138,6 +220,469 @@ const obstacleKeywords = [
   { term: "consistency", obstacle: "consistency challenges" },
 ];
 
+// Function to determine budget tier based on monthly budget
+const determineBudgetTier = (budget: number): BudgetTier => {
+  if (budget <= 1000) return BudgetTier.Low;
+  if (budget <= 2500) return BudgetTier.Medium;
+  return BudgetTier.High;
+};
+
+// Function to determine appropriate service types based on goal category and budget tier
+const determineServiceTypes = (
+  goalCategory: string,
+  budgetTier: BudgetTier,
+  healthConditions: string[] = []
+): {category: ServiceCategory, priority: number}[] => {
+  const services: {category: ServiceCategory, priority: number}[] = [];
+  
+  switch (goalCategory) {
+    case GoalCategory.WeightLoss:
+      services.push({category: "dietician", priority: 5});
+      services.push({category: "personal-trainer", priority: 4});
+      if (budgetTier === BudgetTier.Medium || budgetTier === BudgetTier.High) {
+        services.push({category: "coaching", priority: 3});
+      }
+      if (budgetTier === BudgetTier.High) {
+        services.push({category: "family-medicine", priority: 2});
+      }
+      break;
+      
+    case GoalCategory.MuscleGain:
+      services.push({category: "personal-trainer", priority: 5});
+      services.push({category: "dietician", priority: 4});
+      if (budgetTier === BudgetTier.Medium || budgetTier === BudgetTier.High) {
+        services.push({category: "physiotherapist", priority: 2});
+      }
+      break;
+      
+    case GoalCategory.Rehabilitation:
+      services.push({category: "physiotherapist", priority: 5});
+      services.push({category: "biokineticist", priority: 4});
+      if (budgetTier === BudgetTier.Medium || budgetTier === BudgetTier.High) {
+        services.push({category: "personal-trainer", priority: 3});
+      }
+      if (budgetTier === BudgetTier.High) {
+        services.push({category: "family-medicine", priority: 2});
+      }
+      break;
+      
+    case GoalCategory.Running:
+      services.push({category: "coaching", priority: 5});
+      services.push({category: "personal-trainer", priority: 3});
+      services.push({category: "dietician", priority: 2});
+      if (budgetTier === BudgetTier.Medium || budgetTier === BudgetTier.High) {
+        services.push({category: "physiotherapist", priority: 3});
+      }
+      break;
+      
+    case GoalCategory.ChronicCondition:
+      services.push({category: "family-medicine", priority: 5});
+      services.push({category: "dietician", priority: 4});
+      services.push({category: "personal-trainer", priority: 3});
+      if (budgetTier === BudgetTier.Medium || budgetTier === BudgetTier.High) {
+        services.push({category: "physiotherapist", priority: 2});
+      }
+      break;
+      
+    case GoalCategory.Performance:
+      services.push({category: "personal-trainer", priority: 5});
+      services.push({category: "coaching", priority: 4});
+      services.push({category: "dietician", priority: 3});
+      if (budgetTier === BudgetTier.High) {
+        services.push({category: "physiotherapist", priority: 2});
+      }
+      break;
+      
+    case GoalCategory.GeneralFitness:
+    default:
+      services.push({category: "personal-trainer", priority: 5});
+      services.push({category: "dietician", priority: 3});
+      if (budgetTier === BudgetTier.Medium || budgetTier === BudgetTier.High) {
+        services.push({category: "coaching", priority: 2});
+      }
+      if (budgetTier === BudgetTier.High) {
+        services.push({category: "physiotherapist", priority: 1});
+      }
+      break;
+  }
+  
+  // Add health condition-specific services
+  for (const condition of healthConditions) {
+    if (condition.includes("knee") || condition.includes("shoulder") || 
+        condition.includes("back") || condition.includes("ankle") || 
+        condition.includes("wrist")) {
+      if (!services.some(s => s.category === "physiotherapist")) {
+        services.push({category: "physiotherapist", priority: 4});
+      }
+    }
+    
+    if (condition.includes("diabetes") || condition.includes("hypertension") || 
+        condition.includes("asthma") || condition.includes("thyroid") ||
+        condition.includes("chronic fatigue")) {
+      if (!services.some(s => s.category === "family-medicine")) {
+        services.push({category: "family-medicine", priority: 4});
+      }
+      if (!services.some(s => s.category === "dietician")) {
+        services.push({category: "dietician", priority: 3});
+      }
+    }
+    
+    if (condition.includes("anxiety") || condition.includes("depression")) {
+      if (!services.some(s => s.category === "coaching")) {
+        services.push({category: "coaching", priority: 4});
+      }
+    }
+  }
+  
+  // Sort by priority
+  return services.sort((a, b) => b.priority - a.priority);
+};
+
+// Function to calculate session distribution based on budget tier and service priorities
+const calculateSessionDistribution = (
+  budget: number, 
+  services: {category: ServiceCategory, priority: number}[],
+  location?: string,
+  preferOnline?: boolean
+): {
+  type: ServiceCategory,
+  price: number,
+  sessions: number,
+  description: string,
+  isHighEnd: boolean
+}[] => {
+  if (services.length === 0) return [];
+  
+  const budgetTier = determineBudgetTier(budget);
+  const totalPriority = services.reduce((sum, service) => sum + service.priority, 0);
+  const plan: {
+    type: ServiceCategory,
+    price: number,
+    sessions: number,
+    description: string,
+    isHighEnd: boolean
+  }[] = [];
+  
+  // Price ranges by service category and budget tier
+  const priceRanges: Record<ServiceCategory, Record<BudgetTier, {affordable: number, highEnd: number}>> = {
+    "dietician": {
+      "low": {affordable: 200, highEnd: 350},
+      "medium": {affordable: 300, highEnd: 600},
+      "high": {affordable: 400, highEnd: 800}
+    },
+    "personal-trainer": {
+      "low": {affordable: 150, highEnd: 300},
+      "medium": {affordable: 250, highEnd: 500},
+      "high": {affordable: 400, highEnd: 800}
+    },
+    "physiotherapist": {
+      "low": {affordable: 350, highEnd: 500},
+      "medium": {affordable: 450, highEnd: 800},
+      "high": {affordable: 600, highEnd: 1200}
+    },
+    "biokineticist": {
+      "low": {affordable: 300, highEnd: 500},
+      "medium": {affordable: 400, highEnd: 700},
+      "high": {affordable: 600, highEnd: 1000}
+    },
+    "coaching": {
+      "low": {affordable: 150, highEnd: 300},
+      "medium": {affordable: 250, highEnd: 500},
+      "high": {affordable: 350, highEnd: 800}
+    },
+    "family-medicine": {
+      "low": {affordable: 300, highEnd: 500},
+      "medium": {affordable: 400, highEnd: 700},
+      "high": {affordable: 500, highEnd: 1200}
+    },
+    "internal-medicine": {
+      "low": {affordable: 400, highEnd: 600},
+      "medium": {affordable: 500, highEnd: 800},
+      "high": {affordable: 600, highEnd: 1200}
+    },
+    // Default values for other service categories
+    "pediatrics": {
+      "low": {affordable: 300, highEnd: 500},
+      "medium": {affordable: 400, highEnd: 700},
+      "high": {affordable: 500, highEnd: 900}
+    },
+    "cardiology": {
+      "low": {affordable: 400, highEnd: 600},
+      "medium": {affordable: 500, highEnd: 800},
+      "high": {affordable: 700, highEnd: 1200}
+    },
+    "dermatology": {
+      "low": {affordable: 300, highEnd: 500},
+      "medium": {affordable: 400, highEnd: 700},
+      "high": {affordable: 500, highEnd: 900}
+    },
+    "orthopedics": {
+      "low": {affordable: 400, highEnd: 600},
+      "medium": {affordable: 500, highEnd: 800},
+      "high": {affordable: 700, highEnd: 1200}
+    },
+    "neurology": {
+      "low": {affordable: 400, highEnd: 600},
+      "medium": {affordable: 500, highEnd: 800},
+      "high": {affordable: 700, highEnd: 1200}
+    },
+    "gastroenterology": {
+      "low": {affordable: 400, highEnd: 600},
+      "medium": {affordable: 500, highEnd: 800},
+      "high": {affordable: 700, highEnd: 1200}
+    },
+    "obstetrics-gynecology": {
+      "low": {affordable: 300, highEnd: 500},
+      "medium": {affordable: 400, highEnd: 700},
+      "high": {affordable: 500, highEnd: 900}
+    },
+    "emergency-medicine": {
+      "low": {affordable: 400, highEnd: 600},
+      "medium": {affordable: 500, highEnd: 800},
+      "high": {affordable: 700, highEnd: 1200}
+    },
+    "psychiatry": {
+      "low": {affordable: 400, highEnd: 600},
+      "medium": {affordable: 500, highEnd: 800},
+      "high": {affordable: 700, highEnd: 1200}
+    },
+    "anesthesiology": {
+      "low": {affordable: 400, highEnd: 600},
+      "medium": {affordable: 500, highEnd: 800},
+      "high": {affordable: 700, highEnd: 1200}
+    },
+    "endocrinology": {
+      "low": {affordable: 400, highEnd: 600},
+      "medium": {affordable: 500, highEnd: 800},
+      "high": {affordable: 700, highEnd: 1200}
+    },
+    "urology": {
+      "low": {affordable: 400, highEnd: 600},
+      "medium": {affordable: 500, highEnd: 800},
+      "high": {affordable: 700, highEnd: 1200}
+    },
+    "oncology": {
+      "low": {affordable: 500, highEnd: 700},
+      "medium": {affordable: 600, highEnd: 900},
+      "high": {affordable: 800, highEnd: 1400}
+    },
+    "neurosurgery": {
+      "low": {affordable: 500, highEnd: 700},
+      "medium": {affordable: 600, highEnd: 900},
+      "high": {affordable: 800, highEnd: 1400}
+    },
+    "infectious-disease": {
+      "low": {affordable: 400, highEnd: 600},
+      "medium": {affordable: 500, highEnd: 800},
+      "high": {affordable: 700, highEnd: 1200}
+    },
+    "radiology": {
+      "low": {affordable: 400, highEnd: 600},
+      "medium": {affordable: 500, highEnd: 800},
+      "high": {affordable: 700, highEnd: 1200}
+    },
+    "geriatric-medicine": {
+      "low": {affordable: 300, highEnd: 500},
+      "medium": {affordable: 400, highEnd: 700},
+      "high": {affordable: 500, highEnd: 900}
+    },
+    "plastic-surgery": {
+      "low": {affordable: 500, highEnd: 800},
+      "medium": {affordable: 700, highEnd: 1200},
+      "high": {affordable: 1000, highEnd: 2000}
+    },
+    "rheumatology": {
+      "low": {affordable: 400, highEnd: 600},
+      "medium": {affordable: 500, highEnd: 800},
+      "high": {affordable: 700, highEnd: 1200}
+    },
+    "pain-management": {
+      "low": {affordable: 400, highEnd: 600},
+      "medium": {affordable: 500, highEnd: 800},
+      "high": {affordable: 700, highEnd: 1200}
+    }
+  };
+  
+  // Session description templates by service type
+  const sessionDescriptions: Record<ServiceCategory, {
+    affordable: string,
+    highEnd: string
+  }> = {
+    "dietician": {
+      affordable: "Group nutrition workshop with diet guidance",
+      highEnd: "One-on-one comprehensive nutritional assessment and personalized meal planning"
+    },
+    "personal-trainer": {
+      affordable: "Group fitness training session with strength and cardio focus",
+      highEnd: "Personalized one-on-one training session with customized exercise programming"
+    },
+    "physiotherapist": {
+      affordable: "Clinical assessment and therapeutic exercises for recovery",
+      highEnd: "Comprehensive manual therapy and rehabilitation with personalized home exercise program"
+    },
+    "biokineticist": {
+      affordable: "Functional movement assessment and corrective exercise guidance",
+      highEnd: "In-depth biomechanical analysis and specialized rehabilitation programming"
+    },
+    "coaching": {
+      affordable: "Group coaching session with technique guidance and motivation",
+      highEnd: "Private coaching with personalized training plan and performance analysis"
+    },
+    "family-medicine": {
+      affordable: "Clinical consultation with basic health assessment",
+      highEnd: "Comprehensive medical evaluation with detailed health recommendations"
+    },
+    "internal-medicine": {
+      affordable: "Medical assessment focusing on internal health systems",
+      highEnd: "Specialized internal medicine consultation with comprehensive testing"
+    },
+    // Default values for other categories
+    "pediatrics": {
+      affordable: "Standard pediatric check-up and assessment",
+      highEnd: "Comprehensive pediatric health evaluation and development plan"
+    },
+    "cardiology": {
+      affordable: "Basic heart health assessment and monitoring",
+      highEnd: "Comprehensive cardiac evaluation with advanced diagnostics"
+    },
+    "dermatology": {
+      affordable: "Standard skin assessment and treatment recommendations",
+      highEnd: "Advanced dermatological consultation with specialized treatment plan"
+    },
+    "orthopedics": {
+      affordable: "Basic orthopedic assessment and treatment guidance",
+      highEnd: "Comprehensive orthopedic evaluation with specialized therapy recommendations"
+    },
+    "neurology": {
+      affordable: "Basic neurological assessment and monitoring",
+      highEnd: "Comprehensive neurological evaluation with detailed treatment plan"
+    },
+    "gastroenterology": {
+      affordable: "Digestive health assessment and diet recommendations",
+      highEnd: "Comprehensive gastroenterological evaluation and specialized treatment plan"
+    },
+    "obstetrics-gynecology": {
+      affordable: "Standard gynecological check-up and health guidance",
+      highEnd: "Comprehensive women's health evaluation and personalized care plan"
+    },
+    "emergency-medicine": {
+      affordable: "Urgent care assessment and treatment planning",
+      highEnd: "Comprehensive emergency medicine consultation with follow-up care plan"
+    },
+    "psychiatry": {
+      affordable: "Mental health assessment and basic care recommendations",
+      highEnd: "In-depth psychiatric evaluation and personalized treatment planning"
+    },
+    "anesthesiology": {
+      affordable: "Pre-operative assessment and anesthesia planning",
+      highEnd: "Comprehensive anesthesia consultation with detailed risk assessment"
+    },
+    "endocrinology": {
+      affordable: "Hormonal health assessment and basic treatment guidance",
+      highEnd: "Comprehensive endocrine evaluation with specialized treatment plan"
+    },
+    "urology": {
+      affordable: "Basic urological health assessment and recommendations",
+      highEnd: "Comprehensive urological evaluation and personalized treatment plan"
+    },
+    "oncology": {
+      affordable: "Cancer screening and prevention counseling",
+      highEnd: "Comprehensive oncological evaluation and specialized treatment planning"
+    },
+    "neurosurgery": {
+      affordable: "Neurosurgical assessment and treatment options",
+      highEnd: "Comprehensive neurosurgical consultation with detailed intervention planning"
+    },
+    "infectious-disease": {
+      affordable: "Infection assessment and treatment guidance",
+      highEnd: "Comprehensive infectious disease evaluation and specialized treatment plan"
+    },
+    "radiology": {
+      affordable: "Basic imaging assessment and interpretation",
+      highEnd: "Comprehensive radiological evaluation with detailed findings analysis"
+    },
+    "geriatric-medicine": {
+      affordable: "Senior health assessment and basic care recommendations",
+      highEnd: "Comprehensive geriatric evaluation and personalized care planning"
+    },
+    "plastic-surgery": {
+      affordable: "Cosmetic assessment and procedural options discussion",
+      highEnd: "Comprehensive cosmetic evaluation and detailed treatment planning"
+    },
+    "rheumatology": {
+      affordable: "Rheumatological assessment and treatment guidance",
+      highEnd: "Comprehensive evaluation of joint health with specialized treatment plan"
+    },
+    "pain-management": {
+      affordable: "Pain assessment and basic management strategies",
+      highEnd: "Comprehensive pain evaluation and multimodal treatment approach"
+    }
+  };
+  
+  // Calculate budget allocation per service based on priority
+  let remainingBudget = budget;
+  
+  for (const service of services) {
+    if (remainingBudget <= 0) break;
+    
+    const allocation = (service.priority / totalPriority) * budget;
+    const priceRange = priceRanges[service.category][budgetTier];
+    
+    // Determine if we should use high-end or affordable sessions based on budget tier
+    let isHighEnd = false;
+    if (budgetTier === BudgetTier.High) {
+      isHighEnd = true;
+    } else if (budgetTier === BudgetTier.Medium) {
+      isHighEnd = service === services[0]; // High-end only for primary service in medium tier
+    }
+    
+    const sessionPrice = isHighEnd ? priceRange.highEnd : priceRange.affordable;
+    const sessionDescription = isHighEnd ? 
+      sessionDescriptions[service.category].highEnd : 
+      sessionDescriptions[service.category].affordable;
+    
+    let sessions = Math.floor(allocation / sessionPrice);
+    
+    // Ensure at least 1 session if this is a high-priority service
+    if (sessions === 0 && service.priority >= 4) {
+      sessions = 1;
+    }
+    
+    // Cap sessions based on budget tier and service type
+    const maxSessions = {
+      "low": 2,
+      "medium": 3,
+      "high": 4
+    }[budgetTier];
+    
+    sessions = Math.min(sessions, maxSessions);
+    
+    if (sessions > 0) {
+      plan.push({
+        type: service.category,
+        price: sessionPrice,
+        sessions: sessions,
+        description: sessionDescription,
+        isHighEnd: isHighEnd
+      });
+      
+      remainingBudget -= sessionPrice * sessions;
+    }
+  }
+  
+  // If we have budget left and less than 3 services, add more sessions to existing services
+  if (remainingBudget > 0 && plan.length > 0 && plan.length < 3) {
+    // Add an extra session to the highest priority service
+    const primaryService = plan[0];
+    if (remainingBudget >= primaryService.price) {
+      primaryService.sessions += 1;
+      remainingBudget -= primaryService.price;
+    }
+  }
+  
+  return plan;
+};
+
 export const analyzeUserInput = (input: string): PlanOptions => {
   const lowerInput = input.toLowerCase();
   const options: PlanOptions = {
@@ -148,7 +693,8 @@ export const analyzeUserInput = (input: string): PlanOptions => {
     preferOnline: false,
     budget: 1000,
     goal: undefined,
-    obstacle: undefined
+    obstacle: undefined,
+    location: undefined
   };
 
   const categoryScores: Record<ServiceCategory, number> = {
@@ -220,6 +766,12 @@ export const analyzeUserInput = (input: string): PlanOptions => {
       options.preferOnline = keyword.preference;
     }
   });
+  
+  locationKeywords.forEach(keyword => {
+    if (lowerInput.includes(keyword.term)) {
+      options.location = keyword.location;
+    }
+  });
 
   const budgetMatch = input.match(/R?(\d+)(?:\s*(?:per|a|\/)\s*(?:month|session|week))?/i);
   if (budgetMatch) {
@@ -276,20 +828,68 @@ export const findAlternativeCategories = (selectedCategories: ServiceCategory[])
 const getSuitablePractitioners = (
   serviceCategory: ServiceCategory,
   goal?: string,
-  obstacle?: string,
+  location?: string,
   preferOnline?: boolean,
-  budget?: number
+  budget?: number,
+  isHighEnd?: boolean
 ): Practitioner[] => {
   let practitioners = PRACTITIONERS.filter(p => p.serviceType === serviceCategory);
   
+  // Filter by price based on high-end preference and budget
   if (budget) {
-    practitioners = practitioners.filter(p => p.pricePerSession <= budget);
+    if (isHighEnd) {
+      practitioners = practitioners.filter(p => 
+        p.pricePerSession <= budget && 
+        // Higher price range for high-end
+        p.pricePerSession >= budget * 0.6
+      );
+    } else {
+      practitioners = practitioners.filter(p => 
+        p.pricePerSession <= budget && 
+        // Lower price range for affordable
+        p.pricePerSession <= budget * 0.6
+      );
+    }
   }
   
+  // Filter by location if specified
+  if (location) {
+    // First try exact location match
+    const exactLocationMatches = practitioners.filter(p => 
+      p.location.toLowerCase().includes(location.toLowerCase())
+    );
+    
+    if (exactLocationMatches.length > 0) {
+      practitioners = exactLocationMatches;
+    } else {
+      // Locations and their nearby areas (simplified implementation)
+      const nearbyLocations: Record<string, string[]> = {
+        "Sea Point": ["Green Point", "Bantry Bay", "Mouille Point"],
+        "Camps Bay": ["Clifton", "Bantry Bay", "Sea Point"],
+        "Observatory": ["Woodstock", "Mowbray", "Salt River"],
+        "Claremont": ["Newlands", "Kenilworth", "Rondebosch"],
+        "Constantia": ["Tokai", "Wynberg", "Bishopscourt"],
+        "Table View": ["Bloubergstrand", "Milnerton", "Parklands"],
+        "Mitchell's Plain": ["Athlone", "Strandfontein", "Philippi"]
+      };
+      
+      const nearbyAreas = nearbyLocations[location] || [];
+      const nearbyMatches = practitioners.filter(p => 
+        nearbyAreas.some(area => p.location.toLowerCase().includes(area.toLowerCase()))
+      );
+      
+      if (nearbyMatches.length > 0) {
+        practitioners = nearbyMatches;
+      }
+    }
+  }
+  
+  // Filter by online preference if specified
   if (preferOnline !== undefined) {
-    practitioners = practitioners.filter(p => preferOnline === p.isOnline);
+    practitioners = practitioners.filter(p => p.isOnline === preferOnline);
   }
   
+  // Sort by relevance to goal if specified
   if (goal) {
     practitioners = practitioners.sort((a, b) => {
       const aRelevance = a.serviceTags.some(tag => 
@@ -306,311 +906,101 @@ const getSuitablePractitioners = (
     });
   }
   
+  // Secondary sort by rating
+  practitioners = practitioners.sort((a, b) => b.rating - a.rating);
+  
   return practitioners.slice(0, 3);
-};
-
-const createBalancedServiceCombination = (
-  categories: ServiceCategory[],
-  budget: number,
-  planType: 'best-fit' | 'high-impact' | 'progressive',
-  goal?: string,
-  obstacle?: string,
-  preferOnline?: boolean
-): {
-  type: ServiceCategory,
-  price: number,
-  sessions: number,
-  description: string,
-  recommendedPractitioners?: Practitioner[]
-}[] => {
-  const serviceInfo: Partial<Record<ServiceCategory, {
-    basePrice: number;
-    minSessions: number;
-    maxSessions: number;
-    digitalOption?: { price: number; description: string };
-  }>> = {
-    'dietician': {
-      basePrice: 350,
-      minSessions: 1,
-      maxSessions: 4,
-      digitalOption: {
-        price: 250,
-        description: "Personalized meal plan & nutrition guide"
-      }
-    },
-    'personal-trainer': {
-      basePrice: 300,
-      minSessions: 1,
-      maxSessions: 8,
-      digitalOption: {
-        price: 200,
-        description: "Custom workout program with video tutorials"
-      }
-    },
-    'physiotherapist': {
-      basePrice: 400,
-      minSessions: 1,
-      maxSessions: 4,
-      digitalOption: {
-        price: 250,
-        description: "Rehab program with exercise videos"
-      }
-    },
-    'biokineticist': {
-      basePrice: 450,
-      minSessions: 1,
-      maxSessions: 4,
-      digitalOption: {
-        price: 300,
-        description: "Specialized movement program"
-      }
-    },
-    'coaching': {
-      basePrice: 300,
-      minSessions: 1,
-      maxSessions: 4,
-      digitalOption: {
-        price: 200,
-        description: "Guided mindset & accountability program"
-      }
-    },
-    'family-medicine': {
-      basePrice: 400,
-      minSessions: 1,
-      maxSessions: 2,
-      digitalOption: {
-        price: 300,
-        description: "Virtual consultation and follow-up plan"
-      }
-    },
-    'internal-medicine': {
-      basePrice: 500,
-      minSessions: 1,
-      maxSessions: 2,
-      digitalOption: {
-        price: 400,
-        description: "Comprehensive health assessment"
-      }
-    }
-  };
-
-  const distributionRatios = {
-    'best-fit': {primary: 0.4, secondary: 0.3, tertiary: 0.3},
-    'high-impact': {primary: 0.5, secondary: 0.3, tertiary: 0.2},
-    'progressive': {primary: 0.6, secondary: 0.4, tertiary: 0}
-  };
-
-  const ratio = distributionRatios[planType];
-  
-  if (goal) {
-    const goalRelevance: Partial<Record<string, ServiceCategory[]>> = {
-      'weight loss': ['personal-trainer', 'dietician', 'coaching'],
-      'muscle building': ['personal-trainer', 'coaching', 'dietician'],
-      'rehabilitation': ['physiotherapist', 'biokineticist', 'coaching'],
-      'back pain relief': ['physiotherapist', 'biokineticist', 'coaching'],
-      'running performance': ['coaching', 'personal-trainer', 'physiotherapist'],
-      'marathon training': ['coaching', 'personal-trainer', 'dietician'],
-      'stress management': ['coaching', 'personal-trainer', 'dietician'],
-      'strength improvement': ['personal-trainer', 'coaching', 'biokineticist'],
-      'posture improvement': ['physiotherapist', 'biokineticist', 'coaching'],
-      'injury recovery': ['physiotherapist', 'biokineticist', 'coaching'],
-      'general fitness': ['personal-trainer', 'coaching', 'dietician'],
-      'strength training': ['personal-trainer', 'coaching', 'biokineticist'],
-      'online coaching': ['coaching', 'personal-trainer', 'dietician'],
-      'knee pain': ['physiotherapist', 'biokineticist', 'coaching'],
-      'chronic condition': ['family-medicine', 'internal-medicine', 'dietician'],
-      'digestive issues': ['dietician', 'internal-medicine', 'coaching'],
-      'heart health': ['internal-medicine', 'dietician', 'biokineticist']
-    };
-
-    const relevantOrder = goalRelevance[goal];
-    if (relevantOrder) {
-      categories = [...categories].sort((a, b) => {
-        const aIndex = relevantOrder.indexOf(a);
-        const bIndex = relevantOrder.indexOf(b);
-        if (aIndex === -1) return 1;
-        if (bIndex === -1) return -1;
-        return aIndex - bIndex;
-      });
-    }
-  }
-
-  if (categories.length < 2) {
-    const alternatives = findAlternativeCategories(categories);
-    categories = [...categories, ...alternatives].slice(0, 3);
-  }
-
-  const services = [];
-  let remainingBudget = budget;
-  
-  const getServiceDescription = (category: ServiceCategory, isSession: boolean, goal?: string, obstacle?: string): string => {
-    const baseDescriptions: Partial<Record<ServiceCategory, string>> = {
-      'dietician': isSession ? "Nutrition consultation & diet planning" : "Personalized meal plan",
-      'personal-trainer': isSession ? "Guided workout session" : "Custom workout program",
-      'physiotherapist': isSession ? "Therapeutic assessment & treatment" : "Rehabilitation program",
-      'biokineticist': isSession ? "Movement therapy session" : "Movement optimization plan",
-      'coaching': isSession ? "Wellness strategy & motivation session" : "Mindset & accountability program",
-      'family-medicine': isSession ? "Medical consultation & diagnosis" : "Health assessment & care plan",
-      'internal-medicine': isSession ? "Comprehensive medical evaluation" : "Specialized treatment protocol",
-      'pediatrics': isSession ? "Child health assessment" : "Child wellness plan",
-      'cardiology': isSession ? "Heart health evaluation" : "Cardiac care protocol",
-      'psychiatry': isSession ? "Mental health consultation" : "Psychological support plan"
-    };
-    
-    if (goal && category) {
-      const goalDescriptions: Record<string, Partial<Record<ServiceCategory, string>>> = {
-        'weight loss': {
-          'dietician': isSession ? "Weight loss nutrition consultation" : "Customized weight loss meal plan",
-          'personal-trainer': isSession ? "Fat-burning workout session" : "Progressive weight loss training program"
-        },
-        'back pain': {
-          'physiotherapist': isSession ? "Back pain assessment & treatment" : "Back pain relief program", 
-          'biokineticist': isSession ? "Spine mobility & strength session" : "Back strengthening program"
-        },
-        'marathon training': {
-          'personal-trainer': isSession ? "Runner's conditioning session" : "Marathon preparation program",
-          'physiotherapist': isSession ? "Runner's biomechanics assessment" : "Running form optimization guide"
-        },
-        'stress management': {
-          'coaching': isSession ? "Stress reduction coaching session" : "Comprehensive stress management plan"
-        }
-      };
-      
-      if (goalDescriptions[goal] && goalDescriptions[goal][category]) {
-        return goalDescriptions[goal][category] as string;
-      }
-    }
-    
-    return baseDescriptions[category] || 
-           (isSession ? "Professional consultation session" : "Personalized health program");
-  };
-  
-  const primaryCategory = categories[0];
-  const primaryBudget = Math.floor(budget * ratio.primary);
-  const primaryServiceInfo = serviceInfo[primaryCategory];
-  
-  let primaryIsDigital = false;
-  
-  if (obstacle && (obstacle === 'location limitations' || obstacle === 'time constraints')) {
-    primaryIsDigital = true;
-  }
-  
-  if (primaryServiceInfo && primaryServiceInfo.basePrice <= primaryBudget && !primaryIsDigital) {
-    const possibleSessions = Math.min(
-      Math.floor(primaryBudget / primaryServiceInfo.basePrice),
-      primaryServiceInfo.maxSessions
-    );
-    
-    const sessions = Math.max(primaryServiceInfo.minSessions, possibleSessions);
-    const cost = sessions * primaryServiceInfo.basePrice;
-    
-    services.push({
-      type: primaryCategory,
-      price: primaryServiceInfo.basePrice,
-      sessions: sessions,
-      description: getServiceDescription(primaryCategory, true, goal, obstacle),
-      recommendedPractitioners: getSuitablePractitioners(primaryCategory, goal, obstacle, preferOnline, primaryServiceInfo.basePrice)
-    });
-    
-    remainingBudget -= cost;
-  } 
-  else if (primaryServiceInfo && primaryServiceInfo.digitalOption) {
-    services.push({
-      type: primaryCategory,
-      price: primaryServiceInfo.digitalOption.price,
-      sessions: 1,
-      description: primaryServiceInfo.digitalOption.description,
-      recommendedPractitioners: getSuitablePractitioners(primaryCategory, goal, obstacle, true, primaryServiceInfo.digitalOption.price)
-    });
-    
-    remainingBudget -= primaryServiceInfo.digitalOption.price;
-  }
-  
-  if (remainingBudget > 0 && categories.length > 1) {
-    const secondaryCategory = categories[1];
-    const secondaryBudget = Math.floor(budget * ratio.secondary);
-    const secondaryServiceInfo = serviceInfo[secondaryCategory];
-    
-    if (secondaryServiceInfo && secondaryServiceInfo.basePrice <= secondaryBudget) {
-      const possibleSessions = Math.min(
-        Math.floor(secondaryBudget / secondaryServiceInfo.basePrice),
-        secondaryServiceInfo.maxSessions
-      );
-      
-      const sessions = Math.max(1, possibleSessions);
-      const cost = sessions * secondaryServiceInfo.basePrice;
-      
-      services.push({
-        type: secondaryCategory,
-        price: secondaryServiceInfo.basePrice,
-        sessions: sessions,
-        description: getServiceDescription(secondaryCategory, true, goal, obstacle),
-        recommendedPractitioners: getSuitablePractitioners(secondaryCategory, goal, obstacle, preferOnline, secondaryServiceInfo.basePrice)
-      });
-      
-      remainingBudget -= cost;
-    } 
-    else if (secondaryServiceInfo && secondaryServiceInfo.digitalOption && secondaryServiceInfo.digitalOption.price <= remainingBudget) {
-      services.push({
-        type: secondaryCategory,
-        price: secondaryServiceInfo.digitalOption.price,
-        sessions: 1,
-        description: secondaryServiceInfo.digitalOption.description,
-        recommendedPractitioners: getSuitablePractitioners(secondaryCategory, goal, obstacle, true, secondaryServiceInfo.digitalOption.price)
-      });
-      
-      remainingBudget -= secondaryServiceInfo.digitalOption.price;
-    }
-  }
-  
-  if (remainingBudget > 200 && categories.length > 2 && planType !== 'progressive') {
-    const tertiaryCategory = categories[2];
-    const tertiaryServiceInfo = serviceInfo[tertiaryCategory];
-    
-    if (tertiaryServiceInfo && tertiaryServiceInfo.basePrice <= remainingBudget) {
-      services.push({
-        type: tertiaryCategory,
-        price: tertiaryServiceInfo.basePrice,
-        sessions: 1,
-        description: getServiceDescription(tertiaryCategory, true, goal, obstacle),
-        recommendedPractitioners: getSuitablePractitioners(tertiaryCategory, goal, obstacle, preferOnline, tertiaryServiceInfo.basePrice)
-      });
-    } 
-    else if (tertiaryServiceInfo && tertiaryServiceInfo.digitalOption && tertiaryServiceInfo.digitalOption.price <= remainingBudget) {
-      services.push({
-        type: tertiaryCategory,
-        price: tertiaryServiceInfo.digitalOption.price,
-        sessions: 1,
-        description: tertiaryServiceInfo.digitalOption.description,
-        recommendedPractitioners: getSuitablePractitioners(tertiaryCategory, goal, obstacle, true, tertiaryServiceInfo.digitalOption.price)
-      });
-    }
-  }
-  
-  return services;
 };
 
 export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   const options = analyzeUserInput(userQuery);
   const plans: AIHealthPlan[] = [];
 
+  // Extract health conditions based on user query
+  const lowerQuery = userQuery.toLowerCase();
+  const healthConditions: string[] = [];
+  
+  healthConditionKeywords.forEach(keyword => {
+    if (lowerQuery.includes(keyword.term)) {
+      healthConditions.push(keyword.condition);
+    }
+  });
+
+  // Categorize the goal for better service matching
+  let goalCategory = GoalCategory.GeneralFitness;
+  if (options.goal) {
+    if (options.goal.includes("weight loss")) {
+      goalCategory = GoalCategory.WeightLoss;
+    } else if (options.goal.includes("muscle") || options.goal.includes("strength")) {
+      goalCategory = GoalCategory.MuscleGain;
+    } else if (options.goal.includes("run") || options.goal.includes("marathon")) {
+      goalCategory = GoalCategory.Running;
+    } else if (options.goal.includes("rehab") || options.goal.includes("recover") || 
+               options.goal.includes("injury") || options.goal.includes("pain")) {
+      goalCategory = GoalCategory.Rehabilitation;
+    } else if (options.goal.includes("diabetes") || options.goal.includes("blood pressure") || 
+               options.goal.includes("asthma") || options.goal.includes("fatigue")) {
+      goalCategory = GoalCategory.ChronicCondition;
+    }
+  }
+
+  // Determine budget tier
+  const budgetTier = determineBudgetTier(options.budget || 1000);
+  
+  // Get appropriate service types based on goal and budget
+  const requiredServices = determineServiceTypes(goalCategory, budgetTier, healthConditions);
+
   const planTypes: ('best-fit' | 'high-impact' | 'progressive')[] = ['best-fit', 'high-impact', 'progressive'];
 
   const descTemplates = {
-    'best-fit': "Comprehensive wellness plan combining {focus} over {timeframe}, with flexible in-person and online options to achieve {goal}.",
-    'high-impact': "Intensive program featuring {focus} over {timeframe}, utilizing both virtual and in-person sessions for {goal}.",
-    'progressive': "Gradual approach with {focus} over {timeframe}, mixing online coaching and in-person support for {goal}."
+    'best-fit': "Comprehensive wellness plan combining {focus} over {timeframe}, with balanced sessions to achieve {goal}.",
+    'high-impact': "Intensive program featuring {focus} over {timeframe}, prioritizing results-focused services for {goal}.",
+    'progressive': "Gradual approach with {focus} over {timeframe}, starting with essentials and building toward {goal}."
   };
 
   planTypes.forEach((planType, index) => {
-    const services = createBalancedServiceCombination(
-      options.focus || [], 
-      options.budget || 1000, 
-      planType,
-      options.goal,
-      options.obstacle,
+    // Adjust service allocations based on plan type
+    let adjustedServices = [...requiredServices];
+    if (planType === 'high-impact') {
+      // For high-impact, boost primary service priority
+      if (adjustedServices.length > 0) {
+        adjustedServices[0].priority += 2;
+      }
+    } else if (planType === 'progressive') {
+      // For progressive, focus on fewer services
+      adjustedServices = adjustedServices.slice(0, 2);
+    }
+    
+    // Generate service distribution based on adjusted priorities
+    const serviceTypes = adjustedServices.map(s => s.category);
+    
+    // Calculate session distribution
+    const sessionDistribution = calculateSessionDistribution(
+      options.budget || 1000,
+      adjustedServices,
+      options.location,
       options.preferOnline
     );
+    
+    // Enhance with practitioner recommendations
+    const services = sessionDistribution.map(service => {
+      const practitioners = getSuitablePractitioners(
+        service.type,
+        options.goal,
+        options.location,
+        options.preferOnline,
+        service.price,
+        service.isHighEnd
+      );
+      
+      return {
+        type: service.type,
+        price: service.price,
+        sessions: service.sessions,
+        description: service.description,
+        recommendedPractitioners: practitioners
+      };
+    });
 
     const totalCost = services.reduce((sum, service) => 
       sum + (service.price * service.sessions), 0);
@@ -624,11 +1014,15 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
       .replace('{timeframe}', options.timeframe || '8 weeks')
       .replace('{goal}', goalDescription);
 
-    const planName = planType === 'best-fit' 
-      ? 'Integrated Wellness Plan' 
-      : planType === 'high-impact' 
-        ? 'Accelerated Results Plan' 
-        : 'Progressive Development Plan';
+    // Generate dynamic plan names based on goal and plan type
+    let planName = "";
+    if (planType === 'best-fit') {
+      planName = `Balanced ${goalCategory.charAt(0).toUpperCase() + goalCategory.slice(1)} Plan`;
+    } else if (planType === 'high-impact') {
+      planName = `Intensive ${goalCategory.charAt(0).toUpperCase() + goalCategory.slice(1)} Program`;
+    } else {
+      planName = `Progressive ${goalCategory.charAt(0).toUpperCase() + goalCategory.slice(1)} Journey`;
+    }
 
     plans.push({
       id: `plan-${index + 1}`,
@@ -649,35 +1043,49 @@ export const generateMedicalManagementPlan = (
   budget: number,
   timeframe: string = "12 weeks"
 ): AIHealthPlan => {
-  const commonConditions: Record<string, ServiceCategory[]> = {
-    'diabetes': ['family-medicine', 'dietician', 'personal-trainer'],
-    'hypertension': ['family-medicine', 'dietician', 'biokineticist'],
-    'back pain': ['physiotherapist', 'biokineticist', 'coaching'],
-    'obesity': ['dietician', 'personal-trainer', 'family-medicine'],
-    'depression': ['psychiatry', 'coaching', 'personal-trainer'],
-    'anxiety': ['psychiatry', 'coaching', 'biokineticist'],
-    'heart disease': ['cardiology', 'dietician', 'biokineticist'],
-    'stroke recovery': ['physiotherapist', 'coaching', 'dietician'],
-    'arthritis': ['rheumatology', 'physiotherapist', 'biokineticist'],
-    'chronic pain': ['pain-management', 'physiotherapist', 'psychiatry'],
-    'injury recovery': ['physiotherapist', 'biokineticist', 'coaching']
-  };
-
-  let categories: ServiceCategory[] = ['family-medicine', 'physiotherapist', 'dietician'];
-
-  for (const [knownCondition, categoryList] of Object.entries(commonConditions)) {
-    if (condition.toLowerCase().includes(knownCondition)) {
-      categories = categoryList;
-      break;
-    }
+  // Determine appropriate services for the condition
+  const lowerCondition = condition.toLowerCase();
+  const healthConditions = [condition];
+  
+  // Map condition to goal category
+  let goalCategory = GoalCategory.ChronicCondition;
+  
+  if (lowerCondition.includes("pain") || lowerCondition.includes("injury") || 
+      lowerCondition.includes("sprain") || lowerCondition.includes("strain")) {
+    goalCategory = GoalCategory.Rehabilitation;
   }
-
-  const services = createBalancedServiceCombination(
-    categories,
+  
+  // Determine budget tier
+  const budgetTier = determineBudgetTier(budget);
+  
+  // Get appropriate service types
+  const requiredServices = determineServiceTypes(goalCategory, budgetTier, healthConditions);
+  
+  // Calculate session distribution
+  const sessionDistribution = calculateSessionDistribution(
     budget,
-    'best-fit',
-    condition
+    requiredServices
   );
+  
+  // Enhance with practitioner recommendations
+  const services = sessionDistribution.map(service => {
+    const practitioners = getSuitablePractitioners(
+      service.type,
+      condition,
+      undefined,
+      false,
+      service.price,
+      service.isHighEnd
+    );
+    
+    return {
+      type: service.type,
+      price: service.price,
+      sessions: service.sessions,
+      description: service.description,
+      recommendedPractitioners: practitioners
+    };
+  });
 
   const totalCost = services.reduce((sum, service) => 
     sum + (service.price * service.sessions), 0);
