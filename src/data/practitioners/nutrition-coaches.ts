@@ -180,5 +180,50 @@ export const NUTRITION_COACHES: Practitioner[] = [
     bio: "Metabolic health specialist with expertise in ketogenic and low-carb diets.",
     rating: 4.8,
     specialtyNotes: "Keto and metabolic health"
+  },
+  {
+    id: "nc13",
+    name: "Emma Roberts",
+    serviceType: "dietician",
+    pricePerSession: 320,
+    maxPrice: 950,
+    serviceTags: ["sports nutrition", "performance diet", "meal timing"],
+    location: "Constantia, Cape Town",
+    isOnline: true,
+    availability: "Flexible hours",
+    imageUrl: "/placeholder.svg",
+    bio: "Sports nutrition specialist focusing on performance optimization through diet.",
+    rating: 4.8,
+    specialtyNotes: "Sports nutrition expert"
+  },
+  {
+    id: "nc14",
+    name: "Jabu Nkomo",
+    serviceType: "dietician",
+    pricePerSession: 280,
+    maxPrice: 840,
+    serviceTags: ["weight management", "diabetes", "lifestyle changes"],
+    location: "Mitchell's Plain, Cape Town",
+    isOnline: true,
+    availability: "Morning sessions",
+    imageUrl: "/placeholder.svg",
+    bio: "Weight management specialist with focus on diabetes and lifestyle changes.",
+    rating: 4.6,
+    specialtyNotes: "Weight management specialist"
+  },
+  {
+    id: "nc15",
+    name: "Sarah Palmer",
+    serviceType: "dietician",
+    pricePerSession: 310,
+    maxPrice: 930,
+    serviceTags: ["plant-based nutrition", "vegan diets", "sustainable eating"],
+    location: "Newlands, Cape Town",
+    isOnline: true,
+    availability: "Afternoon sessions",
+    imageUrl: "/placeholder.svg",
+    bio: "Plant-based nutrition expert specializing in vegan and sustainable diets.",
+    rating: 4.9,
+    specialtyNotes: "Plant-based nutrition specialist"
   }
 ];
