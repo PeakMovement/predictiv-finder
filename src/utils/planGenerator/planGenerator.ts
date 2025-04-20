@@ -1,9 +1,10 @@
-
 import { AIHealthPlan, Practitioner, ServiceCategory } from "@/types";
 import { PRACTITIONERS } from "@/data/mockData";
 import { PlanContext, ServiceAllocation } from "./types";
 import { CONDITION_TO_SERVICES, SERVICE_CONFIGS_BY_BUDGET } from "./serviceMappings";
-import { PRICE_RANGES, determineBudgetTier } from "./budgetConfig";
+import { identifySymptoms, getProfessionalsForSymptoms } from "./symptomMapper";
+import { filterByLocation } from "./locationFilter";
+import { distributeSessionsByBudget } from "./sessionCalculator";
 
 export const generatePlan = (context: PlanContext): AIHealthPlan => {
   const config = SERVICE_CONFIGS_BY_BUDGET[context.budgetTier.name];
@@ -26,7 +27,19 @@ const determineRequiredServices = (
 ): ServiceAllocation[] => {
   let services: ServiceAllocation[] = [];
 
-  if (context.medicalConditions && context.medicalConditions.length > 0) {
+  if (context.goal) {
+    const symptoms = identifySymptoms(context.goal);
+    const symptomBasedServices = getProfessionalsForSymptoms(symptoms);
+    
+    symptomBasedServices.forEach(serviceType => {
+      const allocation = allocations.find(a => a.type === serviceType);
+      if (allocation && !services.some(s => s.type === serviceType)) {
+        services.push(allocation);
+      }
+    });
+  }
+
+  if (services.length === 0 && context.medicalConditions?.length > 0) {
     context.medicalConditions.forEach(condition => {
       const conditionServices = CONDITION_TO_SERVICES[condition];
       if (conditionServices) {
@@ -52,35 +65,40 @@ const allocateServices = (
   context: PlanContext
 ): AIHealthPlan['services'] => {
   const allocatedServices: AIHealthPlan['services'] = [];
-  let remainingBudget = context.budget;
+  
+  const serviceDistribution = distributeSessionsByBudget(
+    context.budget,
+    services.map(s => ({ type: s.type, priority: s.priority }))
+  );
 
   services.forEach(service => {
-    const priceRange = PRICE_RANGES[service.type]?.[context.budgetTier.name];
-    if (!priceRange) return; // Skip if price range is not defined for this service
-    
-    const isHighEnd = context.budgetTier.name === 'high' || service.priority === 1;
-    const sessionPrice = isHighEnd ? priceRange.highEnd : priceRange.affordable;
-    const maxSessions = context.budgetTier.maxSessions;
-    const percentageOfBudget = service.percentage / 100;
-    const budgetForService = context.budget * percentageOfBudget;
-    const possibleSessions = Math.floor(budgetForService / sessionPrice);
-    const sessions = Math.min(possibleSessions, maxSessions);
+    const sessionAllocation = serviceDistribution[service.type];
+    if (!sessionAllocation) return;
 
-    if (sessions > 0) {
+    let availablePractitioners = PRACTITIONERS.filter(p => 
+      p.serviceType === service.type
+    );
+
+    if (context.location) {
+      availablePractitioners = filterByLocation(
+        availablePractitioners,
+        { 
+          location: context.location, 
+          radius: context.preferOnline ? 'anywhere' : 'nearby' 
+        }
+      );
+    }
+
+    if (availablePractitioners.length > 0) {
+      const practitioner = availablePractitioners[0]; // For now, take first match
+      
       allocatedServices.push({
         type: service.type,
-        price: sessionPrice,
-        sessions: sessions,
-        description: generateServiceDescription(service.type, isHighEnd),
-        recommendedPractitioners: getSuitablePractitioners(
-          service.type,
-          context.goal,
-          context.location,
-          context.preferOnline,
-          sessionPrice
-        )
+        price: sessionAllocation.costPerSession,
+        sessions: sessionAllocation.sessions,
+        description: generateServiceDescription(service.type, context.budgetTier.name === 'high'),
+        recommendedPractitioners: availablePractitioners.slice(0, 3)
       });
-      remainingBudget -= sessionPrice * sessions;
     }
   });
 
