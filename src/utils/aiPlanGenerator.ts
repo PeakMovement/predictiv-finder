@@ -414,7 +414,8 @@ const createBalancedServiceCombination = (
   
   // Function to get personalized service description
   const getServiceDescription = (category: ServiceCategory, isSession: boolean, goal?: string, obstacle?: string): string => {
-    const baseDescriptions: Record<ServiceCategory, string> = {
+    // Create a base set of descriptions for the main categories we're actively using
+    const baseDescriptions: Partial<Record<ServiceCategory, string>> = {
       'dietician': isSession ? "Nutrition consultation & diet planning" : "Personalized meal plan",
       'personal-trainer': isSession ? "Guided workout session" : "Custom workout program",
       'physiotherapist': isSession ? "Therapeutic assessment & treatment" : "Rehabilitation program",
@@ -447,7 +448,9 @@ const createBalancedServiceCombination = (
       }
     }
     
-    return baseDescriptions[category];
+    // Return the base description if available, otherwise provide a default
+    return baseDescriptions[category] || 
+           (isSession ? "Professional consultation session" : "Personalized health program");
   };
   
   // Primary service allocation (with specific category)
