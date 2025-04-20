@@ -1,4 +1,3 @@
-
 import { Practitioner } from '@/types';
 
 export const NUTRITION_COACHES: Practitioner[] = [
@@ -46,5 +45,50 @@ export const NUTRITION_COACHES: Practitioner[] = [
     bio: "Family nutrition specialist focusing on budget-friendly meal plans. Makes healthy eating accessible for families.",
     rating: 4.7,
     specialtyNotes: "Family nutrition, budget-friendly plans"
+  },
+  {
+    id: "nc4",
+    name: "James Smith",
+    serviceType: "dietician",
+    pricePerSession: 320,
+    maxPrice: 950,
+    serviceTags: ["sports nutrition", "weight management", "competition prep"],
+    location: "Gardens, Cape Town",
+    isOnline: true,
+    availability: "Weekdays and evenings",
+    imageUrl: "/placeholder.svg",
+    bio: "Sports nutrition specialist helping athletes optimize their performance through proper nutrition planning.",
+    rating: 4.8,
+    specialtyNotes: "Sports nutrition, competition prep"
+  },
+  {
+    id: "nc5",
+    name: "Sarah Thompson",
+    serviceType: "dietician",
+    pricePerSession: 280,
+    maxPrice: 800,
+    serviceTags: ["diabetes management", "heart health", "medical nutrition"],
+    location: "Observatory, Cape Town",
+    isOnline: true,
+    availability: "Mon-Fri, morning sessions",
+    imageUrl: "/placeholder.svg",
+    bio: "Medical nutrition specialist focused on managing chronic conditions through dietary interventions.",
+    rating: 4.6,
+    specialtyNotes: "Medical nutrition therapy"
+  },
+  {
+    id: "nc6",
+    name: "David Nkosi",
+    serviceType: "dietician",
+    pricePerSession: 350,
+    maxPrice: 1000,
+    serviceTags: ["corporate wellness", "group programs", "lifestyle change"],
+    location: "Century City, Cape Town",
+    isOnline: true,
+    availability: "Flexible scheduling",
+    imageUrl: "/placeholder.svg",
+    bio: "Corporate wellness specialist designing nutrition programs for busy professionals.",
+    rating: 4.9,
+    specialtyNotes: "Corporate wellness programs"
   }
 ];

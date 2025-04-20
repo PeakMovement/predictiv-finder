@@ -1,4 +1,3 @@
-
 import { Practitioner } from '@/types';
 
 export const RUN_COACHES: Practitioner[] = [
@@ -46,5 +45,50 @@ export const RUN_COACHES: Practitioner[] = [
     bio: "Beginner-friendly coach specializing in park-based sessions. Makes running accessible and enjoyable for newcomers.",
     rating: 4.7,
     specialtyNotes: "Beginner-friendly, park-based sessions"
+  },
+  {
+    id: "rc4",
+    name: "Michael Patel",
+    serviceType: "coaching",
+    pricePerSession: 280,
+    maxPrice: 850,
+    serviceTags: ["ultra marathon", "trail running", "endurance"],
+    location: "Newlands, Cape Town",
+    isOnline: false,
+    availability: "Early mornings and weekends",
+    imageUrl: "/placeholder.svg",
+    bio: "Ultra marathon specialist with extensive experience in trail running and endurance events.",
+    rating: 4.9,
+    specialtyNotes: "Ultra marathon preparation"
+  },
+  {
+    id: "rc5",
+    name: "Emma Wilson",
+    serviceType: "coaching",
+    pricePerSession: 220,
+    maxPrice: 600,
+    serviceTags: ["5k-10k training", "beginners", "women's running"],
+    location: "Green Point, Cape Town",
+    isOnline: true,
+    availability: "Weekday evenings",
+    imageUrl: "/placeholder.svg",
+    bio: "Specialized in helping beginners achieve their first 5k and 10k goals. Women's running group leader.",
+    rating: 4.7,
+    specialtyNotes: "Beginner running programs"
+  },
+  {
+    id: "rc6",
+    name: "Andile Khumalo",
+    serviceType: "coaching",
+    pricePerSession: 300,
+    maxPrice: 900,
+    serviceTags: ["speed work", "track training", "competitive racing"],
+    location: "Bellville, Cape Town",
+    isOnline: false,
+    availability: "Afternoon sessions",
+    imageUrl: "/placeholder.svg",
+    bio: "Former competitive runner focusing on speed development and race preparation.",
+    rating: 4.8,
+    specialtyNotes: "Speed training specialist"
   }
 ];

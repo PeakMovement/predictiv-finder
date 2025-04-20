@@ -1,4 +1,3 @@
-
 import { Practitioner } from '@/types';
 
 export const STRENGTH_COACHES: Practitioner[] = [
@@ -46,5 +45,50 @@ export const STRENGTH_COACHES: Practitioner[] = [
     bio: "Specializes in women's strength training with a focus on bodyweight exercises. Creates inclusive and supportive training environments.",
     rating: 4.7,
     specialtyNotes: "Women's strength training, bodyweight focus"
+  },
+  {
+    id: "sc4",
+    name: "Maria Santos",
+    serviceType: "personal-trainer",
+    pricePerSession: 280,
+    maxPrice: 850,
+    serviceTags: ["olympic lifting", "crossfit", "athletic performance"],
+    location: "Salt River, Cape Town",
+    isOnline: false,
+    availability: "Flexible hours",
+    imageUrl: "/placeholder.svg",
+    bio: "Olympic lifting coach specializing in CrossFit and athletic performance enhancement.",
+    rating: 4.8,
+    specialtyNotes: "Olympic lifting, CrossFit"
+  },
+  {
+    id: "sc5",
+    name: "John Peterson",
+    serviceType: "personal-trainer",
+    pricePerSession: 320,
+    maxPrice: 950,
+    serviceTags: ["senior fitness", "rehabilitation", "functional training"],
+    location: "Pinelands, Cape Town",
+    isOnline: true,
+    availability: "Morning sessions",
+    imageUrl: "/placeholder.svg",
+    bio: "Specialized in senior fitness and post-rehabilitation strength training.",
+    rating: 4.7,
+    specialtyNotes: "Senior fitness specialist"
+  },
+  {
+    id: "sc6",
+    name: "Nomvula Dlamini",
+    serviceType: "personal-trainer",
+    pricePerSession: 290,
+    maxPrice: 870,
+    serviceTags: ["bodyweight training", "calisthenics", "mobility"],
+    location: "Observatory, Cape Town",
+    isOnline: true,
+    availability: "Evening sessions",
+    imageUrl: "/placeholder.svg",
+    bio: "Calisthenics expert focusing on bodyweight strength and mobility improvement.",
+    rating: 4.9,
+    specialtyNotes: "Calisthenics and mobility"
   }
 ];
