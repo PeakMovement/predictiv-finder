@@ -151,8 +151,8 @@ const Index = () => {
                   />
                 </div>
                 <br className="md:hidden" />
-                <span className="bg-gradient-to-r from-health-teal to-health-purple bg-clip-text text-transparent">
-                  Personalized
+                <span className="text-foreground bg-gradient-to-r from-health-teal to-health-purple bg-clip-text text-transparent">
+                  , Personalized
                 </span>
               </motion.div>
               
