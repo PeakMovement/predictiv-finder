@@ -17,28 +17,30 @@ export const SYMPTOM_MAPPINGS: Record<string, SymptomMapping> = {
     keywords: [
       "hurt", "hurting", "ache", "aching", 
       "cramp", "cramping", "discomfort",
-      "bloated", "bloating", "upset stomach"
+      "bloated", "bloating", "upset stomach",
+      "abdominal", "belly", "gut", "tummy",
+      "burning", "sharp pain", "dull pain"
     ]
   },
   "nausea": {
     primary: "gastroenterology",
     specialties: ["gastroenterology", "family-medicine"],
-    priority: 0.9
+    priority: 0.9,
+    keywords: [
+      "sick", "vomit", "throwing up",
+      "queasy", "nauseous", "upset stomach",
+      "morning sickness", "dizzy", "woozy"
+    ]
   },
   "indigestion": {
     primary: "gastroenterology",
     specialties: ["gastroenterology", "family-medicine", "dietician"],
-    priority: 0.8
-  },
-  "acid reflux": {
-    primary: "gastroenterology",
-    specialties: ["gastroenterology", "family-medicine"],
-    priority: 0.8
-  },
-  "bloating": {
-    primary: "gastroenterology",
-    specialties: ["gastroenterology", "dietician"],
-    priority: 0.7
+    priority: 0.8,
+    keywords: [
+      "heartburn", "acid", "reflux", "burning",
+      "difficulty digesting", "upset stomach",
+      "after eating", "stomach ache", "dyspepsia"
+    ]
   },
   
   // Musculoskeletal System
@@ -46,23 +48,25 @@ export const SYMPTOM_MAPPINGS: Record<string, SymptomMapping> = {
     primary: "physiotherapist",
     specialties: ["physiotherapist", "biokineticist"],
     priority: 0.9,
-    secondary: ["orthopedics"]
+    secondary: ["orthopedics"],
+    keywords: [
+      "sore back", "backache", "spinal",
+      "lower back", "upper back", "spine",
+      "stiff back", "pulled muscle", "herniated",
+      "sciatica", "lumbar", "thoracic"
+    ]
   },
   "joint pain": {
     primary: "physiotherapist",
     specialties: ["physiotherapist", "biokineticist"],
     priority: 0.8,
-    secondary: ["orthopedics", "rheumatology"]
-  },
-  "muscle pain": {
-    primary: "physiotherapist",
-    specialties: ["physiotherapist", "biokineticist", "personal-trainer"],
-    priority: 0.7
-  },
-  "arthritis": {
-    primary: "rheumatology",
-    specialties: ["rheumatology", "physiotherapist"],
-    priority: 0.9
+    secondary: ["orthopedics", "rheumatology"],
+    keywords: [
+      "arthritis", "stiff joints", "swelling",
+      "knee pain", "ankle pain", "hip pain",
+      "shoulder pain", "elbow pain", "wrist pain",
+      "inflammation", "rheumatic", "gout"
+    ]
   },
   
   // Fitness and Wellness
@@ -112,12 +116,24 @@ export const SYMPTOM_MAPPINGS: Record<string, SymptomMapping> = {
   "stress": {
     primary: "psychiatry",
     specialties: ["psychiatry", "coaching"],
-    priority: 0.7
+    priority: 0.7,
+    keywords: [
+      "anxious", "worried", "overwhelmed",
+      "burnout", "tension", "pressure",
+      "mental pressure", "stressed out",
+      "can't cope", "exhausted", "mental fatigue"
+    ]
   },
   "anxiety": {
     primary: "psychiatry",
     specialties: ["psychiatry"],
-    priority: 0.8
+    priority: 0.8,
+    keywords: [
+      "panic", "worry", "nervousness",
+      "fear", "phobia", "social anxiety",
+      "racing thoughts", "restless", "uneasy",
+      "on edge", "nervous"
+    ]
   },
   "depression": {
     primary: "psychiatry",
