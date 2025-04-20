@@ -3,6 +3,9 @@ import { PHYSIOTHERAPISTS } from './practitioners/physiotherapists';
 import { BIOKINETICISTS } from './practitioners/biokineticists';
 import { COACHES } from './practitioners/coaches';
 import { DOCTORS } from './practitioners/doctors';
+import { RUN_COACHES } from './practitioners/run-coaches';
+import { STRENGTH_COACHES } from './practitioners/strength-coaches';
+import { NUTRITION_COACHES } from './practitioners/nutrition-coaches';
 import { AIHealthPlan } from '@/types';
 
 export const PRACTITIONERS = [
@@ -10,7 +13,10 @@ export const PRACTITIONERS = [
   ...DIETICIANS,
   ...PHYSIOTHERAPISTS,
   ...BIOKINETICISTS,
-  ...COACHES
+  ...COACHES,
+  ...RUN_COACHES,
+  ...STRENGTH_COACHES,
+  ...NUTRITION_COACHES
 ];
 
 export const GOALS_BY_CATEGORY = {

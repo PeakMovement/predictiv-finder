@@ -169,7 +169,27 @@ export const analyzeUserInput = (input: string): PlanOptions => {
     'personal-trainer': 0,
     'biokineticist': 0,
     'physiotherapist': 0,
-    'coaching': 0
+    'coaching': 0,
+    'family-medicine': 0,
+    'internal-medicine': 0,
+    'pediatrics': 0,
+    'cardiology': 0,
+    'dermatology': 0,
+    'orthopedics': 0,
+    'neurology': 0,
+    'gastroenterology': 0,
+    'obstetrics-gynecology': 0,
+    'emergency-medicine': 0,
+    'psychiatry': 0,
+    'anesthesiology': 0,
+    'endocrinology': 0,
+    'urology': 0,
+    'oncology': 0,
+    'neurosurgery': 0,
+    'infectious-disease': 0,
+    'radiology': 0,
+    'geriatric-medicine': 0,
+    'plastic-surgery': 0
   };
 
   // Check for health keywords
@@ -249,7 +269,7 @@ export const analyzeUserInput = (input: string): PlanOptions => {
 };
 
 export const findAlternativeCategories = (selectedCategories: ServiceCategory[]): ServiceCategory[] => {
-  const complementaryPairs: Record<ServiceCategory, ServiceCategory[]> = {
+  const complementaryPairs: Partial<Record<ServiceCategory, ServiceCategory[]>> = {
     'dietician': ['personal-trainer', 'coaching'],
     'personal-trainer': ['dietician', 'physiotherapist'],
     'physiotherapist': ['personal-trainer', 'biokineticist'],
@@ -288,10 +308,15 @@ const createBalancedServiceCombination = (
   description: string
 }[] => {
   // Service base prices and minimum effective sessions
-  const serviceInfo: Record<ServiceCategory, {basePrice: number, minSessions: number, maxSessions: number, digitalOption?: {price: number, description: string}}> = {
+  const serviceInfo: Partial<Record<ServiceCategory, {
+    basePrice: number;
+    minSessions: number;
+    maxSessions: number;
+    digitalOption?: { price: number; description: string };
+  }>> = {
     'dietician': {
-      basePrice: 350, 
-      minSessions: 1, 
+      basePrice: 350,
+      minSessions: 1,
       maxSessions: 4,
       digitalOption: {
         price: 250,
@@ -299,8 +324,8 @@ const createBalancedServiceCombination = (
       }
     },
     'personal-trainer': {
-      basePrice: 300, 
-      minSessions: 1, 
+      basePrice: 300,
+      minSessions: 1,
       maxSessions: 8,
       digitalOption: {
         price: 200,
@@ -308,8 +333,8 @@ const createBalancedServiceCombination = (
       }
     },
     'physiotherapist': {
-      basePrice: 400, 
-      minSessions: 1, 
+      basePrice: 400,
+      minSessions: 1,
       maxSessions: 4,
       digitalOption: {
         price: 250,
@@ -317,8 +342,8 @@ const createBalancedServiceCombination = (
       }
     },
     'biokineticist': {
-      basePrice: 450, 
-      minSessions: 1, 
+      basePrice: 450,
+      minSessions: 1,
       maxSessions: 4,
       digitalOption: {
         price: 300,
@@ -326,15 +351,15 @@ const createBalancedServiceCombination = (
       }
     },
     'coaching': {
-      basePrice: 300, 
-      minSessions: 1, 
+      basePrice: 300,
+      minSessions: 1,
       maxSessions: 4,
       digitalOption: {
         price: 200,
         description: "Guided mindset & accountability program"
       }
     }
-  };
+  } as const;
 
   // Adjust session distribution based on plan type
   const distributionRatios = {
