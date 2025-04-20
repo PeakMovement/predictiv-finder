@@ -1,4 +1,5 @@
-import { AIHealthPlan, ServiceCategory } from "@/types";
+import { AIHealthPlan, ServiceCategory, Practitioner } from "@/types";
+import { PRACTITIONERS } from '@/data/mockData';
 
 interface PlanOptions {
   costFactor?: number;
@@ -11,9 +12,7 @@ interface PlanOptions {
   obstacle?: string;
 }
 
-// Keywords to detect in user input for health categories
 const healthKeywords = [
-  // Physiotherapy related
   { term: "injured", category: "physiotherapist", priority: 2 },
   { term: "injury", category: "physiotherapist", priority: 2 },
   { term: "pain", category: "physiotherapist", priority: 2 },
@@ -25,7 +24,6 @@ const healthKeywords = [
   { term: "knee", category: "physiotherapist", priority: 2 },
   { term: "posture", category: "physiotherapist", priority: 2 },
   
-  // Personal Training related
   { term: "running", category: "personal-trainer", priority: 2 },
   { term: "strength", category: "personal-trainer", priority: 2 },
   { term: "muscle", category: "personal-trainer", priority: 1 },
@@ -36,7 +34,6 @@ const healthKeywords = [
   { term: "toned", category: "personal-trainer", priority: 2 },
   { term: "marathon", category: "personal-trainer", priority: 3 },
   
-  // Dietician related
   { term: "weight loss", category: "dietician", priority: 2 },
   { term: "nutrition", category: "dietician", priority: 2 },
   { term: "diet", category: "dietician", priority: 2 },
@@ -46,7 +43,6 @@ const healthKeywords = [
   { term: "energy", category: "dietician", priority: 1 },
   { term: "meal", category: "dietician", priority: 2 },
   
-  // Coaching related
   { term: "mental", category: "coaching", priority: 2 },
   { term: "motivation", category: "coaching", priority: 2 },
   { term: "goals", category: "coaching", priority: 1 },
@@ -55,7 +51,6 @@ const healthKeywords = [
   { term: "mindset", category: "coaching", priority: 2 },
   { term: "routine", category: "coaching", priority: 1 },
   
-  // Biokineticist related
   { term: "mobility", category: "biokineticist", priority: 2 },
   { term: "rehabilitation", category: "biokineticist", priority: 2 },
   { term: "movement", category: "biokineticist", priority: 1 },
@@ -64,7 +59,6 @@ const healthKeywords = [
   { term: "conditioning", category: "biokineticist", priority: 2 },
 ];
 
-// Budget-related keywords with more precise factors
 const budgetKeywords = [
   { term: "cheap", factor: 0.5 },
   { term: "affordable", factor: 0.6 },
@@ -74,7 +68,6 @@ const budgetKeywords = [
   { term: "high-end", factor: 1.5 },
 ];
 
-// Intensity-related keywords
 const intensityKeywords = [
   { term: "gentle", intensity: "low" as const },
   { term: "easy", intensity: "low" as const },
@@ -87,7 +80,6 @@ const intensityKeywords = [
   { term: "hardcore", intensity: "high" as const },
 ];
 
-// Timeframe keywords
 const timeframeKeywords = [
   { term: "quick", timeframe: "4 weeks" },
   { term: "fast", timeframe: "4 weeks" },
@@ -100,7 +92,6 @@ const timeframeKeywords = [
   { term: "weekly", timeframe: "4 weeks" },
 ];
 
-// Online preference keywords
 const onlineKeywords = [
   { term: "online", preference: true },
   { term: "virtual", preference: true },
@@ -109,7 +100,6 @@ const onlineKeywords = [
   { term: "face to face", preference: false },
 ];
 
-// Goal extraction keywords
 const goalKeywords = [
   { term: "lose weight", goal: "weight loss" },
   { term: "weight loss", goal: "weight loss" },
@@ -128,7 +118,6 @@ const goalKeywords = [
   { term: "recovery", goal: "injury recovery" },
 ];
 
-// Obstacle extraction keywords
 const obstacleKeywords = [
   { term: "busy", obstacle: "time constraints" },
   { term: "no time", obstacle: "time constraints" },
@@ -149,7 +138,6 @@ const obstacleKeywords = [
   { term: "consistency", obstacle: "consistency challenges" },
 ];
 
-// Analyze user input and determine plan options
 export const analyzeUserInput = (input: string): PlanOptions => {
   const lowerInput = input.toLowerCase();
   const options: PlanOptions = {
@@ -158,12 +146,11 @@ export const analyzeUserInput = (input: string): PlanOptions => {
     timeframe: "8 weeks",
     focus: [],
     preferOnline: false,
-    budget: 1000, // Default budget
+    budget: 1000,
     goal: undefined,
     obstacle: undefined
   };
 
-  // Detect focus areas by category
   const categoryScores: Record<ServiceCategory, number> = {
     'dietician': 0,
     'personal-trainer': 0,
@@ -192,7 +179,6 @@ export const analyzeUserInput = (input: string): PlanOptions => {
     'plastic-surgery': 0
   };
 
-  // Check for health keywords
   healthKeywords.forEach(keyword => {
     if (lowerInput.includes(keyword.term)) {
       const category = keyword.category as ServiceCategory;
@@ -200,46 +186,39 @@ export const analyzeUserInput = (input: string): PlanOptions => {
     }
   });
 
-  // Get top categories based on scores
   const sortedCategories = Object.entries(categoryScores)
     .sort((a, b) => b[1] - a[1])
     .filter(([_, score]) => score > 0)
     .map(([category]) => category as ServiceCategory);
 
-  // Get at least 3 categories if possible
   options.focus = sortedCategories.length > 0 ? 
     sortedCategories.slice(0, 3) : 
-    ['personal-trainer', 'dietician', 'coaching']; // Default if no clear focus
+    ['personal-trainer', 'dietician', 'coaching'];
 
-  // Check for budget keywords
   budgetKeywords.forEach(keyword => {
     if (lowerInput.includes(keyword.term)) {
       options.costFactor = keyword.factor;
     }
   });
 
-  // Check for intensity keywords
   intensityKeywords.forEach(keyword => {
     if (lowerInput.includes(keyword.term)) {
       options.intensity = keyword.intensity;
     }
   });
 
-  // Check for timeframe keywords
   timeframeKeywords.forEach(keyword => {
     if (lowerInput.includes(keyword.term)) {
       options.timeframe = keyword.timeframe;
     }
   });
 
-  // Check for online preference
   onlineKeywords.forEach(keyword => {
     if (lowerInput.includes(keyword.term)) {
       options.preferOnline = keyword.preference;
     }
   });
 
-  // Extract specific budget amount if mentioned (e.g., R1000, 1200, etc.)
   const budgetMatch = input.match(/R?(\d+)(?:\s*(?:per|a|\/)\s*(?:month|session|week))?/i);
   if (budgetMatch) {
     const extractedBudget = parseInt(budgetMatch[1]);
@@ -249,7 +228,6 @@ export const analyzeUserInput = (input: string): PlanOptions => {
     }
   }
 
-  // Extract goal
   for (const keyword of goalKeywords) {
     if (lowerInput.includes(keyword.term)) {
       options.goal = keyword.goal;
@@ -257,7 +235,6 @@ export const analyzeUserInput = (input: string): PlanOptions => {
     }
   }
 
-  // Extract obstacle
   for (const keyword of obstacleKeywords) {
     if (lowerInput.includes(keyword.term)) {
       options.obstacle = keyword.obstacle;
@@ -278,7 +255,7 @@ export const findAlternativeCategories = (selectedCategories: ServiceCategory[])
   };
 
   if (selectedCategories.length === 0) {
-    return ['coaching', 'dietician']; // Default holistic health approach
+    return ['coaching', 'dietician'];
   }
 
   const alternatives: ServiceCategory[] = [];
@@ -291,21 +268,58 @@ export const findAlternativeCategories = (selectedCategories: ServiceCategory[])
     });
   });
 
-  return alternatives.slice(0, 2); // Return top 2 alternatives
+  return alternatives.slice(0, 2);
 };
 
-// New function to create more balanced service combinations
+const getSuitablePractitioners = (
+  serviceCategory: ServiceCategory,
+  goal?: string,
+  obstacle?: string,
+  preferOnline?: boolean,
+  budget?: number
+): Practitioner[] => {
+  let practitioners = PRACTITIONERS.filter(p => p.serviceType === serviceCategory);
+  
+  if (budget) {
+    practitioners = practitioners.filter(p => p.pricePerSession <= budget);
+  }
+  
+  if (preferOnline !== undefined) {
+    practitioners = practitioners.filter(p => preferOnline === p.isOnline);
+  }
+  
+  if (goal) {
+    practitioners = practitioners.sort((a, b) => {
+      const aRelevance = a.serviceTags.some(tag => 
+        goal.toLowerCase().includes(tag.toLowerCase()) || 
+        tag.toLowerCase().includes(goal.toLowerCase())
+      ) ? 1 : 0;
+      
+      const bRelevance = b.serviceTags.some(tag => 
+        goal.toLowerCase().includes(tag.toLowerCase()) || 
+        tag.toLowerCase().includes(goal.toLowerCase())
+      ) ? 1 : 0;
+      
+      return bRelevance - aRelevance;
+    });
+  }
+  
+  return practitioners.slice(0, 3);
+};
+
 const createBalancedServiceCombination = (
   categories: ServiceCategory[],
   budget: number,
   planType: 'best-fit' | 'high-impact' | 'progressive',
   goal?: string,
-  obstacle?: string
+  obstacle?: string,
+  preferOnline?: boolean
 ): {
   type: ServiceCategory,
   price: number,
   sessions: number,
-  description: string
+  description: string,
+  recommendedPractitioners?: Practitioner[]
 }[] => {
   const serviceInfo: Partial<Record<ServiceCategory, {
     basePrice: number;
@@ -357,6 +371,24 @@ const createBalancedServiceCombination = (
         price: 200,
         description: "Guided mindset & accountability program"
       }
+    },
+    'family-medicine': {
+      basePrice: 400,
+      minSessions: 1,
+      maxSessions: 2,
+      digitalOption: {
+        price: 300,
+        description: "Virtual consultation and follow-up plan"
+      }
+    },
+    'internal-medicine': {
+      basePrice: 500,
+      minSessions: 1,
+      maxSessions: 2,
+      digitalOption: {
+        price: 400,
+        description: "Comprehensive health assessment"
+      }
     }
   };
 
@@ -382,7 +414,11 @@ const createBalancedServiceCombination = (
       'injury recovery': ['physiotherapist', 'biokineticist', 'coaching'],
       'general fitness': ['personal-trainer', 'coaching', 'dietician'],
       'strength training': ['personal-trainer', 'coaching', 'biokineticist'],
-      'online coaching': ['coaching', 'personal-trainer', 'dietician']
+      'online coaching': ['coaching', 'personal-trainer', 'dietician'],
+      'knee pain': ['physiotherapist', 'biokineticist', 'coaching'],
+      'chronic condition': ['family-medicine', 'internal-medicine', 'dietician'],
+      'digestive issues': ['dietician', 'internal-medicine', 'coaching'],
+      'heart health': ['internal-medicine', 'dietician', 'biokineticist']
     };
 
     const relevantOrder = goalRelevance[goal];
@@ -411,7 +447,12 @@ const createBalancedServiceCombination = (
       'personal-trainer': isSession ? "Guided workout session" : "Custom workout program",
       'physiotherapist': isSession ? "Therapeutic assessment & treatment" : "Rehabilitation program",
       'biokineticist': isSession ? "Movement therapy session" : "Movement optimization plan",
-      'coaching': isSession ? "Wellness strategy & motivation session" : "Mindset & accountability program"
+      'coaching': isSession ? "Wellness strategy & motivation session" : "Mindset & accountability program",
+      'family-medicine': isSession ? "Medical consultation & diagnosis" : "Health assessment & care plan",
+      'internal-medicine': isSession ? "Comprehensive medical evaluation" : "Specialized treatment protocol",
+      'pediatrics': isSession ? "Child health assessment" : "Child wellness plan",
+      'cardiology': isSession ? "Heart health evaluation" : "Cardiac care protocol",
+      'psychiatry': isSession ? "Mental health consultation" : "Psychological support plan"
     };
     
     if (goal && category) {
@@ -420,7 +461,7 @@ const createBalancedServiceCombination = (
           'dietician': isSession ? "Weight loss nutrition consultation" : "Customized weight loss meal plan",
           'personal-trainer': isSession ? "Fat-burning workout session" : "Progressive weight loss training program"
         },
-        'back pain relief': {
+        'back pain': {
           'physiotherapist': isSession ? "Back pain assessment & treatment" : "Back pain relief program", 
           'biokineticist': isSession ? "Spine mobility & strength session" : "Back strengthening program"
         },
@@ -465,7 +506,8 @@ const createBalancedServiceCombination = (
       type: primaryCategory,
       price: primaryServiceInfo.basePrice,
       sessions: sessions,
-      description: getServiceDescription(primaryCategory, true, goal, obstacle)
+      description: getServiceDescription(primaryCategory, true, goal, obstacle),
+      recommendedPractitioners: getSuitablePractitioners(primaryCategory, goal, obstacle, preferOnline, primaryServiceInfo.basePrice)
     });
     
     remainingBudget -= cost;
@@ -475,7 +517,8 @@ const createBalancedServiceCombination = (
       type: primaryCategory,
       price: primaryServiceInfo.digitalOption.price,
       sessions: 1,
-      description: primaryServiceInfo.digitalOption.description
+      description: primaryServiceInfo.digitalOption.description,
+      recommendedPractitioners: getSuitablePractitioners(primaryCategory, goal, obstacle, true, primaryServiceInfo.digitalOption.price)
     });
     
     remainingBudget -= primaryServiceInfo.digitalOption.price;
@@ -486,7 +529,7 @@ const createBalancedServiceCombination = (
     const secondaryBudget = Math.floor(budget * ratio.secondary);
     const secondaryServiceInfo = serviceInfo[secondaryCategory];
     
-    if (secondaryServiceInfo.basePrice <= secondaryBudget) {
+    if (secondaryServiceInfo && secondaryServiceInfo.basePrice <= secondaryBudget) {
       const possibleSessions = Math.min(
         Math.floor(secondaryBudget / secondaryServiceInfo.basePrice),
         secondaryServiceInfo.maxSessions
@@ -499,17 +542,19 @@ const createBalancedServiceCombination = (
         type: secondaryCategory,
         price: secondaryServiceInfo.basePrice,
         sessions: sessions,
-        description: getServiceDescription(secondaryCategory, true, goal, obstacle)
+        description: getServiceDescription(secondaryCategory, true, goal, obstacle),
+        recommendedPractitioners: getSuitablePractitioners(secondaryCategory, goal, obstacle, preferOnline, secondaryServiceInfo.basePrice)
       });
       
       remainingBudget -= cost;
     } 
-    else if (secondaryServiceInfo.digitalOption && secondaryServiceInfo.digitalOption.price <= remainingBudget) {
+    else if (secondaryServiceInfo && secondaryServiceInfo.digitalOption && secondaryServiceInfo.digitalOption.price <= remainingBudget) {
       services.push({
         type: secondaryCategory,
         price: secondaryServiceInfo.digitalOption.price,
         sessions: 1,
-        description: secondaryServiceInfo.digitalOption.description
+        description: secondaryServiceInfo.digitalOption.description,
+        recommendedPractitioners: getSuitablePractitioners(secondaryCategory, goal, obstacle, true, secondaryServiceInfo.digitalOption.price)
       });
       
       remainingBudget -= secondaryServiceInfo.digitalOption.price;
@@ -520,20 +565,22 @@ const createBalancedServiceCombination = (
     const tertiaryCategory = categories[2];
     const tertiaryServiceInfo = serviceInfo[tertiaryCategory];
     
-    if (tertiaryServiceInfo.basePrice <= remainingBudget) {
+    if (tertiaryServiceInfo && tertiaryServiceInfo.basePrice <= remainingBudget) {
       services.push({
         type: tertiaryCategory,
         price: tertiaryServiceInfo.basePrice,
         sessions: 1,
-        description: getServiceDescription(tertiaryCategory, true, goal, obstacle)
+        description: getServiceDescription(tertiaryCategory, true, goal, obstacle),
+        recommendedPractitioners: getSuitablePractitioners(tertiaryCategory, goal, obstacle, preferOnline, tertiaryServiceInfo.basePrice)
       });
     } 
-    else if (tertiaryServiceInfo.digitalOption && tertiaryServiceInfo.digitalOption.price <= remainingBudget) {
+    else if (tertiaryServiceInfo && tertiaryServiceInfo.digitalOption && tertiaryServiceInfo.digitalOption.price <= remainingBudget) {
       services.push({
         type: tertiaryCategory,
         price: tertiaryServiceInfo.digitalOption.price,
         sessions: 1,
-        description: tertiaryServiceInfo.digitalOption.description
+        description: tertiaryServiceInfo.digitalOption.description,
+        recommendedPractitioners: getSuitablePractitioners(tertiaryCategory, goal, obstacle, true, tertiaryServiceInfo.digitalOption.price)
       });
     }
   }
@@ -548,7 +595,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   const planTypes: ('best-fit' | 'high-impact' | 'progressive')[] = ['best-fit', 'high-impact', 'progressive'];
 
   const descTemplates = {
-    'best-fit': "Balanced wellness plan combining {focus} over {timeframe}, with flexible in-person and online options to achieve {goal}.",
+    'best-fit': "Comprehensive wellness plan combining {focus} over {timeframe}, with flexible in-person and online options to achieve {goal}.",
     'high-impact': "Intensive program featuring {focus} over {timeframe}, utilizing both virtual and in-person sessions for {goal}.",
     'progressive': "Gradual approach with {focus} over {timeframe}, mixing online coaching and in-person support for {goal}."
   };
@@ -559,7 +606,8 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
       options.budget || 1000, 
       planType,
       options.goal,
-      options.obstacle
+      options.obstacle,
+      options.preferOnline
     );
 
     const totalCost = services.reduce((sum, service) => 
@@ -575,7 +623,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
       .replace('{goal}', goalDescription);
 
     const planName = planType === 'best-fit' 
-      ? 'Balanced Wellness Plan' 
+      ? 'Integrated Wellness Plan' 
       : planType === 'high-impact' 
         ? 'Accelerated Results Plan' 
         : 'Progressive Development Plan';
@@ -584,7 +632,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
       id: `plan-${index + 1}`,
       name: planName,
       description: planDesc,
-      services: services,
+      services: services.map(({ recommendedPractitioners, ...service }) => service),
       totalCost: totalCost,
       planType: planType,
       timeFrame: options.timeframe || '8 weeks'
@@ -592,4 +640,55 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   });
 
   return plans;
+};
+
+export const generateMedicalManagementPlan = (
+  condition: string,
+  budget: number,
+  timeframe: string = "12 weeks"
+): AIHealthPlan => {
+  const commonConditions: Record<string, ServiceCategory[]> = {
+    'diabetes': ['family-medicine', 'dietician', 'personal-trainer'],
+    'hypertension': ['family-medicine', 'dietician', 'biokineticist'],
+    'back pain': ['physiotherapist', 'biokineticist', 'coaching'],
+    'obesity': ['dietician', 'personal-trainer', 'family-medicine'],
+    'depression': ['psychiatry', 'coaching', 'personal-trainer'],
+    'anxiety': ['psychiatry', 'coaching', 'biokineticist'],
+    'heart disease': ['cardiology', 'dietician', 'biokineticist'],
+    'stroke recovery': ['physiotherapist', 'coaching', 'dietician'],
+    'arthritis': ['rheumatology', 'physiotherapist', 'biokineticist'],
+    'chronic pain': ['pain-management', 'physiotherapist', 'psychiatry'],
+    'injury recovery': ['physiotherapist', 'biokineticist', 'coaching']
+  };
+
+  let categories: ServiceCategory[] = ['family-medicine', 'physiotherapist', 'dietician'];
+
+  for (const [knownCondition, categoryList] of Object.entries(commonConditions)) {
+    if (condition.toLowerCase().includes(knownCondition)) {
+      categories = categoryList;
+      break;
+    }
+  }
+
+  const services = createBalancedServiceCombination(
+    categories,
+    budget,
+    'best-fit',
+    condition
+  );
+
+  const totalCost = services.reduce((sum, service) => 
+    sum + (service.price * service.sessions), 0);
+
+  const planFocus = services.map(s => s.type.replace('-', ' ')).join(', ');
+  
+  return {
+    id: `medical-plan-${Date.now().toString(36)}`,
+    name: `Comprehensive ${condition} Management Plan`,
+    description: `Integrated healthcare approach combining ${planFocus} over ${timeframe} to effectively manage ${condition} with personalized professional support.`,
+    services: services.map(({ recommendedPractitioners, ...service }) => service),
+    totalCost: totalCost,
+    planType: 'best-fit',
+    timeFrame: timeframe
+  };
 };

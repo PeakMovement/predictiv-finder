@@ -1,3 +1,4 @@
+
 import { DIETICIANS } from './practitioners/dieticians';
 import { PHYSIOTHERAPISTS } from './practitioners/physiotherapists';
 import { BIOKINETICISTS } from './practitioners/biokineticists';
@@ -65,80 +66,98 @@ export const GOALS_BY_CATEGORY = {
 export const EXAMPLE_AI_PLANS: AIHealthPlan[] = [
   {
     id: "plan1",
-    name: "Knee Recovery & Return to Running Plan",
-    description: "A balanced plan to rehabilitate your knee injury while preparing to resume running safely.",
+    name: "Comprehensive Knee Recovery Plan",
+    description: "A multidisciplinary approach to rehabilitate your knee injury while preparing to resume running safely with expert supervision.",
     services: [
       {
         type: "physiotherapist",
         price: 600,
         sessions: 3,
-        description: "Initial assessment and rehabilitation program focusing on knee stability and pain management."
+        description: "Initial assessment and rehabilitation program focusing on knee stability, pain management, and progressive mobility improvements."
       },
       {
         type: "biokineticist",
         price: 550,
         sessions: 2,
-        description: "Progressive exercise therapy to rebuild strength and proper movement patterns."
+        description: "Specialized exercise therapy to rebuild knee strength, improve movement patterns, and restore functional capacity."
       },
       {
         type: "coaching",
         price: 350,
         sessions: 1,
-        description: "Running technique assessment and customized re-entry plan to prevent re-injury."
+        description: "Running technique assessment and customized re-entry plan with gradual progression to prevent re-injury."
+      },
+      {
+        type: "family-medicine",
+        price: 400,
+        sessions: 1,
+        description: "Medical evaluation to rule out structural damage and develop a comprehensive recovery timeline."
       }
     ],
-    totalCost: 3250,
+    totalCost: 3650,
     planType: "best-fit",
-    timeFrame: "6 weeks"
+    timeFrame: "8 weeks"
   },
   {
     id: "plan2",
     name: "High-Impact Knee Rehabilitation Focus",
-    description: "Intensive physiotherapy approach to rapidly address your knee injury and establish foundation for return to running.",
+    description: "Intensive therapeutic approach to rapidly address your knee injury with modern treatment modalities and establish a solid foundation for return to running.",
     services: [
       {
         type: "physiotherapist",
         price: 600,
         sessions: 4,
-        description: "Comprehensive rehabilitation program with hands-on therapy and advanced modalities."
+        description: "Comprehensive rehabilitation program with hands-on therapy, advanced modalities, and progressive movement protocols."
       },
       {
         type: "coaching",
         price: 350,
         sessions: 1,
-        description: "Expert guidance on running form to prevent future knee injuries."
+        description: "Expert guidance on running form modifications and biomechanical assessment to prevent future knee injuries."
+      },
+      {
+        type: "biokineticist",
+        price: 550,
+        sessions: 1,
+        description: "Advanced movement screening and corrective exercise programming to address underlying movement dysfunctions."
       }
     ],
-    totalCost: 2750,
+    totalCost: 3300,
     planType: "high-impact",
     timeFrame: "4 weeks"
   },
   {
     id: "plan3",
     name: "Progressive Return-to-Running Journey",
-    description: "A staged approach that gradually builds from rehabilitation to running, spreading costs over time.",
+    description: "A staged approach that gradually builds from rehabilitation to running, spreading costs over time with multi-disciplinary support.",
     services: [
       {
         type: "physiotherapist",
         price: 600,
         sessions: 2,
-        description: "Initial assessment and treatment to address pain and inflammation."
+        description: "Initial assessment and targeted treatment to address pain, inflammation, and restricted mobility."
       },
       {
         type: "biokineticist",
         price: 550,
         sessions: 1,
-        description: "Customized exercise program to restore function and prevent re-injury."
+        description: "Customized exercise program to restore function, improve stability, and prevent re-injury."
       },
       {
         type: "coaching",
         price: 350,
         sessions: 1,
-        description: "Running program design with gradual progression milestones."
+        description: "Running program design with gradual progression milestones and technique refinement."
+      },
+      {
+        type: "dietician",
+        price: 350,
+        sessions: 1,
+        description: "Anti-inflammatory nutrition strategy to support tissue healing and recovery."
       }
     ],
-    totalCost: 2100,
+    totalCost: 2450,
     planType: "progressive",
-    timeFrame: "8 weeks"
+    timeFrame: "10 weeks"
   }
 ];

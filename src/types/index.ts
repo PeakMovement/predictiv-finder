@@ -1,3 +1,4 @@
+
 export type ServiceCategory = 
   | 'dietician'
   | 'personal-trainer'
@@ -23,7 +24,9 @@ export type ServiceCategory =
   | 'infectious-disease'
   | 'radiology'
   | 'geriatric-medicine'
-  | 'plastic-surgery';
+  | 'plastic-surgery'
+  | 'rheumatology'
+  | 'pain-management';
 
 export type ServiceMode = 'online' | 'in-person' | 'both';
 
@@ -56,6 +59,7 @@ export interface AIHealthPlan {
     price: number;
     sessions: number;
     description: string;
+    recommendedPractitioners?: Practitioner[];
   }[];
   totalCost: number;
   planType: 'best-fit' | 'high-impact' | 'progressive';
