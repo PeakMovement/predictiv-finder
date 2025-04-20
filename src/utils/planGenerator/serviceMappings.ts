@@ -1,4 +1,3 @@
-
 import { ServiceConfigurationByBudget, ServiceCategory } from "./types";
 
 export const CONDITION_TO_SERVICES: Record<string, ServiceCategory[]> = {
@@ -6,12 +5,19 @@ export const CONDITION_TO_SERVICES: Record<string, ServiceCategory[]> = {
   'hypertension': ['cardiology', 'dietician', 'personal-trainer'],
   'diabetes': ['endocrinology', 'dietician', 'personal-trainer'],
   'asthma': ['internal-medicine', 'personal-trainer', 'dietician'],
-  'ankle sprain': ['physiotherapist', 'personal-trainer'],
-  'shoulder strain': ['physiotherapist', 'personal-trainer'],
+  'ankle sprain': ['physiotherapist', 'personal-trainer', 'biokineticist'],
+  'shoulder strain': ['physiotherapist', 'personal-trainer', 'biokineticist'],
   'chronic fatigue': ['endocrinology', 'dietician', 'personal-trainer'],
   'stomach issues': ['gastroenterology', 'family-medicine', 'dietician'],
-  'knee pain': ['physiotherapist', 'personal-trainer'],
-  'back pain': ['physiotherapist', 'personal-trainer']
+  'digestive problems': ['gastroenterology', 'family-medicine', 'dietician'],
+  'knee pain': ['physiotherapist', 'personal-trainer', 'biokineticist'],
+  'back pain': ['physiotherapist', 'personal-trainer', 'biokineticist'],
+  'mental health': ['psychiatry', 'coaching'],
+  'anxiety': ['psychiatry', 'coaching'],
+  'depression': ['psychiatry', 'coaching'],
+  'stress': ['psychiatry', 'coaching'],
+  'respiratory issues': ['internal-medicine', 'family-medicine'],
+  'joint pain': ['physiotherapist', 'biokineticist', 'orthopedics']
 };
 
 export const SERVICE_CONFIGS_BY_BUDGET: ServiceConfigurationByBudget = {
