@@ -41,8 +41,6 @@ const Index = () => {
   const { toast } = useToast();
 
   const getMatchingPractitioners = (criteria: DetailedUserCriteria): Practitioner[] => {
-    // Start with all practitioners and use the scoring function in PractitionerList 
-    // to sort them rather than filtering them out completely
     return PRACTITIONERS;
   };
 

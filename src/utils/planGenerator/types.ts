@@ -1,5 +1,8 @@
 
-import { ServiceCategory, AIHealthPlan, Practitioner } from "@/types";
+import { ServiceCategory as AppServiceCategory, AIHealthPlan, Practitioner } from "@/types";
+
+// Re-export the ServiceCategory from the app types
+export type ServiceCategory = AppServiceCategory;
 
 export interface BudgetTier {
   name: 'low' | 'medium' | 'high';

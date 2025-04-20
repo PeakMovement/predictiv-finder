@@ -1,3 +1,4 @@
+
 import { AIHealthPlan, Practitioner, ServiceCategory } from "@/types";
 import { PRACTITIONERS } from "@/data/mockData";
 import { PlanContext, ServiceAllocation } from "./types";
@@ -13,7 +14,7 @@ export const generatePlan = (context: PlanContext): AIHealthPlan => {
     name: generatePlanName(context),
     description: generatePlanDescription(context),
     services: allocateServices(services, context),
-    totalCost: calculateTotalCost(services),
+    totalCost: calculateTotalCost(allocateServices(services, context)),
     planType: determinePlanType(context),
     timeFrame: determineTimeFrame(context)
   };
@@ -54,7 +55,9 @@ const allocateServices = (
   let remainingBudget = context.budget;
 
   services.forEach(service => {
-    const priceRange = PRICE_RANGES[service.type][context.budgetTier.name];
+    const priceRange = PRICE_RANGES[service.type]?.[context.budgetTier.name];
+    if (!priceRange) return; // Skip if price range is not defined for this service
+    
     const isHighEnd = context.budgetTier.name === 'high' || service.priority === 1;
     const sessionPrice = isHighEnd ? priceRange.highEnd : priceRange.affordable;
     const maxSessions = context.budgetTier.maxSessions;
@@ -125,7 +128,7 @@ const getSuitablePractitioners = (
 };
 
 const generateServiceDescription = (serviceType: ServiceCategory, isHighEnd: boolean): string => {
-  const descriptions: Record<ServiceCategory, { affordable: string; highEnd: string }> = {
+  const descriptions: Record<string, { affordable: string; highEnd: string }> = {
     'dietician': {
       affordable: 'Basic dietary advice and meal planning.',
       highEnd: 'Comprehensive nutritional assessment and personalized meal plans.'
@@ -162,9 +165,83 @@ const generateServiceDescription = (serviceType: ServiceCategory, isHighEnd: boo
       affordable: "Clinical consultation with basic health assessment",
       highEnd: "Comprehensive medical evaluation with detailed health recommendations"
     },
+    'biokineticist': {
+      affordable: "Basic movement and biomechanical assessment",
+      highEnd: "Advanced movement analysis with personalized exercise prescription"
+    },
+    'pediatrics': {
+      affordable: "Standard pediatric health check-up",
+      highEnd: "Comprehensive pediatric assessment with developmental evaluation"
+    },
+    'dermatology': {
+      affordable: "Basic skin assessment and care recommendations",
+      highEnd: "Advanced dermatological evaluation with specialized treatment"
+    },
+    'orthopedics': {
+      affordable: "Standard orthopedic consultation",
+      highEnd: "Comprehensive orthopedic evaluation with specialized treatment"
+    },
+    'neurology': {
+      affordable: "Basic neurological check-up",
+      highEnd: "Comprehensive neurological assessment with advanced diagnostics"
+    },
+    'obstetrics-gynecology': {
+      affordable: "Standard gynecological check-up",
+      highEnd: "Comprehensive women's health assessment with specialized care"
+    },
+    'emergency-medicine': {
+      affordable: "Basic urgent care assessment",
+      highEnd: "Comprehensive emergency medical evaluation"
+    },
+    'psychiatry': {
+      affordable: "Initial mental health consultation",
+      highEnd: "Comprehensive psychiatric evaluation with personalized treatment plan"
+    },
+    'anesthesiology': {
+      affordable: "Standard pre-procedure assessment",
+      highEnd: "Comprehensive anesthetic evaluation and pain management"
+    },
+    'urology': {
+      affordable: "Basic urological health check-up",
+      highEnd: "Comprehensive urological assessment with specialized treatment"
+    },
+    'oncology': {
+      affordable: "Initial cancer screening consultation",
+      highEnd: "Comprehensive oncological evaluation with personalized treatment plan"
+    },
+    'neurosurgery': {
+      affordable: "Initial neurosurgical consultation",
+      highEnd: "Comprehensive neurosurgical evaluation with specialized treatment"
+    },
+    'infectious-disease': {
+      affordable: "Basic infectious disease screening",
+      highEnd: "Comprehensive infectious disease assessment with specialized treatment"
+    },
+    'radiology': {
+      affordable: "Standard imaging assessment",
+      highEnd: "Advanced imaging with specialized interpretation"
+    },
+    'geriatric-medicine': {
+      affordable: "Basic elder care consultation",
+      highEnd: "Comprehensive geriatric assessment with specialized care plan"
+    },
+    'plastic-surgery': {
+      affordable: "Initial cosmetic consultation",
+      highEnd: "Comprehensive aesthetic evaluation with personalized treatment plan"
+    },
+    'rheumatology': {
+      affordable: "Basic rheumatological check-up",
+      highEnd: "Comprehensive rheumatological assessment with specialized treatment"
+    },
+    'pain-management': {
+      affordable: "Basic pain assessment and treatment",
+      highEnd: "Comprehensive pain evaluation with multimodal treatment plan"
+    }
   };
 
-  return isHighEnd ? descriptions[serviceType].highEnd : descriptions[serviceType].affordable;
+  return isHighEnd ? 
+    descriptions[serviceType]?.highEnd || "Premium specialized service" : 
+    descriptions[serviceType]?.affordable || "Standard service";
 };
 
 const calculateTotalCost = (services: AIHealthPlan['services']): number => {
