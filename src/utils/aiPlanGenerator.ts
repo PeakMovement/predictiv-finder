@@ -1,4 +1,3 @@
-
 import { AIHealthPlan, ServiceCategory, Practitioner, UserCriteria } from "@/types";
 import { PRACTITIONERS } from '@/data/mockData';
 
@@ -35,7 +34,7 @@ enum GoalCategory {
 const healthKeywords = [
   { term: "injured", category: "physiotherapist", priority: 2 },
   { term: "injury", category: "physiotherapist", priority: 2 },
-  { term: "pain", category: "physiotherapist", priority: 2 },
+  { term: "pain", category: "family-medicine", priority: 2 },
   { term: "recover", category: "physiotherapist", priority: 1 },
   { term: "rehabilitation", category: "physiotherapist", priority: 2 },
   { term: "physio", category: "physiotherapist", priority: 3 },
@@ -46,6 +45,21 @@ const healthKeywords = [
   { term: "shoulder", category: "physiotherapist", priority: 2 },
   { term: "wrist", category: "physiotherapist", priority: 2 },
   { term: "ankle", category: "physiotherapist", priority: 2 },
+  
+  { term: "stomach pain", category: "gastroenterology", priority: 3 },
+  { term: "abdominal pain", category: "gastroenterology", priority: 3 },
+  { term: "stomach", category: "gastroenterology", priority: 2 },
+  { term: "digestion", category: "gastroenterology", priority: 2 },
+  { term: "digestive", category: "gastroenterology", priority: 2 },
+  { term: "acid reflux", category: "gastroenterology", priority: 3 },
+  { term: "heartburn", category: "gastroenterology", priority: 3 },
+  { term: "indigestion", category: "gastroenterology", priority: 3 },
+  { term: "nausea", category: "gastroenterology", priority: 2 },
+  { term: "constipation", category: "gastroenterology", priority: 2 },
+  { term: "diarrhea", category: "gastroenterology", priority: 2 },
+  { term: "ibs", category: "gastroenterology", priority: 3 },
+  { term: "irritable bowel", category: "gastroenterology", priority: 3 },
+  { term: "gut health", category: "gastroenterology", priority: 3 },
   
   { term: "running", category: "coaching", priority: 2 },
   { term: "marathon", category: "coaching", priority: 3 },
@@ -187,6 +201,12 @@ const goalKeywords = [
 const healthConditionKeywords = [
   { term: "knee", condition: "knee issue" },
   { term: "back pain", condition: "back pain" },
+  { term: "stomach pain", condition: "stomach pain" },
+  { term: "abdominal pain", condition: "abdominal pain" },
+  { term: "acid reflux", condition: "acid reflux" },
+  { term: "heartburn", condition: "heartburn" },
+  { term: "indigestion", condition: "indigestion" },
+  { term: "ibs", condition: "irritable bowel syndrome" },
   { term: "diabetes", condition: "diabetes" },
   { term: "asthma", condition: "asthma" },
   { term: "blood pressure", condition: "hypertension" },
@@ -220,14 +240,12 @@ const obstacleKeywords = [
   { term: "consistency", obstacle: "consistency challenges" },
 ];
 
-// Function to determine budget tier based on monthly budget
 const determineBudgetTier = (budget: number): BudgetTier => {
   if (budget <= 1000) return BudgetTier.Low;
   if (budget <= 2500) return BudgetTier.Medium;
   return BudgetTier.High;
 };
 
-// Function to determine appropriate service types based on goal category and budget tier
 const determineServiceTypes = (
   goalCategory: string,
   budgetTier: BudgetTier,
@@ -306,13 +324,24 @@ const determineServiceTypes = (
       break;
   }
   
-  // Add health condition-specific services
   for (const condition of healthConditions) {
     if (condition.includes("knee") || condition.includes("shoulder") || 
         condition.includes("back") || condition.includes("ankle") || 
         condition.includes("wrist")) {
       if (!services.some(s => s.category === "physiotherapist")) {
         services.push({category: "physiotherapist", priority: 4});
+      }
+    }
+    
+    if (condition.includes("stomach") || condition.includes("abdominal") || 
+        condition.includes("reflux") || condition.includes("heartburn") || 
+        condition.includes("indigestion") || condition.includes("ibs") ||
+        condition.includes("irritable bowel")) {
+      if (!services.some(s => s.category === "gastroenterology")) {
+        services.push({category: "gastroenterology", priority: 5});
+      }
+      if (!services.some(s => s.category === "dietician")) {
+        services.push({category: "dietician", priority: 3});
       }
     }
     
@@ -334,11 +363,9 @@ const determineServiceTypes = (
     }
   }
   
-  // Sort by priority
   return services.sort((a, b) => b.priority - a.priority);
 };
 
-// Function to calculate session distribution based on budget tier and service priorities
 const calculateSessionDistribution = (
   budget: number, 
   services: {category: ServiceCategory, priority: number}[],
@@ -363,7 +390,6 @@ const calculateSessionDistribution = (
     isHighEnd: boolean
   }[] = [];
   
-  // Price ranges by service category and budget tier
   const priceRanges: Record<ServiceCategory, Record<BudgetTier, {affordable: number, highEnd: number}>> = {
     "dietician": {
       "low": {affordable: 200, highEnd: 350},
@@ -400,7 +426,11 @@ const calculateSessionDistribution = (
       "medium": {affordable: 500, highEnd: 800},
       "high": {affordable: 600, highEnd: 1200}
     },
-    // Default values for other service categories
+    "gastroenterology": {
+      "low": {affordable: 300, highEnd: 500},
+      "medium": {affordable: 400, highEnd: 700},
+      "high": {affordable: 500, highEnd: 900}
+    },
     "pediatrics": {
       "low": {affordable: 300, highEnd: 500},
       "medium": {affordable: 400, highEnd: 700},
@@ -422,11 +452,6 @@ const calculateSessionDistribution = (
       "high": {affordable: 700, highEnd: 1200}
     },
     "neurology": {
-      "low": {affordable: 400, highEnd: 600},
-      "medium": {affordable: 500, highEnd: 800},
-      "high": {affordable: 700, highEnd: 1200}
-    },
-    "gastroenterology": {
       "low": {affordable: 400, highEnd: 600},
       "medium": {affordable: 500, highEnd: 800},
       "high": {affordable: 700, highEnd: 1200}
@@ -503,7 +528,6 @@ const calculateSessionDistribution = (
     }
   };
   
-  // Session description templates by service type
   const sessionDescriptions: Record<ServiceCategory, {
     affordable: string,
     highEnd: string
@@ -536,7 +560,10 @@ const calculateSessionDistribution = (
       affordable: "Medical assessment focusing on internal health systems",
       highEnd: "Specialized internal medicine consultation with comprehensive testing"
     },
-    // Default values for other categories
+    "gastroenterology": {
+      affordable: "Standard digestive health assessment and treatment recommendations",
+      highEnd: "Advanced gastroenterological consultation with specialized treatment plan"
+    },
     "pediatrics": {
       affordable: "Standard pediatric check-up and assessment",
       highEnd: "Comprehensive pediatric health evaluation and development plan"
@@ -556,10 +583,6 @@ const calculateSessionDistribution = (
     "neurology": {
       affordable: "Basic neurological assessment and monitoring",
       highEnd: "Comprehensive neurological evaluation with detailed treatment plan"
-    },
-    "gastroenterology": {
-      affordable: "Digestive health assessment and diet recommendations",
-      highEnd: "Comprehensive gastroenterological evaluation and specialized treatment plan"
     },
     "obstetrics-gynecology": {
       affordable: "Standard gynecological check-up and health guidance",
@@ -619,7 +642,6 @@ const calculateSessionDistribution = (
     }
   };
   
-  // Calculate budget allocation per service based on priority
   let remainingBudget = budget;
   
   for (const service of services) {
@@ -628,12 +650,11 @@ const calculateSessionDistribution = (
     const allocation = (service.priority / totalPriority) * budget;
     const priceRange = priceRanges[service.category][budgetTier];
     
-    // Determine if we should use high-end or affordable sessions based on budget tier
     let isHighEnd = false;
     if (budgetTier === BudgetTier.High) {
       isHighEnd = true;
     } else if (budgetTier === BudgetTier.Medium) {
-      isHighEnd = service === services[0]; // High-end only for primary service in medium tier
+      isHighEnd = service === services[0];
     }
     
     const sessionPrice = isHighEnd ? priceRange.highEnd : priceRange.affordable;
@@ -643,12 +664,10 @@ const calculateSessionDistribution = (
     
     let sessions = Math.floor(allocation / sessionPrice);
     
-    // Ensure at least 1 session if this is a high-priority service
     if (sessions === 0 && service.priority >= 4) {
       sessions = 1;
     }
     
-    // Cap sessions based on budget tier and service type
     const maxSessions = {
       "low": 2,
       "medium": 3,
@@ -670,9 +689,7 @@ const calculateSessionDistribution = (
     }
   }
   
-  // If we have budget left and less than 3 services, add more sessions to existing services
   if (remainingBudget > 0 && plan.length > 0 && plan.length < 3) {
-    // Add an extra session to the highest priority service
     const primaryService = plan[0];
     if (remainingBudget >= primaryService.price) {
       primaryService.sessions += 1;
@@ -835,26 +852,21 @@ const getSuitablePractitioners = (
 ): Practitioner[] => {
   let practitioners = PRACTITIONERS.filter(p => p.serviceType === serviceCategory);
   
-  // Filter by price based on high-end preference and budget
   if (budget) {
     if (isHighEnd) {
       practitioners = practitioners.filter(p => 
         p.pricePerSession <= budget && 
-        // Higher price range for high-end
         p.pricePerSession >= budget * 0.6
       );
     } else {
       practitioners = practitioners.filter(p => 
         p.pricePerSession <= budget && 
-        // Lower price range for affordable
         p.pricePerSession <= budget * 0.6
       );
     }
   }
   
-  // Filter by location if specified
   if (location) {
-    // First try exact location match
     const exactLocationMatches = practitioners.filter(p => 
       p.location.toLowerCase().includes(location.toLowerCase())
     );
@@ -862,7 +874,6 @@ const getSuitablePractitioners = (
     if (exactLocationMatches.length > 0) {
       practitioners = exactLocationMatches;
     } else {
-      // Locations and their nearby areas (simplified implementation)
       const nearbyLocations: Record<string, string[]> = {
         "Sea Point": ["Green Point", "Bantry Bay", "Mouille Point"],
         "Camps Bay": ["Clifton", "Bantry Bay", "Sea Point"],
@@ -884,12 +895,10 @@ const getSuitablePractitioners = (
     }
   }
   
-  // Filter by online preference if specified
   if (preferOnline !== undefined) {
     practitioners = practitioners.filter(p => p.isOnline === preferOnline);
   }
   
-  // Sort by relevance to goal if specified
   if (goal) {
     practitioners = practitioners.sort((a, b) => {
       const aRelevance = a.serviceTags.some(tag => 
@@ -906,7 +915,6 @@ const getSuitablePractitioners = (
     });
   }
   
-  // Secondary sort by rating
   practitioners = practitioners.sort((a, b) => b.rating - a.rating);
   
   return practitioners.slice(0, 3);
@@ -916,7 +924,6 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   const options = analyzeUserInput(userQuery);
   const plans: AIHealthPlan[] = [];
 
-  // Extract health conditions based on user query
   const lowerQuery = userQuery.toLowerCase();
   const healthConditions: string[] = [];
   
@@ -926,7 +933,6 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     }
   });
 
-  // Categorize the goal for better service matching
   let goalCategory = GoalCategory.GeneralFitness;
   if (options.goal) {
     if (options.goal.includes("weight loss")) {
@@ -944,10 +950,8 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     }
   }
 
-  // Determine budget tier
   const budgetTier = determineBudgetTier(options.budget || 1000);
   
-  // Get appropriate service types based on goal and budget
   const requiredServices = determineServiceTypes(goalCategory, budgetTier, healthConditions);
 
   const planTypes: ('best-fit' | 'high-impact' | 'progressive')[] = ['best-fit', 'high-impact', 'progressive'];
@@ -959,22 +963,17 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   };
 
   planTypes.forEach((planType, index) => {
-    // Adjust service allocations based on plan type
     let adjustedServices = [...requiredServices];
     if (planType === 'high-impact') {
-      // For high-impact, boost primary service priority
       if (adjustedServices.length > 0) {
         adjustedServices[0].priority += 2;
       }
     } else if (planType === 'progressive') {
-      // For progressive, focus on fewer services
       adjustedServices = adjustedServices.slice(0, 2);
     }
     
-    // Generate service distribution based on adjusted priorities
     const serviceTypes = adjustedServices.map(s => s.category);
     
-    // Calculate session distribution
     const sessionDistribution = calculateSessionDistribution(
       options.budget || 1000,
       adjustedServices,
@@ -982,7 +981,6 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
       options.preferOnline
     );
     
-    // Enhance with practitioner recommendations
     const services = sessionDistribution.map(service => {
       const practitioners = getSuitablePractitioners(
         service.type,
@@ -1014,7 +1012,6 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
       .replace('{timeframe}', options.timeframe || '8 weeks')
       .replace('{goal}', goalDescription);
 
-    // Generate dynamic plan names based on goal and plan type
     let planName = "";
     if (planType === 'best-fit') {
       planName = `Balanced ${goalCategory.charAt(0).toUpperCase() + goalCategory.slice(1)} Plan`;
@@ -1043,11 +1040,9 @@ export const generateMedicalManagementPlan = (
   budget: number,
   timeframe: string = "12 weeks"
 ): AIHealthPlan => {
-  // Determine appropriate services for the condition
   const lowerCondition = condition.toLowerCase();
   const healthConditions = [condition];
   
-  // Map condition to goal category
   let goalCategory = GoalCategory.ChronicCondition;
   
   if (lowerCondition.includes("pain") || lowerCondition.includes("injury") || 
@@ -1055,19 +1050,15 @@ export const generateMedicalManagementPlan = (
     goalCategory = GoalCategory.Rehabilitation;
   }
   
-  // Determine budget tier
   const budgetTier = determineBudgetTier(budget);
   
-  // Get appropriate service types
   const requiredServices = determineServiceTypes(goalCategory, budgetTier, healthConditions);
   
-  // Calculate session distribution
   const sessionDistribution = calculateSessionDistribution(
     budget,
     requiredServices
   );
   
-  // Enhance with practitioner recommendations
   const services = sessionDistribution.map(service => {
     const practitioners = getSuitablePractitioners(
       service.type,

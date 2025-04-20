@@ -1,4 +1,3 @@
-
 export type ServiceCategory = 
   | 'dietician'
   | 'personal-trainer'

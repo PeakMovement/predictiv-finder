@@ -61,6 +61,14 @@ export const GOALS_BY_CATEGORY = {
     'Form correction',
     'Competition preparation'
   ],
+  'gastroenterology': [
+    'Digestive health',
+    'Stomach pain management',
+    'IBS treatment',
+    'Acid reflux management',
+    'Gut health optimization',
+    'Food sensitivity management'
+  ],
 };
 
 export const EXAMPLE_AI_PLANS: AIHealthPlan[] = [
