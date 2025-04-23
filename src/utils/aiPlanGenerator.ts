@@ -7,8 +7,22 @@ import { AIHealthPlan } from '@/types';
 
 // Function to generate custom AI health plans based on user text input
 export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
-  // Analyze the input to extract conditions and service categories
-  const { medicalConditions, suggestedCategories, budget } = analyzeUserInput(userQuery);
+  // Analyze the input to extract conditions, service categories, budget and location
+  const { 
+    medicalConditions, 
+    suggestedCategories, 
+    budget,
+    location,
+    preferOnline 
+  } = analyzeUserInput(userQuery);
+  
+  console.log("Analysis results:", {
+    medicalConditions,
+    suggestedCategories,
+    budget,
+    location,
+    preferOnline
+  });
   
   // Create plans, respecting user's budget if provided
   const plans: AIHealthPlan[] = [];
@@ -34,12 +48,18 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   budgetTiers.forEach(tier => {
     const budgetTierObj = determineBudgetTier(tier.budget);
     
+    const goal = extractGoal(userQuery);
+    console.log("Extracted goal:", goal);
+    
+    const extractedLocation = location || extractLocation(userQuery);
+    console.log("Final location:", extractedLocation);
+    
     const plan = generatePlan({
       budget: tier.budget,
       medicalConditions,
-      goal: extractGoal(userQuery),
-      location: extractLocation(userQuery),
-      preferOnline: userQuery.toLowerCase().includes('online'),
+      goal,
+      location: extractedLocation,
+      preferOnline: preferOnline !== undefined ? preferOnline : userQuery.toLowerCase().includes('online'),
       budgetTier: budgetTierObj
     });
     
@@ -55,17 +75,31 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
 // Extract goal from user input
 const extractGoal = (input: string): string => {
   const goalPatterns = [
-    /want to (.*?)(\.|\,|\;|\and)/i,
-    /goal is to (.*?)(\.|\,|\;|\and)/i,
-    /looking to (.*?)(\.|\,|\;|\and)/i,
-    /need to (.*?)(\.|\,|\;|\and)/i,
-    /help with (.*?)(\.|\,|\;|\and)/i,
+    /want to (.*?)(\.|\,|\;|\and|\s|$)/i,
+    /goal is to (.*?)(\.|\,|\;|\and|\s|$)/i,
+    /looking to (.*?)(\.|\,|\;|\and|\s|$)/i,
+    /need to (.*?)(\.|\,|\;|\and|\s|$)/i,
+    /help with (.*?)(\.|\,|\;|\and|\s|$)/i,
+    /struggling with (.*?)(\.|\,|\;|\and|\s|$)/i,
+    /improve (.*?)(\.|\,|\;|\and|\s|$)/i,
+    /manage (.*?)(\.|\,|\;|\and|\s|$)/i,
+    /treat (.*?)(\.|\,|\;|\and|\s|$)/i,
   ];
   
   for (const pattern of goalPatterns) {
     const match = input.match(pattern);
     if (match && match[1]) {
       return match[1].trim();
+    }
+  }
+  
+  // If no explicit goal found, check for key medical conditions
+  const medicalKeywords = ['pain', 'ache', 'issue', 'problem', 'condition', 'symptoms', 'discomfort', 'difficulties'];
+  for (const keyword of medicalKeywords) {
+    const medicalPattern = new RegExp(`(?:my|the|with)\\s+(.*?)\\s+${keyword}s?`, 'i');
+    const match = input.match(medicalPattern);
+    if (match && match[1]) {
+      return `manage ${match[1]} ${keyword}`;
     }
   }
   
