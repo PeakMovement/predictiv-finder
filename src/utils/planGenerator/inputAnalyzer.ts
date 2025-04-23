@@ -7,6 +7,15 @@ const SYMPTOM_TO_CONDITION: Record<string, string[]> = {
   'weight': ['weight loss'],
   'diet': ['weight loss'],
   'nutrition': ['weight loss'],
+  'lose weight': ['weight loss'],
+  'kg': ['weight loss'],
+  'tone': ['fitness goals'],
+  'toning': ['fitness goals'],
+  'train': ['fitness goals'],
+  'training': ['fitness goals'],
+  'workout': ['fitness goals'],
+  'exercise': ['fitness goals'],
+  'fitness': ['fitness goals'],
   'blood pressure': ['hypertension'],
   'high blood pressure': ['hypertension'],
   'pressure': ['hypertension'],
@@ -51,19 +60,21 @@ const SYMPTOM_TO_CONDITION: Record<string, string[]> = {
   'skin': ['skin issues'],
   'rash': ['skin issues'],
   'acne': ['skin issues'],
-  'eczema': ['skin issues']
+  'eczema': ['skin issues'],
+  'wedding': ['fitness goals', 'weight loss']
 };
 
 // Map goals to service categories
 const GOAL_TO_SERVICES: Record<string, ServiceCategory[]> = {
-  'weight loss': ['dietician', 'personal-trainer', 'coaching'],
+  'weight loss': ['personal-trainer', 'dietician', 'coaching'],
+  'fitness goals': ['personal-trainer', 'coaching', 'dietician'],
   'strength': ['personal-trainer', 'physiotherapist'],
   'muscle': ['personal-trainer', 'dietician'],
-  'nutrition': ['dietician', 'coaching'],
+  'nutrition': ['dietician', 'personal-trainer', 'coaching'],
   'recovery': ['physiotherapist', 'personal-trainer'],
   'pain management': ['physiotherapist', 'family-medicine', 'pain-management'],
-  'fitness': ['personal-trainer', 'coaching'],
-  'health': ['family-medicine', 'dietician'],
+  'fitness': ['personal-trainer', 'coaching', 'dietician'],
+  'health': ['family-medicine', 'dietician', 'personal-trainer'],
   'cardio': ['personal-trainer', 'coaching'],
   'energy': ['dietician', 'personal-trainer', 'endocrinology'],
   'stress': ['coaching', 'physiotherapist', 'psychiatry'],
@@ -98,7 +109,7 @@ export const analyzeUserInput = (input: string): {
 
   console.log("Analyzing user input:", inputLower);
 
-  // Extract budget from input
+  // Extract budget constraints
   const budgetMatches = inputLower.match(/r\s*(\d+)/i) || 
                          inputLower.match(/pay\s*r?\s*(\d+)/i) || 
                          inputLower.match(/budget.*?(\d+)/i) ||
@@ -108,6 +119,20 @@ export const analyzeUserInput = (input: string): {
   if (budgetMatches && budgetMatches[1]) {
     extractedBudget = parseInt(budgetMatches[1], 10);
     console.log("Extracted budget:", extractedBudget);
+  }
+  
+  // Detect budget constraints even if no specific number is mentioned
+  const budgetConstraintTerms = [
+    'tight budget', 'limited budget', 'cheap', 'affordable', 
+    'low cost', "can't afford", 'budget constraint', 'expensive',
+    'low price', 'reasonable price'
+  ];
+  
+  const hasBudgetConstraint = budgetConstraintTerms.some(term => inputLower.includes(term));
+  if (hasBudgetConstraint && !extractedBudget) {
+    // Set a default modest budget when constraints are mentioned
+    extractedBudget = 1000; 
+    console.log("Budget constraint detected, setting default budget:", extractedBudget);
   }
 
   // Extract location preference
@@ -174,6 +199,8 @@ export const analyzeUserInput = (input: string): {
     { term: 'dietician', service: 'dietician' },
     { term: 'nutritionist', service: 'dietician' },
     { term: 'trainer', service: 'personal-trainer' },
+    { term: 'program', service: 'personal-trainer' },
+    { term: 'meal plan', service: 'dietician' },
     { term: 'coach', service: 'coaching' },
     { term: 'physio', service: 'physiotherapist' },
     { term: 'physiotherapist', service: 'physiotherapist' },
@@ -196,6 +223,50 @@ export const analyzeUserInput = (input: string): {
       console.log("Adding service from professional mention:", service, "from term:", term);
     }
   });
+
+  // Handle negation patterns for specific services
+  const negationPatterns = [
+    { pattern: /can['']?t afford (a |an |the )?([a-zA-Z\- ]+)/i, type: 'exclusion' },
+    { pattern: /(no|not) (a |an |the )?([a-zA-Z\- ]+)/i, type: 'exclusion' },
+    { pattern: /without (a |an |the )?([a-zA-Z\- ]+)/i, type: 'exclusion' }
+  ];
+  
+  negationPatterns.forEach(({ pattern, type }) => {
+    const matches = inputLower.match(pattern);
+    if (matches) {
+      const negatedTerm = matches[matches.length - 1].toLowerCase();
+      
+      // Check if the negated term refers to a professional
+      if (negatedTerm.includes('trainer') || negatedTerm.includes('coach')) {
+        // If user says they can't afford a trainer, ensure we don't exclude it but prioritize cost-effective options
+        // We'll still include it but flag it for budget consideration
+        serviceCategories.add('personal-trainer');
+        console.log("User mentioned can't afford trainer, but we'll include budget-friendly options");
+      }
+    }
+  });
+
+  // Special handling for fitness, weight loss and toning goals
+  if (inputLower.includes('lose weight') || inputLower.includes('tone') || 
+      inputLower.includes('kg') || inputLower.includes('toning') ||
+      inputLower.includes('train') || inputLower.includes('fitness')) {
+    console.log("Adding personal trainer and dietician based on fitness/weight goals");
+    serviceCategories.add('personal-trainer');
+    serviceCategories.add('dietician');
+  }
+
+  // Wedding preparation is almost always fitness + nutrition focused
+  if (inputLower.includes('wedding')) {
+    console.log("Wedding preparation detected, adding fitness and nutrition services");
+    serviceCategories.add('personal-trainer');
+    serviceCategories.add('dietician');
+  }
+
+  // If user explicitly mentions "program" or "on my own", they want self-guided options
+  if (inputLower.includes('program') || inputLower.includes('on my own')) {
+    console.log("User wants self-guided program, adding personal trainer");
+    serviceCategories.add('personal-trainer');
+  }
 
   // If stomach issues are detected, add gastroenterology
   if (medicalConditions.includes('stomach issues')) {

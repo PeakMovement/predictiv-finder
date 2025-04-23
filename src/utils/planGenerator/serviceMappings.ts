@@ -1,7 +1,9 @@
+
 import { ServiceConfigurationByBudget, ServiceCategory } from "./types";
 
 export const CONDITION_TO_SERVICES: Record<string, ServiceCategory[]> = {
-  'weight loss': ['dietician', 'personal-trainer', 'coaching'],
+  'weight loss': ['personal-trainer', 'dietician', 'coaching'],
+  'fitness goals': ['personal-trainer', 'coaching', 'dietician'],
   'hypertension': ['cardiology', 'dietician', 'personal-trainer'],
   'diabetes': ['endocrinology', 'dietician', 'personal-trainer'],
   'asthma': ['internal-medicine', 'personal-trainer', 'dietician'],
@@ -23,34 +25,37 @@ export const CONDITION_TO_SERVICES: Record<string, ServiceCategory[]> = {
 export const SERVICE_CONFIGS_BY_BUDGET: ServiceConfigurationByBudget = {
   'low': {
     allocations: [
-      { type: 'family-medicine', percentage: 50, priority: 1, minSessions: 1 },
-      { type: 'gastroenterology', percentage: 50, priority: 1, minSessions: 1 },
-      { type: 'dietician', percentage: 40, priority: 2 },
-      { type: 'personal-trainer', percentage: 30, priority: 3 }
+      { type: 'personal-trainer', percentage: 50, priority: 1, minSessions: 1 },
+      { type: 'dietician', percentage: 40, priority: 2, minSessions: 1 },
+      { type: 'coaching', percentage: 30, priority: 3 },
+      { type: 'family-medicine', percentage: 25, priority: 4 },
+      { type: 'gastroenterology', percentage: 25, priority: 4 }
     ],
-    requiresDoctor: true,
+    requiresDoctor: false,
     preferHighEnd: false
   },
   'medium': {
     allocations: [
-      { type: 'gastroenterology', percentage: 40, priority: 1, minSessions: 1 },
-      { type: 'family-medicine', percentage: 30, priority: 1, minSessions: 1 },
+      { type: 'personal-trainer', percentage: 40, priority: 1, minSessions: 2 },
       { type: 'dietician', percentage: 30, priority: 2, minSessions: 1 },
-      { type: 'personal-trainer', percentage: 25, priority: 3 },
+      { type: 'coaching', percentage: 25, priority: 3 },
+      { type: 'gastroenterology', percentage: 20, priority: 4 },
+      { type: 'family-medicine', percentage: 20, priority: 4 },
       { type: 'physiotherapist', percentage: 25, priority: 3 }
     ],
-    requiresDoctor: true,
+    requiresDoctor: false,
     preferHighEnd: true
   },
   'high': {
     allocations: [
-      { type: 'gastroenterology', percentage: 35, priority: 1, minSessions: 1 },
-      { type: 'family-medicine', percentage: 25, priority: 1, minSessions: 1 },
-      { type: 'dietician', percentage: 20, priority: 2, minSessions: 1 },
-      { type: 'personal-trainer', percentage: 10, priority: 3 },
+      { type: 'personal-trainer', percentage: 35, priority: 1, minSessions: 4 },
+      { type: 'dietician', percentage: 25, priority: 2, minSessions: 2 },
+      { type: 'coaching', percentage: 20, priority: 3 },
+      { type: 'gastroenterology', percentage: 15, priority: 4 },
+      { type: 'family-medicine', percentage: 15, priority: 4 },
       { type: 'physiotherapist', percentage: 10, priority: 3 }
     ],
-    requiresDoctor: true,
+    requiresDoctor: false,
     preferHighEnd: true
   }
 };

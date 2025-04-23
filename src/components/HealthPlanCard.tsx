@@ -45,6 +45,9 @@ export const HealthPlanCard = ({ plan, onSelect, featured = false }: HealthPlanC
   const { bgGradient, icon } = getPlanTypeStyles(plan.planType);
   const planTypeLabel = planTypeLabels[plan.planType];
 
+  // Log the plan to help with debugging
+  console.log("Rendering plan:", plan.name, "with services:", plan.services);
+
   return (
     <motion.div
       className={`rounded-xl overflow-hidden ${featured ? 'ring-4 ring-health-purple/30' : ''}`}
@@ -81,7 +84,7 @@ export const HealthPlanCard = ({ plan, onSelect, featured = false }: HealthPlanC
                     <p className="text-health-purple font-medium text-sm">R{service.price} per session</p>
                   </div>
 
-                  {service.recommendedPractitioners && service.recommendedPractitioners.length > 0 && (
+                  {service.recommendedPractitioners && service.recommendedPractitioners.length > 0 ? (
                     <div className="mt-2">
                       <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Recommended Practitioners:</p>
                       <div className="flex items-center gap-2">
@@ -92,6 +95,9 @@ export const HealthPlanCard = ({ plan, onSelect, featured = false }: HealthPlanC
                                 src={practitioner.imageUrl || "/placeholder.svg"} 
                                 alt={practitioner.name}
                                 className="object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = "/placeholder.svg";
+                                }}
                               />
                             </Avatar>
                             <span className="text-xs">{practitioner.name}</span>
@@ -102,6 +108,8 @@ export const HealthPlanCard = ({ plan, onSelect, featured = false }: HealthPlanC
                         )}
                       </div>
                     </div>
+                  ) : (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">No specific practitioners recommended</p>
                   )}
                 </li>
               ))}

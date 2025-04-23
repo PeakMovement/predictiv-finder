@@ -24,6 +24,18 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     preferOnline
   });
   
+  // Ensure personal trainer is included for fitness/weight loss queries
+  let categories = [...suggestedCategories];
+  if (userQuery.toLowerCase().includes('weight') || 
+      userQuery.toLowerCase().includes('tone') || 
+      userQuery.toLowerCase().includes('kg') || 
+      userQuery.toLowerCase().includes('train')) {
+    if (!categories.includes('personal-trainer')) {
+      categories.push('personal-trainer');
+      console.log("Added personal-trainer based on fitness keywords");
+    }
+  }
+  
   // Create plans, respecting user's budget if provided
   const plans: AIHealthPlan[] = [];
   
@@ -32,6 +44,11 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     { name: 'medium', budget: 2000 },
     { name: 'high', budget: 4000 }
   ];
+  
+  // If budget constraints are mentioned but no specific budget given, assume tight budget
+  const hasBudgetConstraint = userQuery.toLowerCase().includes('tight budget') || 
+                             userQuery.toLowerCase().includes("can't afford") ||
+                             userQuery.toLowerCase().includes('affordable');
   
   // If user specified a budget, create custom tiers around that budget
   if (budget) {
@@ -42,6 +59,13 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
       { name: 'low', budget: userBudget },
       { name: 'medium', budget: Math.floor(userBudget * 1.5) },
       { name: 'high', budget: Math.floor(userBudget * 2.5) }
+    ];
+  } else if (hasBudgetConstraint) {
+    // Set lower budget tiers if constraints mentioned but no specific budget
+    budgetTiers = [
+      { name: 'low', budget: 600 },
+      { name: 'medium', budget: 1200 },
+      { name: 'high', budget: 2500 }
     ];
   }
   
@@ -74,6 +98,30 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
 
 // Extract goal from user input
 const extractGoal = (input: string): string => {
+  // Special handling for weight loss and fitness
+  if (input.toLowerCase().includes('lose weight') || 
+      input.toLowerCase().includes('weight loss') || 
+      input.toLowerCase().includes('kg')) {
+    
+    // Extract specific kg/pounds mentioned
+    const weightMatch = input.match(/lose\s+(\d+)\s*(kg|pounds|lbs)/i);
+    if (weightMatch) {
+      const amount = weightMatch[1];
+      const unit = weightMatch[2];
+      return `lose ${amount} ${unit}`;
+    }
+    
+    return 'lose weight';
+  }
+  
+  if (input.toLowerCase().includes('tone') || input.toLowerCase().includes('toning')) {
+    return 'tone up and improve fitness';
+  }
+  
+  if (input.toLowerCase().includes('wedding')) {
+    return 'get fit for wedding';
+  }
+  
   const goalPatterns = [
     /want to (.*?)(\.|\,|\;|\and|\s|$)/i,
     /goal is to (.*?)(\.|\,|\;|\and|\s|$)/i,
