@@ -2,6 +2,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { AIHealthPlan } from "@/types";
+import { Avatar } from "@/components/ui/avatar";
 
 interface HealthPlanCardProps {
   plan: AIHealthPlan;
@@ -71,15 +72,37 @@ export const HealthPlanCard = ({ plan, onSelect, featured = false }: HealthPlanC
           
           <div className="mb-4 flex-grow">
             <h5 className="font-medium text-sm mb-2">Included Services:</h5>
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               {plan.services.map((service, idx) => (
-                <li key={idx} className="flex items-start">
-                  <span className="text-health-teal mr-2">•</span>
-                  <div>
+                <li key={idx} className="pb-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                  <div className="mb-2">
                     <p className="font-medium capitalize text-sm">{service.sessions}x {service.type.replace('-', ' ')}</p>
                     <p className="text-gray-600 dark:text-gray-400 text-xs">{service.description}</p>
                     <p className="text-health-purple font-medium text-sm">R{service.price} per session</p>
                   </div>
+
+                  {service.recommendedPractitioners && service.recommendedPractitioners.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Recommended Practitioners:</p>
+                      <div className="flex items-center gap-2">
+                        {service.recommendedPractitioners.slice(0, 2).map((practitioner, i) => (
+                          <div key={i} className="flex items-center gap-1.5">
+                            <Avatar className="w-6 h-6 border border-gray-200">
+                              <img 
+                                src={practitioner.imageUrl || "/placeholder.svg"} 
+                                alt={practitioner.name}
+                                className="object-cover"
+                              />
+                            </Avatar>
+                            <span className="text-xs">{practitioner.name}</span>
+                          </div>
+                        ))}
+                        {service.recommendedPractitioners.length > 2 && (
+                          <span className="text-xs text-gray-500">+{service.recommendedPractitioners.length - 2} more</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>

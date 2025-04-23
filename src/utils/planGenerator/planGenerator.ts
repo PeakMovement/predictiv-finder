@@ -1,3 +1,4 @@
+
 import { AIHealthPlan, Practitioner, ServiceCategory } from "@/types";
 import { PRACTITIONERS } from "@/data/mockData";
 import { PlanContext, ServiceAllocation } from "./types";
@@ -53,6 +54,7 @@ const determineRequiredServices = (
     });
   }
 
+  // If no specific services were determined, use default allocations
   if (services.length === 0) {
     services = allocations;
   }
@@ -89,16 +91,39 @@ const allocateServices = (
       );
     }
 
+    // Add online preference filtering
+    if (context.preferOnline !== undefined) {
+      availablePractitioners = availablePractitioners.filter(p => 
+        p.isOnline === context.preferOnline
+      );
+    }
+
+    // If we found practitioners for this service
     if (availablePractitioners.length > 0) {
-      const practitioner = availablePractitioners[0]; // For now, take first match
+      // Sort practitioners by rating
+      const sortedPractitioners = [...availablePractitioners].sort((a, b) => b.rating - a.rating);
       
       allocatedServices.push({
         type: service.type,
         price: sessionAllocation.costPerSession,
         sessions: sessionAllocation.sessions,
         description: generateServiceDescription(service.type, context.budgetTier.name === 'high'),
-        recommendedPractitioners: availablePractitioners.slice(0, 3)
+        recommendedPractitioners: sortedPractitioners.slice(0, 3)
       });
+    } else {
+      // Even if we don't find exact matches, include the service with general practitioners
+      // This ensures the plan always has services even if perfect matches aren't found
+      const generalPractitioners = PRACTITIONERS.filter(p => p.serviceType === service.type).slice(0, 3);
+      
+      if (generalPractitioners.length > 0) {
+        allocatedServices.push({
+          type: service.type,
+          price: sessionAllocation.costPerSession,
+          sessions: sessionAllocation.sessions,
+          description: generateServiceDescription(service.type, context.budgetTier.name === 'high'),
+          recommendedPractitioners: generalPractitioners
+        });
+      }
     }
   });
 

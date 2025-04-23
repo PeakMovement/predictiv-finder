@@ -62,6 +62,13 @@ export const AIPlansDisplay = ({
 
   // Analyze the user query to display relevant information
   const analysis = analyzeUserInput(userQuery);
+  
+  // Check if plans have actual practitioners to display
+  const hasPractitioners = plans.some(plan => 
+    plan.services.some(service => 
+      service.recommendedPractitioners && service.recommendedPractitioners.length > 0
+    )
+  );
 
   return (
     <motion.div
