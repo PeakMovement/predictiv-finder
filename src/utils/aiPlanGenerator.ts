@@ -4,24 +4,36 @@ import { analyzeUserInput } from './planGenerator/inputAnalyzer';
 import { findAlternativeCategories } from './planGenerator/categoryMatcher';
 import { determineBudgetTier } from './planGenerator/budgetConfig';
 import { AIHealthPlan } from '@/types';
+import { enhancedAnalyzeUserInput, checkCoMorbidities, generatePlanNotes } from './planGenerator/enhancedInputAnalyzer';
+import { CO_MORBIDITY_MAPPINGS } from './planGenerator/serviceMappings';
 
 // Function to generate custom AI health plans based on user text input
 export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
-  // Analyze the input to extract conditions, service categories, budget and location
+  // Use enhanced analysis to extract detailed information from user input
   const { 
     medicalConditions, 
     suggestedCategories, 
     budget,
     location,
-    preferOnline 
-  } = analyzeUserInput(userQuery);
+    preferOnline,
+    severity,
+    preferences,
+    timeAvailability,
+    timeFrame,
+    specificGoals
+  } = enhancedAnalyzeUserInput(userQuery);
   
-  console.log("Analysis results:", {
+  console.log("Enhanced analysis results:", {
     medicalConditions,
     suggestedCategories,
     budget,
     location,
-    preferOnline
+    preferOnline,
+    severity,
+    preferences,
+    timeAvailability,
+    timeFrame,
+    specificGoals
   });
   
   // Ensure personal trainer is included for fitness/weight loss queries
@@ -36,9 +48,35 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     }
   }
   
+  // Handle co-morbidities - add specialized services when certain conditions co-occur
+  // Check from our mappings first
+  Object.values(CO_MORBIDITY_MAPPINGS).forEach(mapping => {
+    const hasAllConditions = mapping.conditions.every(condition => 
+      medicalConditions.includes(condition)
+    );
+    
+    if (hasAllConditions) {
+      mapping.additionalServices.forEach(service => {
+        if (!categories.includes(service)) {
+          categories.push(service);
+          console.log(`Added ${service} due to co-morbidity of ${mapping.conditions.join(' + ')}`);
+        }
+      });
+    }
+  });
+  
+  // Also check with our helper function for any additional co-morbidities
+  const coMorbidityServices = checkCoMorbidities(medicalConditions);
+  coMorbidityServices.forEach(service => {
+    if (!categories.includes(service)) {
+      categories.push(service);
+    }
+  });
+  
   // Create plans, respecting user's budget if provided
   const plans: AIHealthPlan[] = [];
   
+  // Dynamic budget tier calculation
   let budgetTiers = [
     { name: 'low', budget: 800 },
     { name: 'medium', budget: 2000 },
@@ -48,7 +86,8 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   // If budget constraints are mentioned but no specific budget given, assume tight budget
   const hasBudgetConstraint = userQuery.toLowerCase().includes('tight budget') || 
                              userQuery.toLowerCase().includes("can't afford") ||
-                             userQuery.toLowerCase().includes('affordable');
+                             userQuery.toLowerCase().includes('affordable') ||
+                             preferences.budgetConstraint === 'tight';
   
   // If user specified a budget, create custom tiers around that budget
   if (budget) {
@@ -69,15 +108,26 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     ];
   }
   
+  // Adjust tiers based on preferences (e.g., student discount)
+  if (preferences.occupation === 'student') {
+    budgetTiers = budgetTiers.map(tier => ({
+      ...tier,
+      budget: Math.floor(tier.budget * 0.8), // 20% discount for students
+    }));
+    console.log("Applied student discount to budget tiers");
+  }
+  
+  // Generate plans for each budget tier
   budgetTiers.forEach(tier => {
     const budgetTierObj = determineBudgetTier(tier.budget);
     
-    const goal = extractGoal(userQuery);
+    const goal = extractGoal(userQuery, specificGoals);
     console.log("Extracted goal:", goal);
     
     const extractedLocation = location || extractLocation(userQuery);
     console.log("Final location:", extractedLocation);
     
+    // Generate the plan using our existing function but with enhanced context
     const plan = generatePlan({
       budget: tier.budget,
       medicalConditions,
@@ -90,14 +140,37 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     // Add unique tier name to differentiate plans
     plan.name = `${tier.name.charAt(0).toUpperCase() + tier.name.slice(1)} Budget: ${plan.name}`;
     
+    // Generate personalized notes
+    const personalizedNotes = generatePlanNotes(
+      preferences,
+      medicalConditions,
+      severity,
+      specificGoals,
+      timeFrame,
+      extractedLocation,
+      preferOnline
+    );
+    
+    // Add notes to the plan description
+    if (personalizedNotes.length > 0) {
+      plan.description = `${plan.description} ${personalizedNotes.join(' ')}`;
+    }
+    
     plans.push(plan);
   });
   
-  return plans;
+  // Sort plans by budget
+  return plans.sort((a, b) => a.totalCost - b.totalCost);
 };
 
-// Extract goal from user input
-const extractGoal = (input: string): string => {
+// Extract goal from user input with enhanced specificity
+const extractGoal = (input: string, specificGoals: Record<string, any> = {}): string => {
+  // Handle weight loss with specific targets
+  if (specificGoals.weightLoss) {
+    const { amount, unit } = specificGoals.weightLoss;
+    return `lose ${amount} ${unit}`;
+  }
+  
   // Special handling for weight loss and fitness
   if (input.toLowerCase().includes('lose weight') || 
       input.toLowerCase().includes('weight loss') || 

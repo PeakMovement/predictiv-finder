@@ -1,5 +1,6 @@
 
 import { ServiceCategory } from "./types";
+import { SERVICE_PRICE_RANGES } from "./serviceMappings";
 
 interface SessionAllocation {
   sessions: number;
@@ -10,9 +11,12 @@ interface SessionAllocation {
 export const calculateSessions = (
   monthlyBudget: number,
   serviceType: ServiceCategory,
-  priority: number = 1
+  priority: number = 1,
+  preferences: Record<string, string> = {},
+  severity: Record<string, number> = {},
+  preferHighEnd: boolean = false
 ): SessionAllocation => {
-  // Adjust budget based on priority (e.g., primary vs secondary service)
+  // Adjust budget based on priority
   const allocatedBudget = monthlyBudget * priority;
   
   // Define minimum and maximum sessions per month for each service type
@@ -46,68 +50,27 @@ export const calculateSessions = (
     'pain-management': { min: 1, max: 3 },
   };
 
-  // Get base cost per session for the service type
-  const getBaseCost = (type: ServiceCategory): number => {
-    // Base costs adjusted to provide more affordable options for common services
-    const BASELINE_COSTS: Partial<Record<ServiceCategory, number>> = {
-      'dietician': 400,
-      'personal-trainer': 350,
-      'physiotherapist': 450,
-      'coaching': 400,
-      'family-medicine': 400, // Reduced from 800 to match typical GP visit cost
-      'biokineticist': 450,
-      'internal-medicine': 650,
-      'pediatrics': 500,
-      'cardiology': 800,
-      'dermatology': 600,
-      'orthopedics': 700,
-      'neurology': 800,
-      'gastroenterology': 600, // Reduced for stomach issues
-      'obstetrics-gynecology': 700,
-      'emergency-medicine': 1200,
-      'psychiatry': 800,
-      'anesthesiology': 1000,
-      'endocrinology': 700,
-      'urology': 700,
-      'oncology': 900,
-      'neurosurgery': 1500,
-      'infectious-disease': 700,
-      'radiology': 600,
-      'geriatric-medicine': 600,
-      'plastic-surgery': 1200,
-      'rheumatology': 700,
-      'pain-management': 600,
-    };
-
-    // Define high-end costs for premium services
-    const PREMIUM_COSTS: Partial<Record<ServiceCategory, number>> = {
-      'dietician': 600,
-      'personal-trainer': 500,
-      'physiotherapist': 700,
-      'coaching': 550,
-      'family-medicine': 800,
-      'gastroenterology': 1000,
-      'obstetrics-gynecology': 900,
-      'emergency-medicine': 1500,
-      'psychiatry': 1000,
-      'anesthesiology': 1300,
-      'endocrinology': 950,
-      'urology': 950,
-      'oncology': 1200,
-      'neurosurgery': 2000,
-      'infectious-disease': 950,
-      'radiology': 800,
-      'geriatric-medicine': 850,
-      'plastic-surgery': 1500,
-      'rheumatology': 900,
-      'pain-management': 800,
-    };
+  // Get price range for the service type
+  const priceRange = SERVICE_PRICE_RANGES[serviceType] || { affordable: 500, highEnd: 800 };
+  
+  // Determine base cost based on preference for high-end services
+  let baseCost = preferHighEnd ? priceRange.highEnd : priceRange.affordable;
+  
+  // Apply discounts for certain user categories
+  if (preferences.occupation === 'student') {
+    baseCost = Math.floor(baseCost * 0.85); // 15% student discount
+  }
+  
+  // For severe conditions, we might need higher quality services
+  const relatedConditions = Object.entries(severity)
+    .filter(([_, value]) => value > 0.7) // High severity
+    .map(([condition, _]) => condition);
     
-    // For now, use baseline costs. If premium is needed, we can expose that option
-    return BASELINE_COSTS[type] || 500; // Default to 500 if not specified
-  };
-
-  const baseCost = getBaseCost(serviceType);
+  if (relatedConditions.length > 0) {
+    // For severe conditions, prefer higher quality services
+    baseCost = Math.floor(baseCost * 1.1); // 10% premium for serious conditions
+  }
+  
   const defaultLimits = { min: 1, max: 4 };
   const limits = SESSION_LIMITS[serviceType] || defaultLimits;
 
@@ -126,6 +89,11 @@ export const calculateSessions = (
     1, // Always allow at least 1 session
     Math.min(possibleSessions, limits.max)
   );
+  
+  // For busy people, limit sessions further
+  if (preferences.schedule === 'busy') {
+    possibleSessions = Math.min(possibleSessions, 2); // Limit to 1-2 sessions for busy people
+  }
 
   return {
     sessions: possibleSessions,
@@ -136,12 +104,15 @@ export const calculateSessions = (
 
 export const distributeSessionsByBudget = (
   monthlyBudget: number,
-  services: { type: ServiceCategory; priority: number }[]
+  services: { type: ServiceCategory; priority: number }[],
+  preferences: Record<string, string> = {},
+  severity: Record<string, number> = {},
+  preferHighEnd: boolean = false
 ): Partial<Record<ServiceCategory, SessionAllocation>> => {
   const allocations: Partial<Record<ServiceCategory, SessionAllocation>> = {};
   
-  // Sort services by priority (highest first)
-  const sortedServices = [...services].sort((a, b) => b.priority - a.priority);
+  // Sort services by priority (lowest number = highest priority)
+  const sortedServices = [...services].sort((a, b) => a.priority - b.priority);
   
   let remainingBudget = monthlyBudget;
   
@@ -151,7 +122,10 @@ export const distributeSessionsByBudget = (
     const allocation = calculateSessions(
       remainingBudget,
       service.type,
-      service.priority
+      service.priority,
+      preferences,
+      severity,
+      preferHighEnd
     );
     
     if (allocation.sessions > 0) {

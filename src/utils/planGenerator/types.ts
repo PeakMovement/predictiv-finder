@@ -18,6 +18,7 @@ export interface ServiceAllocation {
   percentage: number;
   priority: number;
   minSessions?: number;
+  maxSessions?: number;
 }
 
 export interface PriceRange {
@@ -32,6 +33,10 @@ export interface PlanContext {
   medicalConditions: string[];
   preferOnline?: boolean;
   budgetTier: BudgetTier;
+  severity?: Record<string, number>;
+  preferences?: Record<string, string>;
+  specificGoals?: Record<string, any>;
+  timeAvailability?: number;
 }
 
 export interface ServiceConfigurationByBudget {
