@@ -1,14 +1,21 @@
 
-import { generatePlan } from './planGenerator/planGenerator';
+import { AIHealthPlan } from '@/types';
 import { analyzeUserInput } from './planGenerator/inputAnalyzer';
 import { findAlternativeCategories } from './planGenerator/categoryMatcher';
 import { determineBudgetTier } from './planGenerator/budgetConfig';
-import { AIHealthPlan } from '@/types';
-import { enhancedAnalyzeUserInput, checkCoMorbidities, generatePlanNotes } from './planGenerator/enhancedInputAnalyzer';
-import { CO_MORBIDITY_MAPPINGS } from './planGenerator/serviceMappings';
+import { generatePlan } from './planGenerator/planGenerator';
+import { 
+  enhancedAnalyzeUserInput, 
+  checkCoMorbidities, 
+  generatePlanNotes,
+  calculateOptimalServiceAllocation
+} from './planGenerator/enhancedInputAnalyzer';
+import { BASELINE_COSTS, STUDENT_DISCOUNT } from './planGenerator/types';
 
 // Function to generate custom AI health plans based on user text input
 export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
+  console.log("Generating AI plans for query:", userQuery);
+  
   // Use enhanced analysis to extract detailed information from user input
   const { 
     medicalConditions, 
@@ -20,79 +27,344 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     preferences,
     timeAvailability,
     timeFrame,
-    specificGoals
+    specificGoals,
+    primaryIssue,
+    contextualFactors,
+    servicePriorities,
+    contraindicated,
+    userType
   } = enhancedAnalyzeUserInput(userQuery);
   
-  console.log("Enhanced analysis results:", {
+  console.log("Enhanced analysis complete:", {
     medicalConditions,
     suggestedCategories,
     budget,
     location,
     preferOnline,
     severity,
-    preferences,
-    timeAvailability,
-    timeFrame,
-    specificGoals
+    primaryIssue,
+    contextualFactors,
+    userType
   });
   
-  // Ensure personal trainer is included for fitness/weight loss queries
+  // Ensure we have the right categories based on the analysis
   let categories = [...suggestedCategories];
-  if (userQuery.toLowerCase().includes('weight') || 
-      userQuery.toLowerCase().includes('tone') || 
-      userQuery.toLowerCase().includes('kg') || 
-      userQuery.toLowerCase().includes('train')) {
-    if (!categories.includes('personal-trainer')) {
-      categories.push('personal-trainer');
-      console.log("Added personal-trainer based on fitness keywords");
-    }
-  }
   
   // Handle co-morbidities - add specialized services when certain conditions co-occur
-  // Check from our mappings first
-  Object.values(CO_MORBIDITY_MAPPINGS).forEach(mapping => {
-    const hasAllConditions = mapping.conditions.every(condition => 
-      medicalConditions.includes(condition)
-    );
-    
-    if (hasAllConditions) {
-      mapping.additionalServices.forEach(service => {
-        if (!categories.includes(service)) {
-          categories.push(service);
-          console.log(`Added ${service} due to co-morbidity of ${mapping.conditions.join(' + ')}`);
-        }
-      });
-    }
-  });
-  
-  // Also check with our helper function for any additional co-morbidities
   const coMorbidityServices = checkCoMorbidities(medicalConditions);
   coMorbidityServices.forEach(service => {
-    if (!categories.includes(service)) {
+    if (!categories.includes(service) && !contraindicated.includes(service)) {
       categories.push(service);
+      console.log(`Added ${service} due to co-morbidity detection`);
     }
   });
   
-  // Create plans, respecting user's budget if provided
+  // Remove contraindicated services
+  categories = categories.filter(cat => !contraindicated.includes(cat));
+  console.log("Final service categories after filtering:", categories);
+  
+  // Calculate budget tiers based on user input and context
+  let budgetTiers = calculateBudgetTiers(
+    budget, 
+    userQuery, 
+    preferences, 
+    userType, 
+    contextualFactors
+  );
+  
+  console.log("Generated budget tiers:", budgetTiers);
+  
+  // Create plans for each budget tier
   const plans: AIHealthPlan[] = [];
   
-  // Dynamic budget tier calculation
+  for (const tier of budgetTiers) {
+    console.log(`\nGenerating plan for ${tier.name} tier (${tier.budget} ZAR)`);
+    
+    // Use our enhanced calculation for optimal service allocation
+    const optimizedServices = calculateOptimalServiceAllocation(
+      categories,
+      servicePriorities || {},
+      tier.budget,
+      userType,
+      contextualFactors || []
+    );
+    
+    console.log("Optimized services:", optimizedServices);
+    
+    // Generate notes
+    const notes = generatePlanNotes(
+      preferences || {},
+      medicalConditions,
+      severity || {},
+      specificGoals || {},
+      timeFrame,
+      location,
+      preferOnline,
+      contextualFactors,
+      primaryIssue,
+      servicePriorities
+    );
+    
+    // Create a customized description
+    let description = generatePlanDescription(
+      medicalConditions, 
+      primaryIssue, 
+      userType, 
+      tier.name
+    );
+    
+    // Add notes to description
+    if (notes.length > 0) {
+      description = `${description} ${notes.join(' ')}`;
+    }
+    
+    // Create the final plan
+    const plan: AIHealthPlan = {
+      id: `plan-${Date.now()}-${Math.floor(Math.random() * 1000)}-${tier.name}`,
+      name: generatePlanName(tier.name, medicalConditions, primaryIssue),
+      description,
+      services: optimizedServices.map(service => ({
+        type: service.type,
+        price: Math.round(service.cost / service.sessions), // Price per session
+        sessions: service.sessions,
+        description: generateServiceDescription(
+          service.type, 
+          tier.name === 'high',
+          service.frequency,
+          primaryIssue
+        ),
+        recommendedPractitioners: [] // Will be populated by the planGenerator module
+      })),
+      totalCost: optimizedServices.reduce((sum, s) => sum + s.cost, 0),
+      planType: determinePlanType(medicalConditions, primaryIssue, tier.name),
+      timeFrame: timeFrame || determineTimeFrame(medicalConditions, userQuery, contextualFactors)
+    };
+    
+    plans.push(plan);
+  }
+  
+  // Sort plans by budget
+  return plans.sort((a, b) => a.totalCost - b.totalCost);
+};
+
+// Helper function to generate more specific plan names
+function generatePlanName(
+  tierName: string, 
+  conditions: string[], 
+  primaryIssue?: string
+): string {
+  const tierPrefix = `${tierName.charAt(0).toUpperCase() + tierName.slice(1)} Budget:`;
+  
+  if (primaryIssue === 'shoulder pain' || conditions.includes('shoulder strain')) {
+    return `${tierPrefix} Shoulder Recovery Plan`;
+  }
+  
+  if (primaryIssue === 'knee pain' || conditions.includes('knee pain')) {
+    return `${tierPrefix} Knee Rehabilitation Plan`;
+  }
+  
+  if (primaryIssue === 'back pain' || conditions.includes('back pain')) {
+    return `${tierPrefix} Back Relief & Recovery Plan`;
+  }
+  
+  if (primaryIssue === 'digestive issues' || conditions.includes('stomach issues')) {
+    return `${tierPrefix} Digestive Health Plan`;
+  }
+  
+  if (primaryIssue === 'weight management' || conditions.includes('weight loss')) {
+    return `${tierPrefix} Weight Management Plan`;
+  }
+  
+  if (primaryIssue === 'fitness' || primaryIssue === 'strength' || conditions.includes('fitness goals')) {
+    return `${tierPrefix} Fitness & Strength Plan`;
+  }
+  
+  if (primaryIssue === 'event preparation') {
+    return `${tierPrefix} Event Preparation Plan`;
+  }
+  
+  if (primaryIssue === 'sports injury' || conditions.includes('sports injury')) {
+    return `${tierPrefix} Sports Recovery Plan`;
+  }
+  
+  if (primaryIssue === 'stress' || conditions.includes('mental health')) {
+    return `${tierPrefix} Stress Management Plan`;
+  }
+  
+  // Default name
+  return `${tierPrefix} Customized Wellness Plan`;
+}
+
+// Helper function to generate more personalized descriptions
+function generatePlanDescription(
+  conditions: string[], 
+  primaryIssue?: string,
+  userType?: string,
+  tierName?: string
+): string {
+  if (primaryIssue === 'shoulder pain' || conditions.includes('shoulder strain')) {
+    return "A targeted recovery plan focusing on shoulder rehabilitation with physiotherapy and properly guided exercises to reduce pain and restore function.";
+  }
+  
+  if (primaryIssue === 'knee pain' || conditions.includes('knee pain')) {
+    return "A specialized knee rehabilitation program combining physiotherapy, targeted exercises, and professional guidance to rebuild strength and reduce discomfort.";
+  }
+  
+  if (primaryIssue === 'back pain' || conditions.includes('back pain')) {
+    return "A comprehensive back care plan with therapeutic interventions to address pain, improve posture, and strengthen core stabilizing muscles.";
+  }
+  
+  if (primaryIssue === 'digestive issues' || conditions.includes('stomach issues')) {
+    return "A personalized digestive health plan with nutritional guidance and specialist support to address gut health concerns and improve overall well-being.";
+  }
+  
+  if (primaryIssue === 'weight management' || conditions.includes('weight loss')) {
+    return "A sustainable weight management program combining nutritional guidance and effective exercise strategies tailored to your specific goals and lifestyle.";
+  }
+  
+  if (primaryIssue === 'fitness' || primaryIssue === 'strength' || conditions.includes('fitness goals')) {
+    return "A progressive strength and fitness plan designed to build muscle, improve performance, and enhance overall physical capacity through structured training.";
+  }
+  
+  if (primaryIssue === 'event preparation') {
+    return "A specialized training program to prepare you for your upcoming event with periodized training phases, recovery strategies, and performance optimization.";
+  }
+  
+  if (primaryIssue === 'sports injury' || conditions.includes('sports injury')) {
+    return "An integrated recovery plan to address your sports injury through rehabilitation, gradual return to activity, and preventive strategies.";
+  }
+  
+  if (primaryIssue === 'stress' || conditions.includes('mental health')) {
+    return "A holistic stress management program combining mental wellness strategies with physical activity to improve resilience and overall wellbeing.";
+  }
+  
+  // Default description
+  let baseDescription = "A personalized wellness plan designed to address your specific health needs";
+  
+  if (userType === 'student') {
+    baseDescription += " with student-friendly options";
+  } else if (tierName === 'low') {
+    baseDescription += " within an affordable budget";
+  } else if (tierName === 'high') {
+    baseDescription += " with premium service options";
+  }
+  
+  return `${baseDescription}.`;
+}
+
+// Helper function to generate more specific service descriptions
+function generateServiceDescription(
+  serviceType: string, 
+  isHighEnd: boolean,
+  frequency?: string,
+  primaryIssue?: string
+): string {
+  let description = '';
+  
+  switch (serviceType) {
+    case 'physiotherapist':
+      if (primaryIssue === 'shoulder pain') {
+        description = "Specialized shoulder assessment and rehabilitation treatment";
+      } else if (primaryIssue === 'knee pain') {
+        description = "Comprehensive knee evaluation and targeted rehabilitation";
+      } else if (primaryIssue === 'back pain') {
+        description = "Focused back assessment with manual therapy and corrective exercises";
+      } else if (primaryIssue === 'sports injury') {
+        description = "Sports injury rehabilitation with return-to-play protocols";
+      } else {
+        description = isHighEnd 
+          ? "Comprehensive physiotherapy assessment and specialized treatment plan" 
+          : "Clinical assessment and targeted rehabilitation exercises";
+      }
+      break;
+      
+    case 'personal-trainer':
+      if (primaryIssue === 'weight management') {
+        description = "Structured weight loss training sessions with fat-burning exercises";
+      } else if (primaryIssue === 'fitness' || primaryIssue === 'strength') {
+        description = "Progressive strength training with performance tracking";
+      } else if (primaryIssue === 'event preparation') {
+        description = "Event-specific training with periodization and performance targets";
+      } else {
+        description = isHighEnd 
+          ? "Fully personalized training sessions with advanced program design" 
+          : "Guided workout sessions targeting your specific fitness goals";
+      }
+      break;
+      
+    case 'dietician':
+      if (primaryIssue === 'weight management') {
+        description = "Customized meal planning for sustainable weight loss";
+      } else if (primaryIssue === 'digestive issues') {
+        description = "Specialized dietary assessment for digestive health";
+      } else {
+        description = isHighEnd 
+          ? "Comprehensive nutritional assessment with detailed dietary recommendations" 
+          : "Nutritional guidance and practical meal planning advice";
+      }
+      break;
+      
+    case 'coaching':
+      description = isHighEnd 
+        ? "One-on-one coaching sessions with advanced behavior change techniques" 
+        : "Supportive coaching to help develop healthy habits and mindsets";
+      break;
+      
+    default:
+      description = isHighEnd 
+        ? "Specialized professional consultation with comprehensive assessment" 
+        : "Professional consultation focused on your specific needs";
+  }
+  
+  // Add frequency information if available
+  if (frequency) {
+    description += ` (${frequency})`;
+  }
+  
+  return description;
+}
+
+// Helper function to calculate budget tiers
+function calculateBudgetTiers(
+  budget: number | undefined, 
+  userQuery: string, 
+  preferences: Record<string, string> = {},
+  userType?: string,
+  contextualFactors: string[] = []
+): { name: string; budget: number }[] {
+  const hasBudgetConstraint = 
+    userQuery.toLowerCase().includes('tight budget') || 
+    userQuery.toLowerCase().includes("can't afford") ||
+    userQuery.toLowerCase().includes('affordable') ||
+    preferences.budgetConstraint === 'tight' ||
+    contextualFactors.includes('budget-sensitive');
+  
+  // Default tiers for South African market (in Rands)
   let budgetTiers = [
-    { name: 'low', budget: 800 },
-    { name: 'medium', budget: 2000 },
-    { name: 'high', budget: 4000 }
+    { name: 'low', budget: 1000 },
+    { name: 'medium', budget: 2500 },
+    { name: 'high', budget: 5000 }
   ];
   
-  // If budget constraints are mentioned but no specific budget given, assume tight budget
-  const hasBudgetConstraint = userQuery.toLowerCase().includes('tight budget') || 
-                             userQuery.toLowerCase().includes("can't afford") ||
-                             userQuery.toLowerCase().includes('affordable') ||
-                             preferences.budgetConstraint === 'tight';
+  // Adjust tiers based on user type
+  if (userType === 'student') {
+    budgetTiers = [
+      { name: 'low', budget: 800 },
+      { name: 'medium', budget: 1500 },
+      { name: 'high', budget: 3000 }
+    ];
+  } else if (userType === 'premium') {
+    budgetTiers = [
+      { name: 'low', budget: 2000 },
+      { name: 'medium', budget: 4000 },
+      { name: 'high', budget: 8000 }
+    ];
+  }
   
   // If user specified a budget, create custom tiers around that budget
   if (budget) {
     // Create a low tier at exactly the user's budget
-    const userBudget = Math.max(400, budget); // Ensure minimum viable budget
+    const userBudget = Math.max(500, budget); // Ensure minimum viable budget
     
     budgetTiers = [
       { name: 'low', budget: userBudget },
@@ -102,155 +374,71 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   } else if (hasBudgetConstraint) {
     // Set lower budget tiers if constraints mentioned but no specific budget
     budgetTiers = [
-      { name: 'low', budget: 600 },
-      { name: 'medium', budget: 1200 },
-      { name: 'high', budget: 2500 }
+      { name: 'low', budget: 800 },
+      { name: 'medium', budget: 1600 },
+      { name: 'high', budget: 3000 }
     ];
   }
   
-  // Adjust tiers based on preferences (e.g., student discount)
-  if (preferences.occupation === 'student') {
-    budgetTiers = budgetTiers.map(tier => ({
-      ...tier,
-      budget: Math.floor(tier.budget * 0.8), // 20% discount for students
-    }));
-    console.log("Applied student discount to budget tiers");
-  }
-  
-  // Generate plans for each budget tier
-  budgetTiers.forEach(tier => {
-    const budgetTierObj = determineBudgetTier(tier.budget);
-    
-    const goal = extractGoal(userQuery, specificGoals);
-    console.log("Extracted goal:", goal);
-    
-    const extractedLocation = location || extractLocation(userQuery);
-    console.log("Final location:", extractedLocation);
-    
-    // Generate the plan using our existing function but with enhanced context
-    const plan = generatePlan({
-      budget: tier.budget,
-      medicalConditions,
-      goal,
-      location: extractedLocation,
-      preferOnline: preferOnline !== undefined ? preferOnline : userQuery.toLowerCase().includes('online'),
-      budgetTier: budgetTierObj
-    });
-    
-    // Add unique tier name to differentiate plans
-    plan.name = `${tier.name.charAt(0).toUpperCase() + tier.name.slice(1)} Budget: ${plan.name}`;
-    
-    // Generate personalized notes
-    const personalizedNotes = generatePlanNotes(
-      preferences,
-      medicalConditions,
-      severity,
-      specificGoals,
-      timeFrame,
-      extractedLocation,
-      preferOnline
-    );
-    
-    // Add notes to the plan description
-    if (personalizedNotes.length > 0) {
-      plan.description = `${plan.description} ${personalizedNotes.join(' ')}`;
-    }
-    
-    plans.push(plan);
-  });
-  
-  // Sort plans by budget
-  return plans.sort((a, b) => a.totalCost - b.totalCost);
-};
+  return budgetTiers;
+}
 
-// Extract goal from user input with enhanced specificity
-const extractGoal = (input: string, specificGoals: Record<string, any> = {}): string => {
-  // Handle weight loss with specific targets
-  if (specificGoals.weightLoss) {
-    const { amount, unit } = specificGoals.weightLoss;
-    return `lose ${amount} ${unit}`;
+// Helper function to determine plan type
+function determinePlanType(
+  conditions: string[],
+  primaryIssue?: string,
+  tierName?: string
+): AIHealthPlan['planType'] {
+  if (primaryIssue === 'event preparation' || conditions.includes('fitness goals')) {
+    return 'progressive';
   }
   
-  // Special handling for weight loss and fitness
-  if (input.toLowerCase().includes('lose weight') || 
-      input.toLowerCase().includes('weight loss') || 
-      input.toLowerCase().includes('kg')) {
-    
-    // Extract specific kg/pounds mentioned
-    const weightMatch = input.match(/lose\s+(\d+)\s*(kg|pounds|lbs)/i);
-    if (weightMatch) {
-      const amount = weightMatch[1];
-      const unit = weightMatch[2];
-      return `lose ${amount} ${unit}`;
-    }
-    
-    return 'lose weight';
+  if (primaryIssue === 'shoulder pain' || primaryIssue === 'knee pain' || 
+      primaryIssue === 'back pain' || conditions.includes('sports injury')) {
+    return 'high-impact';
   }
   
-  if (input.toLowerCase().includes('tone') || input.toLowerCase().includes('toning')) {
-    return 'tone up and improve fitness';
+  if (tierName === 'low') {
+    return 'best-fit';
   }
   
-  if (input.toLowerCase().includes('wedding')) {
-    return 'get fit for wedding';
-  }
-  
-  const goalPatterns = [
-    /want to (.*?)(\.|\,|\;|\and|\s|$)/i,
-    /goal is to (.*?)(\.|\,|\;|\and|\s|$)/i,
-    /looking to (.*?)(\.|\,|\;|\and|\s|$)/i,
-    /need to (.*?)(\.|\,|\;|\and|\s|$)/i,
-    /help with (.*?)(\.|\,|\;|\and|\s|$)/i,
-    /struggling with (.*?)(\.|\,|\;|\and|\s|$)/i,
-    /improve (.*?)(\.|\,|\;|\and|\s|$)/i,
-    /manage (.*?)(\.|\,|\;|\and|\s|$)/i,
-    /treat (.*?)(\.|\,|\;|\and|\s|$)/i,
-  ];
-  
-  for (const pattern of goalPatterns) {
-    const match = input.match(pattern);
-    if (match && match[1]) {
-      return match[1].trim();
-    }
-  }
-  
-  // If no explicit goal found, check for key medical conditions
-  const medicalKeywords = ['pain', 'ache', 'issue', 'problem', 'condition', 'symptoms', 'discomfort', 'difficulties'];
-  for (const keyword of medicalKeywords) {
-    const medicalPattern = new RegExp(`(?:my|the|with)\\s+(.*?)\\s+${keyword}s?`, 'i');
-    const match = input.match(medicalPattern);
-    if (match && match[1]) {
-      return `manage ${match[1]} ${keyword}`;
-    }
-  }
-  
-  return 'wellness';
-};
+  return 'progressive';
+}
 
-// Extract location from user input
-const extractLocation = (input: string): string | undefined => {
-  const locationPatterns = [
-    /in (.*?)(\.|,|;|\s and\s|\s)/i,
-    /near (.*?)(\.|,|;|\s and\s|\s)/i,
-    /around (.*?)(\.|,|;|\s and\s|\s)/i,
-    /from (.*?)(\.|,|;|\s and\s|\s)/i,
-  ];
-  
-  for (const pattern of locationPatterns) {
-    const match = input.match(pattern);
-    if (match && match[1]) {
-      // Filter out common words that might be misinterpreted as locations
-      const location = match[1].trim();
-      const ignoreWords = ['the', 'a', 'an', 'my', 'your', 'our', 'their', 'home', 'work'];
-      if (!ignoreWords.includes(location.toLowerCase())) {
-        return location;
-      }
-    }
+// Helper function to determine timeframe
+function determineTimeFrame(
+  conditions: string[],
+  userQuery: string,
+  contextualFactors: string[] = []
+): string {
+  // Check for specific timeframes in the query
+  const timeMatch = userQuery.match(/(\d+)\s*(weeks|week|months|month|days|day)/i);
+  if (timeMatch) {
+    const amount = parseInt(timeMatch[1], 10);
+    const unit = timeMatch[2].toLowerCase();
+    return `${amount} ${unit}`;
   }
   
-  return undefined;
-};
+  // Based on primary issue
+  if (contextualFactors.includes('event-preparation')) {
+    return '8 weeks'; // Standard event prep timeframe
+  }
+  
+  if (conditions.includes('sports injury') || 
+      conditions.includes('shoulder strain') ||
+      conditions.includes('knee pain') ||
+      conditions.includes('back pain')) {
+    return '6 weeks'; // Standard injury rehabilitation timeframe
+  }
+  
+  if (conditions.includes('weight loss')) {
+    return '12 weeks'; // Standard weight loss timeframe
+  }
+  
+  return '8 weeks'; // Default timeframe
+}
 
+// Export our original functions for compatibility
 export {
   generatePlan,
   analyzeUserInput,
