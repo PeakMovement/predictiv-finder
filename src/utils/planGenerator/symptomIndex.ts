@@ -1,5 +1,4 @@
 
-// Re-export all functionality from the new refactored files
 export * from "./symptomTypes";
 export * from "./symptomMappingsData";
 export * from "./symptomDetector";
