@@ -1,3 +1,4 @@
+
 import { ServiceCategory } from "./types";
 
 export interface SymptomMapping {
@@ -7,7 +8,7 @@ export interface SymptomMapping {
   secondary?: ServiceCategory[];
   keywords?: string[];
   context?: string[];
-  contraindications?: string[];
+  contraindications?: ServiceCategory[];
 }
 
 export const SYMPTOM_MAPPINGS: Record<string, SymptomMapping> = {
@@ -447,7 +448,7 @@ export const getProfessionalsForSymptoms = (
 } => {
   const { symptoms, priorities: symptomPriorities, contraindications } = identifySymptoms(userInput);
   const categories = new Set<ServiceCategory>();
-  const categoryPriorities: Record<ServiceCategory, number> = {};
+  const categoryPriorities: Record<ServiceCategory, number> = {} as Record<ServiceCategory, number>;
   
   // Process symptoms and add relevant professionals
   symptoms.forEach(symptom => {
@@ -506,8 +507,8 @@ export const getProfessionalsForSymptoms = (
   
   // Remove contraindicated categories
   contraindications.forEach(category => {
-    categories.delete(category);
-    delete categoryPriorities[category];
+    categories.delete(category as ServiceCategory);
+    delete categoryPriorities[category as ServiceCategory];
   });
   
   // If no categories found, add default
@@ -526,6 +527,6 @@ export const getProfessionalsForSymptoms = (
   return { 
     categories: sortedCategories, 
     priorities: categoryPriorities,
-    contraindicated: contraindications
+    contraindicated: contraindications as ServiceCategory[]
   };
 };

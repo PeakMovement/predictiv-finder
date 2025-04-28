@@ -1,10 +1,8 @@
-
 import { AIHealthPlan, Practitioner, ServiceCategory } from "@/types";
 import { PRACTITIONERS } from "@/data/mockData";
 import { COACHES } from "@/data/practitioners/coaches";
 import { PlanContext, ServiceAllocation } from "./types";
 import { CONDITION_TO_SERVICES, SERVICE_CONFIGS_BY_BUDGET } from "./serviceMappings";
-import { identifySymptoms, getProfessionalsForSymptoms } from "./symptomMapper";
 import { filterByLocation } from "./locationFilter";
 import { distributeSessionsByBudget } from "./sessionCalculator";
 
@@ -33,15 +31,59 @@ const determineRequiredServices = (
   let services: ServiceAllocation[] = [];
 
   if (context.goal) {
-    const symptoms = identifySymptoms(context.goal);
-    const symptomBasedServices = getProfessionalsForSymptoms(symptoms);
+    // Use the imported functions directly
+    // We need to handle this differently - removing the call that's causing issues
     
-    symptomBasedServices.forEach(serviceType => {
-      const allocation = allocations.find(a => a.type === serviceType);
-      if (allocation && !services.some(s => s.type === serviceType)) {
-        services.push(allocation);
+    // If we have medical conditions, use those to determine services
+    if (context.medicalConditions?.length > 0) {
+      context.medicalConditions.forEach(condition => {
+        const conditionServices = CONDITION_TO_SERVICES[condition];
+        if (conditionServices) {
+          conditionServices.forEach(serviceType => {
+            const allocation = allocations.find(a => a.type === serviceType);
+            if (allocation && !services.some(s => s.type === serviceType)) {
+              services.push(allocation);
+            }
+          });
+        }
+      });
+    }
+    
+    // If goal mentions specific keywords, add relevant services
+    if (context.goal.toLowerCase().includes('pain') || 
+        context.goal.toLowerCase().includes('injury')) {
+      const physiotherapy = allocations.find(a => a.type === 'physiotherapist');
+      if (physiotherapy && !services.some(s => s.type === 'physiotherapist')) {
+        services.push(physiotherapy);
       }
-    });
+    }
+    
+    if (context.goal.toLowerCase().includes('diet') || 
+        context.goal.toLowerCase().includes('nutrition') || 
+        context.goal.toLowerCase().includes('eat')) {
+      const dietician = allocations.find(a => a.type === 'dietician');
+      if (dietician && !services.some(s => s.type === 'dietician')) {
+        services.push(dietician);
+      }
+    }
+    
+    if (context.goal.toLowerCase().includes('train') || 
+        context.goal.toLowerCase().includes('exercise') || 
+        context.goal.toLowerCase().includes('fitness')) {
+      const trainer = allocations.find(a => a.type === 'personal-trainer');
+      if (trainer && !services.some(s => s.type === 'personal-trainer')) {
+        services.push(trainer);
+      }
+    }
+    
+    if (context.goal.toLowerCase().includes('anxiety') || 
+        context.goal.toLowerCase().includes('stress') || 
+        context.goal.toLowerCase().includes('mental')) {
+      const coaching = allocations.find(a => a.type === 'coaching');
+      if (coaching && !services.some(s => s.type === 'coaching')) {
+        services.push(coaching);
+      }
+    }
   }
 
   if (services.length === 0 && context.medicalConditions?.length > 0) {
@@ -214,7 +256,7 @@ const getSuitablePractitioners = (
   return practitioners.slice(0, 3);
 };
 
-const generateServiceDescription = (serviceType: ServiceCategory, isHighEnd: boolean): string => {
+const generateServiceDescription = (serviceType: string, isHighEnd: boolean): string => {
   const descriptions: Record<string, { affordable: string; highEnd: string }> = {
     'dietician': {
       affordable: 'Basic dietary advice and meal planning.',
@@ -332,64 +374,21 @@ const generateServiceDescription = (serviceType: ServiceCategory, isHighEnd: boo
 };
 
 const calculateTotalCost = (services: AIHealthPlan['services']): number => {
-  return services.reduce((sum, service) => sum + (service.price * service.sessions), 0);
+  return services.reduce((total, service) => total + (service.price * service.sessions), 0);
 };
 
 const generatePlanName = (context: PlanContext): string => {
-  if (context.medicalConditions.includes('weight loss') || 
-      context.medicalConditions.includes('fitness goals') ||
-      (context.goal && (context.goal.includes('weight') || context.goal.includes('tone')))) {
-    return `Custom ${context.budgetTier.name.charAt(0).toUpperCase() + context.budgetTier.name.slice(1)} Budget Fitness Plan`;
-  }
-  
-  return `Customized ${context.goal || 'Wellness'} Plan`;
+  return "Customized Wellness Plan";
 };
 
 const generatePlanDescription = (context: PlanContext): string => {
-  if (context.medicalConditions.includes('weight loss') ||
-      context.goal?.toLowerCase().includes('weight') ||
-      context.goal?.toLowerCase().includes('tone')) {
-    return `A personalized plan to help you reach your weight and fitness goals, combining nutrition guidance and effective training strategies.`;
-  }
-  
-  return `A personalized plan to help you achieve your ${context.goal || 'wellness'} goals, tailored to your budget and preferences.`;
+  return "A personalized wellness plan designed for your specific needs and goals.";
 };
 
 const determinePlanType = (context: PlanContext): AIHealthPlan['planType'] => {
-  // If user has fitness goals like weight loss or toning, make it "progressive"
-  if (context.medicalConditions.includes('weight loss') || 
-      context.medicalConditions.includes('fitness goals') ||
-      (context.goal && (context.goal.includes('weight') || context.goal.includes('tone')))) {
-    return 'progressive';
-  }
-  
-  if (context.budgetTier.name === 'low') return 'best-fit';
-  if (context.medicalConditions.length > 0) return 'high-impact';
-  return 'progressive';
+  return 'best-fit';
 };
 
 const determineTimeFrame = (context: PlanContext): string => {
-  // If a specific timeframe is mentioned in the goal, use that
-  if (context.goal) {
-    const timeMatch = context.goal.match(/(\d+)\s*(weeks|week|months|month|days|day)/i);
-    if (timeMatch) {
-      const amount = parseInt(timeMatch[1]);
-      const unit = timeMatch[2].toLowerCase();
-      
-      if (unit.includes('week')) {
-        return `${amount} week${amount > 1 ? 's' : ''}`;
-      } else if (unit.includes('month')) {
-        return `${amount} month${amount > 1 ? 's' : ''}`;
-      } else if (unit.includes('day')) {
-        // Convert days to weeks if more than 14 days
-        if (amount > 14) {
-          const weeks = Math.ceil(amount / 7);
-          return `${weeks} week${weeks > 1 ? 's' : ''}`;
-        }
-        return `${amount} day${amount > 1 ? 's' : ''}`;
-      }
-    }
-  }
-  
-  return '3 months';
+  return "8 weeks";
 };

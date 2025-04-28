@@ -108,7 +108,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     // Use our enhanced calculation for optimal service allocation
     const optimizedServices = calculateOptimalServiceAllocation(
       categories,
-      servicePriorities || {},
+      servicePriorities || {} as Record<string, number>,
       tier.budget,
       userType,
       contextualFactors || []

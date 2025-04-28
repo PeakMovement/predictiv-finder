@@ -1,7 +1,8 @@
+
 import { ServiceCategory } from "./types";
 import { AnalyzedInput } from "./enhancedTypes";
 import { CONDITION_TO_SERVICES } from "./serviceMappings";
-import { getProfessionalsForSymptoms, identifySymptoms } from "./symptomMapper";
+import { getProfessionalsForSymptoms, identifySymptoms, SYMPTOM_MAPPINGS } from "./symptomMapper";
 import { BASELINE_COSTS, DEFAULT_SERVICE_FREQUENCIES, STUDENT_DISCOUNT } from "./types";
 
 // Enhanced keyword extraction
@@ -584,7 +585,7 @@ export const generatePlanNotes = (
   preferOnline?: boolean,
   contextualFactors: string[] = [],
   primaryIssue?: string,
-  servicePriorities?: Record<string, number>
+  servicePriorities?: Record<ServiceCategory, number>
 ): string[] => {
   const notes: string[] = [];
   
@@ -663,7 +664,7 @@ export const generatePlanNotes = (
 // Calculate optimal service allocation based on priorities and budgetary constraints
 export const calculateOptimalServiceAllocation = (
   serviceCategories: ServiceCategory[],
-  priorities: Record<ServiceCategory, number> = {},
+  priorities: Record<ServiceCategory, number> = {} as Record<ServiceCategory, number>,
   budget: number,
   userType: 'student' | 'working' | 'premium' = 'working',
   contextualFactors: string[] = []
@@ -674,7 +675,7 @@ export const calculateOptimalServiceAllocation = (
   frequency?: string;
 }[] => {
   // First, calculate base costs adjusted for user type
-  const adjustedCosts: Record<ServiceCategory, number> = {};
+  const adjustedCosts: Record<ServiceCategory, number> = {} as Record<ServiceCategory, number>;
   
   serviceCategories.forEach(category => {
     let cost = BASELINE_COSTS[category] || 500;
@@ -690,7 +691,7 @@ export const calculateOptimalServiceAllocation = (
   });
   
   // Apply frequency preferences based on service type and contextual factors
-  const frequencyPreferences: Record<ServiceCategory, FrequencyPreference> = {};
+  const frequencyPreferences: Record<ServiceCategory, FrequencyPreference> = {} as Record<ServiceCategory, FrequencyPreference>;
   
   serviceCategories.forEach(category => {
     const baseFrequency = DEFAULT_SERVICE_FREQUENCIES[category] || 
