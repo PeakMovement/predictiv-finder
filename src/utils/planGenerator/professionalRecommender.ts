@@ -1,3 +1,4 @@
+
 import { ServiceCategory } from "./types";
 import { identifySymptoms } from "./symptomDetector";
 import { SYMPTOM_MAPPINGS } from "./symptomMappingsData";
@@ -27,9 +28,9 @@ export const getProfessionalsForSymptoms = (
       // Only add primary specialist if not contraindicated
       if (!contraindicatedSet.has(mapping.primary)) {
         categories.add(mapping.primary);
-        const symptomPriority = symptomPriorities[symptom] || mapping.priority;
+        const currentSymptomPriority = symptomPriorities[symptom] || mapping.priority;
         categoryPriorities[mapping.primary] = Math.max(
-          symptomPriority, 
+          currentSymptomPriority, 
           categoryPriorities[mapping.primary] || 0
         );
       } else {
@@ -41,7 +42,7 @@ export const getProfessionalsForSymptoms = (
         if (!contraindicatedSet.has(specialty)) {
           categories.add(specialty);
           categoryPriorities[specialty] = Math.max(
-            symptomPriority * 0.9, 
+            (symptomPriorities[symptom] || mapping.priority) * 0.9, 
             categoryPriorities[specialty] || 0
           );
         } else {
@@ -54,7 +55,7 @@ export const getProfessionalsForSymptoms = (
         if (!contraindicatedSet.has(secondary)) {
           categories.add(secondary);
           categoryPriorities[secondary] = Math.max(
-            symptomPriority * 0.7, 
+            (symptomPriorities[symptom] || mapping.priority) * 0.7, 
             categoryPriorities[secondary] || 0
           );
         } else {

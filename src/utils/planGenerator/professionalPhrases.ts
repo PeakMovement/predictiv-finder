@@ -36,7 +36,12 @@ export const PROFESSIONAL_PHRASES: ProfessionalPhraseMapping[] = [
       "stomach doctor",
       "digestive doctor",
       "abdominal doctor",
-      "gastro doctor"
+      "gastro doctor",
+      "general doctor", 
+      "medical checkup",
+      "physical exam",
+      "regular doctor",
+      "family doctor"
     ]
   },
   {
@@ -65,7 +70,12 @@ export const PROFESSIONAL_PHRASES: ProfessionalPhraseMapping[] = [
       "clinical diet planner",
       "gut health dietician",
       "digestive nutrition expert",
-      "stomach dietician"
+      "stomach dietician",
+      "meal planner",
+      "eating habits expert",
+      "weight loss dietician",
+      "sports nutrition expert",
+      "food planning specialist"
     ]
   },
   {
@@ -91,7 +101,13 @@ export const PROFESSIONAL_PHRASES: ProfessionalPhraseMapping[] = [
       "physiotherapy consultant",
       "pain relief therapist",
       "movement rehab expert",
-      "physical therapy specialist"
+      "physical therapy specialist",
+      "sports physio",
+      "athletic therapist",
+      "running injury specialist",
+      "movement specialist",
+      "injury recovery expert",
+      "musculoskeletal therapist"
     ]
   },
   {
@@ -116,7 +132,15 @@ export const PROFESSIONAL_PHRASES: ProfessionalPhraseMapping[] = [
       "GI consultant",
       "abdominal specialist",
       "digestive health doctor",
-      "intestinal health expert"
+      "intestinal health expert",
+      "digestive tract doctor",
+      "stomach pain doctor",
+      "acid reflux specialist",
+      "IBS specialist",
+      "food intolerance doctor",
+      "gut health doctor",
+      "digestive disorder expert",
+      "colon health specialist"
     ]
   },
   {
@@ -153,7 +177,14 @@ export const PROFESSIONAL_PHRASES: ProfessionalPhraseMapping[] = [
       "nutrition guide",
       "eating plan coach",
       "health food coach",
-      "nutrition support coach"
+      "nutrition support coach",
+      "life coach",
+      "wellness coach",
+      "health coach",
+      "fitness coach",
+      "mental performance coach",
+      "stress management coach",
+      "race preparation coach"
     ]
   },
   {
@@ -180,7 +211,57 @@ export const PROFESSIONAL_PHRASES: ProfessionalPhraseMapping[] = [
       "strength program coach",
       "muscle fitness coach",
       "lifting coach",
-      "strength exercise expert"
+      "strength exercise expert",
+      "weight training coach",
+      "workout specialist",
+      "exercise trainer",
+      "gym trainer",
+      "fitness expert",
+      "PT",
+      "group fitness trainer",
+      "exercise specialist"
+    ]
+  },
+  {
+    professional: "psychiatry",
+    phrases: [
+      "psychiatrist",
+      "mental health doctor",
+      "mental health specialist",
+      "psychiatric specialist",
+      "psychiatric doctor",
+      "mental health expert",
+      "anxiety doctor",
+      "depression specialist",
+      "mood disorder doctor",
+      "mental wellness expert",
+      "psychological health specialist",
+      "psychiatric consultant",
+      "mental health physician",
+      "psychiatry expert",
+      "anxiety specialist",
+      "stress doctor",
+      "behavioral health doctor"
+    ]
+  },
+  {
+    professional: "orthopedics",
+    phrases: [
+      "orthopedist", 
+      "orthopedic surgeon",
+      "orthopedic specialist",
+      "bone doctor",
+      "joint doctor",
+      "sports medicine doctor",
+      "orthopedic physician",
+      "musculoskeletal specialist",
+      "bone and joint specialist",
+      "fracture specialist",
+      "orthopedic consultant",
+      "knee surgeon",
+      "shoulder surgeon",
+      "hip specialist",
+      "sports injury doctor"
     ]
   }
 ];
@@ -227,6 +308,45 @@ export const detectProfessionalMentions = (
     
     // Add family-medicine as a backup for digestive issues
     detectedProfessionals.set('family-medicine', 1);
+    
+    // Add dietician for nutritional support with digestive issues
+    detectedProfessionals.set('dietician', 1);
+    console.log("Added dietician based on stomach/digestive reference");
+  }
+  
+  // Special case: mental health detection
+  if (lowerText.includes('anxiety') || 
+      lowerText.includes('stress') || 
+      lowerText.includes('depression') ||
+      lowerText.includes('mental health')) {
+    
+    // Add psychiatry for mental health concerns
+    detectedProfessionals.set('psychiatry', 2);
+    console.log("Added psychiatry based on mental health reference");
+    
+    // Add coaching as supportive service
+    detectedProfessionals.set('coaching', 1);
+    console.log("Added coaching as supportive service for mental health");
+  }
+  
+  // Special case: physical pain or injury
+  if (lowerText.includes('pain') || 
+      lowerText.includes('injury') || 
+      lowerText.includes('hurt')) {
+    
+    // Check for specific body parts
+    const bodyParts = ['knee', 'back', 'shoulder', 'neck', 'hip', 'joint'];
+    const hasBodyPartPain = bodyParts.some(part => lowerText.includes(part));
+    
+    if (hasBodyPartPain) {
+      // Add physiotherapist for joint/musculoskeletal pain
+      detectedProfessionals.set('physiotherapist', 2);
+      console.log("Added physiotherapist based on specific body part pain");
+      
+      // Add orthopedics as secondary option
+      detectedProfessionals.set('orthopedics', 1);
+      console.log("Added orthopedics as secondary option for pain");
+    }
   }
   
   // Budget-sensitive detection
@@ -238,6 +358,14 @@ export const detectProfessionalMentions = (
       const currentCount = detectedProfessionals.get('family-medicine') || 0;
       detectedProfessionals.set('family-medicine', currentCount + 1);
       console.log("Added family-medicine based on tight budget consideration");
+      
+      // For extremely tight budgets, remove expensive specialists
+      if (budget < 600) {
+        ['psychiatry', 'orthopedics', 'gastroenterology'].forEach(specialist => {
+          detectedProfessionals.delete(specialist as ServiceCategory);
+        });
+        console.log("Removed expensive specialists due to extremely tight budget");
+      }
     }
   }
   
