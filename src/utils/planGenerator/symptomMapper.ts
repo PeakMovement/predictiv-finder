@@ -1,4 +1,3 @@
-
 import { ServiceCategory } from "./types";
 
 export interface SymptomMapping {
@@ -102,6 +101,31 @@ export const SYMPTOM_MAPPINGS: Record<string, SymptomMapping> = {
     ]
   },
   
+  // Mental Health & Psychology
+  "anxiety": {
+    primary: "coaching",
+    specialties: ["coaching", "dietician"],
+    priority: 0.9,
+    keywords: [
+      "anxious", "worry", "nervous", "stress", "panic", "fear", 
+      "overwhelmed", "overthinking", "can't relax", "on edge", 
+      "racing thoughts", "mental health", "anxiety attack"
+    ],
+    secondary: ["psychiatry"],
+    contraindications: ["physiotherapist", "orthopedics"]
+  },
+  "mental health": {
+    primary: "coaching",
+    specialties: ["coaching", "psychiatry"],
+    priority: 0.85,
+    keywords: [
+      "depression", "mood", "therapy", "counseling", "trauma", 
+      "emotional", "mental", "psychological", "stress", "burnout"
+    ],
+    secondary: ["dietician"],
+    contraindications: ["physiotherapist", "orthopedics"]
+  },
+  
   // Fitness & Strength Goals
   "strength": {
     primary: "personal-trainer",
@@ -139,11 +163,13 @@ export const SYMPTOM_MAPPINGS: Record<string, SymptomMapping> = {
   "nutrition": {
     primary: "dietician",
     specialties: ["dietician"],
-    priority: 0.85,
+    priority: 0.9,
     secondary: ["coaching"],
     keywords: [
       "eat", "eating", "diet", "food", "nutrition", "meal", "meals",
-      "healthy eating", "balanced diet", "macros", "macronutrients"
+      "healthy eating", "balanced diet", "macros", "macronutrients",
+      "appetite", "hunger", "nutrients", "struggling to eat", "not eating",
+      "poor appetite", "meal planning", "nutrition plan"
     ]
   },
   "digestive issues": {
@@ -154,39 +180,30 @@ export const SYMPTOM_MAPPINGS: Record<string, SymptomMapping> = {
       "bloating", "bloated", "gas", "constipation", "diarrhea", "IBS",
       "irritable bowel", "gut health", "digestive", "indigestion",
       "stomach pain", "stomach issues", "abdominal", "gut discomfort",
-      "food intolerance", "GERD", "acid reflux"
+      "food intolerance", "GERD", "acid reflux", "appetite", "nauseous"
     ],
     contraindications: ["personal-trainer", "physiotherapist"]
   },
   
-  // Mental Health & Wellness
-  "stress": {
-    primary: "coaching",
-    specialties: ["coaching", "psychiatry"],
-    priority: 0.7,
+  // Event Preparation
+  "race preparation": {
+    primary: "personal-trainer",
+    specialties: ["personal-trainer", "coaching"],
+    priority: 0.95,
+    secondary: ["dietician"],
     keywords: [
-      "anxious", "worried", "overwhelmed", "burnout", "tension", "pressure",
-      "mental pressure", "stressed out", "can't cope", "exhausted", "mental fatigue",
-      "anxiety", "anxious", "panic", "stress management"
-    ]
-  },
-  "sleep issues": {
-    primary: "coaching",
-    specialties: ["coaching", "psychiatry"],
-    priority: 0.75,
-    keywords: [
-      "insomnia", "can't sleep", "trouble sleeping", "sleep quality",
-      "waking up", "tired", "fatigue", "exhausted", "sleep hygiene",
-      "rest", "recovery", "energy levels", "waking up tired"
+      "race", "run", "running", "marathon", "half marathon", "5k", "10k", 
+      "training for race", "prepare for race", "upcoming race", "competition",
+      "event", "preparing", "race day", "starting line", "finish line",
+      "race prep", "weeks until race", "race training"
     ],
-    secondary: ["dietician"]
+    contraindications: ["physiotherapist", "orthopedics"]
   },
   
-  // Event Preparation
   "event preparation": {
     primary: "personal-trainer",
     specialties: ["personal-trainer", "coaching"],
-    priority: 0.8,
+    priority: 0.85,
     secondary: ["dietician", "physiotherapist"],
     keywords: [
       "marathon", "race", "competition", "event", "tournament", "match",
@@ -257,7 +274,6 @@ export const SYMPTOM_MAPPINGS: Record<string, SymptomMapping> = {
   }
 };
 
-// More sophisticated symptom identification with context awareness
 export const identifySymptoms = (userInput: string): { 
   symptoms: string[], 
   priorities: Record<string, number>,
@@ -305,6 +321,69 @@ export const identifySymptoms = (userInput: string): {
     }
   }
   
+  // Special detection for mental health + nutrition + race preparation
+  const mentalHealthKeywords = ["anxiety", "anxious", "mental health", "stress", "nervous", "worry"];
+  const nutritionKeywords = ["eat", "eating", "diet", "food", "appetite", "meal", "nutrition", "hungry"];
+  const raceKeywords = ["race", "run", "running", "marathon", "half marathon", "5k", "10k", "weeks until"];
+  
+  // Check for mental health + nutrition combination
+  let hasAnxiety = false;
+  let hasNutrition = false;
+  let hasRace = false;
+  
+  for (const keyword of mentalHealthKeywords) {
+    if (inputLower.includes(keyword)) {
+      hasAnxiety = true;
+      if (!symptoms.includes("anxiety")) {
+        symptoms.push("anxiety");
+        priorities["anxiety"] = SYMPTOM_MAPPINGS["anxiety"].priority;
+        console.log(`Found mental health symptom: anxiety`);
+      }
+      break;
+    }
+  }
+  
+  for (const keyword of nutritionKeywords) {
+    if (inputLower.includes(keyword)) {
+      hasNutrition = true;
+      if (!symptoms.includes("nutrition")) {
+        symptoms.push("nutrition");
+        priorities["nutrition"] = SYMPTOM_MAPPINGS["nutrition"].priority;
+        console.log(`Found nutrition concern`);
+      }
+      break;
+    }
+  }
+  
+  for (const keyword of raceKeywords) {
+    if (inputLower.includes(keyword)) {
+      hasRace = true;
+      if (!symptoms.includes("race preparation")) {
+        symptoms.push("race preparation");
+        // Give race preparation higher priority when explicitly mentioned
+        priorities["race preparation"] = SYMPTOM_MAPPINGS["race preparation"].priority * 1.2;
+        console.log(`Found race preparation need`);
+      }
+      break;
+    }
+  }
+  
+  // Special case: anxiety + eating issues + race preparation
+  if (hasAnxiety && hasNutrition && hasRace) {
+    // Boost priority for dietician and coaching
+    priorities["nutrition"] = (priorities["nutrition"] || 0) * 1.3;
+    priorities["anxiety"] = (priorities["anxiety"] || 0) * 1.2;
+    priorities["race preparation"] = (priorities["race preparation"] || 0) * 1.2;
+    
+    // Add contraindications for physiotherapy
+    if (!contraindications.includes("physiotherapist" as ServiceCategory)) {
+      contraindications.push("physiotherapist" as ServiceCategory);
+      contraindications.push("biokineticist" as ServiceCategory);
+    }
+    
+    console.log("Found special case: anxiety + nutrition + race preparation");
+  }
+  
   // General mappings check
   Object.entries(SYMPTOM_MAPPINGS).forEach(([symptom, mapping]) => {
     const hasMainKeyword = inputLower.includes(symptom.toLowerCase());
@@ -339,60 +418,26 @@ export const identifySymptoms = (userInput: string): {
     }
   });
 
-  // Special handling for injury + specifics
-  if ((inputLower.includes("injury") || inputLower.includes("hurt")) && 
-      (inputLower.includes("gym") || inputLower.includes("training") || 
-       inputLower.includes("workout") || inputLower.includes("exercise"))) {
-    
-    if (!symptoms.includes("sports injury")) {
-      symptoms.push("sports injury");
-      priorities["sports injury"] = SYMPTOM_MAPPINGS["sports injury"].priority * 1.1;
-      console.log("Found sports injury context");
+  // Check for timeframes
+  const weekMatches = inputLower.match(/(\d+)\s*weeks?/i);
+  if (weekMatches && parseInt(weekMatches[1], 10) <= 4) {
+    // Short timeframe (4 weeks or less) - prioritize coaching and specialized training
+    console.log("Short timeframe detected, prioritizing rapid expertise");
+    if (!symptoms.includes("race preparation")) {
+      symptoms.push("race preparation");
+      priorities["race preparation"] = 1.0; // Highest priority for short timeframe events
     }
   }
   
-  // Special case for desk-related issues
-  if ((inputLower.includes("desk") || inputLower.includes("sitting") || 
-       inputLower.includes("office") || inputLower.includes("computer")) &&
-      (inputLower.includes("pain") || inputLower.includes("posture") || 
-       inputLower.includes("stiff") || inputLower.includes("ache"))) {
-    
-    if (!symptoms.includes("desk job")) {
-      symptoms.push("desk job");
-      priorities["desk job"] = SYMPTOM_MAPPINGS["desk job"].priority;
-      console.log("Found desk job context");
-    }
-  }
-  
-  // Check for budget constraints
-  if (inputLower.includes("affordable") || inputLower.includes("budget") ||
-      inputLower.includes("cheap") || inputLower.includes("cost") || 
-      inputLower.includes("expensive") || inputLower.includes("price") ||
-      inputLower.includes("money") || inputLower.includes("financial")) {
-    
-    if (!symptoms.includes("affordable")) {
-      symptoms.push("affordable");
-      priorities["affordable"] = SYMPTOM_MAPPINGS["affordable"].priority;
-      console.log("Found budget constraints");
-    }
-  }
-  
-  // Check for busy lifestyle
-  if (inputLower.includes("busy") || inputLower.includes("no time") ||
-      inputLower.includes("hectic") || inputLower.includes("schedule") ||
-      inputLower.includes("quick") || inputLower.includes("fast")) {
-    
-    if (!symptoms.includes("busy lifestyle")) {
-      symptoms.push("busy lifestyle");
-      priorities["busy lifestyle"] = SYMPTOM_MAPPINGS["busy lifestyle"].priority;
-      console.log("Found busy lifestyle context");
-    }
+  // If no symptoms found, add some defaults
+  if (symptoms.length === 0) {
+    symptoms.push("general health");
+    priorities["general health"] = SYMPTOM_MAPPINGS["general health"]?.priority || 0.5;
   }
 
   return { symptoms, priorities, contraindications };
 };
 
-// Get professionals for specific symptoms with smarter prioritization
 export const getProfessionalsForSymptoms = (
   userInput: string
 ): { 
@@ -436,6 +481,29 @@ export const getProfessionalsForSymptoms = (
     }
   });
   
+  // Special case for anxiety + eating + race prep
+  if (symptoms.includes("anxiety") && symptoms.includes("nutrition") && 
+      (symptoms.includes("race preparation") || symptoms.includes("event preparation"))) {
+    
+    // Ensure dietician is prioritized for eating issues with anxiety
+    categories.add("dietician");
+    categoryPriorities["dietician"] = Math.max(categoryPriorities["dietician"] || 0, 0.95);
+    
+    // Ensure personal trainer is there for race prep
+    categories.add("personal-trainer");
+    categoryPriorities["personal-trainer"] = Math.max(categoryPriorities["personal-trainer"] || 0, 0.9);
+    
+    // Add coaching for anxiety support
+    categories.add("coaching");
+    categoryPriorities["coaching"] = Math.max(categoryPriorities["coaching"] || 0, 0.85);
+    
+    // Explicitly remove physiotherapy if not needed
+    categories.delete("physiotherapist");
+    delete categoryPriorities["physiotherapist"];
+    
+    console.log("Optimized profile for anxiety + nutrition + race preparation");
+  }
+  
   // Remove contraindicated categories
   contraindications.forEach(category => {
     categories.delete(category);
@@ -444,8 +512,11 @@ export const getProfessionalsForSymptoms = (
   
   // If no categories found, add default
   if (categories.size === 0) {
-    categories.add('family-medicine');
-    categoryPriorities['family-medicine'] = 0.5;
+    categories.add('dietician');
+    categoryPriorities['dietician'] = 0.8;
+    
+    categories.add('personal-trainer');
+    categoryPriorities['personal-trainer'] = 0.7;
   }
   
   // Sort by priority

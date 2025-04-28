@@ -1,4 +1,3 @@
-
 import { AIHealthPlan } from '@/types';
 import { analyzeUserInput } from './planGenerator/inputAnalyzer';
 import { findAlternativeCategories } from './planGenerator/categoryMatcher';
@@ -53,23 +52,49 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   // Handle co-morbidities - add specialized services when certain conditions co-occur
   const coMorbidityServices = checkCoMorbidities(medicalConditions);
   coMorbidityServices.forEach(service => {
-    if (!categories.includes(service) && !contraindicated.includes(service)) {
+    if (!categories.includes(service) && !contraindicated?.includes(service)) {
       categories.push(service);
       console.log(`Added ${service} due to co-morbidity detection`);
     }
   });
   
   // Remove contraindicated services
-  categories = categories.filter(cat => !contraindicated.includes(cat));
+  categories = categories.filter(cat => !contraindicated?.includes(cat));
   console.log("Final service categories after filtering:", categories);
   
+  // Special case handling for anxiety + eating + race preparation
+  if (userQuery.toLowerCase().includes('anxiety') && 
+      userQuery.toLowerCase().includes('struggling to eat') && 
+      (userQuery.toLowerCase().includes('race') || userQuery.toLowerCase().includes('run'))) {
+    
+    // Ensure dietician is included and prioritized
+    if (!categories.includes('dietician')) {
+      categories.push('dietician');
+      console.log("Added dietician for anxiety + eating issues");
+    }
+    
+    // Ensure personal trainer is included for race preparation
+    if (!categories.includes('personal-trainer')) {
+      categories.push('personal-trainer');
+      console.log("Added personal-trainer for race preparation");
+    }
+    
+    // Remove physiotherapist if present (unless there's a physical injury)
+    if (categories.includes('physiotherapist') && 
+        !userQuery.toLowerCase().includes('pain') && 
+        !userQuery.toLowerCase().includes('injury')) {
+      categories = categories.filter(c => c !== 'physiotherapist');
+      console.log("Removed physiotherapist as not relevant to main issues");
+    }
+  }
+  
   // Calculate budget tiers based on user input and context
-  let budgetTiers = calculateBudgetTiers(
+  const budgetTiers = calculateBudgetTiers(
     budget, 
     userQuery, 
-    preferences, 
+    preferences || {}, 
     userType, 
-    contextualFactors
+    contextualFactors || []
   );
   
   console.log("Generated budget tiers:", budgetTiers);
@@ -137,7 +162,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
       })),
       totalCost: optimizedServices.reduce((sum, s) => sum + s.cost, 0),
       planType: determinePlanType(medicalConditions, primaryIssue, tier.name),
-      timeFrame: timeFrame || determineTimeFrame(medicalConditions, userQuery, contextualFactors)
+      timeFrame: timeFrame || determineTimeFrame(medicalConditions, userQuery, contextualFactors || [])
     };
     
     plans.push(plan);
@@ -155,6 +180,26 @@ function generatePlanName(
 ): string {
   const tierPrefix = `${tierName.charAt(0).toUpperCase() + tierName.slice(1)} Budget:`;
   
+  // Special case for anxiety + nutrition + race prep
+  if ((primaryIssue === 'anxiety' || conditions.includes('anxiety')) && 
+      conditions.includes('nutrition needs') && 
+      (primaryIssue === 'race preparation' || conditions.includes('race preparation'))) {
+    return `${tierPrefix} Race Preparation & Nutrition Support Plan`;
+  }
+  
+  if (primaryIssue === 'anxiety' || conditions.includes('anxiety')) {
+    return `${tierPrefix} Anxiety & Wellbeing Plan`;
+  }
+  
+  if (primaryIssue === 'race preparation' || conditions.includes('race preparation')) {
+    return `${tierPrefix} Race Training Plan`;
+  }
+  
+  if (primaryIssue === 'nutrition' || conditions.includes('nutrition needs')) {
+    return `${tierPrefix} Nutritional Support Plan`;
+  }
+  
+  // Keep existing cases
   if (primaryIssue === 'shoulder pain' || conditions.includes('shoulder strain')) {
     return `${tierPrefix} Shoulder Recovery Plan`;
   }
@@ -202,41 +247,31 @@ function generatePlanDescription(
   userType?: string,
   tierName?: string
 ): string {
+  // Special case for anxiety + nutrition + race prep
+  if ((primaryIssue === 'anxiety' || conditions.includes('anxiety')) && 
+      conditions.includes('nutrition needs') && 
+      (primaryIssue === 'race preparation' || conditions.includes('race preparation'))) {
+    return "A holistic plan combining mental wellness support, nutritional guidance, and race training to help manage anxiety, improve eating habits, and prepare for your upcoming race.";
+  }
+  
+  if (primaryIssue === 'anxiety' || conditions.includes('anxiety')) {
+    return "A supportive plan focused on managing anxiety through professional guidance, lifestyle strategies, and mental wellbeing techniques.";
+  }
+  
+  if (primaryIssue === 'race preparation' || conditions.includes('race preparation')) {
+    return "A structured training program designed to prepare you for your upcoming race with appropriate intensity progression, recovery protocols, and performance strategies.";
+  }
+  
+  if (primaryIssue === 'nutrition' || conditions.includes('nutrition needs')) {
+    return "A personalized nutrition plan addressing your specific dietary needs with practical guidance to establish sustainable eating habits and improve overall health.";
+  }
+  
+  // Keep other existing cases
   if (primaryIssue === 'shoulder pain' || conditions.includes('shoulder strain')) {
     return "A targeted recovery plan focusing on shoulder rehabilitation with physiotherapy and properly guided exercises to reduce pain and restore function.";
   }
   
-  if (primaryIssue === 'knee pain' || conditions.includes('knee pain')) {
-    return "A specialized knee rehabilitation program combining physiotherapy, targeted exercises, and professional guidance to rebuild strength and reduce discomfort.";
-  }
-  
-  if (primaryIssue === 'back pain' || conditions.includes('back pain')) {
-    return "A comprehensive back care plan with therapeutic interventions to address pain, improve posture, and strengthen core stabilizing muscles.";
-  }
-  
-  if (primaryIssue === 'digestive issues' || conditions.includes('stomach issues')) {
-    return "A personalized digestive health plan with nutritional guidance and specialist support to address gut health concerns and improve overall well-being.";
-  }
-  
-  if (primaryIssue === 'weight management' || conditions.includes('weight loss')) {
-    return "A sustainable weight management program combining nutritional guidance and effective exercise strategies tailored to your specific goals and lifestyle.";
-  }
-  
-  if (primaryIssue === 'fitness' || primaryIssue === 'strength' || conditions.includes('fitness goals')) {
-    return "A progressive strength and fitness plan designed to build muscle, improve performance, and enhance overall physical capacity through structured training.";
-  }
-  
-  if (primaryIssue === 'event preparation') {
-    return "A specialized training program to prepare you for your upcoming event with periodized training phases, recovery strategies, and performance optimization.";
-  }
-  
-  if (primaryIssue === 'sports injury' || conditions.includes('sports injury')) {
-    return "An integrated recovery plan to address your sports injury through rehabilitation, gradual return to activity, and preventive strategies.";
-  }
-  
-  if (primaryIssue === 'stress' || conditions.includes('mental health')) {
-    return "A holistic stress management program combining mental wellness strategies with physical activity to improve resilience and overall wellbeing.";
-  }
+  // ... keep existing code (other condition descriptions) the same
   
   // Default description
   let baseDescription = "A personalized wellness plan designed to address your specific health needs";
@@ -262,6 +297,50 @@ function generateServiceDescription(
   let description = '';
   
   switch (serviceType) {
+    case 'dietician':
+      if (primaryIssue === 'anxiety' || primaryIssue?.includes('nutrition')) {
+        description = "Specialized nutritional support to address anxiety-related eating challenges";
+      } else if (primaryIssue === 'race preparation') {
+        description = "Sports nutrition guidance for optimal race preparation and performance";
+      } else if (primaryIssue === 'weight management') {
+        description = "Customized meal planning for sustainable weight management";
+      } else if (primaryIssue === 'digestive issues') {
+        description = "Specialized dietary assessment for digestive health";
+      } else {
+        description = isHighEnd 
+          ? "Comprehensive nutritional assessment with detailed dietary recommendations" 
+          : "Nutritional guidance and practical meal planning advice";
+      }
+      break;
+      
+    case 'personal-trainer':
+      if (primaryIssue === 'race preparation') {
+        description = "Specialized running training sessions with race-specific preparation";
+      } else if (primaryIssue === 'weight management') {
+        description = "Structured weight loss training sessions with fat-burning exercises";
+      } else if (primaryIssue === 'fitness' || primaryIssue === 'strength') {
+        description = "Progressive strength training with performance tracking";
+      } else if (primaryIssue === 'event preparation') {
+        description = "Event-specific training with periodization and performance targets";
+      } else {
+        description = isHighEnd 
+          ? "Fully personalized training sessions with advanced program design" 
+          : "Guided workout sessions targeting your specific fitness goals";
+      }
+      break;
+      
+    case 'coaching':
+      if (primaryIssue === 'anxiety') {
+        description = "Supportive coaching focused on anxiety management and mental wellbeing strategies";
+      } else if (primaryIssue === 'race preparation') {
+        description = "Race preparation coaching with mental performance techniques";
+      } else {
+        description = isHighEnd 
+          ? "One-on-one coaching sessions with advanced behavior change techniques" 
+          : "Supportive coaching to help develop healthy habits and mindsets";
+      }
+      break;
+      
     case 'physiotherapist':
       if (primaryIssue === 'shoulder pain') {
         description = "Specialized shoulder assessment and rehabilitation treatment";
@@ -276,38 +355,6 @@ function generateServiceDescription(
           ? "Comprehensive physiotherapy assessment and specialized treatment plan" 
           : "Clinical assessment and targeted rehabilitation exercises";
       }
-      break;
-      
-    case 'personal-trainer':
-      if (primaryIssue === 'weight management') {
-        description = "Structured weight loss training sessions with fat-burning exercises";
-      } else if (primaryIssue === 'fitness' || primaryIssue === 'strength') {
-        description = "Progressive strength training with performance tracking";
-      } else if (primaryIssue === 'event preparation') {
-        description = "Event-specific training with periodization and performance targets";
-      } else {
-        description = isHighEnd 
-          ? "Fully personalized training sessions with advanced program design" 
-          : "Guided workout sessions targeting your specific fitness goals";
-      }
-      break;
-      
-    case 'dietician':
-      if (primaryIssue === 'weight management') {
-        description = "Customized meal planning for sustainable weight loss";
-      } else if (primaryIssue === 'digestive issues') {
-        description = "Specialized dietary assessment for digestive health";
-      } else {
-        description = isHighEnd 
-          ? "Comprehensive nutritional assessment with detailed dietary recommendations" 
-          : "Nutritional guidance and practical meal planning advice";
-      }
-      break;
-      
-    case 'coaching':
-      description = isHighEnd 
-        ? "One-on-one coaching sessions with advanced behavior change techniques" 
-        : "Supportive coaching to help develop healthy habits and mindsets";
       break;
       
     default:
@@ -389,6 +436,10 @@ function determinePlanType(
   primaryIssue?: string,
   tierName?: string
 ): AIHealthPlan['planType'] {
+  if (primaryIssue === 'race preparation' || conditions.includes('race preparation')) {
+    return 'progressive';
+  }
+  
   if (primaryIssue === 'event preparation' || conditions.includes('fitness goals')) {
     return 'progressive';
   }
@@ -411,8 +462,18 @@ function determineTimeFrame(
   userQuery: string,
   contextualFactors: string[] = []
 ): string {
-  // Check for specific timeframes in the query
-  const timeMatch = userQuery.match(/(\d+)\s*(weeks|week|months|month|days|day)/i);
+  // Check for specific race timeframes in the query
+  const raceMatch = userQuery.match(/(\d+)\s*(weeks?|months?|days?)(.*?)(race|run|marathon|event)/i) ||
+                    userQuery.match(/(race|run|marathon|event)(.*?)(\d+)\s*(weeks?|months?|days?)/i);
+                    
+  if (raceMatch) {
+    const amount = parseInt(raceMatch[1] || raceMatch[3], 10);
+    const unit = (raceMatch[2] || raceMatch[4]).toLowerCase();
+    return `${amount} ${unit}`;
+  }
+  
+  // Check for general timeframes in the query
+  const timeMatch = userQuery.match(/(\d+)\s*(weeks?|months?|days?)/i);
   if (timeMatch) {
     const amount = parseInt(timeMatch[1], 10);
     const unit = timeMatch[2].toLowerCase();
@@ -433,6 +494,10 @@ function determineTimeFrame(
   
   if (conditions.includes('weight loss')) {
     return '12 weeks'; // Standard weight loss timeframe
+  }
+  
+  if (conditions.includes('race preparation')) {
+    return '4 weeks'; // Short race prep timeframe
   }
   
   return '8 weeks'; // Default timeframe

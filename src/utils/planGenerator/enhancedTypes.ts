@@ -12,6 +12,11 @@ export interface AnalyzedInput {
   timeAvailability: number; // Hours per week available for services
   timeFrame?: string; // Desired timeframe (e.g., "3 months")
   specificGoals?: Record<string, any>; // Specific goals like weight loss amount
+  primaryIssue?: string; // The main issue identified
+  contextualFactors?: string[]; // Additional contextual factors
+  servicePriorities?: Record<ServiceCategory, number>; // Priority scores for services
+  contraindicated?: ServiceCategory[]; // Services that should not be recommended
+  userType?: 'student' | 'working' | 'premium'; // Type of user for pricing adjustments
 }
 
 export interface EnhancedServiceAllocation {

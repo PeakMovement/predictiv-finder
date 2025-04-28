@@ -88,7 +88,8 @@ export const DEFAULT_SERVICE_FREQUENCIES: Record<ServiceCategory, FrequencyPrefe
   'geriatric-medicine': { minFrequency: 0.25, maxFrequency: 0.25, totalSessions: 1 },
   'plastic-surgery': { minFrequency: 0.25, maxFrequency: 0.25, totalSessions: 1 },
   'rheumatology': { minFrequency: 0.25, maxFrequency: 0.25, totalSessions: 1 },
-  'pain-management': { minFrequency: 0.5, maxFrequency: 1, totalSessions: 2 }
+  'pain-management': { minFrequency: 0.5, maxFrequency: 1, totalSessions: 2 },
+  'pediatrics': { minFrequency: 0.25, maxFrequency: 0.5, totalSessions: 1 }
 };
 
 // South African price ranges based on the image data
