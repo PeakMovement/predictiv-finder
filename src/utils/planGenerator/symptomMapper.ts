@@ -4,4 +4,4 @@ export * from "./symptomTypes";
 export * from "./symptomMappingsData";
 export * from "./symptomDetector";
 export * from "./professionalRecommender";
-export * from "./professionalPhrases"; // Add the new functionality
+export * from "./professionalPhrases"; // Keep the professional phrases export

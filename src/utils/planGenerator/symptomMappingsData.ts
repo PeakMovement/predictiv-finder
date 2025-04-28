@@ -1,15 +1,5 @@
-
 import { ServiceCategory } from "./types";
-
-export interface SymptomMapping {
-  primary: ServiceCategory;
-  specialties: ServiceCategory[];
-  secondary?: ServiceCategory[];
-  priority: number;
-  keywords?: string[];
-  context?: string[];
-  contraindications?: ServiceCategory[];
-}
+import { SymptomMapping } from "./symptomTypes";
 
 export const SYMPTOM_MAPPINGS: Record<string, SymptomMapping> = {
   "weight loss": {
@@ -67,23 +57,21 @@ export const SYMPTOM_MAPPINGS: Record<string, SymptomMapping> = {
     priority: 0.8,
     keywords: ['always tired', 'no energy', 'exhausted'],
   },
-  // Updated for stomach issues with appropriate specialists
   "stomach issues": {
     primary: 'gastroenterology',
     specialties: ['family-medicine'],
     secondary: ['dietician'],
     priority: 0.85,
     keywords: ['digestive problems', 'abdominal pain', 'stomach pain', 'gut issues', 'indigestion'],
-    contraindications: ['biokineticist', 'personal-trainer'] // Added contraindications
+    contraindications: ['biokineticist', 'personal-trainer']
   },
-  // Separate entry for stomach pain specifically
   "stomach pain": {
     primary: 'gastroenterology',
     specialties: ['family-medicine'],
     secondary: ['dietician'],
-    priority: 0.9, // Higher priority for specific pain
+    priority: 0.9,
     keywords: ['abdominal pain', 'belly pain', 'stomach ache'],
-    contraindications: ['biokineticist', 'personal-trainer'] // Added contraindications
+    contraindications: ['biokineticist', 'personal-trainer']
   },
   "digestive problems": {
     primary: 'gastroenterology',
@@ -91,7 +79,7 @@ export const SYMPTOM_MAPPINGS: Record<string, SymptomMapping> = {
     secondary: ['dietician'],
     priority: 0.8,
     keywords: ['digestion', 'bowel issues', 'IBS', 'constipation', 'diarrhea'],
-    contraindications: ['biokineticist', 'personal-trainer'] // Added contraindications
+    contraindications: ['biokineticist', 'personal-trainer']
   },
   "knee pain": {
     primary: 'physiotherapist',
