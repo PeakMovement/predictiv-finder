@@ -1,6 +1,7 @@
 
-// Re-export all functionality from the new refactored files
+// Re-export all functionality from the refactored files
 export * from "./symptomTypes";
 export * from "./symptomMappingsData";
 export * from "./symptomDetector";
 export * from "./professionalRecommender";
+export * from "./professionalPhrases"; // Add the new functionality

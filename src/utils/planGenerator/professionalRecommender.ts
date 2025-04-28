@@ -2,6 +2,7 @@
 import { ServiceCategory } from "./types";
 import { identifySymptoms } from "./symptomDetector";
 import { SYMPTOM_MAPPINGS } from "./symptomMappingsData";
+import { detectProfessionalMentions } from "./professionalPhrases";
 
 export const getProfessionalsForSymptoms = (
   userInput: string
@@ -44,6 +45,21 @@ export const getProfessionalsForSymptoms = (
         );
       });
     }
+  });
+  
+  // NEW: Directly add professionals that are explicitly mentioned
+  const professionalMentions = detectProfessionalMentions(userInput);
+  professionalMentions.forEach(({ category, count }) => {
+    categories.add(category);
+    
+    // Explicitly mentioned professionals get a high priority boost based on mention frequency
+    const mentionPriorityBoost = Math.min(0.2 + (count * 0.1), 0.5); // Capped at 0.5 boost
+    categoryPriorities[category] = Math.max(
+      (categoryPriorities[category] || 0.7) + mentionPriorityBoost,
+      0.9 // Explicitly requested professionals get at least 0.9 priority
+    );
+    
+    console.log(`Explicitly requested professional: ${category} with priority ${categoryPriorities[category]}`);
   });
   
   // Special case for anxiety + eating + race prep
