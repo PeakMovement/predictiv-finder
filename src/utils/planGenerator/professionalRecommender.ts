@@ -1,4 +1,3 @@
-
 import { ServiceCategory } from "./types";
 import { identifySymptoms } from "./symptomDetector";
 import { SYMPTOM_MAPPINGS } from "./symptomMappingsData";
@@ -14,6 +13,8 @@ export const getProfessionalsForSymptoms = (
   const { symptoms, priorities: symptomPriorities, contraindications } = identifySymptoms(userInput);
   const categories = new Set<ServiceCategory>();
   const categoryPriorities: Record<ServiceCategory, number> = {} as Record<ServiceCategory, number>;
+  
+  console.log("Processing symptoms for professional recommendations:", symptoms);
   
   // Process symptoms and add relevant professionals
   symptoms.forEach(symptom => {
@@ -47,7 +48,7 @@ export const getProfessionalsForSymptoms = (
     }
   });
   
-  // NEW: Directly add professionals that are explicitly mentioned
+  // Directly add professionals that are explicitly mentioned
   const professionalMentions = detectProfessionalMentions(userInput);
   professionalMentions.forEach(({ category, count }) => {
     categories.add(category);
@@ -83,6 +84,73 @@ export const getProfessionalsForSymptoms = (
     delete categoryPriorities["physiotherapist"];
     
     console.log("Optimized profile for anxiety + nutrition + race preparation");
+  }
+  
+  // Special case for stomach pain/issues
+  if (symptoms.includes("stomach pain") || symptoms.includes("stomach issues") || 
+      symptoms.includes("digestive problems")) {
+    
+    console.log("Detected stomach pain or digestive issues, ensuring appropriate recommendations");
+    
+    // Ensure gastroenterology is prioritized
+    categories.add("gastroenterology");
+    categoryPriorities["gastroenterology"] = Math.max(categoryPriorities["gastroenterology"] || 0, 0.95);
+    
+    // Ensure family medicine is included
+    categories.add("family-medicine");
+    categoryPriorities["family-medicine"] = Math.max(categoryPriorities["family-medicine"] || 0, 0.9);
+    
+    // Ensure dietician is included
+    categories.add("dietician");
+    categoryPriorities["dietician"] = Math.max(categoryPriorities["dietician"] || 0, 0.85);
+    
+    // Remove inappropriate services for stomach issues
+    categories.delete("biokineticist");
+    delete categoryPriorities["biokineticist"];
+    categories.delete("personal-trainer");
+    delete categoryPriorities["personal-trainer"];
+    
+    console.log("Optimized professionals for stomach/digestive issues");
+  }
+  
+  // Budget consideration - if user mentions budget under R1000
+  if (userInput.toLowerCase().match(/r\s*\d{1,3}00/) || 
+      userInput.toLowerCase().includes("budget") || 
+      userInput.toLowerCase().includes("afford")) {
+    
+    const budgetMatch = userInput.match(/r\s*(\d{1,4})/i);
+    const budgetAmount = budgetMatch ? parseInt(budgetMatch[1], 10) : null;
+    
+    console.log(`Detected budget constraint: ${budgetAmount || 'unspecified'}`);
+    
+    // If budget is very low (under R1000), prioritize more affordable options
+    if (budgetAmount && budgetAmount < 1000) {
+      console.log("Very tight budget detected, optimizing for affordability");
+      
+      // Ensure family medicine is included for medical issues as it's more affordable
+      if (symptoms.includes("stomach pain") || symptoms.includes("stomach issues") || 
+          symptoms.includes("digestive problems")) {
+        
+        categories.add("family-medicine");
+        categoryPriorities["family-medicine"] = Math.max(categoryPriorities["family-medicine"] || 0, 0.95);
+        
+        // If budget is extremely tight, focus on the most essential service
+        if (budgetAmount < 600) {
+          // Keep only family-medicine and dietician for very low budgets
+          const essentialCategories: ServiceCategory[] = ["family-medicine", "dietician"];
+          
+          // Remove non-essential categories
+          Array.from(categories).forEach(category => {
+            if (!essentialCategories.includes(category)) {
+              categories.delete(category);
+              delete categoryPriorities[category];
+            }
+          });
+          
+          console.log("Restricted to only essential services for extremely tight budget");
+        }
+      }
+    }
   }
   
   // Remove contraindicated categories

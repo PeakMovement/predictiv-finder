@@ -1,267 +1,199 @@
 
 import { ServiceCategory } from "./types";
-import { SymptomMapping } from "./symptomTypes";
+
+export interface SymptomMapping {
+  primary: ServiceCategory;
+  specialties: ServiceCategory[];
+  secondary?: ServiceCategory[];
+  priority: number;
+  keywords?: string[];
+  context?: string[];
+  contraindications?: ServiceCategory[];
+}
 
 export const SYMPTOM_MAPPINGS: Record<string, SymptomMapping> = {
-  // Musculoskeletal Issues
-  "pain": {
-    primary: "physiotherapist",
-    specialties: ["physiotherapist", "biokineticist", "pain-management"],
-    priority: 1.0,
-    keywords: [
-      "hurt", "hurting", "ache", "aching", "sore", "soreness",
-      "injury", "injured", "pulled", "strained", "sprain",
-      "discomfort", "stiffness", "tight", "tightness"
-    ],
-    context: [
-      "shoulder", "knee", "back", "hip", "elbow", "wrist", "ankle",
-      "neck", "joint", "muscle", "tendon", "spine", "spinal"
-    ]
+  "weight loss": {
+    primary: 'dietician',
+    specialties: ['personal-trainer'],
+    secondary: ['coaching'],
+    priority: 0.9,
+    keywords: ['lose weight', 'losing weight', 'shed kilos', 'burn fat'],
   },
-  "shoulder pain": {
-    primary: "physiotherapist",
-    specialties: ["physiotherapist", "biokineticist"],
-    priority: 0.95,
-    keywords: [
-      "shoulder", "rotator cuff", "impingement", "overhead", "press", 
-      "bench", "lifting", "overhead press", "shoulder press", "bench press",
-      "can't lift", "can't raise", "shoulder injury"
-    ],
-    contraindications: ["dietician", "coaching"]
+  "fitness goals": {
+    primary: 'personal-trainer',
+    specialties: ['coaching'],
+    secondary: ['dietician'],
+    priority: 0.85,
+    keywords: ['get fit', 'build muscle', 'tone', 'fitness', 'strength'],
+  },
+  "hypertension": {
+    primary: 'family-medicine',
+    specialties: ['cardiology'],
+    secondary: ['dietician'],
+    priority: 0.8,
+    keywords: ['high blood pressure', 'blood pressure'],
+  },
+  "diabetes": {
+    primary: 'endocrinology',
+    specialties: ['family-medicine'],
+    secondary: ['dietician'],
+    priority: 0.85,
+    keywords: ['blood sugar', 'glucose', 'insulin'],
+  },
+  "asthma": {
+    primary: 'internal-medicine',
+    specialties: ['family-medicine'],
+    priority: 0.8,
+    keywords: ['breathing issues', 'shortness of breath', 'wheezing'],
+  },
+  "ankle sprain": {
+    primary: 'physiotherapist',
+    specialties: ['biokineticist'],
+    secondary: ['personal-trainer'],
+    priority: 0.85,
+    keywords: ['twisted ankle', 'ankle injury'],
+  },
+  "shoulder strain": {
+    primary: 'physiotherapist',
+    specialties: ['biokineticist'],
+    secondary: ['personal-trainer'],
+    priority: 0.85,
+    keywords: ['hurt shoulder', 'injured shoulder', 'shoulder pain', 'rotator cuff'],
+  },
+  "chronic fatigue": {
+    primary: 'family-medicine',
+    specialties: ['endocrinology'],
+    secondary: ['coaching'],
+    priority: 0.8,
+    keywords: ['always tired', 'no energy', 'exhausted'],
+  },
+  // Updated for stomach issues with appropriate specialists
+  "stomach issues": {
+    primary: 'gastroenterology',
+    specialties: ['family-medicine'],
+    secondary: ['dietician'],
+    priority: 0.85,
+    keywords: ['digestive problems', 'abdominal pain', 'stomach pain', 'gut issues', 'indigestion'],
+    contraindications: ['biokineticist', 'personal-trainer'] // Added contraindications
+  },
+  // Separate entry for stomach pain specifically
+  "stomach pain": {
+    primary: 'gastroenterology',
+    specialties: ['family-medicine'],
+    secondary: ['dietician'],
+    priority: 0.9, // Higher priority for specific pain
+    keywords: ['abdominal pain', 'belly pain', 'stomach ache'],
+    contraindications: ['biokineticist', 'personal-trainer'] // Added contraindications
+  },
+  "digestive problems": {
+    primary: 'gastroenterology',
+    specialties: ['family-medicine'],
+    secondary: ['dietician'],
+    priority: 0.8,
+    keywords: ['digestion', 'bowel issues', 'IBS', 'constipation', 'diarrhea'],
+    contraindications: ['biokineticist', 'personal-trainer'] // Added contraindications
   },
   "knee pain": {
-    primary: "physiotherapist",
-    specialties: ["physiotherapist", "biokineticist", "orthopedics"],
-    priority: 0.95,
-    keywords: [
-      "knee", "patella", "acl", "mcl", "meniscus", "running pain", "squats",
-      "can't bend", "knee injury", "knee cap", "kneecap"
-    ],
-    contraindications: ["dietician", "coaching"]
+    primary: 'physiotherapist',
+    specialties: ['biokineticist', 'orthopedics'],
+    secondary: ['personal-trainer'],
+    priority: 0.85,
+    keywords: ['sore knee', 'knee injury', 'runner\'s knee', 'ACL'],
   },
   "back pain": {
-    primary: "physiotherapist",
-    specialties: ["physiotherapist", "biokineticist"],
-    priority: 0.95,
-    secondary: ["orthopedics", "personal-trainer"],
-    keywords: [
-      "sore back", "backache", "spinal", "lower back", "upper back", "spine",
-      "stiff back", "pulled muscle", "herniated", "disc", "disk",
-      "sciatica", "lumbar", "thoracic", "back injury", "slipped disc",
-      "lumbago", "can't bend", "can't stand straight", "back hurts"
-    ],
-    context: ["sitting", "desk", "office", "posture", "ergonomic", "desk job"]
-  },
-  "neck pain": {
-    primary: "physiotherapist",
-    specialties: ["physiotherapist", "biokineticist"],
+    primary: 'physiotherapist',
+    specialties: ['biokineticist', 'orthopedics'],
+    secondary: ['personal-trainer'],
     priority: 0.9,
-    keywords: [
-      "stiff neck", "neck injury", "whiplash", "cervical", "can't turn head",
-      "neck stiffness", "trap pain", "trapezius", "cervical spine"
-    ],
-    context: ["desk", "pillow", "sleep", "computer", "posture", "phone", "text neck"]
-  },
-  "joint pain": {
-    primary: "physiotherapist",
-    specialties: ["physiotherapist", "biokineticist", "rheumatology"],
-    priority: 0.85,
-    secondary: ["orthopedics"],
-    keywords: [
-      "arthritis", "stiff joints", "swelling", "inflamed", "inflammation",
-      "rheumatic", "gout", "joints", "joint stiffness"
-    ]
-  },
-  
-  // Sports & Specific Injuries
-  "sports injury": {
-    primary: "physiotherapist",
-    specialties: ["physiotherapist", "biokineticist", "personal-trainer"],
-    priority: 0.9,
-    keywords: [
-      "sports", "injury", "game", "match", "competition", "race", "tournament",
-      "pulled muscle", "strain", "sprain", "torn", "rupture"
-    ]
-  },
-  "recovery": {
-    primary: "physiotherapist",
-    specialties: ["physiotherapist", "biokineticist", "personal-trainer"],
-    priority: 0.7,
-    keywords: [
-      "recover", "healing", "rest", "recuperate", "rehab", "rehabilitation",
-      "sore", "doms", "delayed onset muscle soreness", "tight muscles"
-    ]
-  },
-  
-  // Mental Health & Psychology
-  "anxiety": {
-    primary: "coaching",
-    specialties: ["coaching", "dietician"],
-    priority: 0.9,
-    keywords: [
-      "anxious", "worry", "nervous", "stress", "panic", "fear", 
-      "overwhelmed", "overthinking", "can't relax", "on edge", 
-      "racing thoughts", "mental health", "anxiety attack"
-    ],
-    secondary: ["psychiatry"],
-    contraindications: ["physiotherapist", "orthopedics"]
+    keywords: ['lower back', 'back injury', 'sciatica', 'back ache', 'lumbar pain'],
   },
   "mental health": {
-    primary: "coaching",
-    specialties: ["coaching", "psychiatry"],
-    priority: 0.85,
-    keywords: [
-      "depression", "mood", "therapy", "counseling", "trauma", 
-      "emotional", "mental", "psychological", "stress", "burnout"
-    ],
-    secondary: ["dietician"],
-    contraindications: ["physiotherapist", "orthopedics"]
-  },
-  
-  // Fitness & Strength Goals
-  "strength": {
-    primary: "personal-trainer",
-    specialties: ["personal-trainer", "biokineticist"],
+    primary: 'psychiatry',
+    specialties: ['coaching'],
     priority: 0.8,
-    keywords: [
-      "strong", "stronger", "strength", "build muscle", "hypertrophy",
-      "gain muscle", "toning", "toned", "lifting", "weights", "resistance",
-      "powerful", "power", "buff", "bulking", "muscles"
-    ]
+    keywords: ['anxiety', 'depression', 'stress', 'mood', 'mental wellbeing'],
+  },
+  "anxiety": {
+    primary: 'psychiatry',
+    specialties: ['coaching'],
+    priority: 0.85,
+    keywords: ['anxious', 'worry', 'panic', 'overthinking'],
+  },
+  "depression": {
+    primary: 'psychiatry',
+    specialties: ['coaching'],
+    priority: 0.9,
+    keywords: ['low mood', 'sad', 'unmotivated', 'despair'],
+  },
+  "stress": {
+    primary: 'coaching',
+    specialties: ['psychiatry'],
+    priority: 0.75,
+    keywords: ['overwhelmed', 'burnout', 'tension'],
+  },
+  "respiratory issues": {
+    primary: 'internal-medicine',
+    specialties: ['family-medicine'],
+    priority: 0.85,
+    keywords: ['breathing problems', 'coughing', 'shortness of breath'],
+  },
+  "joint pain": {
+    primary: 'physiotherapist',
+    specialties: ['orthopedics'],
+    secondary: ['biokineticist'],
+    priority: 0.8,
+    keywords: ['arthritis', 'joint stiffness', 'joint inflammation'],
+  },
+  "nutrition": {
+    primary: 'dietician',
+    specialties: ['coaching'],
+    priority: 0.8,
+    keywords: ['diet', 'eating', 'food', 'nutrients', 'meal plan'],
+  },
+  "strength": {
+    primary: 'personal-trainer',
+    specialties: ['biokineticist'],
+    priority: 0.75,
+    keywords: ['stronger', 'build muscle', 'resistance training'],
+  },
+  "cardio": {
+    primary: 'personal-trainer',
+    specialties: ['coaching'],
+    priority: 0.7,
+    keywords: ['running', 'jogging', 'stamina', 'endurance'],
+  },
+  "general health": {
+    primary: 'family-medicine',
+    specialties: ['dietician'],
+    secondary: ['personal-trainer'],
+    priority: 0.5,
+    keywords: ['checkup', 'wellness', 'health status'],
+  },
+  "race preparation": {
+    primary: 'coaching',
+    specialties: ['personal-trainer'],
+    secondary: ['dietician'],
+    priority: 0.85,
+    keywords: ['run training', 'race prep', 'marathon training'],
+  },
+  "event preparation": {
+    primary: 'personal-trainer',
+    specialties: ['coaching'],
+    secondary: ['dietician'],
+    priority: 0.8,
+    keywords: ['competition prep', 'event training', 'preparing for event'],
+  },
+  "pain": {
+    primary: 'physiotherapist',
+    specialties: ['family-medicine'],
+    secondary: ['pain-management'],
+    priority: 0.7,
+    keywords: ['ache', 'hurt', 'sore', 'discomfort'],
   },
   "fitness": {
-    primary: "personal-trainer",
-    specialties: ["personal-trainer", "biokineticist"],
-    priority: 0.75,
-    secondary: ["coaching"],
-    keywords: [
-      "fit", "fitter", "fitness", "cardio", "endurance", "stamina",
-      "conditioning", "workout", "exercise", "training", "gym", "sculpt"
-    ]
-  },
-  "weight management": {
-    primary: "dietician",
-    specialties: ["dietician", "personal-trainer"],
-    priority: 0.85,
-    secondary: ["coaching"],
-    keywords: [
-      "lose weight", "weight loss", "fat loss", "slim down", "get leaner",
-      "drop kilos", "shed kilos", "burn fat", "calorie deficit", "diet",
-      "eating plan", "nutrition plan", "meal plan"
-    ]
-  },
-  
-  // Nutrition & Digestive Issues
-  "nutrition": {
-    primary: "dietician",
-    specialties: ["dietician"],
-    priority: 0.9,
-    secondary: ["coaching"],
-    keywords: [
-      "eat", "eating", "diet", "food", "nutrition", "meal", "meals",
-      "healthy eating", "balanced diet", "macros", "macronutrients",
-      "appetite", "hunger", "nutrients", "struggling to eat", "not eating",
-      "poor appetite", "meal planning", "nutrition plan"
-    ]
-  },
-  "digestive issues": {
-    primary: "dietician",
-    specialties: ["dietician", "gastroenterology"],
-    priority: 0.9,
-    keywords: [
-      "bloating", "bloated", "gas", "constipation", "diarrhea", "IBS",
-      "irritable bowel", "gut health", "digestive", "indigestion",
-      "stomach pain", "stomach issues", "abdominal", "gut discomfort",
-      "food intolerance", "GERD", "acid reflux", "appetite", "nauseous"
-    ],
-    contraindications: ["personal-trainer", "physiotherapist"]
-  },
-  
-  // Event Preparation
-  "race preparation": {
-    primary: "personal-trainer",
-    specialties: ["personal-trainer", "coaching"],
-    priority: 0.95,
-    secondary: ["dietician"],
-    keywords: [
-      "race", "run", "running", "marathon", "half marathon", "5k", "10k", 
-      "training for race", "prepare for race", "upcoming race", "competition",
-      "event", "preparing", "race day", "starting line", "finish line",
-      "race prep", "weeks until race", "race training"
-    ],
-    contraindications: ["physiotherapist", "orthopedics"]
-  },
-  
-  "event preparation": {
-    primary: "personal-trainer",
-    specialties: ["personal-trainer", "coaching"],
-    priority: 0.85,
-    secondary: ["dietician", "physiotherapist"],
-    keywords: [
-      "marathon", "race", "competition", "event", "tournament", "match",
-      "prep", "prepare", "training for", "getting ready", "upcoming",
-      "run", "running", "cycling", "swim", "triathlon", "ironman", "comrades",
-      "half marathon", "10k", "5k", "sports event"
-    ]
-  },
-  
-  // General Health
-  "general health": {
-    primary: "family-medicine",
-    specialties: ["family-medicine", "internal-medicine"],
-    priority: 0.6,
-    keywords: [
-      "health", "check-up", "medical", "doctor", "physician",
-      "general practitioner", "GP", "wellness", "illness", "sick"
-    ]
-  },
-  "fatigue": {
-    primary: "family-medicine",
-    specialties: ["family-medicine", "internal-medicine", "dietician"],
-    priority: 0.75,
-    secondary: ["endocrinology"],
-    keywords: [
-      "tired", "exhausted", "no energy", "lethargic", "sluggish",
-      "worn out", "drained", "fatigue", "chronic fatigue"
-    ]
-  },
-  
-  // Special contexts
-  "desk job": {
-    primary: "physiotherapist",
-    specialties: ["physiotherapist", "personal-trainer"],
-    priority: 0.7,
-    keywords: [
-      "desk", "office", "sitting", "computer", "ergonomic", 
-      "posture", "sedentary", "office worker", "desk worker"
-    ]
-  },
-  "student": {
-    primary: "personal-trainer",
-    specialties: ["personal-trainer", "dietician"],
-    priority: 0.5,
-    keywords: [
-      "student", "university", "college", "studies", "studying",
-      "exams", "academic", "campus", "school", "varsity"
-    ]
-  },
-  "busy lifestyle": {
-    primary: "personal-trainer",
-    specialties: ["personal-trainer", "coaching"],
-    priority: 0.6,
-    keywords: [
-      "busy", "no time", "hectic", "schedule", "time-poor",
-      "efficient", "quick", "fast", "short sessions", "on the go"
-    ]
-  },
-  "affordable": {
-    primary: "personal-trainer",
-    specialties: ["personal-trainer", "coaching"],
-    priority: 0.4,
-    keywords: [
-      "affordable", "budget", "cheap", "cost-effective", "low cost",
-      "inexpensive", "reasonable price", "economical", "tight budget",
-      "money", "financial", "can't afford", "expensive", "price"
-    ]
+    primary: 'personal-trainer',
+    specialties: ['coaching'],
+    priority: 0.8,
+    keywords: ['toning', 'shape', 'workout', 'exercise'],
   }
 };
