@@ -77,8 +77,15 @@ export const calculateSessions = (
   // Adjust cost if budget is too low but still allow at least 1 session
   let adjustedCost = baseCost;
   if (allocatedBudget < baseCost && allocatedBudget > 0) {
-    // Find a reduced cost that fits the budget
-    adjustedCost = Math.max(allocatedBudget * 0.9, 300); // Minimum viable cost
+    // For very low budgets, be more flexible with pricing
+    if (allocatedBudget < 500 && monthlyBudget < 1000) {
+      // Significant price reduction for very tight budgets
+      adjustedCost = Math.max(allocatedBudget * 0.8, 200); // Allow much lower minimums
+      console.log(`Reduced ${serviceType} session cost to ${adjustedCost} due to tight budget`);
+    } else {
+      // Standard price reduction for moderately tight budgets
+      adjustedCost = Math.max(allocatedBudget * 0.9, 300); // Minimum viable cost
+    }
   }
 
   // Calculate maximum possible sessions within budget
@@ -111,13 +118,42 @@ export const distributeSessionsByBudget = (
 ): Partial<Record<ServiceCategory, SessionAllocation>> => {
   const allocations: Partial<Record<ServiceCategory, SessionAllocation>> = {};
   
-  // Sort services by priority (lowest number = highest priority)
-  const sortedServices = [...services].sort((a, b) => a.priority - b.priority);
+  // Sort services by priority (highest priority = lowest number)
+  const sortedServices = [...services].sort((a, b) => {
+    // Consider both priority value and service type
+    if (a.priority !== b.priority) {
+      return a.priority - b.priority;
+    }
+    
+    // If priorities are equal, prefer certain service types for specific cases
+    // Coaching and physiotherapy should both be included in injury + race situations
+    const isInjuryRelated = (type: ServiceCategory) => 
+      type === 'physiotherapist' || type === 'biokineticist';
+    const isPerformanceRelated = (type: ServiceCategory) => 
+      type === 'coaching' || type === 'personal-trainer';
+      
+    // If very low budget, try to spread across service types
+    if (monthlyBudget < 1000) {
+      // Give slight preference to coaching for race preparation
+      if (isPerformanceRelated(a.type) && !isPerformanceRelated(b.type)) return -1;
+      if (!isPerformanceRelated(a.type) && isPerformanceRelated(b.type)) return 1;
+      
+      // Also consider rehab needs
+      if (isInjuryRelated(a.type) && !isInjuryRelated(b.type)) return -1;
+      if (!isInjuryRelated(a.type) && isInjuryRelated(b.type)) return 1;
+    }
+    
+    return 0; // Keep original order if no other criteria apply
+  });
   
+  // Track remaining budget
   let remainingBudget = monthlyBudget;
   
   // First pass - try to allocate at least one session to each service
-  sortedServices.forEach(service => {
+  for (const service of sortedServices) {
+    // For very low budgets, be more flexible with pricing
+    const isLowBudget = monthlyBudget < 1000;
+    
     // Calculate with minimum possible allocation
     const allocation = calculateSessions(
       remainingBudget,
@@ -128,11 +164,38 @@ export const distributeSessionsByBudget = (
       preferHighEnd
     );
     
-    if (allocation.sessions > 0) {
+    // For very low budgets, ensure critical services get at least 1 session
+    if (isLowBudget && allocation.sessions === 0 && 
+        (service.type === 'physiotherapist' || service.type === 'coaching')) {
+      // Force allocation by reducing cost dramatically if needed
+      const minCost = Math.min(400, remainingBudget * 0.9);
+      if (minCost > 0 && remainingBudget >= minCost) {
+        allocations[service.type] = {
+          sessions: 1,
+          costPerSession: minCost,
+          totalCost: minCost
+        };
+        remainingBudget -= minCost;
+        console.log(`Forced allocation for ${service.type} at reduced cost ${minCost}`);
+      }
+    }
+    else if (allocation.sessions > 0) {
       allocations[service.type] = allocation;
       remainingBudget -= allocation.totalCost;
     }
-  });
+    
+    // For low budgets, stop after allocating 2 critical services
+    if (isLowBudget && Object.keys(allocations).length >= 2) {
+      console.log("Limited to 2 services due to tight budget");
+      break;
+    }
+    
+    // For very low budgets, stop after any allocation to ensure we get something
+    if (monthlyBudget < 600 && Object.keys(allocations).length >= 1) {
+      console.log("Limited to 1 service due to extremely tight budget");
+      break;
+    }
+  }
   
   // If we still have budget left, allocate more sessions to priority services
   if (remainingBudget > 0 && sortedServices.length > 0) {
@@ -150,6 +213,28 @@ export const distributeSessionsByBudget = (
           costPerSession: currentAllocation.costPerSession,
           totalCost: currentAllocation.totalCost + additionalCost
         };
+        
+        remainingBudget -= additionalCost;
+      }
+    }
+    
+    // Try to add a second service if budget allows and we don't have one yet
+    if (remainingBudget > 0 && Object.keys(allocations).length < 2 && sortedServices.length > 1) {
+      const secondService = sortedServices[1];
+      
+      if (!allocations[secondService.type]) {
+        const allocation = calculateSessions(
+          remainingBudget,
+          secondService.type,
+          secondService.priority,
+          preferences,
+          severity,
+          preferHighEnd
+        );
+        
+        if (allocation.sessions > 0) {
+          allocations[secondService.type] = allocation;
+        }
       }
     }
   }

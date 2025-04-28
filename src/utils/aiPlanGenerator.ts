@@ -1,3 +1,4 @@
+
 import { AIHealthPlan } from '@/types';
 import { analyzeUserInput } from './planGenerator/inputAnalyzer';
 import { findAlternativeCategories } from './planGenerator/categoryMatcher';
@@ -61,6 +62,45 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   // Remove contraindicated services
   categories = categories.filter(cat => !contraindicated?.includes(cat));
   console.log("Final service categories after filtering:", categories);
+  
+  // Special case handling for knee pain + race preparation
+  const hasKneePain = medicalConditions.some(m => 
+    m.toLowerCase().includes('knee') && m.toLowerCase().includes('pain')
+  );
+  
+  const hasRacePrep = userQuery.toLowerCase().includes('race') || 
+                     userQuery.toLowerCase().includes('marathon') ||
+                     userQuery.toLowerCase().includes('run') ||
+                     medicalConditions.some(m => m.toLowerCase().includes('race'));
+  
+  if (hasKneePain && hasRacePrep) {
+    console.log("Detected knee pain + race preparation special case");
+    
+    // Ensure coaching is included for race preparation
+    if (!categories.includes('coaching')) {
+      categories.push('coaching');
+      console.log("Added coaching for race preparation");
+    }
+    
+    // Ensure physiotherapy is included for knee pain
+    if (!categories.includes('physiotherapist')) {
+      categories.push('physiotherapist');
+      console.log("Added physiotherapist for knee pain");
+    }
+    
+    // Add to medical conditions if not already there
+    if (!medicalConditions.includes('knee pain')) {
+      medicalConditions.push('knee pain');
+    }
+    
+    if (!medicalConditions.includes('race preparation')) {
+      medicalConditions.push('race preparation');
+    }
+    
+    // Adjust the service priorities
+    servicePriorities['coaching'] = Math.max(servicePriorities['coaching'] || 0, 0.9);
+    servicePriorities['physiotherapist'] = Math.max(servicePriorities['physiotherapist'] || 0, 0.9);
+  }
   
   // Special case handling for anxiety + eating + race preparation
   if (userQuery.toLowerCase().includes('anxiety') && 
@@ -135,7 +175,8 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
       medicalConditions, 
       primaryIssue, 
       userType, 
-      tier.name
+      tier.name,
+      hasKneePain && hasRacePrep
     );
     
     // Add notes to description
@@ -146,7 +187,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     // Create the final plan
     const plan: AIHealthPlan = {
       id: `plan-${Date.now()}-${Math.floor(Math.random() * 1000)}-${tier.name}`,
-      name: generatePlanName(tier.name, medicalConditions, primaryIssue),
+      name: generatePlanName(tier.name, medicalConditions, primaryIssue, hasKneePain && hasRacePrep),
       description,
       services: optimizedServices.map(service => ({
         type: service.type,
@@ -156,13 +197,14 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
           service.type, 
           tier.name === 'high',
           service.frequency,
-          primaryIssue
+          primaryIssue,
+          hasKneePain && hasRacePrep
         ),
         recommendedPractitioners: [] // Will be populated by the planGenerator module
       })),
       totalCost: optimizedServices.reduce((sum, s) => sum + s.cost, 0),
       planType: determinePlanType(medicalConditions, primaryIssue, tier.name),
-      timeFrame: timeFrame || determineTimeFrame(medicalConditions, userQuery, contextualFactors || [])
+      timeFrame: timeFrame || determineTimeFrame(medicalConditions, userQuery, contextualFactors || [], hasKneePain && hasRacePrep)
     };
     
     plans.push(plan);
@@ -176,9 +218,15 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
 function generatePlanName(
   tierName: string, 
   conditions: string[], 
-  primaryIssue?: string
+  primaryIssue?: string,
+  isKneePainRacePrep: boolean = false
 ): string {
   const tierPrefix = `${tierName.charAt(0).toUpperCase() + tierName.slice(1)} Budget:`;
+  
+  // Special case for knee pain + race preparation
+  if (isKneePainRacePrep) {
+    return `${tierPrefix} Knee-Safe Race Preparation Plan`;
+  }
   
   // Special case for anxiety + nutrition + race prep
   if ((primaryIssue === 'anxiety' || conditions.includes('anxiety')) && 
@@ -245,8 +293,16 @@ function generatePlanDescription(
   conditions: string[], 
   primaryIssue?: string,
   userType?: string,
-  tierName?: string
+  tierName?: string,
+  isKneePainRacePrep: boolean = false
 ): string {
+  // Special case for knee pain + race preparation
+  if (isKneePainRacePrep) {
+    return "A carefully balanced plan addressing both knee rehabilitation and race preparation needs. " +
+           "This plan includes modified training approaches and targeted therapy to support your racing goals " +
+           "while prioritizing knee health and recovery.";
+  }
+  
   // Special case for anxiety + nutrition + race prep
   if ((primaryIssue === 'anxiety' || conditions.includes('anxiety')) && 
       conditions.includes('nutrition needs') && 
@@ -292,9 +348,28 @@ function generateServiceDescription(
   serviceType: string, 
   isHighEnd: boolean,
   frequency?: string,
-  primaryIssue?: string
+  primaryIssue?: string,
+  isKneePainRacePrep: boolean = false
 ): string {
   let description = '';
+  
+  // Special case for knee pain + race preparation
+  if (isKneePainRacePrep) {
+    switch (serviceType) {
+      case 'physiotherapist':
+        return isHighEnd 
+          ? "Specialized knee rehabilitation sessions focusing on running biomechanics and race-specific movement patterns" 
+          : "Targeted knee therapy sessions to support safe race preparation and running mechanics";
+      case 'coaching':
+        return isHighEnd 
+          ? "Personalized race coaching with knee-safe training plans and modified intensity progression" 
+          : "Race preparation coaching designed to accommodate knee limitations while building fitness";
+      case 'personal-trainer':
+        return isHighEnd 
+          ? "Custom strength training for knee stability and running performance with race-specific focus" 
+          : "Knee-friendly training sessions designed to support your race goals";
+    }
+  }
   
   switch (serviceType) {
     case 'dietician':
@@ -410,14 +485,24 @@ function calculateBudgetTiers(
   
   // If user specified a budget, create custom tiers around that budget
   if (budget) {
-    // Create a low tier at exactly the user's budget
-    const userBudget = Math.max(500, budget); // Ensure minimum viable budget
-    
-    budgetTiers = [
-      { name: 'low', budget: userBudget },
-      { name: 'medium', budget: Math.floor(userBudget * 1.5) },
-      { name: 'high', budget: Math.floor(userBudget * 2.5) }
-    ];
+    // Check if it's an extremely low budget (less than R1000)
+    if (budget < 1000) {
+      // For very tight budgets, create reasonable tiers
+      budgetTiers = [
+        { name: 'low', budget: budget }, // Use their exact budget for low tier
+        { name: 'medium', budget: budget * 2 }, // Double their budget
+        { name: 'high', budget: budget * 3 } // Triple their budget
+      ];
+      
+      console.log("Created extremely tight budget tiers based on user budget:", budgetTiers);
+    } else {
+      // Standard approach for normal budgets
+      budgetTiers = [
+        { name: 'low', budget: Math.max(500, budget) }, // Ensure minimum viable budget
+        { name: 'medium', budget: Math.floor(budget * 1.5) },
+        { name: 'high', budget: Math.floor(budget * 2.5) }
+      ];
+    }
   } else if (hasBudgetConstraint) {
     // Set lower budget tiers if constraints mentioned but no specific budget
     budgetTiers = [
@@ -436,6 +521,14 @@ function determinePlanType(
   primaryIssue?: string,
   tierName?: string
 ): AIHealthPlan['planType'] {
+  // Special case for knee pain + race prep
+  const hasKneePain = conditions.some(c => c.toLowerCase().includes('knee'));
+  const hasRacePrep = conditions.some(c => c.toLowerCase().includes('race'));
+  
+  if (hasKneePain && hasRacePrep) {
+    return 'progressive';
+  }
+  
   if (primaryIssue === 'race preparation' || conditions.includes('race preparation')) {
     return 'progressive';
   }
@@ -460,8 +553,24 @@ function determinePlanType(
 function determineTimeFrame(
   conditions: string[],
   userQuery: string,
-  contextualFactors: string[] = []
+  contextualFactors: string[] = [],
+  isKneePainRacePrep: boolean = false
 ): string {
+  // Special case for knee pain + race prep
+  if (isKneePainRacePrep) {
+    // Check for specific race timeframes in the query
+    const raceMatch = userQuery.match(/(\d+)\s*(weeks?|months?|days?)(.*?)(race|run|marathon|event)/i) ||
+                    userQuery.match(/(race|run|marathon|event)(.*?)(\d+)\s*(weeks?|months?|days?)/i);
+                    
+    if (raceMatch) {
+      const amount = parseInt(raceMatch[1] || raceMatch[3], 10);
+      const unit = (raceMatch[2] || raceMatch[4]).toLowerCase();
+      return `${amount} ${unit}`;
+    }
+    
+    return '8 weeks'; // Standard combined rehab + training timeframe
+  }
+  
   // Check for specific race timeframes in the query
   const raceMatch = userQuery.match(/(\d+)\s*(weeks?|months?|days?)(.*?)(race|run|marathon|event)/i) ||
                     userQuery.match(/(race|run|marathon|event)(.*?)(\d+)\s*(weeks?|months?|days?)/i);
