@@ -32,7 +32,11 @@ export const PROFESSIONAL_PHRASES: ProfessionalPhraseMapping[] = [
       "medical consultant",
       "primary care doctor",
       "specialist physician",
-      "health evaluator"
+      "health evaluator",
+      "stomach doctor",
+      "digestive doctor",
+      "abdominal doctor",
+      "gastro doctor"
     ]
   },
   {
@@ -58,7 +62,10 @@ export const PROFESSIONAL_PHRASES: ProfessionalPhraseMapping[] = [
       "health diet expert",
       "nutrition professional",
       "food intake specialist",
-      "clinical diet planner"
+      "clinical diet planner",
+      "gut health dietician",
+      "digestive nutrition expert",
+      "stomach dietician"
     ]
   },
   {
@@ -85,6 +92,31 @@ export const PROFESSIONAL_PHRASES: ProfessionalPhraseMapping[] = [
       "pain relief therapist",
       "movement rehab expert",
       "physical therapy specialist"
+    ]
+  },
+  {
+    professional: "gastroenterology",
+    phrases: [
+      "gastroenterologist",
+      "GI doctor",
+      "gastro specialist",
+      "digestive specialist",
+      "gut specialist",
+      "stomach specialist",
+      "gastro doctor",
+      "digestive system doctor",
+      "intestinal specialist",
+      "bowel specialist",
+      "abdomen doctor",
+      "gastrointestinal expert",
+      "GI specialist",
+      "gut doctor",
+      "digestive health expert",
+      "stomach doctor",
+      "GI consultant",
+      "abdominal specialist",
+      "digestive health doctor",
+      "intestinal health expert"
     ]
   },
   {
@@ -182,6 +214,32 @@ export const detectProfessionalMentions = (
 ): { category: ServiceCategory; count: number }[] => {
   const lowerText = text.toLowerCase();
   const detectedProfessionals: Map<ServiceCategory, number> = new Map();
+  
+  // Special case: explicitly check for stomach/digestive issues
+  if (lowerText.includes('stomach') || 
+      lowerText.includes('digestive') || 
+      lowerText.includes('abdomen') ||
+      lowerText.includes('gut')) {
+    
+    // Ensure gastroenterology is detected strongly
+    detectedProfessionals.set('gastroenterology', 2);
+    console.log("Added gastroenterology based on stomach/digestive reference");
+    
+    // Add family-medicine as a backup for digestive issues
+    detectedProfessionals.set('family-medicine', 1);
+  }
+  
+  // Budget-sensitive detection
+  const budgetMatch = lowerText.match(/r\s*(\d{1,4})/i);
+  if (budgetMatch) {
+    const budget = parseInt(budgetMatch[1], 10);
+    if (budget < 1000) {
+      // For low budgets, ensure family medicine is detected
+      const currentCount = detectedProfessionals.get('family-medicine') || 0;
+      detectedProfessionals.set('family-medicine', currentCount + 1);
+      console.log("Added family-medicine based on tight budget consideration");
+    }
+  }
   
   // Search for each phrase in the text
   PROFESSIONAL_PHRASES.forEach(mapping => {
