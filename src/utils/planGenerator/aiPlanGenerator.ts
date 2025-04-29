@@ -1,3 +1,4 @@
+
 import { AIHealthPlan, ServiceCategory } from '@/types';
 import { analyzeUserInput } from './inputAnalyzer';
 import { findAlternativeCategories } from './categoryMatcher';
@@ -20,7 +21,11 @@ import {
 
 import { calculateOptimalServiceAllocation } from './planStructure/serviceAllocation';
 import { BASELINE_COSTS, STUDENT_DISCOUNT } from './types';
-import { scoreProfessionals, buildOptimizedPlan } from './professionalScoring';
+import { 
+  scoreProfessionals, 
+  buildOptimizedPlan, 
+  isComplexCase 
+} from './professionalScoring';
 import { COMPLEXITY_INDICATORS } from './inputAnalyzer/keywordMappings';
 
 // Function to generate custom AI health plans based on user text input
@@ -61,12 +66,21 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   // Calculate complexity score based on conditions, goals, and complexity indicators
   const complexityScore = calculateComplexityScore(
     medicalConditions,
-    specificGoals || [],
+    specificGoals ? specificGoals : [],
     userQuery,
-    servicePriorities || {}
+    servicePriorities ? servicePriorities : {}
   );
   
   console.log("Calculated complexity score:", complexityScore);
+  
+  // Determine if this is a complex case requiring multiple professionals
+  const needsMultidisciplinary = isComplexCase(
+    medicalConditions, 
+    specificGoals ? specificGoals : [],
+    userQuery
+  );
+  
+  console.log("Needs multidisciplinary approach:", needsMultidisciplinary);
   
   // Ensure we have the right categories based on the analysis
   let categories = [...suggestedCategories];
@@ -74,14 +88,17 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   // Handle co-morbidities - add specialized services when certain conditions co-occur
   const coMorbidityServices = checkCoMorbidities(medicalConditions);
   coMorbidityServices.forEach(service => {
-    if (!categories.includes(service as ServiceCategory) && !contraindicated?.includes(service as ServiceCategory)) {
+    if (!categories.includes(service as ServiceCategory) && 
+        contraindicated && !contraindicated.includes(service as ServiceCategory)) {
       categories.push(service as ServiceCategory);
       console.log(`Added ${service} due to co-morbidity detection`);
     }
   });
   
   // Remove contraindicated services
-  categories = categories.filter(cat => !contraindicated?.includes(cat));
+  if (contraindicated) {
+    categories = categories.filter(cat => !contraindicated.includes(cat));
+  }
   console.log("Final service categories after filtering:", categories);
   
   // Apply special case handling
@@ -89,7 +106,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     categories,
     medicalConditions,
     userQuery, 
-    servicePriorities || {} as Record<string, number>,
+    servicePriorities ? servicePriorities : {},
     primaryIssue
   );
   
@@ -97,9 +114,9 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   const budgetTiers = calculateBudgetTiers(
     budget, 
     userQuery, 
-    preferences || {}, 
+    preferences ? preferences : {}, 
     userType, 
-    contextualFactors || []
+    contextualFactors ? contextualFactors : []
   );
   
   console.log("Generated budget tiers:", budgetTiers);
@@ -119,7 +136,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     const scoredPractitioners = scoreProfessionals(
       practitioners,
       medicalConditions,
-      specificGoals || [],
+      specificGoals ? specificGoals : [],
       tier.budget,
       timeFrame,
       categories,
@@ -146,10 +163,10 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     if (optimizedPlan.professionals.length === 0) {
       optimizedServices = calculateOptimalServiceAllocation(
         categories,
-        servicePriorities || {} as Record<string, number>,
+        servicePriorities ? servicePriorities : {},
         tier.budget,
         userType,
-        contextualFactors || []
+        contextualFactors ? contextualFactors : []
       );
     } else {
       // Convert our professional-based plan to the service format needed
@@ -165,10 +182,10 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     
     // Generate notes
     const notes = generatePlanNotes(
-      preferences || {},
+      preferences ? preferences : {},
       medicalConditions,
-      severity || {},
-      specificGoals || {},
+      severity ? severity : {},
+      specificGoals ? specificGoals : {},
       timeFrame,
       location,
       preferOnline,
@@ -219,7 +236,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
       })),
       totalCost: optimizedServices.reduce((sum, s) => sum + s.cost, 0),
       planType: determinePlanType(medicalConditions, primaryIssue, tier.name),
-      timeFrame: timeFrame || determineTimeFrame(medicalConditions, userQuery, contextualFactors || [], hasKneePainAndRacePrep)
+      timeFrame: timeFrame || determineTimeFrame(medicalConditions, userQuery, contextualFactors ? contextualFactors : [], hasKneePainAndRacePrep)
     };
     
     plans.push(plan);

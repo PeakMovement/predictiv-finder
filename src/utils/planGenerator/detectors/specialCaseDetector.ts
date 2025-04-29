@@ -23,7 +23,7 @@ export const detectSpecialCases = (
       hasAnxiety = true;
       if (!symptoms.includes("anxiety")) {
         symptoms.push("anxiety");
-        priorities["anxiety"] = SYMPTOM_MAPPINGS["anxiety"].priority;
+        priorities["anxiety"] = SYMPTOM_MAPPINGS["anxiety"]?.priority || 0.8;
         console.log(`Found mental health symptom: anxiety`);
       }
       break;
@@ -35,7 +35,7 @@ export const detectSpecialCases = (
       hasNutrition = true;
       if (!symptoms.includes("nutrition")) {
         symptoms.push("nutrition");
-        priorities["nutrition"] = SYMPTOM_MAPPINGS["nutrition"].priority;
+        priorities["nutrition"] = SYMPTOM_MAPPINGS["nutrition"]?.priority || 0.7;
         console.log(`Found nutrition concern`);
       }
       break;
@@ -48,7 +48,7 @@ export const detectSpecialCases = (
       if (!symptoms.includes("race preparation")) {
         symptoms.push("race preparation");
         // Give race preparation higher priority when explicitly mentioned
-        priorities["race preparation"] = SYMPTOM_MAPPINGS["race preparation"].priority * 1.2;
+        priorities["race preparation"] = (SYMPTOM_MAPPINGS["race preparation"]?.priority || 0.7) * 1.2;
         console.log(`Found race preparation need`);
       }
       break;
@@ -63,9 +63,9 @@ export const detectSpecialCases = (
     priorities["race preparation"] = (priorities["race preparation"] || 0) * 1.2;
     
     // Add contraindications for physiotherapy
-    if (!contraindications.includes("physiotherapist" as ServiceCategory)) {
-      contraindications.push("physiotherapist" as ServiceCategory);
-      contraindications.push("biokineticist" as ServiceCategory);
+    if (!contraindications.includes("physiotherapist")) {
+      contraindications.push("physiotherapist");
+      contraindications.push("biokineticist");
     }
     
     console.log("Found special case: anxiety + nutrition + race preparation");

@@ -1,4 +1,3 @@
-
 import { Practitioner, ServiceCategory } from "@/types";
 import { SYMPTOM_MAPPINGS } from "./symptomMappingsData";
 import { KeywordMapping } from "./inputAnalyzer/keywordMappings";
@@ -264,13 +263,14 @@ function adjustForComplexity(
 ) {
   const practitioner = scored.practitioner;
   
-  // Define synergistic combinations
-  const synergies: Record<ServiceCategory, ServiceCategory[]> = {
+  // Define synergistic combinations for specific service types
+  const synergies: Partial<Record<ServiceCategory, ServiceCategory[]>> = {
     "dietician": ["personal-trainer", "endocrinology"],
     "personal-trainer": ["physiotherapist", "dietician"],
     "physiotherapist": ["personal-trainer", "orthopedics"],
     "psychiatry": ["coaching", "family-medicine"],
     "cardiology": ["dietician", "family-medicine"],
+    "coaching": ["psychiatry", "personal-trainer"]
   };
   
   // Check if this practitioner has synergies with other high-ranking practitioners
@@ -279,7 +279,7 @@ function adjustForComplexity(
     // Find if we have other practitioners of those types
     const hasSynergisticPartners = allPractitioners.some(other => 
       other.id !== practitioner.id && 
-      synergisticWith.includes(other.serviceType)
+      synergisticWith.includes(other.serviceType as ServiceCategory)
     );
     
     if (hasSynergisticPartners) {
@@ -303,6 +303,40 @@ function adjustForComplexity(
 }
 
 /**
+ * Determine if a case is complex enough to warrant a multidisciplinary approach
+ * Returns true if the case is complex, false if it's simple
+ */
+export function isComplexCase(
+  symptoms: string[], 
+  goals: string[],
+  userQuery: string
+): boolean {
+  // Basic complexity - number of symptoms and goals
+  const baseComplexity = symptoms.length + goals.length;
+  
+  // Check for chronic conditions or multiple issues
+  const hasChronic = symptoms.some(s => 
+    s.toLowerCase().includes('chronic') || 
+    s.toLowerCase().includes('recurring') ||
+    s.toLowerCase().includes('long-term')
+  );
+  
+  // Check for keywords that indicate complexity
+  const complexityKeywords = [
+    'multiple issues', 'several problems', 'chronic', 'recurring',
+    'for years', 'complicated', 'complex', 'many symptoms', 'comorbid'
+  ];
+  
+  const hasComplexityKeywords = complexityKeywords.some(k => userQuery.toLowerCase().includes(k));
+  
+  // Rule: Complex if:
+  // - 3+ symptoms/goals, OR
+  // - Has chronic condition, OR
+  // - Explicitly mentions complexity keywords
+  return baseComplexity >= 3 || hasChronic || hasComplexityKeywords;
+}
+
+/**
  * Build an optimized plan based on scored professionals, applying budget and timeline constraints
  */
 export function buildOptimizedPlan(
@@ -319,8 +353,11 @@ export function buildOptimizedPlan(
   const explanations: string[] = [];
   let totalCost = 0;
   
+  // Determine if this is a complex case requiring multiple professionals
+  const needsMultidisciplinary = complexity && complexity > 3;
+  
   // Determine max professionals based on complexity
-  const maxProfessionals = complexity && complexity > 3 ? 3 : 
+  const maxProfessionals = needsMultidisciplinary ? 3 : 
                            complexity && complexity > 1 ? 2 : 1;
   
   console.log(`Building plan with max ${maxProfessionals} professionals, budget ${budget}, complexity ${complexity}`);
@@ -331,7 +368,7 @@ export function buildOptimizedPlan(
     if (plan.length >= maxProfessionals) break;
     
     // Check budget constraint
-    const newTotalCost = totalCost + scored.practitioner.pricePerSession;
+    const newTotalCost = totalCost + (scored.practitioner.pricePerSession * 4); // 4 sessions per month
     if (budget && newTotalCost > budget) {
       console.log(`Skipping ${scored.practitioner.name} as adding would exceed budget`);
       continue;
@@ -348,6 +385,24 @@ export function buildOptimizedPlan(
     console.log(`Added ${scored.practitioner.name} to plan, total cost now: ${totalCost}`);
   }
   
+  // If we have budget constraints and our plan is over budget, adjust it
+  if (budget && totalCost > budget && plan.length > 0) {
+    const adjustedPlan = adjustPlanForBudget(plan, budget, scoredProfessionals);
+    
+    if (adjustedPlan.changed) {
+      plan.length = 0; // Clear the current plan
+      plan.push(...adjustedPlan.plan); // Add the adjusted plan
+      
+      // Add budget adjustment explanation
+      explanations.push(adjustedPlan.explanation);
+      
+      // Update total cost
+      totalCost = plan.reduce((sum, pro) => sum + (pro.pricePerSession * 4), 0);
+      
+      console.log(`Plan adjusted for budget: new total cost ${totalCost}`);
+    }
+  }
+  
   // If we couldn't add any professionals due to budget, try with the cheapest option
   if (plan.length === 0 && budget) {
     const cheapestPro = scoredProfessionals
@@ -355,7 +410,7 @@ export function buildOptimizedPlan(
       
     if (cheapestPro) {
       plan.push(cheapestPro.practitioner);
-      totalCost = cheapestPro.practitioner.pricePerSession;
+      totalCost = cheapestPro.practitioner.pricePerSession * 4; // 4 sessions per month
       explanations.push(`${cheapestPro.practitioner.name} was selected as the most affordable option within your budget.`);
       console.log(`Added ${cheapestPro.practitioner.name} as budget-constrained option`);
     }
@@ -369,6 +424,120 @@ export function buildOptimizedPlan(
 }
 
 /**
+ * Adjust a plan to fit within budget constraints
+ */
+function adjustPlanForBudget(
+  currentPlan: Practitioner[], 
+  budget: number,
+  allScoredPros: ScoredProfessional[]
+): {
+  plan: Practitioner[];
+  changed: boolean;
+  explanation: string;
+} {
+  // Calculate current cost (4 sessions per professional)
+  const currentCost = currentPlan.reduce((sum, pro) => sum + (pro.pricePerSession * 4), 0);
+  
+  // If already within budget, return unchanged
+  if (currentCost <= budget) {
+    return { 
+      plan: currentPlan, 
+      changed: false, 
+      explanation: "" 
+    };
+  }
+  
+  // Create a copy to modify
+  const adjustedPlan = [...currentPlan];
+  
+  // Identify all possible replacement candidates from our scored list
+  const replacementCandidates = allScoredPros.filter(scored => 
+    !currentPlan.some(p => p.id === scored.practitioner.id)
+  );
+  
+  // Sort the current plan by price (most expensive first)
+  const planByPrice = [...adjustedPlan].sort(
+    (a, b) => b.pricePerSession - a.pricePerSession
+  );
+  
+  // Try replacing expensive professionals with more affordable alternatives
+  let replacementMade = false;
+  let replacedProfessional: Practitioner | null = null;
+  let replacementProfessional: Practitioner | null = null;
+  
+  for (const expensivePro of planByPrice) {
+    // Find a cheaper alternative with the same service type
+    const alternatives = replacementCandidates
+      .filter(scored => 
+        scored.practitioner.serviceType === expensivePro.serviceType && 
+        scored.practitioner.pricePerSession < expensivePro.pricePerSession
+      )
+      .sort((a, b) => b.score - a.score); // Sort by highest score first
+    
+    if (alternatives.length > 0) {
+      // Find the index of the expensive pro
+      const index = adjustedPlan.findIndex(p => p.id === expensivePro.id);
+      
+      // Replace with the best alternative
+      replacedProfessional = expensivePro;
+      replacementProfessional = alternatives[0].practitioner;
+      adjustedPlan[index] = replacementProfessional;
+      replacementMade = true;
+      
+      // Check if we're now under budget
+      const newCost = adjustedPlan.reduce(
+        (sum, pro) => sum + (pro.pricePerSession * 4), 0
+      );
+      
+      if (newCost <= budget) {
+        break;
+      }
+    }
+  }
+  
+  // If we still can't fit within budget, try removing the lowest-scored professional
+  if (replacementMade && adjustedPlan.length > 1) {
+    const adjustedCost = adjustedPlan.reduce(
+      (sum, pro) => sum + (pro.pricePerSession * 4), 0
+    );
+    
+    if (adjustedCost > budget) {
+      // Map the adjusted plan back to scored professionals
+      const adjustedScored = adjustedPlan.map(pro => 
+        allScoredPros.find(scored => scored.practitioner.id === pro.id)
+      ).filter(Boolean) as ScoredProfessional[];
+      
+      // Sort by score (lowest first)
+      adjustedScored.sort((a, b) => a.score - b.score);
+      
+      if (adjustedScored.length > 0) {
+        // Remove the lowest scoring professional
+        const lowestScored = adjustedScored[0];
+        adjustedPlan.splice(
+          adjustedPlan.findIndex(p => p.id === lowestScored.practitioner.id),
+          1
+        );
+      }
+    }
+  }
+  
+  // Generate explanation for the adjustment
+  let explanation = "";
+  if (replacementMade && replacedProfessional && replacementProfessional) {
+    explanation = `To fit within your budget, we've replaced ${replacedProfessional.name} (R${replacedProfessional.pricePerSession}/session) with ${replacementProfessional.name} (R${replacementProfessional.pricePerSession}/session), who offers similar services at a more affordable rate.`;
+  } 
+  else if (adjustedPlan.length < currentPlan.length) {
+    explanation = `To stay within your budget constraints, we've focused on the most important services and reduced the number of professionals.`;
+  }
+  
+  return {
+    plan: adjustedPlan,
+    changed: replacementMade || (adjustedPlan.length < currentPlan.length),
+    explanation
+  };
+}
+
+/**
  * Generate a human-readable explanation for why a professional was selected
  */
 function generateExplanation(scored: ScoredProfessional): string {
@@ -377,7 +546,7 @@ function generateExplanation(scored: ScoredProfessional): string {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3); // Get top 3 factors
   
-  // Base explanation
+  // Build a personalized explanation based on the scoring factors
   let explanation = `${pro.name} (${pro.serviceType.replace('-', ' ')}) was selected because `;
   
   // Add primary reason
@@ -410,6 +579,45 @@ function generateExplanation(scored: ScoredProfessional): string {
     }
     else {
       explanation += `they're a great match for your needs`;
+    }
+    
+    // Add secondary reasons if available
+    if (factors.length > 1) {
+      explanation += ` and `;
+      
+      const secondaryReasons: string[] = [];
+      
+      for (let i = 1; i < factors.length; i++) {
+        const factor = factors[i][0];
+        
+        if (factor.includes('_for_')) {
+          const type = factor.split('_for_')[0];
+          const condition = factor.split('_for_')[1];
+          
+          if (type === 'primary') {
+            secondaryReasons.push(`specializes in ${condition}`);
+          } else if (type === 'specialty') {
+            secondaryReasons.push(`has expertise with ${condition}`);
+          } else if (type === 'secondary') {
+            secondaryReasons.push(`can support with ${condition}`);
+          }
+        }
+        else if (factor.startsWith('tag_match_')) {
+          const goal = factor.replace('tag_match_', '');
+          secondaryReasons.push(`aligns with your ${goal} goal`);
+        }
+        else if (factor === 'budget_fit') {
+          secondaryReasons.push(`fits well within your budget`);
+        }
+        else if (factor === 'timeline_fit') {
+          secondaryReasons.push(`can help you reach your goals in your desired timeframe`);
+        }
+        else if (factor === 'synergy_boost') {
+          secondaryReasons.push(`complements the other specialists in your plan`);
+        }
+      }
+      
+      explanation += secondaryReasons.join(' and ');
     }
   } else {
     explanation += `they're a good match for your overall requirements`;
