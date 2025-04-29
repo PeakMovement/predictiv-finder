@@ -3,4 +3,6 @@
 import { SYMPTOM_MAPPINGS } from "./symptomMappings";
 import { SymptomMapping } from "./symptomMappings/types";
 
-export { SYMPTOM_MAPPINGS, SymptomMapping };
+export { SYMPTOM_MAPPINGS };
+export type { SymptomMapping };
+
