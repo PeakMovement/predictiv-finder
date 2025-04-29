@@ -6,4 +6,5 @@ export * from "./professionalRecommender";
 export * from "./professionalPhrases";
 export * from "./detectors";
 export * from "./inputAnalyzer";
+export * from "./professionalScoring";
 
