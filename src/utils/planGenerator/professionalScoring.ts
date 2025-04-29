@@ -1,4 +1,3 @@
-
 import { Practitioner, ServiceCategory } from "@/types";
 import { SYMPTOM_MAPPINGS } from "./symptomMappingsData";
 import { KeywordMapping } from "./inputAnalyzer/keywordMappings";
@@ -337,7 +336,7 @@ function scoreTimelineFit(serviceType: ServiceCategory, timeframe: string): numb
   }
   
   // Map services to their optimal timeframes (in weeks)
-  const serviceOptimalTimelines: Record<ServiceCategory, {min: number, ideal: number, max: number}> = {
+  const serviceOptimalTimelines: Partial<Record<ServiceCategory, {min: number, ideal: number, max: number}>> = {
     'dietician': {min: 4, ideal: 12, max: 52},
     'personal-trainer': {min: 4, ideal: 16, max: 104},
     'physiotherapist': {min: 2, ideal: 8, max: 24},
@@ -352,7 +351,19 @@ function scoreTimelineFit(serviceType: ServiceCategory, timeframe: string): numb
     'neurology': {min: 4, ideal: 12, max: 52},
     'endocrinology': {min: 8, ideal: 24, max: 104},
     'rheumatology': {min: 6, ideal: 16, max: 52},
-    'pain-management': {min: 2, ideal: 8, max: 36}
+    'pain-management': {min: 2, ideal: 8, max: 36},
+    'internal-medicine': {min: 2, ideal: 8, max: 36},
+    'pediatrics': {min: 2, ideal: 8, max: 24},
+    'obstetrics-gynecology': {min: 4, ideal: 12, max: 36},
+    'emergency-medicine': {min: 1, ideal: 1, max: 4},
+    'anesthesiology': {min: 1, ideal: 2, max: 8},
+    'urology': {min: 2, ideal: 6, max: 24},
+    'oncology': {min: 4, ideal: 16, max: 104},
+    'neurosurgery': {min: 4, ideal: 12, max: 52},
+    'infectious-disease': {min: 2, ideal: 8, max: 24},
+    'radiology': {min: 1, ideal: 4, max: 12},
+    'geriatric-medicine': {min: 4, ideal: 12, max: 52},
+    'plastic-surgery': {min: 4, ideal: 12, max: 36}
   };
   
   // If we don't have timeline data for this service, use default scoring
@@ -506,9 +517,22 @@ function scorePreferences(
     }
   }
   
-  // Handle gender preference (if applicable and available in data)
-  if (preferences.genderPreference && practitioner.gender) {
-    if (preferences.genderPreference === practitioner.gender) {
+  // Handle gender preference (if applicable)
+  // Since gender is not in the Practitioner type, we'll check if it might be in the bio
+  if (preferences.genderPreference && practitioner.bio) {
+    // Try to infer gender from bio or name if explicitly mentioned
+    const maleTerms = ['he', 'him', 'his', 'male', 'man', 'mr.', 'mr ', 'gentleman'];
+    const femaleTerms = ['she', 'her', 'hers', 'female', 'woman', 'ms.', 'ms ', 'mrs.', 'mrs ', 'miss', 'lady'];
+    
+    const bioLower = practitioner.bio.toLowerCase();
+    
+    if (preferences.genderPreference === 'male' && 
+        maleTerms.some(term => bioLower.includes(` ${term} `))) {
+      preferenceScore += 0.25;
+      scored.factors["gender_preference"] = 0.25;
+    }
+    else if (preferences.genderPreference === 'female' && 
+             femaleTerms.some(term => bioLower.includes(` ${term} `))) {
       preferenceScore += 0.25;
       scored.factors["gender_preference"] = 0.25;
     }
@@ -1131,4 +1155,3 @@ function generateEnhancedExplanation(
   
   return explanation;
 }
-
