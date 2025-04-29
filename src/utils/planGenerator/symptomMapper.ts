@@ -5,3 +5,5 @@ export * from "./symptomDetector";
 export * from "./professionalRecommender";
 export * from "./professionalPhrases";
 export * from "./detectors";
+export * from "./inputAnalyzer";
+
