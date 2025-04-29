@@ -1,12 +1,3 @@
 
-import { ServiceCategory } from "./types";
-
-export interface SymptomMapping {
-  primary: ServiceCategory;
-  specialties: ServiceCategory[];
-  secondary?: ServiceCategory[];
-  priority: number;
-  keywords?: string[];
-  context?: string[];
-  contraindications?: ServiceCategory[];
-}
+// This file is now just a re-export for backward compatibility
+export * from "./symptomMappings/types";
