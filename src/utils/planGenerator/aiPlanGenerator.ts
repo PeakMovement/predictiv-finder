@@ -66,7 +66,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   // Calculate complexity score based on conditions, goals, and complexity indicators
   const complexityScore = calculateComplexityScore(
     medicalConditions,
-    specificGoals ? specificGoals : [],
+    specificGoals ? (Array.isArray(specificGoals) ? specificGoals : []) : [],
     userQuery,
     servicePriorities ? servicePriorities : {}
   );
@@ -76,7 +76,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   // Determine if this is a complex case requiring multiple professionals
   const needsMultidisciplinary = isComplexCase(
     medicalConditions, 
-    specificGoals ? specificGoals : [],
+    specificGoals ? (Array.isArray(specificGoals) ? specificGoals : []) : [],
     userQuery
   );
   
@@ -116,7 +116,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     userQuery, 
     preferences ? preferences : {}, 
     userType, 
-    contextualFactors ? contextualFactors : []
+    contextualFactors ? (Array.isArray(contextualFactors) ? contextualFactors : []) : []
   );
   
   console.log("Generated budget tiers:", budgetTiers);
@@ -136,7 +136,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     const scoredPractitioners = scoreProfessionals(
       practitioners,
       medicalConditions,
-      specificGoals ? specificGoals : [],
+      specificGoals ? (Array.isArray(specificGoals) ? specificGoals : []) : [],
       tier.budget,
       timeFrame,
       categories,
@@ -166,7 +166,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
         servicePriorities ? servicePriorities : {},
         tier.budget,
         userType,
-        contextualFactors ? contextualFactors : []
+        contextualFactors ? (Array.isArray(contextualFactors) ? contextualFactors : []) : []
       );
     } else {
       // Convert our professional-based plan to the service format needed
@@ -185,11 +185,11 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
       preferences ? preferences : {},
       medicalConditions,
       severity ? severity : {},
-      specificGoals ? specificGoals : {},
+      specificGoals ? (Array.isArray(specificGoals) ? specificGoals : {}) : {},
       timeFrame,
       location,
       preferOnline,
-      contextualFactors,
+      contextualFactors ? (Array.isArray(contextualFactors) ? contextualFactors : []) : [],
       primaryIssue,
       servicePriorities
     );
@@ -236,7 +236,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
       })),
       totalCost: optimizedServices.reduce((sum, s) => sum + s.cost, 0),
       planType: determinePlanType(medicalConditions, primaryIssue, tier.name),
-      timeFrame: timeFrame || determineTimeFrame(medicalConditions, userQuery, contextualFactors ? contextualFactors : [], hasKneePainAndRacePrep)
+      timeFrame: timeFrame || determineTimeFrame(medicalConditions, userQuery, contextualFactors ? (Array.isArray(contextualFactors) ? contextualFactors : []) : [], hasKneePainAndRacePrep)
     };
     
     plans.push(plan);

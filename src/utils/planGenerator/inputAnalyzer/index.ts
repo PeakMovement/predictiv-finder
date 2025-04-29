@@ -8,4 +8,5 @@ export * from './goalExtractor';
 
 // Export KeywordMapping type but not the specific mapping constants
 // to avoid duplicate exports with symptomMapper
-export { KeywordMapping } from './keywordMappings';
+export type { KeywordMapping } from './keywordMappings';
+
