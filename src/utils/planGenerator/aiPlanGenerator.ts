@@ -1,5 +1,5 @@
 
-import { AIHealthPlan } from '@/types';
+import { AIHealthPlan, ServiceCategory } from '@/types';
 import { analyzeUserInput } from './inputAnalyzer';
 import { findAlternativeCategories } from './categoryMatcher';
 import { determineBudgetTier } from './budgetConfig';
@@ -63,8 +63,8 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   // Handle co-morbidities - add specialized services when certain conditions co-occur
   const coMorbidityServices = checkCoMorbidities(medicalConditions);
   coMorbidityServices.forEach(service => {
-    if (!categories.includes(service) && !contraindicated?.includes(service)) {
-      categories.push(service);
+    if (!categories.includes(service as ServiceCategory) && !contraindicated?.includes(service as ServiceCategory)) {
+      categories.push(service as ServiceCategory);
       console.log(`Added ${service} due to co-morbidity detection`);
     }
   });
@@ -145,7 +145,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
       name: generatePlanName(tier.name, medicalConditions, primaryIssue, hasKneePainAndRacePrep),
       description,
       services: optimizedServices.map(service => ({
-        type: service.type,
+        type: service.type as ServiceCategory,
         price: Math.round(service.cost / service.sessions), // Price per session
         sessions: service.sessions,
         description: generateServiceDescription(
@@ -185,12 +185,12 @@ function hasKneePainAndRacePreparation(medicalConditions: string[], userQuery: s
 
 // Helper function to handle special cases and adjust categories
 function handleSpecialCases(
-  categories: string[],
+  categories: ServiceCategory[],
   medicalConditions: string[],
   userQuery: string,
   servicePriorities: Record<string, number>,
   primaryIssue?: string
-): string[] {
+): ServiceCategory[] {
   let updatedCategories = [...categories];
   
   // Special case handling for knee pain + race preparation

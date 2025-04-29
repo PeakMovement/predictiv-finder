@@ -1,4 +1,6 @@
 
+import { ServiceCategory } from '@/types';
+
 export interface OptimizedService {
   type: string;
   cost: number;
@@ -8,7 +10,7 @@ export interface OptimizedService {
 
 // Function to calculate optimal service allocation
 export function calculateOptimalServiceAllocation(
-  categories: string[],
+  categories: ServiceCategory[],
   servicePriorities: Record<string, number>,
   budget: number,
   userType?: string,
