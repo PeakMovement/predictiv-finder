@@ -18,6 +18,8 @@ import {
 } from './goalExtractor';
 import { CONDITION_TO_SERVICES } from "../serviceMappings";
 import { detectProfessionalMentions } from './professionalMentions';
+import { expandSynonyms } from './synonymExpansion';
+import { calculateConditionWeights, mapWeightsToServicePriorities, extractTimeframe } from './weightingSystem';
 
 export const analyzeUserInput = (input: string): {
   medicalConditions: string[];
@@ -25,12 +27,20 @@ export const analyzeUserInput = (input: string): {
   budget?: number;
   location?: string;
   preferOnline?: boolean;
+  conditionWeights?: Record<string, { value: number; multiplier: number; reason?: string }>;
+  servicePriorities?: Record<ServiceCategory, number>;
+  timeframeDays?: number;
+  urgencyLevel?: number;
 } => {
-  const inputLower = input.toLowerCase();
+  // First, expand the input with synonyms to catch more relevant terms
+  const expandedInput = expandSynonyms(input);
+  const inputLower = expandedInput.toLowerCase();
+  
   const medicalConditions: string[] = [];
   const serviceCategories = new Set<ServiceCategory>();
   
   console.log("Analyzing user input:", inputLower);
+  console.log("Expanded input with synonyms:", expandedInput !== input ? "yes" : "no");
 
   // Extract budget constraints
   const extractedBudget = extractBudget(inputLower);
@@ -79,6 +89,19 @@ export const analyzeUserInput = (input: string): {
   
   // Special handling for fitness and weight loss goals
   handleSpecialCases(inputLower, serviceCategories);
+  
+  // Extract timeframe information
+  const timeframeDays = extractTimeframe(inputLower);
+  
+  // Calculate weights for conditions using our new weighting system
+  const { conditionWeights, urgencyLevel } = calculateConditionWeights(
+    medicalConditions, 
+    inputLower,
+    timeframeDays
+  );
+  
+  // Map condition weights to service priorities
+  const servicePriorities = mapWeightsToServicePriorities(conditionWeights, urgencyLevel);
 
   // If no services found, add default ones
   if (serviceCategories.size === 0 && medicalConditions.length === 0) {
@@ -91,7 +114,11 @@ export const analyzeUserInput = (input: string): {
     suggestedCategories: Array.from(serviceCategories),
     budget: extractedBudget,
     location: extractedLocation,
-    preferOnline
+    preferOnline,
+    conditionWeights,
+    servicePriorities,
+    timeframeDays,
+    urgencyLevel
   };
 };
 

@@ -6,6 +6,8 @@ export * from './locationExtractor';
 export * from './conditionExtractor';
 export * from './goalExtractor';
 export * from './professionalMentions';
+export * from './synonymExpansion';
+export * from './weightingSystem';
 
 // Export KeywordMapping type but not the specific mapping constants
 // to avoid duplicate exports with symptomMapper
