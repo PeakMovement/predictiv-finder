@@ -17,6 +17,7 @@ export interface AnalyzedInput {
   servicePriorities?: Record<ServiceCategory, number>; // Priority scores for services
   contraindicated?: ServiceCategory[]; // Services that should not be recommended
   userType?: 'student' | 'working' | 'premium'; // Type of user for pricing adjustments
+  practitionerPreferences?: Record<string, string>; // Practitioner preferences (gender, experience, etc.)
 }
 
 export interface EnhancedServiceAllocation {

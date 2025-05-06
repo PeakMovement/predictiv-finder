@@ -3,6 +3,13 @@ import { analyzeUserInput } from './inputAnalyzer';
 import { findAlternativeCategories } from './categoryMatcher';
 import { AnalyzedInput, PlanNote } from './enhancedTypes';
 import { expandSynonyms } from './inputAnalyzer/synonymExpansion';
+import { findMedicalConditionsFromSymptoms } from './inputAnalyzer/conditionExtractor';
+import { CONDITION_TO_SERVICES } from './serviceMappings';
+import { mapGoalsToCategories } from './inputAnalyzer/goalExtractor';
+import { detectProfessionalMentions } from './inputAnalyzer/professionalMentions';
+import { extractTimeframe, calculateConditionWeights, mapWeightsToServicePriorities } from './inputAnalyzer/weightingSystem';
+import { SYMPTOM_MAPPINGS } from './symptomMappingsData';
+import { identifySymptoms } from './symptomDetector';
 
 // Enhanced keyword extraction
 const SEVERITY_KEYWORDS: Record<string, number> = {
@@ -107,15 +114,26 @@ export interface FrequencyPreference {
   totalSessions: number; // recommended total sessions
 }
 
+// Update the AnalyzedInput interface to include practitionerPreferences
+export interface PractitionerPreferences {
+  gender?: string;
+  experience?: string;
+  specificDoctor?: string;
+}
+
+// Extend the AnalyzedInput interface from enhancedTypes.ts
+export interface EnhancedAnalyzedInput extends AnalyzedInput {
+  practitionerPreferences?: PractitionerPreferences;
+  followUpQuestions?: string[];
+  missingFields?: string[];
+}
+
 /**
  * Enhanced analysis of user input to extract detailed information
  * @param input User's input text
  * @returns Structured analysis with extracted details and follow-up questions if needed
  */
-export const enhancedAnalyzeUserInput = (input: string): AnalyzedInput & {
-  followUpQuestions?: string[];
-  missingFields?: string[];
-} => {
+export const enhancedAnalyzeUserInput = (input: string): EnhancedAnalyzedInput => {
   // First, expand the input with synonyms to catch more relevant terms
   const expandedInput = expandSynonyms(input);
   const inputLower = expandedInput.toLowerCase();
@@ -273,7 +291,7 @@ export const enhancedAnalyzeUserInput = (input: string): AnalyzedInput & {
     primaryIssue: determinePrimaryIssue(symptoms, medicalConditions, inputLower),
     contextualFactors,
     servicePriorities,
-    contraindicated: [], // Will be populated by specializied detectors
+    contraindicated: [], // Will be populated by specialized detectors
     userType: determineUserType(inputLower, extractedBudget),
     followUpQuestions: followUpQuestions.length > 0 ? followUpQuestions : undefined,
     missingFields: missingFields.length > 0 ? missingFields : undefined,

@@ -5,7 +5,7 @@ export * from './symptomDetector';
 export * from './symptomMappingsData';
 export * from './planGenerator';
 export * from './inputAnalyzer';
-export * from './categoryMatcher';
+export * from './categoryMatcher'; // This ensures findAlternativeCategories is exported
 export * from './budgetConfig';
 export * from './planStructure';
 export * from './detectors';
