@@ -1,4 +1,3 @@
-
 import { AIHealthPlan, ServiceCategory } from '@/types';
 import { analyzeUserInput } from './inputAnalyzer';
 import { findAlternativeCategories } from './categoryMatcher';
@@ -834,7 +833,7 @@ export function generatePlanNotes(
   
   // Add note about timeframe if urgent
   if (timeFrame && timeFrame.includes('week') && parseInt(timeFrame.split(' ')[0], 10) < 4) {
-    notes.push('Given your urgent timeframe, we've prioritized immediate availability.');
+    notes.push("Given your urgent timeframe, we've prioritized immediate availability.");
   }
   
   // Add goal-specific notes
