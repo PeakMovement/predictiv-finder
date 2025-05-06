@@ -114,11 +114,18 @@ export interface FrequencyPreference {
   totalSessions: number; // recommended total sessions
 }
 
-// Update the AnalyzedInput interface to include practitionerPreferences
+// Update the PractitionerPreferences interface to include an index signature
 export interface PractitionerPreferences {
   gender?: string;
   experience?: string;
   specificDoctor?: string;
+  [key: string]: string | undefined; // Add index signature to make it compatible with Record<string, string>
+}
+
+// Updated interface for professional service mention results
+interface ProfessionalServiceMention {
+  serviceCategory: ServiceCategory;
+  confidence: number;
 }
 
 // Extend the AnalyzedInput interface from enhancedTypes.ts
@@ -189,7 +196,8 @@ export const enhancedAnalyzeUserInput = (input: string): EnhancedAnalyzedInput =
   // Check for specific professionals mentioned
   const professionalServices = detectProfessionalMentions(inputLower);
   professionalServices.forEach(service => {
-    serviceCategories.add(service.category);
+    // Fix: Use serviceCategory property instead of category
+    serviceCategories.add(service.serviceCategory);
   });
 
   // Handle negation patterns
