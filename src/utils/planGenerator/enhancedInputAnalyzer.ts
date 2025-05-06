@@ -1,9 +1,8 @@
-import { ServiceCategory } from "./types";
-import { AnalyzedInput } from "./enhancedTypes";
-import { CONDITION_TO_SERVICES } from "./serviceMappings";
-import { getProfessionalsForSymptoms, identifySymptoms, SYMPTOM_MAPPINGS } from "./symptomMapper";
-import { BASELINE_COSTS, DEFAULT_SERVICE_FREQUENCIES, STUDENT_DISCOUNT } from "./types";
-import { expandSynonyms } from "./inputAnalyzer/synonymExpansion";
+import { AIHealthPlan, ServiceCategory } from '@/types';
+import { analyzeUserInput } from './inputAnalyzer';
+import { findAlternativeCategories } from './categoryMatcher';
+import { AnalyzedInput, PlanNote } from './enhancedTypes';
+import { expandSynonyms } from './inputAnalyzer/synonymExpansion';
 
 // Enhanced keyword extraction
 const SEVERITY_KEYWORDS: Record<string, number> = {
@@ -497,9 +496,9 @@ function extractLocation(inputLower: string): { extractedLocation?: string; pref
   let extractedLocation: string | undefined = undefined;
   const locationPatterns = [
     /\bin\s+([a-z\s]+?)(?:\s+area)(?:\s+and|\s+or|\s+but|\.|\,|\s+with|\s+for|\s+to|\s+from|\s+$)/i,
-    /\bin\s+([a-z\s]+?)(?:\s+and|\s+or|\s+but|\.|\,|\s+with|\s+for|\s+to|\s+from|\s+$)/i,
-    /\bnear\s+([a-z\s]+?)(?:\s+and|\s+or|\s+but|\.|\,|\s+with|\s+for|\s+to|\s+from|\s+$)/i,
-    /\baround\s+([a-z\s]+?)(?:\s+and|\s+or|\s+but|\.|\,|\s+with|\s+for|\s+to|\s+from|\s+$)/i,
+    /\bin\s+([a-z\s]+?)(?:\s+and|\s+or|\s+but|\.|\,|\s+with|\s+for|\s+to|\s+$)/i,
+    /\bnear\s+([a-z\s]+?)(?:\s+and|\s+or|\s+but|\.|\,|\s+with|\s+for|\s+to|\s+$)/i,
+    /\baround\s+([a-z\s]+?)(?:\s+and|\s+or|\s+but|\.|\,|\s+with|\s+for|\s+to|\s+$)/i,
     /\bfrom\s+([a-z\s]+?)(?:\s+and|\s+or|\s+but|\.|\,|\s+with|\s+for|\s+to|\s+$)/i
   ];
   

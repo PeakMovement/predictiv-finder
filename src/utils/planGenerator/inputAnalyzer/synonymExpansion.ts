@@ -1,42 +1,40 @@
 
-// Mental health related synonyms
-export const MENTAL_HEALTH_SYNONYMS: Record<string, string[]> = {
-  'anxiety': ['anxiety', 'anxious', 'worry', 'worried', 'panic', 'stress', 'stressed', 'nervous', 'tension', 'fear'],
-  'depression': ['depression', 'depressed', 'sad', 'sadness', 'unhappy', 'despair', 'melancholy', 'down', 'blue', 'hopeless'],
-  'mental health': ['mental health', 'mental wellbeing', 'psychological', 'emotional health', 'emotional wellbeing', 'therapy']
+export const MENTAL_HEALTH_SYNONYMS = {
+  'anxiety': ['worried', 'anxious', 'stress', 'panic', 'nervousness', 'fear', 'tension', 'apprehension'],
+  'depression': ['sad', 'hopeless', 'depressed', 'melancholy', 'down', 'blue', 'unhappy', 'gloomy', 'despondent'],
+  'sleep': ['insomnia', 'sleepless', 'rest', 'tired', 'exhaustion', 'fatigue', 'drowsy', 'lethargy'],
+  'focus': ['concentration', 'attention', 'distracted', 'adhd', 'forgetful', 'memory'],
+  'stress': ['tension', 'pressure', 'strain', 'burden', 'overwhelmed', 'burnout', 'overworked']
 };
 
-// Fitness related synonyms
-export const FITNESS_SYNONYMS: Record<string, string[]> = {
-  'weight loss': ['weight loss', 'lose weight', 'slim down', 'get lean', 'drop pounds', 'shed kilos', 'slimming'],
-  'muscle': ['muscle', 'strength', 'build muscle', 'tone', 'toning', 'definition', 'bulk up', 'hypertrophy'],
-  'cardio': ['cardio', 'cardiovascular', 'endurance', 'stamina', 'aerobic', 'run', 'running', 'jog', 'jogging'],
-  'race': ['race', 'marathon', 'half-marathon', '5k', '10k', 'competition', 'event', 'run', 'running event', 'triathlon'],
-  'fitness': ['fitness', 'exercise', 'workout', 'training', 'gym', 'physical activity', 'active']
+export const DIGESTIVE_SYNONYMS = {
+  'stomach': ['digestive', 'gut', 'abdomen', 'belly', 'intestines', 'digestive system', 'gastro'],
+  'nausea': ['sick', 'queasy', 'vomit', 'throw up', 'upset stomach'],
+  'constipation': ['blocked', 'irregular', 'bowel issues', 'can\'t go', 'hard stool'],
+  'diarrhea': ['loose stool', 'frequent bowel', 'watery stool', 'upset stomach'],
+  'bloating': ['gas', 'distended', 'swollen', 'full', 'gassy', 'inflated']
 };
 
-// Digestive health related synonyms
-export const DIGESTIVE_SYNONYMS: Record<string, string[]> = {
-  'stomach': ['stomach', 'abdominal', 'tummy', 'belly', 'gut', 'intestinal', 'digestive', 'gastrointestinal', 'gi'],
-  'pain': ['pain', 'ache', 'cramps', 'discomfort', 'upset', 'bloating', 'gas', 'nausea', 'indigestion'],
-  'ibs': ['ibs', 'irritable bowel', 'irritable bowel syndrome', 'bowel issues', 'bowel problems']
+export const FITNESS_SYNONYMS = {
+  'weight loss': ['lose weight', 'slim down', 'get thinner', 'drop kilos', 'shed pounds', 'reduce weight'],
+  'muscle gain': ['build muscle', 'get stronger', 'bulk up', 'increase strength', 'tone up', 'definition'],
+  'cardio': ['aerobic', 'endurance', 'stamina', 'heart rate', 'running', 'cycling'],
+  'strength': ['resistance', 'weights', 'lifting', 'strong', 'power', 'muscle', 'toning']
 };
 
-// Goal related synonyms
-export const GOAL_SYNONYMS: Record<string, string[]> = {
-  'weight loss': ['weight loss', 'lose weight', 'slim down', 'get lean', 'drop pounds', 'shed kilos', 'lose fat'],
-  'strength': ['strength', 'stronger', 'build muscle', 'gain muscle', 'muscle gain', 'bulk up', 'power'],
-  'endurance': ['endurance', 'stamina', 'longer', 'last longer', 'cardiovascular', 'cardio', 'aerobic'],
-  'rehabilitation': ['rehabilitation', 'rehab', 'recover', 'recovery', 'healing', 'get better', 'fix', 'repair'],
-  'race': ['race', 'competition', 'event', 'marathon', 'half-marathon', '5k', '10k', 'triathlon', 'run'],
-  'performance': ['performance', 'improve', 'better', 'excel', 'enhance', 'optimize', 'maximize']
+export const GOAL_SYNONYMS = {
+  'weight': ['lose weight', 'slimmer', 'thinner', 'fat loss', 'leaner', 'tone up', 'trim down'],
+  'fitness': ['fit', 'active', 'exercise', 'workout', 'training', 'conditioning', 'strength'],
+  'race': ['run', 'marathon', 'half-marathon', '5k', '10k', 'competition', 'event', 'triathlon'],
+  'performance': ['improve', 'better', 'faster', 'stronger', 'enhance', 'excel', 'progress'],
+  'health': ['wellness', 'wellbeing', 'healthier', 'lifestyle', 'vitality', 'condition', 'vigor']
 };
 
-// Re-export all synonyms
+// Combined map for easier access
 export const ALL_SYNONYMS = {
   ...MENTAL_HEALTH_SYNONYMS,
-  ...FITNESS_SYNONYMS,
   ...DIGESTIVE_SYNONYMS,
+  ...FITNESS_SYNONYMS,
   ...GOAL_SYNONYMS
 };
 
