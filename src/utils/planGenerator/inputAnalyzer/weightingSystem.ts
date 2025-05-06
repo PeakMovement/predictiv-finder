@@ -1,4 +1,3 @@
-
 import { ServiceCategory } from "../types";
 
 // Define types for weighting system
@@ -447,3 +446,148 @@ export function extractTimeframe(inputText: string): number | undefined {
   // No explicit timeframe found
   return undefined;
 }
+
+/**
+ * Calculate complexity score based on multiple factors
+ * @param conditions List of detected medical conditions
+ * @param goals List of specific goals
+ * @param userInput Original user input text
+ * @param servicePriorities Priority ratings for services if available
+ * @returns A complexity score between 0-1 where higher means more complex
+ */
+export const calculateSeverityScores = (
+  conditions: string[],
+  userInput: string
+): Record<string, number> => {
+  const inputLower = userInput.toLowerCase();
+  const severityScores: Record<string, number> = {};
+  
+  // Detect severity terms
+  const severityIndicators = {
+    high: [
+      'severe', 'extreme', 'unbearable', 'terrible', 'excruciating', 
+      'can\'t walk', 'can\'t move', 'can\'t sleep', 'emergency', 
+      'urgent', 'very bad', 'worst', 'intense', 'debilitating'
+    ],
+    medium: [
+      'moderate', 'uncomfortable', 'painful', 'significant', 
+      'bothering me', 'quite bad', 'noticeable', 'affecting',
+      'impacting', 'limiting'
+    ],
+    low: [
+      'mild', 'slight', 'minor', 'little', 'small', 'tiny', 
+      'barely', 'somewhat', 'occasionally', 'sometimes', 'now and then'
+    ]
+  };
+  
+  // Calculate base severity for each condition
+  for (const condition of conditions) {
+    // Start with a default medium severity
+    let severityScore = 0.5;
+    
+    // Check if severity indicators are mentioned near the condition
+    const conditionContext = extractContext(inputLower, condition, 15);
+    
+    if (conditionContext) {
+      // Check for high severity indicators
+      if (severityIndicators.high.some(term => conditionContext.includes(term))) {
+        severityScore = 0.9;
+      } 
+      // Check for medium severity indicators
+      else if (severityIndicators.medium.some(term => conditionContext.includes(term))) {
+        severityScore = 0.6;
+      }
+      // Check for low severity indicators
+      else if (severityIndicators.low.some(term => conditionContext.includes(term))) {
+        severityScore = 0.3;
+      }
+    }
+    
+    // Global severity check for the whole input
+    if (severityIndicators.high.some(term => inputLower.includes(term))) {
+      severityScore = Math.max(severityScore, 0.8);
+    }
+    
+    severityScores[condition] = severityScore;
+  }
+  
+  return severityScores;
+};
+
+/**
+ * Extracts text context around a term in the input
+ */
+function extractContext(text: string, term: string, wordCount: number): string | null {
+  const index = text.indexOf(term.toLowerCase());
+  if (index === -1) return null;
+  
+  // Get words before and after the term
+  const words = text.split(/\s+/);
+  const termIndex = words.findIndex(word => 
+    word.toLowerCase().includes(term.toLowerCase())
+  );
+  
+  if (termIndex === -1) return null;
+  
+  const start = Math.max(0, termIndex - wordCount/2);
+  const end = Math.min(words.length, termIndex + wordCount/2);
+  
+  return words.slice(start, end).join(' ');
+}
+
+/**
+ * Extract location information from user input
+ * @param input User input text
+ * @returns Extracted location or undefined
+ */
+export const extractLocationDetails = (input: string): {
+  location?: string;
+  isRemote: boolean;
+} => {
+  const inputLower = input.toLowerCase();
+  let location: string | undefined = undefined;
+  let isRemote = false;
+  
+  // Check for remote/online preference
+  const remoteIndicators = ['online', 'remote', 'virtual', 'zoom', 'teams', 'video', 'telehealth'];
+  isRemote = remoteIndicators.some(term => inputLower.includes(term));
+  
+  // Try to extract location from common patterns
+  const locationPatterns = [
+    /\bin\s+([a-z\s]+?)(?:\s+and|\s+or|\s+but|\.|\,|\s+with|\s+for|\s+to|\s+from|\s+$)/i,
+    /\bnear\s+([a-z\s]+?)(?:\s+and|\s+or|\s+but|\.|\,|\s+with|\s+for|\s+to|\s+from|\s+$)/i,
+    /\bfrom\s+([a-z\s]+?)(?:\s+and|\s+or|\s+but|\.|\,|\s+with|\s+for|\s+to|\s+$)/i,
+    /\blive\s+in\s+([a-z\s]+?)(?:\s+and|\s+or|\s+but|\.|\,|\s+with|\s+for|\s+to|\s+from|\s+$)/i,
+    /\bat\s+([a-z\s]+?)(?:\s+and|\s+or|\s+but|\.|\,|\s+with|\s+for|\s+to|\s+from|\s+$)/i
+  ];
+  
+  for (const pattern of locationPatterns) {
+    const match = inputLower.match(pattern);
+    if (match && match[1]) {
+      // Filter out common non-location phrases
+      const candidate = match[1].trim();
+      const nonLocationTerms = ['general', 'particular', 'specific', 'the area', 'mind', 'my experience', 'home'];
+      if (!nonLocationTerms.some(term => candidate.includes(term)) && candidate.length > 2) {
+        location = candidate;
+        break;
+      }
+    }
+  }
+  
+  // South African cities list (most common)
+  const saLocations = [
+    'johannesburg', 'cape town', 'durban', 'pretoria', 'port elizabeth', 
+    'bloemfontein', 'east london', 'kimberley', 'pietermaritzburg', 'polokwane',
+    'nelspruit', 'stellenbosch', 'centurion', 'soweto', 'paarl'
+  ];
+  
+  // Check for explicit South African city mentions
+  for (const city of saLocations) {
+    if (inputLower.includes(city)) {
+      location = city;
+      break;
+    }
+  }
+  
+  return { location, isRemote };
+};

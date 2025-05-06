@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,11 @@ import AIPlansDisplay from "@/components/AIPlansDisplay";
 import HelpButton from "@/components/HelpButton";
 import { ServiceCategory, DetailedUserCriteria, Practitioner, AIHealthPlan } from "@/types";
 import { PRACTITIONERS } from "@/data/mockData";
-import { generateCustomAIPlans, findAlternativeCategories } from "@/utils/aiPlanGenerator";
+import { 
+  generateCustomAIPlans, 
+  findAlternativeCategories,
+  generateProfessionalRecommendations 
+} from "@/utils/aiPlanGenerator";
 import { useToast } from "@/hooks/use-toast";
 import PlanDetailsView from "@/components/PlanDetailsView";
 
@@ -48,6 +53,11 @@ const Index = () => {
     setIsGenerating(true);
     await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
     
+    // First try to get professional recommendations using the new system
+    const recommendations = generateProfessionalRecommendations(query);
+    console.log("Professional recommendations:", recommendations);
+    
+    // Then generate the customized plans
     const customPlans = generateCustomAIPlans(query);
     setAiPlans(customPlans);
     
