@@ -1,64 +1,103 @@
 
 import { ServiceCategory } from "./types";
-import { CONDITION_TO_SERVICES } from "./serviceMappings";
 
-// Common complementary service pairings
-const COMPLEMENTARY_SERVICES: Record<ServiceCategory, ServiceCategory[]> = {
-  'dietician': ['personal-trainer', 'coaching', 'endocrinology'],
-  'personal-trainer': ['dietician', 'physiotherapist', 'coaching'],
-  'physiotherapist': ['personal-trainer', 'family-medicine'],
-  'coaching': ['personal-trainer', 'dietician'],
-  'family-medicine': ['dietician', 'physiotherapist'],
-  'cardiology': ['dietician', 'personal-trainer'],
-  'endocrinology': ['dietician', 'personal-trainer'],
-  'internal-medicine': ['dietician', 'physiotherapist'],
-  'gastroenterology': ['dietician', 'family-medicine'],
-  'biokineticist': ['physiotherapist', 'personal-trainer'],
-  'pediatrics': ['dietician', 'family-medicine'],
-  'dermatology': ['dietician', 'family-medicine'],
-  'orthopedics': ['physiotherapist', 'personal-trainer'],
-  'neurology': ['physiotherapist', 'family-medicine'],
-  'obstetrics-gynecology': ['dietician', 'family-medicine'],
-  'emergency-medicine': ['family-medicine', 'physiotherapist'],
-  'psychiatry': ['coaching', 'family-medicine'],
-  'anesthesiology': ['family-medicine', 'pain-management'],
-  'urology': ['family-medicine', 'dietician'],
-  'oncology': ['dietician', 'family-medicine'],
-  'neurosurgery': ['physiotherapist', 'family-medicine'],
-  'infectious-disease': ['family-medicine', 'dietician'],
-  'radiology': ['family-medicine', 'orthopedics'],
-  'geriatric-medicine': ['physiotherapist', 'dietician'],
-  'plastic-surgery': ['family-medicine', 'dietician'],
-  'rheumatology': ['physiotherapist', 'dietician'],
-  'pain-management': ['physiotherapist', 'family-medicine']
-};
-
-// Default recommended categories if none are specified
-const DEFAULT_CATEGORIES: ServiceCategory[] = [
-  'dietician',
-  'personal-trainer',
-  'coaching'
-];
-
+/**
+ * Finds alternative service categories based on the user's selected categories
+ * @param selectedCategories Currently selected service categories
+ * @returns Array of recommended additional service categories
+ */
 export const findAlternativeCategories = (
   selectedCategories: ServiceCategory[]
 ): ServiceCategory[] => {
-  const recommended = new Set<ServiceCategory>();
-
-  // If we have selected categories, find complementary ones
-  if (selectedCategories.length > 0) {
-    selectedCategories.forEach(category => {
-      const complementary = COMPLEMENTARY_SERVICES[category] || [];
-      complementary.forEach(c => {
-        if (!selectedCategories.includes(c)) {
-          recommended.add(c);
+  // Common complementary service pairings
+  const complementaryServices: Record<ServiceCategory, ServiceCategory[]> = {
+    'personal-trainer': ['dietician', 'physiotherapist', 'coaching'],
+    'dietician': ['personal-trainer', 'coaching', 'family-medicine'],
+    'physiotherapist': ['personal-trainer', 'biokineticist', 'pain-management'],
+    'coaching': ['personal-trainer', 'dietician', 'psychiatry'],
+    'family-medicine': ['dietician', 'psychiatry', 'gastroenterology'],
+    'gastroenterology': ['dietician', 'family-medicine'],
+    'psychiatry': ['coaching', 'family-medicine'],
+    'cardiology': ['family-medicine', 'dietician'],
+    'orthopedics': ['physiotherapist', 'biokineticist'],
+    'pain-management': ['physiotherapist', 'family-medicine']
+  };
+  
+  const recommendedCategories = new Set<ServiceCategory>();
+  
+  // If no categories selected, recommend some common starting points
+  if (selectedCategories.length === 0) {
+    return ['family-medicine', 'personal-trainer', 'dietician'];
+  }
+  
+  // Add complementary services based on selected categories
+  selectedCategories.forEach(category => {
+    const complementary = complementaryServices[category];
+    if (complementary) {
+      complementary.forEach(service => {
+        // Only recommend services that aren't already selected
+        if (!selectedCategories.includes(service)) {
+          recommendedCategories.add(service);
         }
       });
-    });
-  } else {
-    // If no categories selected, provide defaults
-    DEFAULT_CATEGORIES.forEach(c => recommended.add(c));
+    }
+  });
+  
+  // Special case: If selected categories contain both personal trainer and dietician,
+  // suggest coaching as it complements both
+  if (selectedCategories.includes('personal-trainer') && 
+      selectedCategories.includes('dietician') &&
+      !selectedCategories.includes('coaching')) {
+    recommendedCategories.add('coaching');
   }
+  
+  // If selected categories include any pain-related service,
+  // suggest pain-management if not already selected
+  const painRelatedServices: ServiceCategory[] = ['physiotherapist', 'orthopedics'];
+  if (painRelatedServices.some(s => selectedCategories.includes(s)) && 
+      !selectedCategories.includes('pain-management')) {
+    recommendedCategories.add('pain-management');
+  }
+  
+  // Return up to 3 recommendations
+  return Array.from(recommendedCategories).slice(0, 3);
+};
 
-  return Array.from(recommended).slice(0, 3);
+/**
+ * Maps user health conditions to appropriate service categories
+ * @param conditions Array of health conditions
+ * @returns Recommended service categories
+ */
+export const mapConditionsToCategories = (
+  conditions: string[]
+): ServiceCategory[] => {
+  const conditionMap: Record<string, ServiceCategory[]> = {
+    'back pain': ['physiotherapist', 'orthopedics', 'pain-management'],
+    'knee pain': ['physiotherapist', 'orthopedics'],
+    'weight loss': ['dietician', 'personal-trainer'],
+    'fitness goals': ['personal-trainer', 'coaching'],
+    'stomach issues': ['gastroenterology', 'dietician'],
+    'digestive problems': ['gastroenterology', 'dietician'],
+    'anxiety': ['psychiatry', 'coaching'],
+    'depression': ['psychiatry', 'coaching'],
+    'stress': ['psychiatry', 'coaching'],
+    'headaches': ['neurology', 'family-medicine'],
+    'sleep issues': ['psychiatry', 'family-medicine'],
+    'hypertension': ['cardiology', 'dietician'],
+    'diabetes': ['endocrinology', 'dietician']
+  };
+  
+  const categories = new Set<ServiceCategory>();
+  
+  conditions.forEach(condition => {
+    const mappedCategories = conditionMap[condition.toLowerCase()];
+    if (mappedCategories) {
+      mappedCategories.forEach(category => categories.add(category));
+    } else {
+      // Default to family medicine for unknown conditions
+      categories.add('family-medicine');
+    }
+  });
+  
+  return Array.from(categories);
 };

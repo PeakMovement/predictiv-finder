@@ -3,4 +3,4 @@
 export * from './planGenerator/aiPlanGenerator';
 export * from './planGenerator/planStructure';
 export * from './planGenerator/professionalScoring';
-export * from './planGenerator/categoryMatcher'; // Ensure findAlternativeCategories is exported
+export * from './planGenerator/categoryMatcher'; // Explicitly export from categoryMatcher
