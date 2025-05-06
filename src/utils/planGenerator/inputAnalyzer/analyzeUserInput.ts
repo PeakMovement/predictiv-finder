@@ -1,4 +1,3 @@
-
 import { ServiceCategory } from "../types";
 import { 
   extractBudget,
@@ -81,7 +80,9 @@ export const analyzeUserInput = (input: string): {
   // Check for specific professionals mentioned
   const professionalServices = detectProfessionalMentions(inputLower);
   professionalServices.forEach(service => {
-    serviceCategories.add(service);
+    // Access the serviceCategory property instead of trying to add the whole object
+    serviceCategories.add(service.serviceCategory);
+    console.log("Adding service from professional mention:", service.serviceCategory);
   });
 
   // Handle negation patterns
