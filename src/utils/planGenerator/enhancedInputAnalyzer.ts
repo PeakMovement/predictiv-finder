@@ -1,3 +1,4 @@
+
 import { AIHealthPlan, ServiceCategory } from '@/types';
 import { analyzeUserInput } from './inputAnalyzer';
 import { findAlternativeCategories } from './categoryMatcher';
@@ -762,4 +763,99 @@ function extractContextualFactors(inputLower: string): string[] {
     factors.push('student-lifestyle');
   }
   
-  if (inputLower.includes
+  return factors;
+}
+
+// Function to check for co-morbidities and suggest additional services
+export function checkCoMorbidities(conditions: string[]): string[] {
+  const additionalServices: string[] = [];
+  
+  // Check for anxiety + depression (common comorbidity)
+  if (conditions.includes('anxiety') && conditions.includes('depression')) {
+    additionalServices.push('psychiatry');
+    additionalServices.push('psychology');
+  }
+  
+  // Check for pain + mental health issues
+  if ((conditions.includes('knee pain') || conditions.includes('back pain') || 
+       conditions.includes('chronic pain')) && 
+      (conditions.includes('anxiety') || conditions.includes('depression'))) {
+    additionalServices.push('pain-management');
+    additionalServices.push('psychology');
+  }
+  
+  // Check for weight issues + other conditions
+  if (conditions.includes('weight loss') && 
+      (conditions.includes('diabetes') || conditions.includes('hypertension'))) {
+    additionalServices.push('dietician');
+    additionalServices.push('endocrinology');
+  }
+  
+  return additionalServices;
+}
+
+// Generate personalized notes for the plan based on extracted data
+export function generatePlanNotes(
+  preferences: Record<string, string>,
+  conditions: string[],
+  severity: Record<string, number>,
+  specificGoals: Record<string, any>,
+  timeFrame?: string,
+  location?: string,
+  preferOnline?: boolean,
+  contextualFactors?: string[],
+  primaryIssue?: string,
+  servicePriorities?: Record<ServiceCategory, number>
+): string[] {
+  const notes: string[] = [];
+  
+  // Add note about online preference
+  if (preferOnline) {
+    notes.push('All consultations can be conducted online for your convenience.');
+  }
+  
+  // Add note about location if specified
+  if (location) {
+    notes.push(`Services are available in the ${location} area.`);
+  }
+  
+  // Add note about practitioner preferences
+  if (preferences.gender) {
+    notes.push(`We've noted your preference for a ${preferences.gender} practitioner.`);
+  }
+  
+  if (preferences.experience) {
+    if (preferences.experience === 'experienced') {
+      notes.push('This plan includes senior practitioners with extensive experience.');
+    } else if (preferences.experience === 'junior') {
+      notes.push('This plan includes more affordable practitioners for your budget considerations.');
+    }
+  }
+  
+  // Add note about timeframe if urgent
+  if (timeFrame && timeFrame.includes('week') && parseInt(timeFrame.split(' ')[0], 10) < 4) {
+    notes.push('Given your urgent timeframe, we've prioritized immediate availability.');
+  }
+  
+  // Add goal-specific notes
+  if (specificGoals.weightLoss) {
+    const { amount, unit } = specificGoals.weightLoss;
+    notes.push(`Your weight loss goal of ${amount} ${unit} requires a combination of nutrition and exercise support.`);
+  }
+  
+  if (specificGoals.racePreparation) {
+    const { timeFrame } = specificGoals.racePreparation;
+    notes.push(`Your race preparation plan is designed for the ${timeFrame} timeline you specified.`);
+  }
+  
+  // Add contextual notes
+  if (contextualFactors?.includes('sedentary-work')) {
+    notes.push('This plan addresses challenges related to desk work and sedentary lifestyle.');
+  }
+  
+  if (contextualFactors?.includes('student-lifestyle')) {
+    notes.push('This plan is designed with student schedules and budget considerations in mind.');
+  }
+  
+  return notes;
+}
