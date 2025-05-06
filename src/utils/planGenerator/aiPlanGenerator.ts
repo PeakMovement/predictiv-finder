@@ -1,4 +1,3 @@
-
 import { AIHealthPlan, ServiceCategory } from '@/types';
 import { analyzeUserInput } from './inputAnalyzer';
 import { findAlternativeCategories } from './categoryMatcher';
@@ -359,11 +358,12 @@ function handleSpecialCases(
 }
 
 /**
- * Enhanced complexity score calculation with more nuanced factors
- * Returns a value between 0-5 where:
- * 0-1: Simple issue (single condition/goal)
- * 2-3: Moderate complexity (multiple related issues)
- * 4-5: Complex case (multiple chronic or interrelated conditions)
+ * Enhanced complexity score calculation with a 0-100 scale based on multiple weighted factors
+ * Returns a value between 0-100 where:
+ * 0-30: Simple case (single condition/goal, no urgency)
+ * 31-60: Moderate complexity (multiple related issues or moderate urgency)
+ * 61-85: Complex case (multiple chronic or interrelated conditions)
+ * 86-100: Critical case (urgent medical attention needed)
  */
 function calculateComplexityScore(
   conditions: string[],
@@ -372,63 +372,150 @@ function calculateComplexityScore(
   servicePriorities: Record<string, number>
 ): number {
   let score = 0;
+  const inputLower = userQuery.toLowerCase();
   
-  // Base score from number of conditions and goals
-  score += Math.min(conditions.length * 0.8, 2.5); // Cap at 2.5
-  score += Math.min(goals.length * 0.5, 1.5);      // Cap at 1.5
+  // FACTOR 1: CONDITION SEVERITY (0-30 points)
+  // Check for condition severity indicators
+  const severityTerms = {
+    'chronic': 30,
+    'severe': 25,
+    'serious': 25,
+    'persistent': 20,
+    'recurring': 20,
+    'constant': 20,
+    'acute': 15,
+    'moderate': 15,
+    'mild': 10,
+    'minor': 5
+  };
   
-  // Check for complexity indicators in the query
-  const complexityMatches = COMPLEXITY_INDICATORS.filter(indicator => 
-    userQuery.toLowerCase().includes(indicator.toLowerCase())
-  );
+  let maxSeverityScore = 0;
   
-  score += complexityMatches.length * 0.5; // 0.5 points per complexity indicator
+  // Find the highest severity term mentioned
+  Object.entries(severityTerms).forEach(([term, value]) => {
+    if (inputLower.includes(term)) {
+      maxSeverityScore = Math.max(maxSeverityScore, value);
+    }
+  });
   
-  // Check for chronic conditions
-  const chronicConditions = conditions.filter(c => 
-    c.toLowerCase().includes('chronic') || 
-    c.toLowerCase().includes('recurring') ||
-    c.toLowerCase().includes('persistent')
-  );
+  // Add severity score
+  score += maxSeverityScore;
+  console.log(`Complexity - Severity score: ${maxSeverityScore}`);
   
-  score += chronicConditions.length * 0.7; // 0.7 points per chronic condition
+  // FACTOR 2: TIMEFRAME URGENCY (0-20 points)
+  let timeframeScore = 0;
   
-  // Check service diversity needed based on priorities
-  const highPriorityServices = Object.entries(servicePriorities)
-    .filter(([_, priority]) => priority > 0.7)
-    .map(([service, _]) => service);
+  // Check for specific timeframes
+  const timeframeMatch = inputLower.match(/(\d+)\s*(week|day|month)/);
+  if (timeframeMatch) {
+    const amount = parseInt(timeframeMatch[1]);
+    const unit = timeframeMatch[2];
     
-  // More diverse service needs = higher complexity
-  score += Math.min(highPriorityServices.length * 0.4, 1.2);
-  
-  // NEW: Check for comorbidity patterns (multiple related conditions)
-  const hasComorbidityPatterns = (
-    (conditions.some(c => c.toLowerCase().includes('pain')) && 
-     conditions.some(c => c.toLowerCase().includes('depression'))) ||
-    (conditions.some(c => c.toLowerCase().includes('weight')) && 
-     conditions.some(c => c.toLowerCase().includes('diabetes'))) ||
-    (conditions.some(c => c.toLowerCase().includes('anxiety')) && 
-     conditions.some(c => c.toLowerCase().includes('sleep')))
-  );
-  
-  if (hasComorbidityPatterns) {
-    score += 1.2; // Significant complexity boost for comorbidities
-    console.log("Detected comorbidity pattern, adding complexity score");
+    // Convert everything to weeks for comparison
+    let weeks = amount;
+    if (unit === 'day') weeks = amount / 7;
+    if (unit === 'month') weeks = amount * 4.3;
+    
+    // Assign points based on urgency
+    if (weeks < 1) timeframeScore = 20; // Very urgent (less than 1 week)
+    else if (weeks <= 2) timeframeScore = 15; // Urgent (1-2 weeks)
+    else if (weeks <= 4) timeframeScore = 10; // Moderately urgent (2-4 weeks)
+    else if (weeks <= 8) timeframeScore = 5; // Somewhat urgent (4-8 weeks)
+    else timeframeScore = 0; // Not urgent (more than 8 weeks)
   }
   
-  // NEW: Check for timeline challenges
-  const hasTimeConstraints = userQuery.toLowerCase().includes('urgent') || 
-                          userQuery.toLowerCase().includes('soon') ||
-                          userQuery.toLowerCase().includes('deadline') ||
-                          userQuery.toLowerCase().includes('weeks');
+  // Check for urgency keywords
+  const urgencyTerms = {
+    'urgent': 20,
+    'emergency': 20,
+    'asap': 18,
+    'immediately': 18,
+    'soon': 10,
+    'quickly': 8,
+    'fast': 8
+  };
   
-  if (hasTimeConstraints) {
-    score += 0.7; // Time constraints increase complexity
-    console.log("Detected time constraints, adding complexity score");
+  Object.entries(urgencyTerms).forEach(([term, value]) => {
+    if (inputLower.includes(term)) {
+      timeframeScore = Math.max(timeframeScore, value);
+    }
+  });
+  
+  // Add timeframe score
+  score += timeframeScore;
+  console.log(`Complexity - Timeframe urgency score: ${timeframeScore}`);
+  
+  // FACTOR 3: MULTIPLE CONDITIONS (0-20 points)
+  // 5 points for the first condition, +5 for each additional up to 20 points
+  const conditionScore = Math.min(5 + (Math.max(conditions.length - 1, 0) * 5), 20);
+  score += conditionScore;
+  console.log(`Complexity - Multiple conditions score: ${conditionScore}`);
+  
+  // FACTOR 4: SPECIFIC GOALS (0-15 points)
+  let goalScore = 0;
+  
+  // Basic score based on number of goals
+  goalScore += Math.min(goals.length * 3, 9);
+  
+  // Additional points for specific types of goals
+  const highComplexityGoals = ['race preparation', 'competition', 'marathon', 'return to sport', 'performance'];
+  highComplexityGoals.forEach(goal => {
+    if (inputLower.includes(goal)) goalScore += 3;
+  });
+  
+  // Cap at 15 points
+  goalScore = Math.min(goalScore, 15);
+  score += goalScore;
+  console.log(`Complexity - Goal complexity score: ${goalScore}`);
+  
+  // FACTOR 5: BUDGET CONSTRAINTS (0-10 points)
+  let budgetScore = 0;
+  
+  // Extract budget if mentioned
+  const budgetMatch = inputLower.match(/r\s*(\d+)/i);
+  if (budgetMatch && budgetMatch[1]) {
+    const budget = parseInt(budgetMatch[1]);
+    if (budget < 500) budgetScore = 10;  // Extremely tight budget
+    else if (budget < 1000) budgetScore = 7; // Very tight budget 
+    else if (budget < 2000) budgetScore = 5; // Moderate constraint
+    else if (budget < 3000) budgetScore = 2; // Mild constraint
   }
   
-  // Ensure score stays within 0-5 range
-  return Math.max(0, Math.min(5, score));
+  // Check for budget constraint terms
+  if (inputLower.includes('tight budget') || 
+      inputLower.includes('can\'t afford') ||
+      inputLower.includes('expensive') ||
+      inputLower.includes('low budget')) {
+    budgetScore = Math.max(budgetScore, 7);
+  }
+  
+  score += budgetScore;
+  console.log(`Complexity - Budget constraint score: ${budgetScore}`);
+  
+  // FACTOR 6: CO-MORBIDITY PATTERNS (0-15 points)
+  let comorbidityScore = 0;
+  
+  // Check for known co-morbidity patterns
+  const comorbidityPatterns = [
+    { pattern: /(?=.*\bpain\b)(?=.*\bdepression\b)/i, score: 15 },
+    { pattern: /(?=.*\banxiety\b)(?=.*\bsleep\b)/i, score: 12 },
+    { pattern: /(?=.*\bdiabetes\b)(?=.*\bweight\b)/i, score: 13 },
+    { pattern: /(?=.*\bknee\b)(?=.*\brace\b)/i, score: 12 },
+    { pattern: /(?=.*\bchronic\b)(?=.*\bfatigue\b)/i, score: 10 },
+    { pattern: /(?=.*\banxiety\b)(?=.*\beat\b)/i, score: 12 }
+  ];
+  
+  comorbidityPatterns.forEach(({ pattern, score: patternScore }) => {
+    if (pattern.test(inputLower)) {
+      comorbidityScore = Math.max(comorbidityScore, patternScore);
+    }
+  });
+  
+  score += comorbidityScore;
+  console.log(`Complexity - Co-morbidity score: ${comorbidityScore}`);
+  
+  // Ensure score stays within 0-100 range
+  return Math.max(0, Math.min(100, Math.round(score)));
 }
 
 // Enhanced mock practitioners function with more variety
