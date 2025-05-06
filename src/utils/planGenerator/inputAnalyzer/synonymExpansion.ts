@@ -39,3 +39,40 @@ export const ALL_SYNONYMS = {
   ...DIGESTIVE_SYNONYMS,
   ...GOAL_SYNONYMS
 };
+
+/**
+ * Expands user input with relevant synonyms to improve detection accuracy
+ * @param input Original user input text
+ * @returns Expanded text with relevant synonym terms added
+ */
+export const expandSynonyms = (input: string): string => {
+  // If input is empty or not a string, return as is
+  if (!input || typeof input !== 'string') {
+    return input;
+  }
+  
+  const inputLower = input.toLowerCase();
+  let expandedInput = input;
+  
+  // Track already added terms to avoid duplicates
+  const addedTerms = new Set<string>();
+  
+  // Go through all synonym categories
+  Object.entries(ALL_SYNONYMS).forEach(([keyword, synonyms]) => {
+    // Check if the input contains this keyword or any of its synonyms
+    const hasMatch = synonyms.some(synonym => inputLower.includes(synonym.toLowerCase()));
+    
+    if (hasMatch) {
+      // Add all synonyms to the expanded input that aren't already in the input
+      synonyms.forEach(synonym => {
+        if (!inputLower.includes(synonym.toLowerCase()) && !addedTerms.has(synonym.toLowerCase())) {
+          // Add the term with a space to ensure it's a separate word
+          expandedInput += ` ${synonym}`;
+          addedTerms.add(synonym.toLowerCase());
+        }
+      });
+    }
+  });
+  
+  return expandedInput;
+};
