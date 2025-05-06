@@ -1,4 +1,3 @@
-
 import { ServiceCategory } from "./types";
 
 /**
@@ -212,7 +211,8 @@ export const scoreProfessionalMatch = (
   };
   
   // Severity adjustments - for higher severity, favor medical professionals
-  const severityAdjustments: Record<ServiceCategory, number> = {
+  // Changed to Partial<Record> to fix the TypeScript error
+  const severityAdjustments: Partial<Record<ServiceCategory, number>> = {
     'family-medicine': 0.3,
     'orthopedics': 0.3,
     'psychiatry': 0.3,

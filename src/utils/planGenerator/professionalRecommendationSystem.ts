@@ -1,4 +1,3 @@
-
 import { ServiceCategory } from "./types";
 import { identifySymptoms } from "./symptomDetector";
 import { matchPractitionersToNeeds, scoreProfessionalMatch } from "./categoryMatcher";
@@ -135,8 +134,8 @@ export const generateProfessionalRecommendations = (
         }
       }
       
-      // Estimate budget based on professional type
-      const baseCosts: Record<ServiceCategory, number> = {
+      // Estimate budget based on professional type - Changed to Partial<Record> to fix TypeScript error
+      const baseCosts: Partial<Record<ServiceCategory, number>> = {
         'dietician': 500,
         'personal-trainer': 350,
         'physiotherapist': 600,
