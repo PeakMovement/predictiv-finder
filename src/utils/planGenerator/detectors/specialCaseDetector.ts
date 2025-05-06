@@ -1,7 +1,12 @@
 
 import { ServiceCategory } from "../types";
 import { SYMPTOM_MAPPINGS } from "../symptomMappingsData";
-import { MENTAL_HEALTH_SYNONYMS, FITNESS_SYNONYMS, DIGESTIVE_SYNONYMS } from "../inputAnalyzer/synonymExpansion";
+import { 
+  MENTAL_HEALTH_SYNONYMS, 
+  FITNESS_SYNONYMS, 
+  DIGESTIVE_SYNONYMS,
+  GOAL_SYNONYMS 
+} from "../inputAnalyzer/synonymExpansion";
 
 export const detectSpecialCases = (
   inputLower: string,
