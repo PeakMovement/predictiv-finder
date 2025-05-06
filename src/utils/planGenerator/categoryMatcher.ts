@@ -10,7 +10,7 @@ export const findAlternativeCategories = (
   selectedCategories: ServiceCategory[]
 ): ServiceCategory[] => {
   // Common complementary service pairings
-  const complementaryServices: Record<ServiceCategory, ServiceCategory[]> = {
+  const complementaryServices: Partial<Record<ServiceCategory, ServiceCategory[]>> = {
     'personal-trainer': ['dietician', 'physiotherapist', 'coaching'],
     'dietician': ['personal-trainer', 'coaching', 'family-medicine'],
     'physiotherapist': ['personal-trainer', 'biokineticist', 'pain-management'],
@@ -20,7 +20,24 @@ export const findAlternativeCategories = (
     'psychiatry': ['coaching', 'family-medicine'],
     'cardiology': ['family-medicine', 'dietician'],
     'orthopedics': ['physiotherapist', 'biokineticist'],
-    'pain-management': ['physiotherapist', 'family-medicine']
+    'pain-management': ['physiotherapist', 'family-medicine'],
+    'biokineticist': ['personal-trainer', 'physiotherapist'],
+    'internal-medicine': ['family-medicine', 'dietician'],
+    'pediatrics': ['family-medicine', 'dietician'],
+    'dermatology': ['family-medicine'],
+    'neurology': ['psychiatry', 'pain-management'],
+    'obstetrics-gynecology': ['family-medicine', 'dietician'],
+    'emergency-medicine': ['family-medicine'],
+    'anesthesiology': ['pain-management'],
+    'endocrinology': ['dietician', 'internal-medicine'],
+    'urology': ['family-medicine'],
+    'oncology': ['internal-medicine', 'dietician'],
+    'neurosurgery': ['neurology', 'pain-management'],
+    'infectious-disease': ['internal-medicine', 'family-medicine'],
+    'radiology': ['family-medicine'],
+    'geriatric-medicine': ['family-medicine', 'psychiatry'],
+    'plastic-surgery': ['dermatology'],
+    'rheumatology': ['pain-management', 'physiotherapist']
   };
   
   const recommendedCategories = new Set<ServiceCategory>();
