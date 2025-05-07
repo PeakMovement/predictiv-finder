@@ -3,11 +3,28 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { Loader, LoaderCircle } from "lucide-react";
 
+/**
+ * Props for the Spinner component
+ * 
+ * @interface SpinnerProps
+ * @extends React.HTMLAttributes<HTMLDivElement>
+ * @property {"sm" | "md" | "lg"} [size] - Size of the spinner (small, medium, large)
+ * @property {"circle" | "dots" | "default"} [variant] - Visual style of the spinner
+ */
 interface SpinnerProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: "sm" | "md" | "lg";
   variant?: "circle" | "dots" | "default";
 }
 
+/**
+ * Spinner component for indicating loading states
+ * Supports multiple sizes and visual variants
+ *
+ * @example
+ * ```tsx
+ * <Spinner size="md" variant="circle" className="text-primary" />
+ * ```
+ */
 export const Spinner = React.forwardRef<HTMLDivElement, SpinnerProps>(
   ({ className, size = "md", variant = "default", ...props }, ref) => {
     const sizeClasses = {
