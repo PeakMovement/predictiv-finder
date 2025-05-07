@@ -19,13 +19,17 @@ const queryClient = new QueryClient({
       retry: 1,
       staleTime: 30000,
       refetchOnWindowFocus: false,
-      onError: (error) => {
-        logger.error("Query error:", error);
+      meta: {
+        onError: (error: Error) => {
+          logger.error("Query error:", error);
+        }
       }
     },
     mutations: {
-      onError: (error) => {
-        logger.error("Mutation error:", error);
+      meta: {
+        onError: (error: Error) => {
+          logger.error("Mutation error:", error);
+        }
       }
     }
   }
