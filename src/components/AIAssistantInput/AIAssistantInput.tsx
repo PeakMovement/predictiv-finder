@@ -6,27 +6,42 @@ import { Spinner } from "@/components/ui/spinner";
 import { LoadingIndicator, ProgressBar } from "@/components/ui/loading-indicator";
 import { validateStringInput } from '@/utils/inputValidation';
 import { useToast } from '@/hooks/use-toast';
+import { FormError } from '@/components/ui/form-feedback';
 
 interface AIAssistantInputProps {
   onSubmit: (input: string) => void;
   isLoading?: boolean;
 }
 
+/**
+ * Input component for the AI Assistant feature
+ * Allows users to describe their health needs for AI analysis
+ */
 const AIAssistantInput: React.FC<AIAssistantInputProps> = ({ onSubmit, isLoading = false }) => {
   const [inputText, setInputText] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isFormTouched, setIsFormTouched] = useState(false);
   const { toast } = useToast();
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInputText(e.target.value);
-    // Clear validation error when user starts typing
-    if (validationError) {
-      setValidationError(null);
+    const value = e.target.value;
+    setInputText(value);
+    
+    // Mark form as touched once user starts typing
+    if (!isFormTouched) {
+      setIsFormTouched(true);
+    }
+    
+    // Live validation after user has started typing
+    if (isFormTouched) {
+      const validation = validateStringInput(value, 20, 1000);
+      setValidationError(validation.isValid ? null : validation.errorMessage);
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsFormTouched(true);
     
     // Validate the input
     const validation = validateStringInput(inputText, 20, 1000);
@@ -40,6 +55,9 @@ const AIAssistantInput: React.FC<AIAssistantInputProps> = ({ onSubmit, isLoading
       });
       return;
     }
+    
+    // Clear any validation errors
+    setValidationError(null);
     
     // Submit if valid
     onSubmit(inputText);
@@ -65,6 +83,20 @@ const AIAssistantInput: React.FC<AIAssistantInputProps> = ({ onSubmit, isLoading
 
   const inputQuality = getInputQualityScore();
   const showQualityIndicator = inputText.length > 10;
+  
+  // Determine quality label
+  const getQualityLabel = (): string => {
+    if (inputQuality < 30) return 'Basic';
+    if (inputQuality < 70) return 'Good';
+    return 'Detailed';
+  };
+  
+  // Determine quality color
+  const getQualityColor = (): string => {
+    if (inputQuality < 30) return 'text-yellow-600'; 
+    if (inputQuality < 70) return 'text-blue-600';
+    return 'text-green-600';
+  };
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
@@ -75,22 +107,28 @@ const AIAssistantInput: React.FC<AIAssistantInputProps> = ({ onSubmit, isLoading
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
+          <label htmlFor="health-input" className="sr-only">Health needs input</label>
           <Textarea
+            id="health-input"
             placeholder="For example: I need help with lower back pain that started 2 months ago. I work at a desk all day and I want to be able to play tennis again."
             value={inputText}
             onChange={handleChange}
-            className={`min-h-32 ${validationError ? 'border-red-500' : ''}`}
+            className={`min-h-32 ${validationError ? 'border-red-500 focus:ring-red-500' : ''}`}
             disabled={isLoading}
+            aria-invalid={!!validationError}
+            aria-describedby={validationError ? "input-error" : undefined}
           />
-          {validationError && (
-            <p className="text-red-500 text-sm mt-1">{validationError}</p>
-          )}
+          
+          <FormError 
+            id="input-error"
+            message={validationError || ""} 
+          />
           
           {showQualityIndicator && (
             <div className="mt-2">
               <div className="flex justify-between text-sm text-gray-500 mb-1">
                 <span>Input quality</span>
-                <span>{inputQuality < 30 ? 'Basic' : inputQuality < 70 ? 'Good' : 'Detailed'}</span>
+                <span className={getQualityColor()}>{getQualityLabel()}</span>
               </div>
               <ProgressBar value={inputQuality} />
             </div>
@@ -102,7 +140,8 @@ const AIAssistantInput: React.FC<AIAssistantInputProps> = ({ onSubmit, isLoading
             type="submit" 
             size="lg" 
             className="px-8"
-            disabled={isLoading || !inputText.trim()}
+            disabled={isLoading || !inputText.trim() || !!validationError}
+            aria-busy={isLoading}
           >
             {isLoading ? (
               <>
