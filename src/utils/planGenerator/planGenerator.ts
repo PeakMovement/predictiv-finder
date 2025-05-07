@@ -9,6 +9,7 @@ import { distributeSessionsByBudget } from "./sessionCalculator";
 // Create a combined practitioners array that includes coaches
 const ALL_PRACTITIONERS = [...PRACTITIONERS, ...COACHES];
 
+// Export the generatePlan function
 export const generatePlan = (context: PlanContext): AIHealthPlan => {
   const config = SERVICE_CONFIGS_BY_BUDGET[context.budgetTier.name];
   const services = determineRequiredServices(context, config.allocations);
@@ -24,6 +25,7 @@ export const generatePlan = (context: PlanContext): AIHealthPlan => {
   };
 };
 
+// Export the rest of the functions used in the module
 const determineRequiredServices = (
   context: PlanContext,
   allocations: ServiceAllocation[]

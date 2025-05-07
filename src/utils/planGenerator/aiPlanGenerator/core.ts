@@ -2,7 +2,9 @@
 import { AIHealthPlan, ServiceCategory } from '@/types';
 import { findAlternativeCategories } from '../categoryMatcher';
 import { calculateBudgetTiers } from '../planStructure';
-import { generatePlan, analyzeUserInput } from '../planGenerator';
+import { generatePlan } from '../planGenerator';
+// Import analyzeUserInput from the correct module
+import { analyzeUserInput } from '../inputAnalyzer';
 import { handleSpecialCases } from './complexity';
 import { analyzeUserForPlanning } from './userAnalysis';
 import { buildHealthPlans } from './planBuilder';
@@ -28,7 +30,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   
   // Remove contraindicated services
   if (analysis.contraindicated) {
-    categories = categories.filter(cat => !analysis.contraindicated.includes(cat));
+    categories = categories.filter(cat => !analysis.contraindicated!.includes(cat));
   }
   console.log("Final service categories after filtering:", categories);
   
@@ -65,6 +67,5 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
 // Export our original functions for compatibility
 export {
   generatePlan,
-  analyzeUserInput,
   findAlternativeCategories
 };

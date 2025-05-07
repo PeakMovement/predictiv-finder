@@ -5,3 +5,4 @@ export * from './planGenerator/planStructure';
 export * from './planGenerator/professionalScoring';
 export * from './planGenerator/categoryMatcher'; // Explicitly export from categoryMatcher
 export * from './planGenerator/professionalRecommendation'; // Export the refactored recommendation system
+export * from './planGenerator/inputAnalyzer'; // Make sure input analyzer is properly exported

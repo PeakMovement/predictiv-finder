@@ -1,117 +1,53 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
 @layer base {
   :root {
-    --background: 195 30% 98%;
-    --foreground: 210 50% 15%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 210 50% 15%;
-
+    --background: 0 0% 100%;
+    --foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 210 50% 15%;
-
-    --primary: 175 64% 55%;
-    --primary-foreground: 210 50% 98%;
-
-    --secondary: 252 100% 69%;
-    --secondary-foreground: 210 50% 98%;
-
-    --muted: 196 33% 97%;
-    --muted-foreground: 215 16% 47%;
-
-    --accent: 16 100% 70%;
-    --accent-foreground: 210 50% 98%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 50% 98%;
-
-    --border: 196 33% 90%;
-    --input: 196 33% 90%;
-    --ring: 175 64% 55%;
-
-    --radius: 0.75rem;
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5% 26%;
-    --sidebar-primary: 175 64% 55%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 5% 96%;
-    --sidebar-accent-foreground: 240 6% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 175 64% 55%;
+    --popover-foreground: 222.2 47.4% 11.2%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 47.4% 11.2%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 210 40% 98%;
+    --ring: 215 20.2% 65.1%;
+    --radius: 0.5rem;
   }
-
+ 
   .dark {
-    --background: 210 50% 8%;
-    --foreground: 195 30% 98%;
-
-    --card: 210 50% 10%;
-    --card-foreground: 195 30% 98%;
-
-    --popover: 210 50% 10%;
-    --popover-foreground: 195 30% 98%;
-
-    --primary: 175 64% 45%;
-    --primary-foreground: 210 50% 98%;
-
-    --secondary: 252 70% 60%;
-    --secondary-foreground: 210 50% 98%;
-
-    --muted: 210 33% 15%;
-    --muted-foreground: 215 20% 65%;
-
-    --accent: 16 85% 55%;
-    --accent-foreground: 210 50% 98%;
-
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+    --muted: 223 47% 11%;
+    --muted-foreground: 215.4 16.3% 56.9%;
+    --popover: 224 71% 4%;
+    --popover-foreground: 215 20.2% 65.1%;
+    --card: 224 71% 4%;
+    --card-foreground: 213 31% 91%;
+    --border: 216 34% 17%;
+    --input: 216 34% 17%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 1.2%;
+    --secondary: 222.2 47.4% 11.2%;
+    --secondary-foreground: 210 40% 98%;
+    --accent: 216 34% 17%;
+    --accent-foreground: 210 40% 98%;
     --destructive: 0 63% 31%;
-    --destructive-foreground: 210 50% 98%;
-
-    --border: 210 33% 15%;
-    --input: 210 33% 15%;
-    --ring: 175 64% 45%;
-
-    --sidebar-background: 210 50% 10%;
-    --sidebar-foreground: 195 30% 96%;
-    --sidebar-primary: 175 64% 45%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 33% 16%;
-    --sidebar-accent-foreground: 195 30% 96%;
-    --sidebar-border: 210 33% 16%;
-    --sidebar-ring: 175 64% 45%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground font-sans;
-    font-family: 'Poppins', sans-serif;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-medium tracking-tight;
-  }
-
-  /* Custom utility classes */
-  .health-gradient {
-    @apply bg-gradient-to-r from-health-teal to-health-purple;
-  }
-
-  .glass-effect {
-    @apply bg-white/70 dark:bg-gray-900/70 backdrop-blur-md;
-  }
-}
-
-@layer components {
-  .emoji-icon {
-    @apply text-2xl mr-2;
+    --destructive-foreground: 210 40% 98%;
+    --ring: 216 34% 17%;
+    --radius: 0.5rem;
   }
 }

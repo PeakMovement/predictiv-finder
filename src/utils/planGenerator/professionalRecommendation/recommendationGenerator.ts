@@ -11,6 +11,22 @@ import { calculateBudget, detectBudgetConstraint, baseCosts } from "./budgetEsti
 import { determineIdealTiming } from "./timingRecommender";
 import { generateRecommendationNotes, generatePreferredTraits } from "./notesGenerator";
 
+export interface SymptomAnalysisResult {
+  symptoms: string[];
+  priorities: Record<string, number>;
+  contraindications: ServiceCategory[];
+}
+
+export interface LocationAnalysis {
+  location: string | undefined;
+  isRemote: boolean | undefined;
+}
+
+export interface BudgetAnalysis {
+  budget: number | undefined;
+  hasBudgetConstraint: boolean;
+}
+
 /**
  * Generates comprehensive professional recommendations based on user input
  * @param userInput Text input from the user describing their needs
@@ -22,7 +38,7 @@ export function generateProfessionalRecommendations(
   console.log("Generating professional recommendations for input:", userInput);
   
   // Extract conditions and symptoms
-  const { symptoms, priorities, contraindications } = identifySymptoms(userInput);
+  const { symptoms, priorities, contraindications }: SymptomAnalysisResult = identifySymptoms(userInput);
   console.log("Identified symptoms:", symptoms);
   console.log("Contraindicated services:", contraindications);
   
@@ -35,7 +51,7 @@ export function generateProfessionalRecommendations(
   console.log("Severity scores:", severityScores);
   
   // Extract location and online preference
-  const { location, isRemote } = extractLocationDetails(userInput);
+  const { location, isRemote }: LocationAnalysis = extractLocationDetails(userInput);
   console.log("Location info:", { location, isRemote });
   
   // Extract budget information
@@ -83,7 +99,7 @@ export function generateProfessionalRecommendations(
       );
       
       // Preferred traits for professionals
-      const preferredTraits = generatePreferredTraits(primaryCondition, goals);
+      const preferredTraits = generatePreferredTraits(primaryCondition || "", goals);
       
       return {
         category,

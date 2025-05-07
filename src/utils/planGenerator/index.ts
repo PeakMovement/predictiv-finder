@@ -24,8 +24,12 @@ import {
   generatePlanNotes
 } from './enhancedInputAnalyzer';
 
+// Export functions from enhancedInputAnalyzer
 export {
   enhancedAnalyzeUserInput, 
   checkCoMorbidities, 
   generatePlanNotes
 };
+
+// Explicitly export analyzeUserInput for components that need it
+export { analyzeUserInput } from './inputAnalyzer';

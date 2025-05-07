@@ -12,3 +12,6 @@ export * from './weightingSystem';
 // Export KeywordMapping type but not the specific mapping constants
 // to avoid duplicate exports with symptomMapper
 export type { KeywordMapping } from './keywordMappings';
+
+// Ensure analyzeUserInput is explicitly exported as it's used in other modules
+export { analyzeUserInput } from './analyzeUserInput';

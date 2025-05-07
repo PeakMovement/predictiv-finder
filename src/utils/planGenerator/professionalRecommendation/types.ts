@@ -18,3 +18,21 @@ export interface CategoryRecommendation {
   score: number;
   primaryCondition?: string;
 }
+
+export interface RecommendationGoal {
+  type: string;
+  priority: number;
+  description: string;
+}
+
+export interface ServiceTimingPreference {
+  frequency: number; // sessions per week/month
+  duration: number; // weeks/months
+  intensity: 'light' | 'moderate' | 'intensive';
+}
+
+export interface TraitPreference {
+  trait: string;
+  importance: number; // 0-1 scale
+  reason?: string;
+}
