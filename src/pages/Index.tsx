@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import PlanDetailsView from "@/components/PlanDetailsView";
 import HomeHero from "@/components/homepage/HomeHero";
 import NavigationControls from "@/components/homepage/NavigationControls";
+import { validateArrayInput } from "@/utils/inputValidation";
 
 const Index = () => {
   const [stage, setStage] = useState<AppStage>('home');
@@ -37,36 +38,76 @@ const Index = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiPlans, setAiPlans] = useState<AIHealthPlan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<AIHealthPlan | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const getMatchingPractitioners = (criteria: DetailedUserCriteria): Practitioner[] => {
-    return PRACTITIONERS;
-  };
+  // Memoized function to get matching practitioners for better performance
+  const getMatchingPractitioners = useCallback((criteria: DetailedUserCriteria): Practitioner[] => {
+    try {
+      // Here you would implement actual filtering logic based on criteria
+      return PRACTITIONERS;
+    } catch (error) {
+      console.error("Error getting matching practitioners:", error);
+      toast({
+        title: "Error finding matching practitioners",
+        description: "There was a problem finding practitioners. Please try again.",
+        variant: "destructive",
+      });
+      return [];
+    }
+  }, [toast]);
 
-  const generateAIPlans = async (query: string) => {
+  // Enhanced AI plan generation with error handling
+  const generateAIPlans = useCallback(async (query: string) => {
     setIsGenerating(true);
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+    setError(null);
     
-    // First try to get professional recommendations using the new system
-    const recommendations = generateProfessionalRecommendations(query);
-    console.log("Professional recommendations:", recommendations);
-    
-    // Then generate the customized plans
-    const customPlans = generateCustomAIPlans(query);
-    setAiPlans(customPlans);
-    
-    setIsGenerating(false);
-  };
+    try {
+      // Simulate API call with timeout
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Generate professional recommendations using the new system
+      const recommendations = generateProfessionalRecommendations(query);
+      console.log("Professional recommendations:", recommendations);
+      
+      if (recommendations.length === 0) {
+        throw new Error("Unable to generate professional recommendations based on your input");
+      }
+      
+      // Generate the customized plans
+      const customPlans = generateCustomAIPlans(query);
+      
+      if (customPlans.length === 0) {
+        throw new Error("Unable to generate health plans based on your input");
+      }
+      
+      setAiPlans(customPlans);
+    } catch (error) {
+      console.error("Error generating AI plans:", error);
+      setError(error instanceof Error ? error.message : "Failed to generate health plans");
+      
+      toast({
+        title: "Error generating health plans",
+        description: error instanceof Error ? error.message : "Failed to generate health plans. Please try again with different wording.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [toast]);
 
-  const handleCategoryToggle = (category: ServiceCategory) => {
+  const handleCategoryToggle = useCallback((category: ServiceCategory) => {
     setSelectedCategories(prev => 
       prev.includes(category) 
         ? prev.filter(c => c !== category)
         : [...prev, category]
     );
-  };
+  }, []);
 
-  const handleCategorySubmit = (categories: ServiceCategory[]) => {
+  const handleCategorySubmit = useCallback((categories: ServiceCategory[]) => {
+    // Validate category selection
+    const validation = validateArrayInput(categories, 0);
+    
     if (categories.length === 0) {
       const alternatives = findAlternativeCategories([]);
       toast({
@@ -88,31 +129,44 @@ const Index = () => {
 
     setSelectedCategories(categories);
     setStage('category-questionnaire');
-  };
+  }, [toast]);
 
-  const handleQuestionnaireSubmit = (criteria: DetailedUserCriteria) => {
+  const handleQuestionnaireSubmit = useCallback((criteria: DetailedUserCriteria) => {
+    // Validate criteria
+    if (!criteria.categories || criteria.categories.length === 0) {
+      toast({
+        title: "Missing categories",
+        description: "Please select at least one category.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setUserCriteria(criteria);
     setStage('practitioner-list');
-  };
+  }, [toast]);
 
-  const handleAIInputSubmit = (input: string) => {
+  const handleAIInputSubmit = useCallback((input: string) => {
     setUserQuery(input);
     generateAIPlans(input);
     setStage('ai-plans');
-  };
+  }, [generateAIPlans]);
 
-  const handleSelectPractitioner = (practitioner: Practitioner) => {
+  const handleSelectPractitioner = useCallback((practitioner: Practitioner) => {
     console.log('Selected practitioner:', practitioner);
-    alert(`You've selected ${practitioner.name}. In a complete app, this would take you to a booking page.`);
-  };
+    toast({
+      title: "Practitioner selected",
+      description: `You've selected ${practitioner.name}. In a complete app, this would take you to a booking page.`,
+    });
+  }, [toast]);
 
-  const handleSelectPlan = (plan: AIHealthPlan) => {
+  const handleSelectPlan = useCallback((plan: AIHealthPlan) => {
     console.log('Selected plan:', plan);
     setSelectedPlan(plan);
     setStage('plan-details');
-  };
+  }, []);
 
-  const resetToHome = () => {
+  const resetToHome = useCallback(() => {
     setStage('home');
     setSelectedCategories([]);
     setUserCriteria({
@@ -124,9 +178,10 @@ const Index = () => {
       }
     });
     setUserQuery('');
-  };
+    setError(null);
+  }, []);
   
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     switch(stage) {
       case 'category-questionnaire':
         setStage('category-selector');
@@ -146,7 +201,7 @@ const Index = () => {
       default:
         resetToHome();
     }
-  };
+  }, [stage, resetToHome]);
 
   return (
     <div className="min-h-screen bg-health-blue-light dark:bg-gray-900">
@@ -154,6 +209,23 @@ const Index = () => {
       
       <main className="container max-w-6xl mx-auto px-4 py-8">
         <AnimatePresence mode="wait">
+          {error && (
+            <motion.div
+              key="error"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="bg-red-50 border-l-4 border-red-400 p-4 mb-6"
+            >
+              <div className="flex">
+                <div>
+                  <h3 className="text-red-800 font-medium">Error</h3>
+                  <p className="text-red-700">{error}</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+          
           {stage === 'home' && (
             <HomeHero 
               onSelectCategoryFlow={() => setStage('category-selector')} 

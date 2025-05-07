@@ -1,4 +1,5 @@
 import { ServiceCategory } from "./types";
+import { memoize } from "../performance/memoize";
 
 /**
  * Finds alternative service categories based on the user's selected categories
@@ -257,91 +258,109 @@ export const scoreProfessionalMatch = (
 };
 
 /**
- * Match practitioners to user needs with weighted scoring
- * @param conditions User's health conditions
- * @param severityScores Severity scores for each condition
- * @param goals User's health and fitness goals
- * @param location Optional user location
- * @param preferOnline Whether user prefers online consultations
- * @param budgetConstraint Whether there are significant budget constraints
- * @returns Ranked professional categories with scores
+ * Matches health practitioners to user needs based on symptoms, goals, and other factors
+ * Function is now optimized with error handling and memoization
  */
-export const matchPractitionersToNeeds = (
-  conditions: string[],
-  severityScores: Record<string, number>,
-  goals: string[] = [],
-  location?: string,
-  preferOnline?: boolean,
-  budgetConstraint: boolean = false
-): Array<{category: ServiceCategory, score: number, primaryCondition?: string}> => {
-  // First get the base category recommendations from conditions
-  const baseCategorySet = new Set<ServiceCategory>();
-  
-  // Add categories from conditions
-  conditions.forEach(condition => {
-    const mappedCategories = mapConditionsToCategories([condition]);
-    mappedCategories.forEach(category => baseCategorySet.add(category));
-  });
-  
-  // Compute scores for each professional category
-  const categoryScores: Array<{category: ServiceCategory, score: number, primaryCondition?: string}> = [];
-  
-  Array.from(baseCategorySet).forEach(category => {
-    let maxScore = 0;
-    let primaryCondition: string | undefined = undefined;
-    
-    // Find the highest matching score across all conditions
-    conditions.forEach(condition => {
-      const severity = severityScores[condition] || 0.5;
+export const matchPractitionersToNeeds = memoize(
+  (
+    symptoms: string[],
+    severityScores: Record<string, number>,
+    goals: any[],
+    location?: string,
+    isRemote?: boolean,
+    hasBudgetConstraint?: boolean
+  ) => {
+    try {
+      // First get the base category recommendations from conditions
+      const baseCategorySet = new Set<ServiceCategory>();
       
-      // Find best matching goal for this condition-professional pair
-      let bestGoalBonus = 0;
-      goals.forEach(goal => {
-        const score = scoreProfessionalMatch(category, condition, severity, goal, budgetConstraint);
-        if (score > maxScore) {
-          maxScore = score;
-          primaryCondition = condition;
-        }
+      // Add categories from conditions
+      symptoms.forEach(condition => {
+        const mappedCategories = mapConditionsToCategories([condition]);
+        mappedCategories.forEach(category => baseCategorySet.add(category));
       });
       
-      // If no goals, just use condition
-      if (goals.length === 0) {
-        const score = scoreProfessionalMatch(category, condition, severity, undefined, budgetConstraint);
-        if (score > maxScore) {
-          maxScore = score;
-          primaryCondition = condition;
-        }
-      }
-    });
-    
-    // Location and online preference adjustments
-    if (preferOnline === true) {
-      // Professionals that work well online get a boost
-      const onlineFriendlyProfessionals: ServiceCategory[] = [
-        'dietician', 'coaching', 'psychiatry', 'family-medicine'
-      ];
+      // Compute scores for each professional category
+      const categoryScores: Array<{category: ServiceCategory, score: number, primaryCondition?: string}> = [];
       
-      if (onlineFriendlyProfessionals.includes(category)) {
-        maxScore += 0.05;
-      } else {
-        // Physical services get a penalty if online is preferred
-        const physicalServices: ServiceCategory[] = [
-          'physiotherapist', 'biokineticist', 'personal-trainer'
-        ];
+      Array.from(baseCategorySet).forEach(category => {
+        let maxScore = 0;
+        let primaryCondition: string | undefined = undefined;
         
-        if (physicalServices.includes(category)) {
-          maxScore -= 0.1;
+        // Find the highest matching score across all conditions
+        symptoms.forEach(condition => {
+          const severity = severityScores[condition] || 0.5;
+          
+          // Find best matching goal for this condition-professional pair
+          let bestGoalBonus = 0;
+          goals.forEach(goal => {
+            const score = scoreProfessionalMatch(category, condition, severity, goal, hasBudgetConstraint);
+            if (score > maxScore) {
+              maxScore = score;
+              primaryCondition = condition;
+            }
+          });
+          
+          // If no goals, just use condition
+          if (goals.length === 0) {
+            const score = scoreProfessionalMatch(category, condition, severity, undefined, hasBudgetConstraint);
+            if (score > maxScore) {
+              maxScore = score;
+              primaryCondition = condition;
+            }
+          }
+        });
+        
+        // Location and online preference adjustments
+        if (isRemote === true) {
+          // Professionals that work well online get a boost
+          const onlineFriendlyProfessionals: ServiceCategory[] = [
+            'dietician', 'coaching', 'psychiatry', 'family-medicine'
+          ];
+          
+          if (onlineFriendlyProfessionals.includes(category)) {
+            maxScore += 0.05;
+          } else {
+            // Physical services get a penalty if online is preferred
+            const physicalServices: ServiceCategory[] = [
+              'physiotherapist', 'biokineticist', 'personal-trainer'
+            ];
+            
+            if (physicalServices.includes(category)) {
+              maxScore -= 0.1;
+            }
+          }
         }
-      }
+        
+        categoryScores.push({ 
+          category, 
+          score: maxScore,
+          primaryCondition 
+        });
+      });
+      
+      // Sort by score descending
+      return categoryScores.sort((a, b) => b.score - a.score);
+    } catch (error) {
+      console.error("Error in matchPractitionersToNeeds:", error);
+      // Return empty array as fallback
+      return [];
     }
-    
-    categoryScores.push({ 
-      category, 
-      score: maxScore,
-      primaryCondition 
+  },
+  // Custom key generator for better cache performance
+  (symptoms, severityScores, goals, location, isRemote, hasBudgetConstraint) => {
+    return JSON.stringify({
+      s: symptoms.sort().join(','),
+      ss: Object.entries(severityScores)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([k, v]) => `${k}:${v}`)
+        .join(','),
+      g: Array.isArray(goals) ? goals.length : 0,
+      l: location || '',
+      r: isRemote ? 1 : 0,
+      b: hasBudgetConstraint ? 1 : 0
     });
-  });
-  
-  // Sort by score descending
-  return categoryScores.sort((a, b) => b.score - a.score);
-};
+  },
+  // Cache up to 50 results
+  50
+);
