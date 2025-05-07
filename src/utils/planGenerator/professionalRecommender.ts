@@ -1,9 +1,11 @@
 
+// This file is now a thin wrapper over our new modular structure
 import { ServiceCategory } from "./types";
 import { identifySymptoms } from "./symptomDetector";
 import { SYMPTOM_MAPPINGS } from "./symptomMappingsData";
 import { detectProfessionalMentions } from "./professionalPhrases";
 
+// This function will be moved to the new structure in a future refactoring
 export const getProfessionalsForSymptoms = (
   userInput: string
 ): { 
