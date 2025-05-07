@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Spinner } from "@/components/ui/spinner";
+import { Spinner } from "@/components/ui/spinner"; 
+import { LoadingIndicator, ProgressBar } from "@/components/ui/loading-indicator";
 import { validateStringInput } from '@/utils/inputValidation';
 import { useToast } from '@/hooks/use-toast';
 
@@ -44,6 +45,27 @@ const AIAssistantInput: React.FC<AIAssistantInputProps> = ({ onSubmit, isLoading
     onSubmit(inputText);
   };
 
+  // Calculate input quality score based on length and detail
+  const getInputQualityScore = (): number => {
+    if (!inputText || inputText.length < 20) return 0;
+    
+    // Base score on length
+    let score = Math.min(100, Math.max(0, (inputText.length / 200) * 100));
+    
+    // Bonus for including specific details
+    if (inputText.includes("pain") || inputText.includes("symptom")) score += 5;
+    if (inputText.includes("month") || inputText.includes("week") || inputText.includes("year")) score += 5;
+    if (inputText.includes("budget") || inputText.includes("cost")) score += 5;
+    if (inputText.includes("goal")) score += 5;
+    if (inputText.includes("location") || inputText.includes("online")) score += 5;
+    
+    // Cap at 100
+    return Math.min(100, score);
+  };
+
+  const inputQuality = getInputQualityScore();
+  const showQualityIndicator = inputText.length > 10;
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
       <h3 className="text-2xl font-bold mb-4">Tell us what you need</h3>
@@ -63,6 +85,16 @@ const AIAssistantInput: React.FC<AIAssistantInputProps> = ({ onSubmit, isLoading
           {validationError && (
             <p className="text-red-500 text-sm mt-1">{validationError}</p>
           )}
+          
+          {showQualityIndicator && (
+            <div className="mt-2">
+              <div className="flex justify-between text-sm text-gray-500 mb-1">
+                <span>Input quality</span>
+                <span>{inputQuality < 30 ? 'Basic' : inputQuality < 70 ? 'Good' : 'Detailed'}</span>
+              </div>
+              <ProgressBar value={inputQuality} />
+            </div>
+          )}
         </div>
         
         <div className="flex justify-end">
@@ -74,7 +106,7 @@ const AIAssistantInput: React.FC<AIAssistantInputProps> = ({ onSubmit, isLoading
           >
             {isLoading ? (
               <>
-                <Spinner className="mr-2 h-4 w-4" />
+                <Spinner variant="dots" className="mr-2 h-4 w-4" />
                 Generating plans...
               </>
             ) : (

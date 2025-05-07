@@ -1,6 +1,7 @@
 
 import React, { Component, ErrorInfo, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { logger } from "@/utils/cache";
 
 interface Props {
   children: ReactNode;
@@ -24,8 +25,9 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Error caught by ErrorBoundary:", error);
-    console.error("Component stack:", errorInfo.componentStack);
+    // Use the new logger utility instead of direct console.error
+    logger.error("Error caught by ErrorBoundary:", error);
+    logger.error("Component stack:", errorInfo.componentStack);
   }
 
   private handleReset = () => {

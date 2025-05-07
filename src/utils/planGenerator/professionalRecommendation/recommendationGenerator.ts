@@ -10,6 +10,7 @@ import { calculateIdealSessions } from "./sessionCalculator";
 import { calculateBudget, detectBudgetConstraint, baseCosts } from "./budgetEstimator";
 import { determineIdealTiming } from "./timingRecommender";
 import { generateRecommendationNotes, generatePreferredTraits } from "./notesGenerator";
+import { enhancedMemoize, logger } from "@/utils/cache";
 
 export interface SymptomAnalysisResult {
   symptoms: string[];
@@ -59,7 +60,7 @@ export function generateProfessionalRecommendations(
   userInput: string
 ): ProfessionalRecommendation[] {
   try {
-    console.log("Generating professional recommendations for input:", userInput);
+    logger.debug("Generating professional recommendations for input:", userInput);
     
     // Validate user input
     const validation = validateUserInput(userInput);
@@ -72,16 +73,16 @@ export function generateProfessionalRecommendations(
     try {
       symptomAnalysisResult = identifySymptoms(userInput);
     } catch (error) {
-      console.error("Error identifying symptoms:", error);
+      logger.error("Error identifying symptoms:", error);
       throw new Error("Failed to analyze health symptoms. Please try different wording.");
     }
     
     const { symptoms, priorities, contraindications } = symptomAnalysisResult;
-    console.log("Identified symptoms:", symptoms);
-    console.log("Contraindicated services:", contraindications);
+    logger.debug("Identified symptoms:", symptoms);
+    logger.debug("Contraindicated services:", contraindications);
     
     if (symptoms.length === 0) {
-      console.warn("No symptoms identified from input");
+      logger.warn("No symptoms identified from input");
     }
     
     // Extract goals with error handling
@@ -89,33 +90,33 @@ export function generateProfessionalRecommendations(
     try {
       goals = extractGoals(userInput);
     } catch (error) {
-      console.error("Error extracting goals:", error);
+      logger.error("Error extracting goals:", error);
       goals = [];
     }
-    console.log("Extracted goals:", goals);
+    logger.debug("Extracted goals:", goals);
     
     // Calculate severity scores for each condition with error handling
     let severityScores;
     try {
       severityScores = calculateSeverityScores(symptoms, userInput);
     } catch (error) {
-      console.error("Error calculating severity scores:", error);
+      logger.error("Error calculating severity scores:", error);
       severityScores = symptoms.reduce((acc, symptom) => {
         acc[symptom] = 0.5; // Default medium severity
         return acc;
       }, {} as Record<string, number>);
     }
-    console.log("Severity scores:", severityScores);
+    logger.debug("Severity scores:", severityScores);
     
     // Extract location and online preference with error handling
     let locationInfo: LocationAnalysis;
     try {
       locationInfo = extractLocationDetails(userInput);
     } catch (error) {
-      console.error("Error extracting location details:", error);
+      logger.error("Error extracting location details:", error);
       locationInfo = { location: undefined, isRemote: false };
     }
-    console.log("Location info:", locationInfo);
+    logger.debug("Location info:", locationInfo);
     
     // Extract budget information with error handling
     let budget;
@@ -124,17 +125,17 @@ export function generateProfessionalRecommendations(
       budget = extractBudget(userInput);
       hasBudgetConstraint = detectBudgetConstraint(userInput, budget);
     } catch (error) {
-      console.error("Error extracting budget information:", error);
+      logger.error("Error extracting budget information:", error);
       budget = undefined;
       hasBudgetConstraint = false;
     }
-    console.log("Budget info:", { budget, hasBudgetConstraint });
+    logger.debug("Budget info:", { budget, hasBudgetConstraint });
     
-    // Match practitioners to needs with error handling and performance optimization
+    // Match practitioners to needs with error handling and enhanced caching
     let rankedCategories: CategoryRecommendation[];
     try {
-      // Use memoization wrapper for expensive calculations
-      rankedCategories = memoizedMatchPractitioners(
+      // Use enhanced memoization wrapper for expensive calculations
+      rankedCategories = cachedMatchPractitioners(
         symptoms,
         severityScores,
         goals,
@@ -143,14 +144,14 @@ export function generateProfessionalRecommendations(
         hasBudgetConstraint
       );
     } catch (error) {
-      console.error("Error matching practitioners to needs:", error);
+      logger.error("Error matching practitioners to needs:", error);
       throw new Error("Failed to match health professionals to your needs. Please try different wording.");
     }
     
-    console.log("Ranked professional categories:", rankedCategories);
+    logger.debug("Ranked professional categories:", rankedCategories);
     
     if (rankedCategories.length === 0) {
-      console.warn("No professional categories matched to user needs");
+      logger.warn("No professional categories matched to user needs");
       return [];
     }
     
@@ -170,7 +171,7 @@ export function generateProfessionalRecommendations(
           try {
             idealSessions = calculateIdealSessions(category, conditionSeverity);
           } catch (error) {
-            console.error(`Error calculating ideal sessions for ${category}:`, error);
+            logger.error(`Error calculating ideal sessions for ${category}:`, error);
             idealSessions = 4; // Default value
           }
           
@@ -181,7 +182,7 @@ export function generateProfessionalRecommendations(
           try {
             estimatedBudget = calculateBudget(category, idealSessions);
           } catch (error) {
-            console.error(`Error calculating budget for ${category}:`, error);
+            logger.error(`Error calculating budget for ${category}:`, error);
             estimatedBudget = sessionCost * idealSessions;
           }
           
@@ -190,7 +191,7 @@ export function generateProfessionalRecommendations(
           try {
             idealTiming = determineIdealTiming(category, conditionSeverity);
           } catch (error) {
-            console.error(`Error determining ideal timing for ${category}:`, error);
+            logger.error(`Error determining ideal timing for ${category}:`, error);
             idealTiming = "Weekly sessions for 1 month";
           }
           
@@ -206,7 +207,7 @@ export function generateProfessionalRecommendations(
               sessionCost
             );
           } catch (error) {
-            console.error(`Error generating recommendation notes for ${category}:`, error);
+            logger.error(`Error generating recommendation notes for ${category}:`, error);
             notes = [`Consider working with a ${category.replace('-', ' ')} professional.`];
           }
           
@@ -215,7 +216,7 @@ export function generateProfessionalRecommendations(
           try {
             preferredTraits = generatePreferredTraits(primaryCondition || "", goals);
           } catch (error) {
-            console.error(`Error generating preferred traits for ${category}:`, error);
+            logger.error(`Error generating preferred traits for ${category}:`, error);
             preferredTraits = [];
           }
           
@@ -231,7 +232,7 @@ export function generateProfessionalRecommendations(
             preferredTraits
           };
         } catch (error) {
-          console.error(`Error generating recommendation for ${rankedCategory.category}:`, error);
+          logger.error(`Error generating recommendation for ${rankedCategory.category}:`, error);
           // Return a minimal valid recommendation to prevent complete failure
           return {
             category: rankedCategory.category,
@@ -249,65 +250,35 @@ export function generateProfessionalRecommendations(
     
     return recommendations;
   } catch (error) {
-    console.error("Error in generateProfessionalRecommendations:", error);
+    logger.error("Error in generateProfessionalRecommendations:", error);
     throw error;
   }
 }
 
-// Create a simple memoization cache for performance optimization
-const memoCache = new Map<string, CategoryRecommendation[]>();
-
-/**
- * Memoized wrapper for matchPractitionersToNeeds to improve performance
- * @param symptoms Array of identified symptoms
- * @param severityScores Severity scores for each symptom
- * @param goals User goals
- * @param location User location
- * @param isRemote Whether user prefers remote sessions
- * @param hasBudgetConstraint Whether user has budget constraints
- * @returns Ranked professional categories
- */
-function memoizedMatchPractitioners(
-  symptoms: string[],
-  severityScores: Record<string, number>,
-  goals: any[],
-  location?: string,
-  isRemote?: boolean,
-  hasBudgetConstraint?: boolean
-): CategoryRecommendation[] {
-  // Create a cache key based on function arguments
-  const cacheKey = JSON.stringify({
-    symptoms,
-    severityScores,
-    goals,
-    location,
-    isRemote,
-    hasBudgetConstraint
-  });
-  
-  // Check if we have a cached result
-  if (memoCache.has(cacheKey)) {
-    console.log("Using cached practitioner matches");
-    return memoCache.get(cacheKey)!;
-  }
-  
-  // If not, perform the calculation and cache the result
-  const result = matchPractitionersToNeeds(
-    symptoms,
-    severityScores,
-    goals,
-    location,
-    isRemote,
-    hasBudgetConstraint
-  );
-  
-  // Store result in cache (limit cache size to prevent memory leaks)
-  if (memoCache.size > 100) {
-    // Clear oldest entries if cache gets too large
-    const oldestKey = memoCache.keys().next().value;
-    memoCache.delete(oldestKey);
-  }
-  
-  memoCache.set(cacheKey, result);
-  return result;
-}
+// Replace the simple memoization cache with enhanced caching
+// Configure with a 10 minute TTL and max 50 items cache size
+const cachedMatchPractitioners = enhancedMemoize(
+  (
+    symptoms: string[],
+    severityScores: Record<string, number>,
+    goals: any[],
+    location?: string,
+    isRemote?: boolean,
+    hasBudgetConstraint?: boolean
+  ): CategoryRecommendation[] => {
+    logger.debug("Cache miss - computing practitioner matches");
+    return matchPractitionersToNeeds(
+      symptoms,
+      severityScores,
+      goals,
+      location,
+      isRemote,
+      hasBudgetConstraint
+    );
+  },
+  // Custom key generator
+  (symptoms, severityScores, goals, location, isRemote, hasBudgetConstraint) => 
+    JSON.stringify({ symptoms, severityScores, goals, location, isRemote, hasBudgetConstraint }),
+  // Cache options
+  { maxSize: 50, ttl: 10 * 60 * 1000 } // 10 minutes TTL, max 50 items
+);

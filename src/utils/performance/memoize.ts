@@ -1,42 +1,21 @@
 
+import { enhancedMemoize, logger } from "../cache";
+
 /**
  * A simple memoization utility to avoid recalculating expensive operations
  * @param fn The function to memoize
  * @param getKey Function to generate a cache key (defaults to JSON.stringify of arguments)
  * @param maxCacheSize Maximum number of results to cache (defaults to 100)
  * @returns Memoized function
+ * @deprecated Use enhancedMemoize from @/utils/cache.ts instead
  */
 export function memoize<T extends (...args: any[]) => any>(
   fn: T,
   getKey: (...args: Parameters<T>) => string = (...args) => JSON.stringify(args),
   maxCacheSize: number = 100
 ): T {
-  const cache = new Map<string, ReturnType<T>>();
-  
-  const memoized = ((...args: Parameters<T>): ReturnType<T> => {
-    const key = getKey(...args);
-    
-    if (cache.has(key)) {
-      return cache.get(key) as ReturnType<T>;
-    }
-    
-    const result = fn(...args);
-    
-    // Manage cache size
-    if (cache.size >= maxCacheSize) {
-      // Remove oldest entry
-      const oldestKey = cache.keys().next().value;
-      cache.delete(oldestKey);
-    }
-    
-    cache.set(key, result);
-    return result;
-  }) as T;
-  
-  // Expose method to clear the cache
-  (memoized as any).clearCache = () => cache.clear();
-  
-  return memoized;
+  logger.warn("memoize is deprecated. Use enhancedMemoize from @/utils/cache.ts instead");
+  return enhancedMemoize(fn, getKey, { maxSize: maxCacheSize });
 }
 
 /**
@@ -96,3 +75,6 @@ export function throttle<T extends (...args: any[]) => void>(
     }, limit);
   };
 }
+
+// Export the enhanced caching functions to encourage their use
+export { enhancedMemoize, logger } from "../cache";
