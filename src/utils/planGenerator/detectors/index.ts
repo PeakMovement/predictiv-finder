@@ -1,9 +1,9 @@
 
-export * from './bodyPartDetector';
+// Export all detector functions
+export * from './bodyPainDetector';
 export * from './stomachIssueDetector';
-export * from './budgetDetector';
 export * from './onlinePreferenceDetector';
 export * from './specialCaseDetector';
-export * from './generalSymptomsDetector';
-export * from './professionalBasedDetector';
+export * from './generalSymptomDetector';
 export * from './timeframeDetector';
+export * from './professionalBasedDetector';
