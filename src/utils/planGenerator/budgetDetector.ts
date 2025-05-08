@@ -1,5 +1,5 @@
 
-import { ServiceCategory } from "../types";
+import { ServiceCategory } from "./types";
 
 export const detectBudgetConstraints = (
   inputLower: string,

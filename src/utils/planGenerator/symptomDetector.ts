@@ -2,15 +2,19 @@
 import { ServiceCategory } from "./types";
 import { SYMPTOM_MAPPINGS } from "./symptomMappingsData";
 import { 
-  detectBodyPainAssociations,
   detectStomachIssues,
-  detectBudgetConstraints,
   detectOnlinePreference,
   detectSpecialCases,
-  detectGeneralSymptoms,
-  detectSymptomsFromProfessionals,
-  detectTimeframes
+  detectTimeframes,
+  detectSymptomsFromProfessionals
 } from "./detectors";
+
+// Import separately since we created these files
+import { detectBodyPainAssociations } from "./detectors/bodyPainDetector";
+import { detectGeneralSymptoms } from "./detectors/generalSymptomDetector"; 
+
+// Import budget detection since it's used here
+import { detectBudgetConstraints } from "./budgetDetector";
 
 export const identifySymptoms = (userInput: string): { 
   symptoms: string[], 
