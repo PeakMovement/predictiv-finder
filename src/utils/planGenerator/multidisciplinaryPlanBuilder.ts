@@ -1,4 +1,3 @@
-
 import { AIHealthPlan, ServiceCategory, Practitioner } from "@/types";
 import { parseMonthlyBudget } from "./budgetDetector";
 import { extractGoalTimeframe } from "./detectors/timeframeDetector";
@@ -77,10 +76,10 @@ function prioritizeServices(
     "headache": {
       "physiotherapist": 2,
       "neurology": 3,
-      "massage-therapy": 1
+      "pain-management": 1  // Changed from massage-therapy to pain-management
     },
     "tension": {
-      "massage-therapy": 1,
+      "pain-management": 1,  // Changed from massage-therapy to pain-management
       "physiotherapist": 2,
       "psychiatry": 3
     },

@@ -1,5 +1,5 @@
 
-import { ServiceCategory } from "../../types";
+import { ServiceCategory } from "../types";
 import { SYMPTOM_MAPPINGS } from "../symptomMappingsData";
 
 export const detectGeneralSymptoms = (
@@ -15,7 +15,7 @@ export const detectGeneralSymptoms = (
     // Skip symptoms we've already matched via specific detectors
     if (symptoms.includes(symptomKey)) continue;
     
-    const keywordMatches = symptomData.keywords.some(keyword => 
+    const keywordMatches = symptomData.keywords?.some(keyword => 
       inputLower.includes(keyword.toLowerCase())
     );
     

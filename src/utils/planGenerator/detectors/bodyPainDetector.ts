@@ -1,5 +1,5 @@
 
-import { ServiceCategory } from "../../types";
+import { ServiceCategory } from "../types";
 import { SYMPTOM_MAPPINGS } from "../symptomMappingsData";
 
 // Function to check for specific body parts mentioned with pain keywords
