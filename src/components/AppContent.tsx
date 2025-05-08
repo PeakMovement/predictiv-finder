@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import EnhancedCategorySelection from "@/components/EnhancedCategorySelection";
 import CategoryQuestionnaire from "@/components/CategoryQuestionnaire";
+import AIAssistantInput from "@/components/AIAssistantInput";
 import PractitionerList from "@/components/PractitionerList";
 import AIPlansDisplay from "@/components/AIPlansDisplay";
 import HelpButton from "@/components/HelpButton";
@@ -16,7 +17,6 @@ import { useAppNavigation } from "@/hooks/use-app-navigation";
 import { usePractitionerService } from "@/services/practitioner-service";
 import { useAIPlansService } from "@/services/ai-plans-service";
 import SafeAIPlansDisplay from "@/components/AIPlansDisplay/SafeAIPlansDisplay";
-import ConversationalAI from "@/components/ConversationalAI";
 
 /**
  * Main content component for the application
@@ -147,7 +147,7 @@ const AppContent: React.FC = () => {
               </Button>
               <h2 className="text-3xl font-bold">Create Your Custom Health Plan</h2>
             </div>
-            <ConversationalAI 
+            <AIAssistantInput 
               onSubmit={handleAIInputSubmitWithGeneration}
               isLoading={isGenerating}
             />
