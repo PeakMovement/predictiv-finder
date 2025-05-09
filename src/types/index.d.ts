@@ -1,5 +1,30 @@
 
-// Extend the existing interface with our new fields
+// We'll import ServiceCategory from planGenerator/types to avoid duplication
+import { ServiceCategory } from "../utils/planGenerator/types";
+export { ServiceCategory };
+
+export type ServiceMode = 'online' | 'in-person' | 'both';
+
+export type FitnessLevel = 'beginner' | 'intermediate' | 'advanced';
+
+export type GoalType = string;
+
+export interface Practitioner {
+  id: string;
+  name: string;
+  serviceType: ServiceCategory;
+  pricePerSession: number;
+  serviceTags: string[];
+  location: string;
+  isOnline: boolean;
+  availability: string;
+  imageUrl: string;
+  bio: string;
+  rating: number;
+  maxPrice?: number;
+  specialtyNotes?: string;
+}
+
 export interface AIHealthPlan {
   id: string;
   name: string;
@@ -9,12 +34,7 @@ export interface AIHealthPlan {
     price: number;
     sessions: number;
     description: string;
-    recommendedPractitioners?: Array<{
-      name: string;
-      imageUrl?: string;
-      specialty?: string;
-      serviceType: ServiceCategory;
-    }>;
+    recommendedPractitioners?: Practitioner[];
   }>;
   totalCost: number;
   planType: 'best-fit' | 'high-impact' | 'progressive';
@@ -44,32 +64,6 @@ export interface AIHealthPlan {
     alternatives: ServiceCategory[];
     reason: string;
   }>;
-}
-
-// Import ServiceCategory from our unified type
-import { ServiceCategory } from "../utils/planGenerator/types";
-export { ServiceCategory };
-
-export type ServiceMode = 'online' | 'in-person' | 'both';
-
-export type FitnessLevel = 'beginner' | 'intermediate' | 'advanced';
-
-export type GoalType = string;
-
-export interface Practitioner {
-  id: string;
-  name: string;
-  serviceType: ServiceCategory;
-  pricePerSession: number;
-  serviceTags: string[];
-  location: string;
-  isOnline: boolean;
-  availability: string;
-  imageUrl: string;
-  bio: string;
-  rating: number;
-  maxPrice?: number;
-  specialtyNotes?: string;
 }
 
 export interface UserCriteria {

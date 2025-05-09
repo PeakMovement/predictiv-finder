@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -107,7 +106,7 @@ const PlanCustomizer: React.FC<PlanCustomizerProps> = ({
       toast({
         title: "Plan saved with recommendations",
         description: "Your plan has been saved, but contains some non-optimal configurations.",
-        variant: "warning",
+        variant: "default",
       });
     } else {
       toast({
