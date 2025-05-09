@@ -23,6 +23,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Info, MessageCircle, AlertCircle } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
 interface PlanDetailsViewProps {
   plan: AIHealthPlan;
@@ -44,6 +52,7 @@ const PlanDetailsView: React.FC<PlanDetailsViewProps> = ({ plan, userQuery, onBa
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [activeExplanationService, setActiveExplanationService] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Generate a realistic timeline based on the plan
@@ -56,13 +65,24 @@ const PlanDetailsView: React.FC<PlanDetailsViewProps> = ({ plan, userQuery, onBa
     
     // Get relevant practitioners for each service type
     const relevantPractitioners = plan.services.map(service => {
-      const matchingPractitioners = PRACTITIONERS.filter(p => p.serviceType === service.type);
+      let practitioner;
+      
+      if (service.recommendedPractitioners && service.recommendedPractitioners.length > 0) {
+        // Use recommended practitioners if available
+        practitioner = service.recommendedPractitioners[0];
+      } else {
+        // Fall back to generic practitioners
+        const matchingPractitioners = PRACTITIONERS.filter(p => p.serviceType === service.type);
+        practitioner = matchingPractitioners[0] || { 
+          name: `${service.type.replace('-', ' ')} specialist`,
+          imageUrl: '/placeholder.svg',
+          serviceType: service.type
+        };
+      }
+      
       return {
         serviceType: service.type,
-        practitioner: matchingPractitioners[0] || { 
-          name: `${service.type.replace('-', ' ')} specialist`,
-          imageUrl: '/placeholder.svg'
-        },
+        practitioner,
         sessionCount: service.sessions
       };
     });
@@ -126,7 +146,7 @@ const PlanDetailsView: React.FC<PlanDetailsViewProps> = ({ plan, userQuery, onBa
           id: `session-${currentSessionId++}`,
           serviceType,
           practitionerName: practitioner.name,
-          practitionerImage: practitioner.imageUrl,
+          practitionerImage: practitioner.imageUrl || "/placeholder.svg",
           date: sessionDate,
           description
         });
@@ -195,6 +215,15 @@ const PlanDetailsView: React.FC<PlanDetailsViewProps> = ({ plan, userQuery, onBa
     setSelectedTime(null);
     setBookingOpen(true);
   };
+
+  // Toggle service explanation
+  const toggleServiceExplanation = (serviceType: string) => {
+    if (activeExplanationService === serviceType) {
+      setActiveExplanationService(null);
+    } else {
+      setActiveExplanationService(serviceType);
+    }
+  };
   
   return (
     <motion.div
@@ -242,26 +271,293 @@ const PlanDetailsView: React.FC<PlanDetailsViewProps> = ({ plan, userQuery, onBa
             Based on your goals: "{userQuery}"
           </p>
           
-          <div className="flex items-center mb-2">
-            <div className="w-4 h-4 rounded-full bg-health-purple mr-2"></div>
-            <p>Your wellness journey starts today</p>
-          </div>
+          {plan.expectedOutcomes ? (
+            <div className="space-y-3">
+              {plan.expectedOutcomes.slice(0, 3).map((outcome, idx) => (
+                <div key={idx} className="flex items-start">
+                  <div className="w-4 h-4 rounded-full bg-health-teal mr-2 mt-1"></div>
+                  <div>
+                    <p className="font-medium">{outcome.milestone} ({outcome.timeframe})</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">{outcome.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center mb-2">
+                <div className="w-4 h-4 rounded-full bg-health-purple mr-2"></div>
+                <p>Your wellness journey starts today</p>
+              </div>
+              
+              <div className="flex items-center">
+                <div className="w-4 h-4 rounded-full bg-health-teal mr-2"></div>
+                <p>
+                  {plan.planType === 'high-impact' 
+                    ? 'Accelerated results expected by ' 
+                    : plan.planType === 'progressive' 
+                      ? 'Sustainable progress building toward ' 
+                      : 'Projected outcomes by '}
+                  <span className="font-bold">{format(expectedResultsDate, 'dd MMMM yyyy')}</span>
+                </p>
+              </div>
+            </>
+          )}
           
-          <div className="flex items-center">
-            <div className="w-4 h-4 rounded-full bg-health-teal mr-2"></div>
-            <p>
-              {plan.planType === 'high-impact' 
-                ? 'Accelerated results expected by ' 
-                : plan.planType === 'progressive' 
-                  ? 'Sustainable progress building toward ' 
-                  : 'Projected outcomes by '}
-              <span className="font-bold">{format(expectedResultsDate, 'dd MMMM yyyy')}</span>
-            </p>
+          {plan.rationales && plan.rationales.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="rationales">
+                  <AccordionTrigger className="text-sm font-medium">
+                    Why We Recommend This Plan
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-3 pt-2">
+                      {plan.rationales.map((rationale, idx) => (
+                        <div key={idx} className="flex items-start gap-2">
+                          <div className={`w-3 h-3 rounded-full mt-1 ${
+                            rationale.evidenceLevel === 'high' ? 'bg-green-500' :
+                            rationale.evidenceLevel === 'medium' ? 'bg-amber-500' :
+                            'bg-gray-400'
+                          }`} />
+                          <div>
+                            <p className="text-sm font-medium capitalize">
+                              {rationale.service.replace('-', ' ')}
+                              <span className="text-xs font-normal ml-2 text-gray-500">
+                                ({rationale.evidenceLevel} evidence)
+                              </span>
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{rationale.rationale}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+          <h4 className="font-semibold mb-3 flex items-center">
+            <MessageCircle className="h-4 w-4 mr-2 text-health-purple" />
+            Plan Benefits
+          </h4>
+          <ul className="space-y-2">
+            <li className="flex items-center text-sm">
+              <div className="w-2 h-2 rounded-full bg-health-purple mr-2"></div>
+              <span>Personalized to your specific needs</span>
+            </li>
+            <li className="flex items-center text-sm">
+              <div className="w-2 h-2 rounded-full bg-health-purple mr-2"></div>
+              <span>Expert practitioners to guide your progress</span>
+            </li>
+            <li className="flex items-center text-sm">
+              <div className="w-2 h-2 rounded-full bg-health-purple mr-2"></div>
+              <span>Comprehensive approach targeting all aspects</span>
+            </li>
+            <li className="flex items-center text-sm">
+              <div className="w-2 h-2 rounded-full bg-health-purple mr-2"></div>
+              <span>Evidence-based techniques for optimal results</span>
+            </li>
+          </ul>
+        </div>
+        
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+          <h4 className="font-semibold mb-3 flex items-center">
+            <Info className="h-4 w-4 mr-2 text-health-teal" />
+            Your Journey Timeline
+          </h4>
+          <div className="space-y-3">
+            {plan.progressTimeline ? (
+              plan.progressTimeline.slice(0, 3).map((milestone, idx) => (
+                <div key={idx} className="flex items-center">
+                  <div className="relative">
+                    <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs">
+                      {milestone.week}
+                    </div>
+                    {idx < 2 && <div className="absolute top-6 left-3 w-px h-12 bg-gray-200 dark:bg-gray-700"></div>}
+                  </div>
+                  <div className="ml-3">
+                    <p className="font-medium text-sm">{milestone.milestone}</p>
+                    <p className="text-xs text-gray-500">{milestone.focus}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <>
+                <div className="flex items-center">
+                  <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs">1</div>
+                  <div className="ml-3">
+                    <p className="font-medium text-sm">Initial Assessment</p>
+                    <p className="text-xs text-gray-500">Establish baseline and goals</p>
+                  </div>
+                </div>
+                <div className="relative">
+                  <div className="absolute left-3 w-px h-6 bg-gray-200 dark:bg-gray-700"></div>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs">
+                    {Math.floor(parseInt(plan.timeFrame) / 2)}
+                  </div>
+                  <div className="ml-3">
+                    <p className="font-medium text-sm">Mid-point Review</p>
+                    <p className="text-xs text-gray-500">Progress evaluation and adjustments</p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+        
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+          <h4 className="font-semibold mb-3 flex items-center">
+            <AlertCircle className="h-4 w-4 mr-2 text-amber-500" />
+            Important Notes
+          </h4>
+          <div className="space-y-2 text-sm">
+            <p>• Regular attendance is key to achieving optimal results</p>
+            <p>• Please arrive 10 minutes early for your first session</p>
+            <p>• Cancellations require 24-hour notice to avoid fees</p>
+            <p>• Progress tracking will help adjust your plan as needed</p>
           </div>
         </div>
       </div>
       
       <h3 className="text-xl font-semibold mb-4">Your Treatment Schedule</h3>
+      
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+          <div className="md:col-span-3">
+            <h4 className="font-medium mb-4">Recommended Services</h4>
+            <div className="space-y-4">
+              {plan.services.map((service, idx) => (
+                <div 
+                  key={idx} 
+                  className="p-4 border border-gray-100 dark:border-gray-700 rounded-lg"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <h5 className="font-medium capitalize">
+                      {service.type.replace('-', ' ')}
+                    </h5>
+                    <Badge>
+                      {service.sessions} sessions
+                    </Badge>
+                  </div>
+                  
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                    {service.description}
+                  </p>
+                  
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-500">
+                      R{service.price} per session
+                    </span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => toggleServiceExplanation(service.type)}
+                      className="h-7 text-health-purple hover:text-health-purple-dark hover:bg-health-purple/10"
+                    >
+                      {activeExplanationService === service.type ? 'Hide Detail' : 'Why This Service?'}
+                    </Button>
+                  </div>
+                  
+                  {activeExplanationService === service.type && (
+                    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                      {plan.rationales?.find(r => r.service === service.type) ? (
+                        <div className="text-sm text-gray-700 dark:text-gray-300">
+                          {plan.rationales.find(r => r.service === service.type)?.rationale}
+                          
+                          <div className="mt-2 flex items-center">
+                            <div className={`w-2 h-2 rounded-full mr-1.5 ${
+                              plan.rationales.find(r => r.service === service.type)?.evidenceLevel === 'high' 
+                                ? 'bg-green-500' 
+                                : plan.rationales.find(r => r.service === service.type)?.evidenceLevel === 'medium'
+                                ? 'bg-yellow-500'
+                                : 'bg-gray-400'
+                            }`}></div>
+                            <span className="text-xs text-gray-500">
+                              {plan.rationales.find(r => r.service === service.type)?.evidenceLevel === 'high' 
+                                ? 'Strong evidence supports this recommendation' 
+                                : plan.rationales.find(r => r.service === service.type)?.evidenceLevel === 'medium'
+                                ? 'Moderate evidence supports this recommendation'
+                                : 'Limited evidence supports this recommendation'}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                          This service was selected based on your specific health needs and goals.
+                          It forms an essential part of your comprehensive treatment approach.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="md:col-span-2">
+            <h4 className="font-medium mb-4">Expected Progress</h4>
+            {plan.expectedOutcomes ? (
+              <div className="space-y-6">
+                {plan.expectedOutcomes.map((outcome, idx) => {
+                  // Calculate a mock progress percentage
+                  const timeframeWeeks = parseInt(outcome.timeframe) || 4;
+                  const totalDays = timeframeWeeks * 7;
+                  const elapsedDays = Math.min(totalDays, 1); // Just started
+                  const progress = Math.round((elapsedDays / totalDays) * 100);
+                  
+                  return (
+                    <div key={idx} className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">{outcome.milestone}</span>
+                        <span className="text-xs text-gray-500">{outcome.timeframe}</span>
+                      </div>
+                      <Progress value={progress} className="h-2" />
+                      <p className="text-xs text-gray-500 mt-1">{outcome.description}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">Initial Progress</span>
+                    <span className="text-xs text-gray-500">Week 2</span>
+                  </div>
+                  <Progress value={0} className="h-2" />
+                  <p className="text-xs text-gray-500">Early adaptation and baseline improvements</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">Significant Improvement</span>
+                    <span className="text-xs text-gray-500">Week 6</span>
+                  </div>
+                  <Progress value={0} className="h-2" />
+                  <p className="text-xs text-gray-500">Notable functional changes and symptom reduction</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">Goal Achievement</span>
+                    <span className="text-xs text-gray-500">Week 12</span>
+                  </div>
+                  <Progress value={0} className="h-2" />
+                  <p className="text-xs text-gray-500">Reaching primary objectives with sustainable strategies</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
       
       <div className="relative">
         {/* Timeline vertical line */}

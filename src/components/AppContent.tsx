@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import EnhancedCategorySelection from "@/components/EnhancedCategorySelection";
@@ -17,6 +17,10 @@ import { useAppNavigation } from "@/hooks/use-app-navigation";
 import { usePractitionerService } from "@/services/practitioner-service";
 import { useAIPlansService } from "@/services/ai-plans-service";
 import SafeAIPlansDisplay from "@/components/AIPlansDisplay/SafeAIPlansDisplay";
+import PlanComparisonView from "@/components/plan-comparison/PlanComparisonView";
+import PlanCustomizer from "@/components/plan-customizer/PlanCustomizer";
+import ProgressTrackingView from "@/components/progress-tracking/ProgressTrackingView";
+import EnhancedHealthQueryInput from "@/components/enhanced-input/EnhancedHealthQueryInput";
 
 /**
  * Main content component for the application
@@ -53,10 +57,30 @@ const AppContent: React.FC = () => {
     generateAIPlans
   } = useAIPlansService();
 
+  // Additional state for enhanced UI features
+  const [customizedPlan, setCustomizedPlan] = useState<AIHealthPlan | null>(null);
+  const [showComparison, setShowComparison] = useState(false);
+  const [showCustomizer, setShowCustomizer] = useState(false);
+  const [showProgress, setShowProgress] = useState(false);
+  
   // Combine AI input submit with plan generation
   const handleAIInputSubmitWithGeneration = (input: string) => {
     handleAIInputSubmit(input);
     generateAIPlans(input);
+  };
+
+  // Handle plan customization
+  const handleCustomizePlan = () => {
+    if (!selectedPlan) return;
+    setCustomizedPlan(selectedPlan);
+    setShowCustomizer(true);
+  };
+  
+  // Save customized plan
+  const handleSaveCustomizedPlan = (plan: AIHealthPlan) => {
+    setCustomizedPlan(null);
+    handleSelectPlan(plan);
+    setShowCustomizer(false);
   };
 
   return (
@@ -147,14 +171,15 @@ const AppContent: React.FC = () => {
               </Button>
               <h2 className="text-3xl font-bold">Create Your Custom Health Plan</h2>
             </div>
-            <AIAssistantInput 
+            {/* Replace AIAssistantInput with our enhanced input for better guidance */}
+            <EnhancedHealthQueryInput
               onSubmit={handleAIInputSubmitWithGeneration}
               isLoading={isGenerating}
             />
           </motion.div>
         )}
         
-        {stage === 'ai-plans' && (
+        {stage === 'ai-plans' && !showComparison && (
           <motion.div
             key="ai-plans"
             initial={{ opacity: 0 }}
@@ -162,6 +187,15 @@ const AppContent: React.FC = () => {
             exit={{ opacity: 0 }}
             className="py-8"
           >
+            <div className="mb-6">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowComparison(true)}
+                className="ml-auto block"
+              >
+                Compare Plans
+              </Button>
+            </div>
             <SafeAIPlansDisplay 
               plans={aiPlans}
               userQuery={userQuery}
@@ -171,8 +205,24 @@ const AppContent: React.FC = () => {
             />
           </motion.div>
         )}
+        
+        {stage === 'ai-plans' && showComparison && (
+          <motion.div
+            key="plan-comparison"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="py-8"
+          >
+            <PlanComparisonView 
+              plans={aiPlans}
+              onSelectPlan={handleSelectPlan}
+              onBack={() => setShowComparison(false)}
+            />
+          </motion.div>
+        )}
 
-        {stage === 'plan-details' && selectedPlan && (
+        {stage === 'plan-details' && selectedPlan && !showCustomizer && !showProgress && (
           <motion.div
             key="plan-details"
             initial={{ opacity: 0 }}
@@ -180,10 +230,58 @@ const AppContent: React.FC = () => {
             exit={{ opacity: 0 }}
             className="py-8"
           >
+            <div className="mb-6">
+              <div className="flex justify-end gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowProgress(true)}
+                >
+                  View Progress Tracking
+                </Button>
+                <Button 
+                  onClick={handleCustomizePlan}
+                  className="bg-health-purple hover:bg-health-purple-dark"
+                >
+                  Customize Plan
+                </Button>
+              </div>
+            </div>
             <PlanDetailsView 
               plan={selectedPlan}
               userQuery={userQuery}
               onBack={() => setStage('ai-plans')}
+            />
+          </motion.div>
+        )}
+        
+        {stage === 'plan-details' && selectedPlan && showCustomizer && (
+          <motion.div
+            key="plan-customizer"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="py-8"
+          >
+            <PlanCustomizer 
+              plan={selectedPlan}
+              onUpdatePlan={(plan) => {}}
+              onSave={handleSaveCustomizedPlan}
+              onCancel={() => setShowCustomizer(false)}
+            />
+          </motion.div>
+        )}
+        
+        {stage === 'plan-details' && selectedPlan && showProgress && (
+          <motion.div
+            key="progress-tracking"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="py-8"
+          >
+            <ProgressTrackingView 
+              plan={selectedPlan}
+              onBack={() => setShowProgress(false)}
             />
           </motion.div>
         )}

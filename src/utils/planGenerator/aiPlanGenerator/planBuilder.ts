@@ -1,6 +1,6 @@
 
 import { AIHealthPlan, ServiceCategory } from '@/types';
-import { handleSpecialCases, hasKneePainAndRacePreparation } from './complexity';
+import { findAlternativeCategories } from '../categoryMatcher';
 import { generatePlanNotes } from '../enhancedInputAnalyzer';
 import { 
   generatePlanName, 
@@ -134,7 +134,7 @@ function buildPlanForTier(
       price: Math.round(service.cost / service.sessions), // Price per session
       sessions: service.sessions,
       description: generateServiceDescription(
-        service.type, 
+        service.type as ServiceCategory, 
         tier.name === 'high',
         service.frequency,
         analysis.primaryIssue,
@@ -151,6 +151,23 @@ function buildPlanForTier(
       userQuery, 
       analysis.contextualFactors ? (Array.isArray(analysis.contextualFactors) ? analysis.contextualFactors : []) : [], 
       hasKneePainAndRacePrep
+    ),
+    // Add expected outcomes and timeline data for progress tracking
+    expectedOutcomes: generateExpectedOutcomes(
+      analysis.medicalConditions,
+      analysis.specificGoals || [],
+      tier.name
+    ),
+    rationales: generatePlanRationales(
+      analysis.medicalConditions,
+      analysis.servicePriorities || {},
+      categories,
+      tier.name
+    ),
+    progressTimeline: generateProgressTimeline(
+      analysis.medicalConditions,
+      services.map(s => s.type as ServiceCategory),
+      analysis.timeFrame
     )
   };
 }
@@ -163,9 +180,9 @@ function getOptimizedServices(
   categories: ServiceCategory[],
   analysis: any,
   tier: {name: string, budget: number}
-): Array<{type: ServiceCategory, cost: number, sessions: number, frequency: string}> {
+): Array<{type: string; cost: number; sessions: number; frequency: string}> {
   // Convert professional-based plan to services or use optimal allocation if needed
-  if (optimizedPlan.professionals.length > 0) {
+  if (optimizedPlan.professionals && optimizedPlan.professionals.length > 0) {
     return optimizedPlan.professionals.map((pro: any) => ({
       type: pro.serviceType,
       cost: pro.pricePerSession * 4, // Assume 4 sessions for simplicity
@@ -217,4 +234,243 @@ function generateEnhancedPlanNotes(
   }
   
   return notes;
+}
+
+/**
+ * Generates expected outcomes based on the user's condition and goals
+ */
+function generateExpectedOutcomes(
+  conditions: string[],
+  goals: string[],
+  tierName: string
+): Array<{milestone: string, timeframe: string, description: string}> {
+  const outcomes: Array<{milestone: string, timeframe: string, description: string}> = [];
+  const isPremium = tierName === 'high';
+  
+  // Early milestone (1-2 weeks)
+  outcomes.push({
+    milestone: "Initial Progress",
+    timeframe: isPremium ? "1 week" : "2 weeks",
+    description: "Initial assessment complete and personalized strategy established. You should start experiencing the first positive changes."
+  });
+  
+  // Mid milestone (4-6 weeks)
+  outcomes.push({
+    milestone: "Significant Improvement",
+    timeframe: isPremium ? "4 weeks" : "6 weeks",
+    description: "Notable progress in primary symptoms with measurable improvement in function and well-being."
+  });
+  
+  // Final milestone (8-12 weeks)
+  outcomes.push({
+    milestone: "Goal Achievement",
+    timeframe: isPremium ? "8 weeks" : "12 weeks",
+    description: "Expected achievement of primary health goals with sustainable strategies for continued progress."
+  });
+  
+  // Add condition-specific outcomes
+  if (conditions.some(c => c.includes('pain'))) {
+    outcomes.push({
+      milestone: "Pain Reduction",
+      timeframe: isPremium ? "3 weeks" : "5 weeks",
+      description: "Expected significant reduction in pain levels with improved mobility and function."
+    });
+  }
+  
+  if (conditions.some(c => c.includes('weight'))) {
+    outcomes.push({
+      milestone: "Weight Management",
+      timeframe: isPremium ? "6 weeks" : "8 weeks",
+      description: "Established sustainable eating patterns and expected progress toward weight goals."
+    });
+  }
+  
+  if (goals.some(g => g.includes('strength') || g.includes('fitness'))) {
+    outcomes.push({
+      milestone: "Strength Building",
+      timeframe: isPremium ? "5 weeks" : "7 weeks",
+      description: "Noticeable improvement in strength, endurance and overall physical capacity."
+    });
+  }
+  
+  if (conditions.some(c => c.includes('stress') || c.includes('anxiety'))) {
+    outcomes.push({
+      milestone: "Stress Management",
+      timeframe: isPremium ? "4 weeks" : "6 weeks",
+      description: "Development of effective coping mechanisms and reduced stress response."
+    });
+  }
+  
+  return outcomes;
+}
+
+/**
+ * Generate detailed rationales for why specific services were included in the plan
+ */
+function generatePlanRationales(
+  conditions: string[],
+  servicePriorities: Record<string, number>,
+  selectedCategories: ServiceCategory[],
+  tierName: string
+): Array<{service: ServiceCategory, rationale: string, evidenceLevel: "high" | "medium" | "low"}> {
+  const rationales: Array<{service: ServiceCategory, rationale: string, evidenceLevel: "high" | "medium" | "low"}> = [];
+  
+  // Generate rationales for each selected service
+  selectedCategories.forEach(category => {
+    let rationale = "";
+    let evidenceLevel: "high" | "medium" | "low" = "medium";
+    
+    switch(category) {
+      case "physiotherapist":
+        rationale = conditions.some(c => c.includes('pain')) 
+          ? "Physiotherapy has strong clinical evidence for reducing pain and improving function through targeted exercises and manual therapy."
+          : "Physiotherapy helps improve movement patterns, joint mobility, and overall physical function.";
+        evidenceLevel = "high";
+        break;
+      case "dietician":
+        rationale = conditions.some(c => c.includes('weight')) 
+          ? "Personalized nutrition planning has been shown to significantly improve weight management outcomes compared to self-directed approaches."
+          : "Professional dietary guidance ensures optimal nutrition to support your health goals and overall wellbeing.";
+        evidenceLevel = "high";
+        break;
+      case "personal-trainer":
+        rationale = "Structured exercise programming with professional guidance leads to better adherence and results compared to self-directed exercise.";
+        evidenceLevel = "medium";
+        break;
+      case "biokineticist":
+        rationale = "Biokinetic assessment and specialized movement therapy addresses underlying movement dysfunction that may contribute to your condition.";
+        evidenceLevel = "medium";
+        break;
+      case "coaching":
+        rationale = "Health coaching provides accountability and behavioral support that significantly improves adherence to health plans.";
+        evidenceLevel = "medium";
+        break;
+      case "psychiatry":
+        rationale = conditions.some(c => c.includes('anxiety') || c.includes('depression')) 
+          ? "Psychiatric care provides evidence-based treatment options for managing mental health conditions."
+          : "Psychiatric support can help address psychological factors that may influence physical health outcomes.";
+        evidenceLevel = "high";
+        break;
+      default:
+        rationale = `${category.replace('-', ' ')} was selected based on the specific details of your health profile.`;
+        evidenceLevel = "low";
+    }
+    
+    // Add priority-based explanation
+    const priority = servicePriorities[category] || 0;
+    if (priority > 0.8) {
+      rationale += " This service was identified as critically important based on your specific needs.";
+    } else if (priority > 0.5) {
+      rationale += " This service was identified as highly beneficial for your specific situation.";
+    }
+    
+    // Add tier-specific information
+    if (tierName === 'high') {
+      rationale += " Your premium plan includes enhanced access to this service for optimal outcomes.";
+    }
+    
+    rationales.push({
+      service: category,
+      rationale,
+      evidenceLevel
+    });
+  });
+  
+  return rationales;
+}
+
+/**
+ * Generate a progress timeline with key milestones
+ */
+function generateProgressTimeline(
+  conditions: string[],
+  services: ServiceCategory[],
+  timeFrame: string | undefined
+): Array<{week: number, milestone: string, focus: string}> {
+  const timeFrameWeeks = timeFrame ? parseInt(timeFrame.split(' ')[0]) || 8 : 8;
+  const timeline: Array<{week: number, milestone: string, focus: string}> = [];
+  
+  // Early assessment and baseline phase
+  timeline.push({
+    week: 1,
+    milestone: "Initial Assessment",
+    focus: "Professional evaluation and baseline measurements"
+  });
+  
+  // Early progress phase
+  timeline.push({
+    week: Math.max(2, Math.floor(timeFrameWeeks * 0.25)),
+    milestone: "Early Adaptation",
+    focus: "Foundational skill development and initial progress"
+  });
+  
+  // Mid-point check
+  timeline.push({
+    week: Math.floor(timeFrameWeeks * 0.5),
+    milestone: "Mid-point Evaluation",
+    focus: "Progress assessment and plan refinement"
+  });
+  
+  // Advanced progress
+  timeline.push({
+    week: Math.floor(timeFrameWeeks * 0.75),
+    milestone: "Advanced Progress",
+    focus: "Skill mastery and habit integration"
+  });
+  
+  // Final review
+  timeline.push({
+    week: timeFrameWeeks,
+    milestone: "Goal Achievement",
+    focus: "Results review and maintenance planning"
+  });
+  
+  // Add service-specific milestones
+  if (services.includes('physiotherapist')) {
+    timeline.push({
+      week: Math.floor(timeFrameWeeks * 0.35),
+      milestone: "Movement Progress",
+      focus: "Notable improvement in mobility and function"
+    });
+  }
+  
+  if (services.includes('personal-trainer')) {
+    timeline.push({
+      week: Math.floor(timeFrameWeeks * 0.4),
+      milestone: "Fitness Breakthrough",
+      focus: "Significant gains in strength and cardiovascular capacity"
+    });
+  }
+  
+  if (services.includes('dietician')) {
+    timeline.push({
+      week: Math.floor(timeFrameWeeks * 0.3),
+      milestone: "Nutrition Adaptation",
+      focus: "Establishment of sustainable eating patterns"
+    });
+  }
+  
+  // Sort by week
+  return timeline.sort((a, b) => a.week - b.week);
+}
+
+// Export the hasKneePainAndRacePreparation function for use elsewhere
+export function hasKneePainAndRacePreparation(
+  conditions: string[] | undefined,
+  userInput: string
+): boolean {
+  if (!conditions || conditions.length === 0) return false;
+  
+  const hasKneePain = conditions.some(c => 
+    c.toLowerCase().includes('knee') && c.toLowerCase().includes('pain')
+  );
+  
+  const hasRacePrep = conditions.some(c => 
+    c.toLowerCase().includes('race') || c.toLowerCase().includes('marathon') || 
+    c.toLowerCase().includes('running')
+  ) || userInput.toLowerCase().includes('race') || 
+     userInput.toLowerCase().includes('marathon') || 
+     userInput.toLowerCase().includes('training for');
+  
+  return hasKneePain && hasRacePrep;
 }
