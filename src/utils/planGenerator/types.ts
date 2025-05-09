@@ -1,4 +1,3 @@
-
 export type ServiceCategory =
   | 'physiotherapist'
   | 'biokineticist'
@@ -30,7 +29,19 @@ export type ServiceCategory =
   | 'rheumatology'
   | 'pediatrics'
   | 'geriatrics'
-  | 'sports-medicine';
+  | 'sports-medicine'
+  // Add missing categories that appear in the errors
+  | 'internal-medicine'
+  | 'orthopedics'
+  | 'neurosurgery'
+  | 'infectious-disease'
+  | 'plastic-surgery'
+  | 'obstetrics-gynecology'
+  | 'emergency-medicine'
+  | 'anesthesiology'
+  | 'radiology'
+  | 'geriatric-medicine'
+  | 'all'; // Special case for filtering/selection
 
 export interface BaseCosts {
   [key: string]: number;
@@ -67,14 +78,26 @@ export const BASELINE_COSTS: Record<ServiceCategory, number> = {
   'rheumatology': 1000,
   'pediatrics': 900,
   'geriatrics': 950,
-  'sports-medicine': 1100
+  'sports-medicine': 1100,
+  // Add the missing service types with reasonable costs
+  'internal-medicine': 1000,
+  'orthopedics': 1400,
+  'neurosurgery': 2200,
+  'infectious-disease': 1300,
+  'plastic-surgery': 2100,
+  'obstetrics-gynecology': 1100,
+  'emergency-medicine': 1500,
+  'anesthesiology': 1700,
+  'radiology': 1200,
+  'geriatric-medicine': 900,
+  'all': 0 // Special case for filtering/selection
 };
 
 export interface OptimizedService {
   type: ServiceCategory;
   sessions: number;
   cost: number;
-  frequency: string;
+  frequency?: string; // Making this optional to match existing usage
   costPerSession: number;
   totalCost: number;
 }
@@ -127,4 +150,46 @@ export interface BudgetAllocationStrategy {
   balancingFactor: number; // 0-1, how much to balance vs prioritize
   overspendAllowed: boolean;
   maxOverspendPercentage?: number;
+}
+
+export interface BudgetTier {
+  name: string;
+  range: PriceRange;
+  maxSessions: number;
+}
+
+export interface PriceRange {
+  min: number;
+  max: number;
+}
+
+export interface ServiceConfigurationByBudget {
+  [key: string]: {
+    allocations: Array<{
+      type: ServiceCategory;
+      percentage: number;
+      priority: number;
+      minSessions?: number;
+      maxSessions?: number;
+    }>;
+    requiresDoctor: boolean;
+    preferHighEnd: boolean;
+  };
+}
+
+export interface PlanContext {
+  userInput: string;
+  budget: number;
+  isStrictBudget: boolean;
+  serviceCategories: ServiceCategory[];
+  categoryPriorities: Record<ServiceCategory, number>;
+  preferredPractitioners?: string[];
+}
+
+export interface ServiceAllocation {
+  type: ServiceCategory;
+  percentage: number;
+  priority: number;
+  minSessions?: number;
+  maxSessions?: number;
 }

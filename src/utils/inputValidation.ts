@@ -371,8 +371,26 @@ export function getFallbackServices(
   const alternatives: Record<ServiceCategory, ServiceCategory[]> = {};
   let explanation = "Some of your preferred services may not be available. Here are alternatives:";
   
+  // Initialize the alternatives record with empty arrays for each service category
+  const allCategories = [
+    'physiotherapist', 'biokineticist', 'dietician', 'personal-trainer',
+    'pain-management', 'coaching', 'psychology', 'psychiatry', 'podiatrist',
+    'general-practitioner', 'sport-physician', 'orthopedic-surgeon', 'family-medicine',
+    'gastroenterology', 'massage-therapy', 'nutrition-coach', 'occupational-therapy',
+    'physical-therapy', 'chiropractor', 'nurse-practitioner', 'cardiology',
+    'dermatology', 'neurology', 'endocrinology', 'urology', 'oncology',
+    'rheumatology', 'pediatrics', 'geriatrics', 'sports-medicine',
+    'internal-medicine', 'orthopedics', 'neurosurgery', 'infectious-disease',
+    'plastic-surgery', 'obstetrics-gynecology', 'emergency-medicine',
+    'anesthesiology', 'radiology', 'geriatric-medicine'
+  ] as ServiceCategory[];
+  
+  allCategories.forEach(category => {
+    alternatives[category] = [];
+  });
+  
   // Define fallback mapping
-  const fallbackMap: Record<ServiceCategory, ServiceCategory[]> = {
+  const fallbackMap: Record<string, ServiceCategory[]> = {
     'physiotherapist': ['biokineticist', 'personal-trainer'],
     'biokineticist': ['physiotherapist', 'personal-trainer'],
     'personal-trainer': ['biokineticist', 'coaching'],
@@ -383,32 +401,31 @@ export function getFallbackServices(
     'psychiatry': ['psychology', 'coaching'],
     'pain-management': ['physiotherapist', 'biokineticist'],
     'occupational-therapy': ['physiotherapist', 'coaching'],
-    'family-medicine': ['general-practitioner', 'nurse-practitioner']
-  } as Record<ServiceCategory, ServiceCategory[]>;
+    'family-medicine': ['general-practitioner', 'nurse-practitioner'],
+    'orthopedics': ['orthopedic-surgeon', 'physiotherapist'],
+    'cardiology': ['internal-medicine', 'sports-medicine'],
+    'internal-medicine': ['family-medicine', 'general-practitioner'],
+    'gastroenterology': ['dietician', 'internal-medicine'],
+    'neurology': ['psychiatry', 'pain-management'],
+    'sports-medicine': ['sport-physician', 'personal-trainer'],
+    'geriatrics': ['geriatric-medicine', 'family-medicine']
+  };
   
   // Generate alternatives for each unavailable service
   unavailableServices.forEach(service => {
     if (fallbackMap[service]) {
-      alternatives[service] = fallbackMap[service];
-      
-      // Add condition-specific explanations
-      const isPain = userConditions.some(c => c.toLowerCase().includes('pain'));
-      const isWeight = userConditions.some(c => c.toLowerCase().includes('weight'));
-      const isMental = userConditions.some(c => 
-        c.toLowerCase().includes('anxiety') || 
-        c.toLowerCase().includes('stress') || 
-        c.toLowerCase().includes('depression')
+      alternatives[service] = fallbackMap[service].filter(alt => 
+        !unavailableServices.includes(alt)
       );
-      
-      if (service === 'physiotherapist' && isPain) {
-        explanation += ` \nA biokineticist can provide similar movement therapy for your pain.`;
-      } else if (service === 'dietician' && isWeight) {
-        explanation += ` \nA nutrition coach can help with your weight management goals.`;
-      } else if ((service === 'psychology' || service === 'psychiatry') && isMental) {
-        explanation += ` \nA wellness coach can provide support for stress management.`;
-      }
-    } else {
-      alternatives[service] = ['coaching']; // Default fallback
+    } 
+    // Add basic fallback for any service not explicitly in our map
+    else if (!alternatives[service] || alternatives[service].length === 0) {
+      alternatives[service] = ['family-medicine', 'general-practitioner'];
+    }
+    
+    // If all regular alternatives are unavailable, default to general-practitioner
+    if (alternatives[service].length === 0) {
+      alternatives[service] = ['general-practitioner'];
     }
   });
   

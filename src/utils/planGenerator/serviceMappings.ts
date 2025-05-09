@@ -1,5 +1,5 @@
 
-import { ServiceConfigurationByBudget, ServiceCategory } from "./types";
+import { ServiceCategory, ServiceConfigurationByBudget } from "./types";
 
 export const CONDITION_TO_SERVICES: Record<string, ServiceCategory[]> = {
   'weight loss': ['personal-trainer', 'dietician', 'coaching'],
@@ -12,8 +12,8 @@ export const CONDITION_TO_SERVICES: Record<string, ServiceCategory[]> = {
   'chronic fatigue': ['endocrinology', 'dietician', 'personal-trainer'],
   'stomach issues': ['gastroenterology', 'family-medicine', 'dietician'],
   'digestive problems': ['gastroenterology', 'family-medicine', 'dietician'],
-  'knee pain': ['physiotherapist', 'personal-trainer', 'biokineticist'],
-  'back pain': ['physiotherapist', 'personal-trainer', 'biokineticist'],
+  'knee pain': ['physiotherapist', 'orthopedics', 'biokineticist'],
+  'back pain': ['physiotherapist', 'orthopedics', 'biokineticist'],
   'mental health': ['psychiatry', 'coaching'],
   'anxiety': ['psychiatry', 'coaching'],
   'depression': ['psychiatry', 'coaching'],
@@ -121,5 +121,19 @@ export const SERVICE_PRICE_RANGES: Record<ServiceCategory, {affordable: number, 
   'geriatric-medicine': {affordable: 600, highEnd: 850},
   'plastic-surgery': {affordable: 1200, highEnd: 1500},
   'rheumatology': {affordable: 700, highEnd: 900},
-  'pain-management': {affordable: 600, highEnd: 800}
+  'pain-management': {affordable: 600, highEnd: 800},
+  'psychology': {affordable: 700, highEnd: 900},
+  'podiatrist': {affordable: 500, highEnd: 700},
+  'general-practitioner': {affordable: 400, highEnd: 700},
+  'sport-physician': {affordable: 700, highEnd: 1000},
+  'orthopedic-surgeon': {affordable: 1000, highEnd: 1800},
+  'massage-therapy': {affordable: 350, highEnd: 600},
+  'nutrition-coach': {affordable: 300, highEnd: 500},
+  'occupational-therapy': {affordable: 500, highEnd: 750},
+  'physical-therapy': {affordable: 500, highEnd: 800},
+  'chiropractor': {affordable: 400, highEnd: 650},
+  'nurse-practitioner': {affordable: 350, highEnd: 550},
+  'sports-medicine': {affordable: 600, highEnd: 900},
+  'geriatrics': {affordable: 550, highEnd: 800},
+  'all': {affordable: 500, highEnd: 800}
 };

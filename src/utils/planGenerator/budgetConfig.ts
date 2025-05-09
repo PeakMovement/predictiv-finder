@@ -1,3 +1,4 @@
+
 import { BudgetTier, PriceRange, ServiceCategory } from "./types";
 
 export const BUDGET_TIERS: BudgetTier[] = [
@@ -19,16 +20,6 @@ export const BUDGET_TIERS: BudgetTier[] = [
 ];
 
 export const PRICE_RANGES: Record<ServiceCategory, Record<BudgetTier['name'], PriceRange>> = {
-  'dietician': {
-    low: { affordable: 150, highEnd: 300 },
-    medium: { affordable: 300, highEnd: 600 },
-    high: { affordable: 600, highEnd: 1000 }
-  },
-  'personal-trainer': {
-    low: { affordable: 100, highEnd: 250 },
-    medium: { affordable: 250, highEnd: 500 },
-    high: { affordable: 500, highEnd: 800 }
-  },
   'physiotherapist': {
     low: { affordable: 200, highEnd: 400 },
     medium: { affordable: 400, highEnd: 700 },
@@ -38,6 +29,16 @@ export const PRICE_RANGES: Record<ServiceCategory, Record<BudgetTier['name'], Pr
     low: { affordable: 180, highEnd: 350 },
     medium: { affordable: 350, highEnd: 600 },
     high: { affordable: 600, highEnd: 1000 }
+  },
+  'dietician': {
+    low: { affordable: 150, highEnd: 300 },
+    medium: { affordable: 300, highEnd: 600 },
+    high: { affordable: 600, highEnd: 1000 }
+  },
+  'personal-trainer': {
+    low: { affordable: 100, highEnd: 250 },
+    medium: { affordable: 250, highEnd: 500 },
+    high: { affordable: 500, highEnd: 800 }
   },
   'coaching': {
     low: { affordable: 80, highEnd: 200 },
@@ -153,6 +154,76 @@ export const PRICE_RANGES: Record<ServiceCategory, Record<BudgetTier['name'], Pr
     low: { affordable: 350, highEnd: 600 },
     medium: { affordable: 600, highEnd: 1000 },
     high: { affordable: 1000, highEnd: 1800 }
+  },
+  'psychology': {
+    low: { affordable: 350, highEnd: 600 },
+    medium: { affordable: 600, highEnd: 1000 },
+    high: { affordable: 1000, highEnd: 1800 }
+  },
+  'podiatrist': {
+    low: { affordable: 200, highEnd: 400 },
+    medium: { affordable: 400, highEnd: 700 },
+    high: { affordable: 700, highEnd: 1200 }
+  },
+  'general-practitioner': {
+    low: { affordable: 250, highEnd: 450 },
+    medium: { affordable: 450, highEnd: 800 },
+    high: { affordable: 800, highEnd: 1400 }
+  },
+  'sport-physician': {
+    low: { affordable: 350, highEnd: 600 },
+    medium: { affordable: 600, highEnd: 1000 },
+    high: { affordable: 1000, highEnd: 1800 }
+  },
+  'orthopedic-surgeon': {
+    low: { affordable: 400, highEnd: 800 },
+    medium: { affordable: 800, highEnd: 1400 },
+    high: { affordable: 1400, highEnd: 2200 }
+  },
+  'massage-therapy': {
+    low: { affordable: 150, highEnd: 300 },
+    medium: { affordable: 300, highEnd: 500 },
+    high: { affordable: 500, highEnd: 800 }
+  },
+  'nutrition-coach': {
+    low: { affordable: 100, highEnd: 250 },
+    medium: { affordable: 250, highEnd: 450 },
+    high: { affordable: 450, highEnd: 700 }
+  },
+  'occupational-therapy': {
+    low: { affordable: 200, highEnd: 400 },
+    medium: { affordable: 400, highEnd: 650 },
+    high: { affordable: 650, highEnd: 1000 }
+  },
+  'physical-therapy': {
+    low: { affordable: 200, highEnd: 400 },
+    medium: { affordable: 400, highEnd: 700 },
+    high: { affordable: 700, highEnd: 1200 }
+  },
+  'chiropractor': {
+    low: { affordable: 150, highEnd: 350 },
+    medium: { affordable: 350, highEnd: 600 },
+    high: { affordable: 600, highEnd: 1000 }
+  },
+  'nurse-practitioner': {
+    low: { affordable: 150, highEnd: 300 },
+    medium: { affordable: 300, highEnd: 500 },
+    high: { affordable: 500, highEnd: 800 }
+  },
+  'sports-medicine': {
+    low: { affordable: 300, highEnd: 500 },
+    medium: { affordable: 500, highEnd: 800 },
+    high: { affordable: 800, highEnd: 1400 }
+  },
+  'geriatrics': {
+    low: { affordable: 250, highEnd: 450 },
+    medium: { affordable: 450, highEnd: 800 },
+    high: { affordable: 800, highEnd: 1400 }
+  },
+  'all': {
+    low: { affordable: 200, highEnd: 400 },
+    medium: { affordable: 400, highEnd: 700 },
+    high: { affordable: 700, highEnd: 1200 }
   }
 };
 
