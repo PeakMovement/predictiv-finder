@@ -20,7 +20,7 @@ export interface AIHealthPlan {
   planType: 'best-fit' | 'high-impact' | 'progressive';
   timeFrame: string;
   
-  // New fields for UI/UX enhancements
+  // Fields for UI/UX enhancements
   expectedOutcomes?: Array<{
     milestone: string;
     timeframe: string;
@@ -46,24 +46,84 @@ export interface AIHealthPlan {
   }>;
 }
 
-export type ServiceCategory =
-  | 'physiotherapist'
-  | 'biokineticist'
-  | 'dietician'
-  | 'personal-trainer'
-  | 'pain-management'
-  | 'coaching'
-  | 'psychology'
-  | 'psychiatry'
-  | 'podiatrist'
-  | 'general-practitioner'
-  | 'sport-physician'
-  | 'orthopedic-surgeon'
-  | 'family-medicine'
-  | 'gastroenterology'
-  | 'massage-therapy'
-  | 'nutrition-coach'
-  | 'occupational-therapy'
-  | 'physical-therapy'
-  | 'chiropractor'
-  | 'nurse-practitioner';
+// Import ServiceCategory from our unified type
+import { ServiceCategory } from "../utils/planGenerator/types";
+export { ServiceCategory };
+
+export type ServiceMode = 'online' | 'in-person' | 'both';
+
+export type FitnessLevel = 'beginner' | 'intermediate' | 'advanced';
+
+export type GoalType = string;
+
+export interface Practitioner {
+  id: string;
+  name: string;
+  serviceType: ServiceCategory;
+  pricePerSession: number;
+  serviceTags: string[];
+  location: string;
+  isOnline: boolean;
+  availability: string;
+  imageUrl: string;
+  bio: string;
+  rating: number;
+  maxPrice?: number;
+  specialtyNotes?: string;
+}
+
+export interface UserCriteria {
+  categories: ServiceCategory[];
+  goal?: string;
+  budget: {
+    monthly: number;
+    preferredSetup: 'once-off' | 'monthly' | 'not-sure';
+    flexibleBudget: boolean;
+  };
+  location?: string;
+  locationRadius?: 'exact' | 'nearby' | 'anywhere';
+  mode?: ServiceMode[];
+  description?: string;
+}
+
+export interface DetailedUserCriteria {
+  categories: ServiceCategory[];
+  fitness?: {
+    level: FitnessLevel;
+    goal: string;
+    injuries: string;
+    trainingStyle: string;
+  };
+  nutrition?: {
+    goal: string;
+    restrictions: string[];
+    struggles: string[];
+    previousDietitian: boolean;
+  };
+  health?: {
+    conditions: string;
+    recovery: string;
+    pain: string;
+    openToReferrals: boolean;
+  };
+  recovery?: {
+    weeklyTime: number;
+    currentRoutine: string[];
+    mindfulness: boolean;
+  };
+  budget: {
+    monthly: number;
+    preferredSetup: 'once-off' | 'monthly' | 'not-sure';
+    flexibleBudget: boolean;
+  };
+  location?: string;
+  locationRadius?: 'exact' | 'nearby' | 'anywhere';
+  mode?: ServiceMode[];
+}
+
+export interface CategorySelectionProps {
+  selectedCategories: ServiceCategory[];
+  onCategoryToggle: (category: ServiceCategory) => void;
+  onContinue: (categories: ServiceCategory[]) => void;
+  suggestedCategories?: ServiceCategory[];
+}

@@ -17,6 +17,12 @@ export * from './serviceMappings';
 export * from './professionalRecommender';
 export * from './types';
 
+// New enhanced modules
+export * from './serviceMatching/advancedServiceMatcher';
+export * from './budgetHandling/enhancedBudgetOptimizer';
+export * from './specialHandling/comorbidityManager';
+export * from './specialHandling/specialPopulationHandler';
+
 // Only import FrequencyPreference from enhancedInputAnalyzer selectively to avoid duplicate exports
 import { 
   enhancedAnalyzeUserInput, 

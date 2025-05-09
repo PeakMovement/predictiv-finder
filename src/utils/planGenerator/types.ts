@@ -19,7 +19,18 @@ export type ServiceCategory =
   | 'occupational-therapy'
   | 'physical-therapy'
   | 'chiropractor'
-  | 'nurse-practitioner';
+  | 'nurse-practitioner'
+  // Added new categories to support more specialties
+  | 'cardiology'
+  | 'dermatology'
+  | 'neurology'
+  | 'endocrinology'
+  | 'urology'
+  | 'oncology'
+  | 'rheumatology'
+  | 'pediatrics'
+  | 'geriatrics'
+  | 'sports-medicine';
 
 export interface BaseCosts {
   [key: string]: number;
@@ -46,6 +57,17 @@ export const BASELINE_COSTS: Record<ServiceCategory, number> = {
   'physical-therapy': 800,
   'chiropractor': 650,
   'nurse-practitioner': 600,
+  // Added costs for new categories
+  'cardiology': 1400,
+  'dermatology': 1000,
+  'neurology': 1300,
+  'endocrinology': 1200,
+  'urology': 1100,
+  'oncology': 1600,
+  'rheumatology': 1000,
+  'pediatrics': 900,
+  'geriatrics': 950,
+  'sports-medicine': 1100
 };
 
 export interface OptimizedService {
@@ -55,4 +77,54 @@ export interface OptimizedService {
   frequency: string;
   costPerSession: number;
   totalCost: number;
+}
+
+// New interface for special group discounts
+export interface SpecialGroupDiscount {
+  group: 'student' | 'senior' | 'child' | 'loyalty' | 'athlete' | 'military';
+  discountPercentage: number;
+  applicableServices: ServiceCategory[];
+  minimumSessions?: number;
+}
+
+// New interface for comorbidity detection
+export interface ComorbidityGroup {
+  name: string;
+  conditions: string[];
+  recommendedServices: ServiceCategory[];
+  specialConsiderations?: string[];
+}
+
+// New interface for special population handling
+export interface SpecialPopulation {
+  type: 'child' | 'elderly' | 'athlete' | 'pregnant' | 'chronic';
+  ageRange?: [number, number];
+  recommendedServices: ServiceCategory[];
+  contraindicatedServices?: ServiceCategory[];
+  specializedProviders?: ServiceCategory[];
+}
+
+// New interface to track user preferences and history
+export interface UserPreference {
+  preferredServiceTypes?: ServiceCategory[];
+  avoidServiceTypes?: ServiceCategory[];
+  previouslyUsedServices?: {
+    serviceType: ServiceCategory;
+    outcome: 'positive' | 'neutral' | 'negative';
+    usageCount: number;
+  }[];
+  timePreference?: 'morning' | 'afternoon' | 'evening' | 'weekend';
+  locationPreference?: 'remote' | 'in-person' | 'hybrid';
+  budgetSensitivity?: 'very-sensitive' | 'somewhat-sensitive' | 'not-sensitive';
+}
+
+// New interface for enhanced budget allocation strategies
+export interface BudgetAllocationStrategy {
+  name: string;
+  description: string;
+  priorityServices: ServiceCategory[];
+  minimumSessionsPerService: Record<ServiceCategory, number>;
+  balancingFactor: number; // 0-1, how much to balance vs prioritize
+  overspendAllowed: boolean;
+  maxOverspendPercentage?: number;
 }
