@@ -1,24 +1,21 @@
 import { useState, useCallback } from "react";
 import { AIHealthPlan, ServiceCategory } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { generateCustomAIPlans } from "@/utils/aiPlanGenerator";
-import { generateProfessionalRecommendations } from "@/utils/planGenerator/professionalRecommendation";
-import { identifySymptoms } from "@/utils/planGenerator/symptomDetector";
-import { detectBudgetConstraints, parseMonthlyBudget } from "@/utils/planGenerator/budgetDetector";
+import { detectComprehensiveSymptoms } from "@/utils/planGenerator/detectors/comprehensiveSymptomDetector";
+import { matchServicesToSymptoms } from "@/utils/planGenerator/serviceMatching/enhancedServiceMatcher";
+import { generateBudgetTiers, optimizeServiceAllocation } from "@/utils/planGenerator/budgetHandling/enhancedBudgetHandler";
 import { detectTimeframes, extractGoalTimeframe } from "@/utils/planGenerator/detectors/timeframeDetector";
 import { buildMultidisciplinaryPlan } from "@/utils/planGenerator/multidisciplinaryPlanBuilder";
+import { safePlanOperation, validateHealthPlanInput, PlanGenerationError, PlanGenerationErrorType } from "@/utils/planGenerator/errorHandling";
 
-// Constants for default values and thresholds
+// Constants for default values
 const DEFAULT_BUDGET = 2000;
 const DEFAULT_TIMEFRAME_WEEKS = 4;
-const URGENCY_LEVELS = { urgent: 0.8, nonUrgent: 0.4 };
 const MIN_BUDGET = 500;
 
 /**
  * Custom hook for AI plan generation service
- * Manages the state and logic for generating AI health plans
- * 
- * @returns An object containing state and functions for AI plan generation
+ * Enhanced with improved symptom detection, service matching, and budget handling
  */
 export function useAIPlansService() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -27,34 +24,136 @@ export function useAIPlansService() {
   const { toast } = useToast();
 
   /**
-   * Extracts and processes user input to identify key health information
-   * 
-   * @param query - The user input describing their health needs
-   * @returns Structured data extracted from user input
+   * Analyzes user input to extract comprehensive health information
    */
-  const extractUserInput = (query: string) => {
-    const lowerQuery = query.toLowerCase();
+  const analyzeUserInput = async (query: string) => {
+    try {
+      // Validate input first
+      validateHealthPlanInput(query);
+      
+      const lowerQuery = query.toLowerCase();
+      
+      // Step 1: Enhanced symptom detection with confidence scores and primary symptom identification
+      const symptomAnalysis = await safePlanOperation(
+        () => detectComprehensiveSymptoms(query),
+        PlanGenerationErrorType.SYMPTOM_DETECTION,
+        "Symptom Detection"
+      );
+      
+      if (!symptomAnalysis.symptoms.length) {
+        throw new PlanGenerationError(
+          "No symptoms detected in user input",
+          PlanGenerationErrorType.SYMPTOM_DETECTION,
+          "Please include specific symptoms or health concerns in your query.",
+          { query },
+          ["Mention any pain or discomfort you're experiencing", "Describe your health goals"]
+        );
+      }
+      
+      // Step 2: Extract timeframe information
+      const { weeks: detectedTimeframe = DEFAULT_TIMEFRAME_WEEKS, isUrgent = false } = 
+        detectTimeframes(lowerQuery, [], {}) || {};
+      const goalTimeframe = extractGoalTimeframe(query) || 0;
+      const effectiveTimeframe = goalTimeframe || detectedTimeframe || DEFAULT_TIMEFRAME_WEEKS;
+      
+      // Step 3: Extract goals from input
+      const goalKeywords = ["race", "weight loss", "pain free", "mobility", "strength", "fitness", "wellness"];
+      const goals = goalKeywords.filter(goal => lowerQuery.includes(goal));
+      if (!goals.length) goals.push("general wellness");
+      
+      // Step 4: Enhanced service matching based on symptoms and goals
+      const serviceMatches = await safePlanOperation(
+        () => matchServicesToSymptoms(
+          symptomAnalysis.symptoms,
+          symptomAnalysis.priorities,
+          goals,
+          undefined,
+          isUrgent
+        ),
+        PlanGenerationErrorType.SERVICE_MATCHING,
+        "Service Matching"
+      );
+      
+      if (!serviceMatches.length) {
+        throw new PlanGenerationError(
+          "Failed to match services to user needs",
+          PlanGenerationErrorType.SERVICE_MATCHING,
+          "We couldn't determine which health services match your needs. Please be more specific."
+        );
+      }
+      
+      // Extract top services and their primary conditions
+      const topServices = serviceMatches.slice(0, 3).map(match => match.category);
+      const primaryCondition = serviceMatches[0].primaryCondition || 
+                              symptomAnalysis.primarySymptoms[0] ||
+                              symptomAnalysis.symptoms[0] || 
+                              "general health";
+      
+      // Build service priorities mapping
+      const servicePriorities: Record<ServiceCategory, number> = {};
+      serviceMatches.forEach(match => {
+        servicePriorities[match.category] = match.score;
+      });
+      
+      // Step 5: Extract budget information
+      // Keep the existing budget detection for compatibility
+      const budgetConstraint = detectBudgetConstraint(lowerQuery);
+      
+      return { 
+        symptoms: symptomAnalysis.symptoms, 
+        primarySymptoms: symptomAnalysis.primarySymptoms,
+        priorities: symptomAnalysis.priorities, 
+        contraindications: symptomAnalysis.contraindications,
+        effectiveTimeframe,
+        isUrgent, 
+        goals, 
+        serviceMatches,
+        topServices,
+        primaryCondition,
+        servicePriorities,
+        budgetConstraint
+      };
+    } catch (error) {
+      if (error instanceof PlanGenerationError) {
+        throw error;
+      } else {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new PlanGenerationError(
+          `Error analyzing user input: ${message}`,
+          PlanGenerationErrorType.UNEXPECTED
+        );
+      }
+    }
+  };
+
+  /**
+   * Helper function to detect budget constraints from input
+   */
+  const detectBudgetConstraint = (inputLower: string): {
+    budget: number;
+    isStrictBudget: boolean;
+  } => {
+    // Enhanced budget detection with better regex patterns
+    const budgetMatch = inputLower.match(/r\s*(\d{1,6})/i) || 
+                      inputLower.match(/budget[^0-9]*(\d{1,6})/i) ||
+                      inputLower.match(/afford[^0-9]*(\d{1,6})/i) ||
+                      inputLower.match(/spend[^0-9]*(\d{1,6})/i);
     
-    // Step 1: Analyze user input to extract key information
-    const { symptoms = [], priorities = {}, contraindications = [] } = identifySymptoms(query) || {};
-    if (!symptoms.length) throw new Error("Please include specific symptoms or health concerns in your query.");
-
-    // Step 2: Extract budget constraints
-    const { budget: detectedBudget = DEFAULT_BUDGET, isStrict: isStrictBudget = false } = detectBudgetConstraints(lowerQuery, []) || {};
-    const { monthlyAmount = 0, timeframe: budgetTimeframe = 0 } = parseMonthlyBudget(lowerQuery) || {};
-    const effectiveBudget = Math.max(MIN_BUDGET, monthlyAmount || detectedBudget || DEFAULT_BUDGET);
-
-    // Step 3: Extract timeframe information
-    const { weeks: detectedTimeframe = DEFAULT_TIMEFRAME_WEEKS, isUrgent = false } = detectTimeframes(lowerQuery, [], {}) || {};
-    const goalTimeframe = extractGoalTimeframe(query) || 0;
-    const effectiveTimeframe = goalTimeframe || detectedTimeframe || budgetTimeframe || DEFAULT_TIMEFRAME_WEEKS;
-
-    // Step 4: Extract goals
-    const goalKeywords = ["race", "weight loss", "pain free", "mobility", "strength", "fitness"];
-    const goals = goalKeywords.filter(goal => lowerQuery.includes(goal));
-    if (!goals.length) goals.push("general wellness");
-
-    return { symptoms, priorities, contraindications, effectiveBudget, isStrictBudget, effectiveTimeframe, isUrgent, goals };
+    // Determine if the budget constraint is strict
+    const strictBudgetPhrases = [
+      "can't spend more", "cannot spend more", "maximum", "max", 
+      "tight budget", "strict budget", "only", "just", "limited to"
+    ];
+    
+    const isStrictBudget = strictBudgetPhrases.some(phrase => inputLower.includes(phrase));
+    
+    // Extract budget amount
+    let budget = DEFAULT_BUDGET;
+    if (budgetMatch && budgetMatch[1]) {
+      budget = Math.max(MIN_BUDGET, parseInt(budgetMatch[1], 10));
+    }
+    
+    return { budget, isStrictBudget };
   };
 
   /**
@@ -64,17 +163,19 @@ export function useAIPlansService() {
     query: string, 
     primaryCondition: string, 
     services: ServiceCategory[], 
+    servicePriorities: Record<ServiceCategory, number>,
     budget: number, 
     timeframeWeeks: number, 
     isStrictBudget: boolean, 
     goals: string[], 
     urgencyLevel: number,
-    namePrefix?: string
+    tierName: string
   }) => {
     const plan = buildMultidisciplinaryPlan({
       input: params.query,
       primaryCondition: params.primaryCondition,
       services: params.services,
+      servicePriorities: params.servicePriorities,
       budget: params.budget,
       timeframeWeeks: params.timeframeWeeks,
       isStrictBudget: params.isStrictBudget,
@@ -82,106 +183,16 @@ export function useAIPlansService() {
       urgencyLevel: params.urgencyLevel
     });
     
-    if (params.namePrefix) {
-      plan.name = `${params.namePrefix} ${plan.name}`;
+    if (params.tierName) {
+      plan.name = `${params.tierName}: ${plan.name}`;
     }
     
     return plan;
   };
 
   /**
-   * Generates multiple health plans at different budget tiers
-   */
-  const generatePlans = (params: {
-    query: string, 
-    symptoms: string[], 
-    effectiveBudget: number, 
-    isStrictBudget: boolean, 
-    effectiveTimeframe: number, 
-    isUrgent: boolean, 
-    goals: string[]
-  }) => {
-    const { query, symptoms, effectiveBudget, isStrictBudget, effectiveTimeframe, isUrgent, goals } = params;
-    
-    // Step 5: Generate professional recommendations
-    const recommendations = generateProfessionalRecommendations(query);
-    if (!recommendations.length) {
-      throw new Error("Unable to generate recommendations. Please provide more specific health details (e.g., 'knee pain' or 'weight loss goals').");
-    }
-
-    // Step 6: Extract primary condition and services
-    const primaryCondition = recommendations[0].primaryCondition || symptoms[0] || "general health";
-    
-    // Fix: Cast the categories to ServiceCategory explicitly
-    // This addresses the TypeScript error by ensuring we're working with the correct type
-    const services = recommendations
-      .map(rec => rec.category as ServiceCategory)
-      .slice(0, 3); // Take top 3 recommendations
-
-    // Step 7: Build multidisciplinary plans for different budget tiers
-    const plans: AIHealthPlan[] = [];
-    const urgencyLevel = isUrgent ? URGENCY_LEVELS.urgent : URGENCY_LEVELS.nonUrgent;
-
-    // Base plan at specified budget
-    const exactBudgetPlan = buildPlanForBudget({
-      query,
-      primaryCondition,
-      services,
-      budget: effectiveBudget,
-      timeframeWeeks: effectiveTimeframe,
-      isStrictBudget,
-      goals,
-      urgencyLevel
-    });
-    plans.push(exactBudgetPlan);
-
-    // Premium plan (if not strict budget and budget isn't too high)
-    if (!isStrictBudget && effectiveBudget < 3000) {
-      const premiumBudget = Math.round(effectiveBudget * 1.5);
-      const premiumPlan = buildPlanForBudget({
-        query,
-        primaryCondition,
-        services,
-        budget: premiumBudget,
-        timeframeWeeks: effectiveTimeframe,
-        isStrictBudget: false,
-        goals,
-        urgencyLevel,
-        namePrefix: "Premium"
-      });
-      plans.push(premiumPlan);
-    }
-
-    // Economy plan (if budget is above minimum)
-    if (effectiveBudget > 1000) {
-      const economyBudget = Math.round(effectiveBudget * 0.7);
-      const economyPlan = buildPlanForBudget({
-        query,
-        primaryCondition,
-        services,
-        budget: economyBudget,
-        timeframeWeeks: effectiveTimeframe,
-        isStrictBudget: true,
-        goals,
-        urgencyLevel,
-        namePrefix: "Economy"
-      });
-      plans.push(economyPlan);
-    }
-
-    if (!plans.length) {
-      throw new Error("Unable to generate health plans. Please describe your health needs in more detail (e.g., 'recover from ankle injury').");
-    }
-
-    // Sort plans by cost for consistent display
-    return plans.sort((a, b) => a.totalCost - b.totalCost);
-  };
-
-  /**
-   * Generates AI health plans based on user query with improved budget handling
-   * and multidisciplinary approach
-   * 
-   * @param query - The user input describing their health needs
+   * Generates AI health plans based on user query with improved detection,
+   * matching, and budget handling
    */
   const generateAIPlans = useCallback(async (query: string) => {
     setIsGenerating(true);
@@ -190,40 +201,97 @@ export function useAIPlansService() {
     try {
       console.log("Generating AI plans with query:", query);
       
-      if (!query || typeof query !== "string" || query.trim() === "") {
-        throw new Error("Please provide a valid health query to generate plans.");
+      // Step 1: Analyze user input
+      const analysis = await analyzeUserInput(query);
+      console.log("User input analysis complete:", analysis);
+      
+      // Step 2: Generate budget tiers
+      const budgetTiers = generateBudgetTiers(
+        analysis.budgetConstraint.budget,
+        analysis.budgetConstraint.isStrictBudget,
+        analysis.topServices,
+        analysis.effectiveTimeframe
+      );
+      
+      // Step 3: Build diverse plans based on budget tiers
+      const urgencyLevel = analysis.isUrgent ? 0.8 : 0.4;
+      const plans: AIHealthPlan[] = [];
+      
+      // Generate a plan for each budget tier
+      for (const tier of budgetTiers) {
+        try {
+          console.log(`Generating ${tier.name} tier plan with budget ${tier.budget}`);
+          
+          // Optimize service allocation within this budget tier
+          const serviceAllocations = optimizeServiceAllocation(
+            tier.budget,
+            analysis.topServices,
+            tier.servicePriorities,
+            tier.maxSessions,
+            tier.isStrictBudget
+          );
+          
+          // Only include services that received at least 1 session
+          const includedServices = serviceAllocations
+            .filter(allocation => allocation.sessions > 0)
+            .map(allocation => allocation.type);
+          
+          // Build the plan
+          const plan = buildPlanForBudget({
+            query,
+            primaryCondition: analysis.primaryCondition,
+            services: includedServices,
+            servicePriorities: analysis.servicePriorities,
+            budget: tier.budget,
+            timeframeWeeks: analysis.effectiveTimeframe,
+            isStrictBudget: tier.isStrictBudget,
+            goals: analysis.goals,
+            urgencyLevel,
+            tierName: tier.name
+          });
+          
+          plans.push(plan);
+          console.log(`Generated ${tier.name} plan:`, plan.name);
+        } catch (error) {
+          console.error(`Error generating ${tier.name} plan:`, error);
+          // Continue generating other plans even if one fails
+        }
       }
       
-      // Simulate API call with timeout
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (plans.length === 0) {
+        throw new PlanGenerationError(
+          "Failed to generate any valid plans",
+          PlanGenerationErrorType.PLAN_CREATION,
+          "We couldn't create health plans based on your input. Please try providing different details."
+        );
+      }
       
-      // Extract user input
-      const userInput = extractUserInput(query);
-      console.log("Extracted user input:", userInput);
-      
-      // Generate and sort plans
-      const sortedPlans = generatePlans({
-        query,
-        symptoms: userInput.symptoms,
-        effectiveBudget: userInput.effectiveBudget,
-        isStrictBudget: userInput.isStrictBudget,
-        effectiveTimeframe: userInput.effectiveTimeframe,
-        isUrgent: userInput.isUrgent,
-        goals: userInput.goals
-      });
-      
+      // Sort plans by cost for consistent display
+      const sortedPlans = plans.sort((a, b) => a.totalCost - b.totalCost);
       setAiPlans(sortedPlans);
-      console.log("Generated plans:", sortedPlans);
+      
+      console.log("Successfully generated plans:", sortedPlans.length);
     } catch (error) {
       console.error("Error generating AI plans:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to generate health plans";
-      setError(errorMessage);
       
-      toast({
-        title: "Error generating health plans",
-        description: errorMessage + " Please try again with more details, such as your symptoms or goals.",
-        variant: "destructive",
-      });
+      if (error instanceof PlanGenerationError) {
+        setError(error.userMessage);
+        
+        toast({
+          title: "Error generating health plans",
+          description: error.userMessage,
+          variant: "destructive",
+        });
+      } else {
+        const errorMessage = error instanceof Error ? error.message : "Failed to generate health plans";
+        setError(errorMessage);
+        
+        toast({
+          title: "Error generating health plans",
+          description: errorMessage + " Please try again with more details.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -236,4 +304,202 @@ export function useAIPlansService() {
     setError,
     generateAIPlans
   };
+}
+
+/**
+ * Helper function for multidisciplinaryPlanBuilder compatibility
+ * Will be refactored in a future update
+ */
+function buildMultidisciplinaryPlan(params: {
+  input: string;
+  primaryCondition: string;
+  services: ServiceCategory[];
+  servicePriorities: Record<ServiceCategory, number>;
+  budget: number;
+  timeframeWeeks: number;
+  isStrictBudget: boolean;
+  goals: string[];
+  urgencyLevel: number;
+}): AIHealthPlan {
+  // This is a temporary compatibility function that will be replaced with the enhanced plan builder
+  const planName = generatePlanName(params.primaryCondition, params.services, params.budget);
+  
+  // Generate services based on optimized allocation
+  const allocations = optimizeServiceAllocation(
+    params.budget, 
+    params.services,
+    params.servicePriorities,
+    {
+      'personal-trainer': params.budget > 2000 ? 8 : 4,
+      'dietician': params.budget > 2000 ? 4 : 2,
+      'physiotherapist': params.budget > 2000 ? 6 : 3,
+      'family-medicine': params.budget > 2000 ? 2 : 1,
+      'coaching': params.budget > 2000 ? 4 : 2,
+      'psychiatry': params.budget > 2000 ? 3 : 2,
+      'gastroenterology': params.budget > 2000 ? 2 : 1,
+      'cardiology': params.budget > 2000 ? 2 : 1,
+      'orthopedics': params.budget > 2000 ? 2 : 1,
+      'biokineticist': params.budget > 2000 ? 3 : 2,
+      'pain-management': params.budget > 2000 ? 3 : 2,
+      'endocrinology': params.budget > 2000 ? 2 : 1
+    },
+    params.isStrictBudget
+  );
+  
+  // Create services for the plan
+  const planServices = allocations.map(allocation => {
+    return {
+      type: allocation.type,
+      sessions: allocation.sessions,
+      price: allocation.costPerSession,
+      description: generateServiceDescription(allocation.type, params.primaryCondition, params.budget > 2000)
+    };
+  });
+  
+  // Calculate total cost
+  const totalCost = allocations.reduce((sum, allocation) => sum + allocation.totalCost, 0);
+  
+  return {
+    id: `plan-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    name: planName,
+    description: generatePlanDescription(params.primaryCondition, params.goals, params.budget),
+    services: planServices,
+    totalCost,
+    planType: 'best-fit',
+    timeFrame: `${params.timeframeWeeks} weeks`
+  };
+}
+
+/**
+ * Generates a plan name based on primary condition and services
+ */
+function generatePlanName(primaryCondition: string, services: ServiceCategory[], budget: number): string {
+  // Create a descriptive plan name
+  let baseName = "Wellness Plan";
+  
+  if (primaryCondition.includes("pain")) {
+    baseName = "Pain Management Plan";
+  } else if (primaryCondition.includes("weight")) {
+    baseName = "Weight Management Plan";
+  } else if (primaryCondition.includes("fitness") || primaryCondition.includes("strength")) {
+    baseName = "Fitness Enhancement Plan";
+  } else if (primaryCondition.includes("anxiety") || primaryCondition.includes("stress")) {
+    baseName = "Stress Management Plan";
+  } else if (primaryCondition.includes("race") || primaryCondition.includes("marathon")) {
+    baseName = "Race Preparation Plan";
+  }
+  
+  // Add specialization based on services
+  if (services.includes('physiotherapist') && services.includes('personal-trainer')) {
+    baseName += " with Rehabilitation Focus";
+  } else if (services.includes('dietician') && services.includes('personal-trainer')) {
+    baseName += " with Nutrition & Fitness";
+  } else if (services.includes('coaching') && services.includes('psychiatry')) {
+    baseName += " with Mental Wellness";
+  }
+  
+  return baseName;
+}
+
+/**
+ * Generates a service description based on service type and context
+ */
+function generateServiceDescription(type: ServiceCategory, condition: string, isPremium: boolean): string {
+  const baseDescriptions: Record<ServiceCategory, { standard: string, premium: string }> = {
+    'personal-trainer': {
+      standard: "Guided exercise sessions tailored to your fitness level",
+      premium: "Personalized training program with advanced exercise techniques"
+    },
+    'dietician': {
+      standard: "Nutritional guidance with meal planning support",
+      premium: "Comprehensive nutritional assessment with customized meal plans"
+    },
+    'physiotherapist': {
+      standard: "Focused treatment to improve movement and function",
+      premium: "Advanced rehabilitation with specialized manual techniques"
+    },
+    'coaching': {
+      standard: "Supportive guidance for achieving your health goals",
+      premium: "Strategic coaching with performance optimization techniques"
+    },
+    'psychiatry': {
+      standard: "Professional mental health support and treatment",
+      premium: "Comprehensive mental wellness program with personalized strategies"
+    },
+    'family-medicine': {
+      standard: "General healthcare consultation and basic assessment",
+      premium: "Thorough medical evaluation with ongoing monitoring"
+    },
+    'gastroenterology': {
+      standard: "Digestive health assessment and treatment recommendations",
+      premium: "Specialized gastrointestinal evaluation and management plan"
+    }
+  };
+  
+  // Get base description based on service type and premium level
+  const baseDescription = baseDescriptions[type]?.[isPremium ? 'premium' : 'standard'] || 
+    (isPremium ? "Premium specialized healthcare service" : "Standard healthcare service");
+  
+  // Customize further based on condition
+  if (condition.includes("knee") && type === 'physiotherapist') {
+    return isPremium ? 
+      "Specialized knee rehabilitation with advanced techniques and progressive exercises" :
+      "Targeted knee therapy to improve movement and reduce pain";
+  } else if (condition.includes("back") && type === 'physiotherapist') {
+    return isPremium ?
+      "Comprehensive back assessment with specialized manual therapy and corrective exercises" :
+      "Back pain treatment with personalized exercises and techniques";
+  } else if (condition.includes("weight") && type === 'dietician') {
+    return isPremium ?
+      "Personalized weight management nutrition plan with detailed meal strategies" :
+      "Nutritional guidance focused on sustainable weight management";
+  } else if (condition.includes("race") && type === 'personal-trainer') {
+    return isPremium ?
+      "Specialized race preparation program with periodized training and performance analysis" :
+      "Structured training plans to prepare you for your upcoming race";
+  }
+  
+  return baseDescription;
+}
+
+/**
+ * Generates a plan description based on condition and goals
+ */
+function generatePlanDescription(condition: string, goals: string[], budget: number): string {
+  let description = "A personalized health plan designed to address your specific needs";
+  
+  // Enhance description based on primary condition
+  if (condition.includes("knee")) {
+    description = "A specialized plan focused on knee rehabilitation and improved mobility";
+  } else if (condition.includes("back")) {
+    description = "A comprehensive plan to address back pain and improve spinal health";
+  } else if (condition.includes("weight")) {
+    description = "A balanced approach to weight management combining nutrition and activity";
+  } else if (condition.includes("anxiety") || condition.includes("stress")) {
+    description = "A supportive plan designed to reduce stress and improve mental wellbeing";
+  } else if (condition.includes("race") || condition.includes("marathon")) {
+    description = "A structured program to prepare you for your race with optimal performance";
+  }
+  
+  // Add goal-specific details
+  if (goals.includes("weight loss")) {
+    description += " with emphasis on sustainable weight management";
+  } else if (goals.includes("strength")) {
+    description += " focused on building functional strength and stability";
+  } else if (goals.includes("mobility")) {
+    description += " designed to enhance range of motion and movement quality";
+  } else if (goals.includes("race")) {
+    description += " tailored to optimize your race preparation";
+  }
+  
+  // Add budget context
+  if (budget < 1000) {
+    description += ". This plan efficiently uses your budget for maximum impact.";
+  } else if (budget > 3000) {
+    description += ". This comprehensive plan provides extensive professional support.";
+  } else {
+    description += ". This balanced plan offers well-rounded professional guidance.";
+  }
+  
+  return description;
 }
