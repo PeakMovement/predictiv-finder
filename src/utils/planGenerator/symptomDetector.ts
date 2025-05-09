@@ -1,5 +1,5 @@
 
-import { ServiceCategory, BASELINE_COSTS } from "./types";
+import { ServiceCategory } from "./types";
 import { detectComprehensiveSymptoms } from "./detectors/comprehensiveSymptomDetector";
 
 /**
@@ -20,6 +20,7 @@ export const identifySymptoms = (userInput: string): {
     // Use the new comprehensive detector
     const results = detectComprehensiveSymptoms(userInput);
     
+    // Return the standard format for backward compatibility
     return {
       symptoms: results.symptoms,
       priorities: results.priorities,
