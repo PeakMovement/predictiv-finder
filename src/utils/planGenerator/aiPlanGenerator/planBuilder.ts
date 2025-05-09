@@ -43,7 +43,12 @@ export function buildHealthPlan(
   }
   
   // Generate a default description if none provided
-  const description = options.description || `A ${options.timeFrame} health plan designed to address your specific needs with a combination of ${services.map(s => s.type.replace(/-/g, ' ')).join(', ')}.`;
+  // Fix the type issue by mapping to an array properly
+  const serviceTypes = services.map(s => s.type);
+  const serviceTypeNames = serviceTypes.map(type => type.replace(/-/g, ' ')).join(', ');
+  
+  const description = options.description || 
+    `A ${options.timeFrame} health plan designed to address your specific needs with a combination of ${serviceTypeNames}.`;
   
   // Calculate total cost or use provided cost
   const totalCost = options.customTotalCost !== undefined
@@ -83,12 +88,25 @@ export function buildHealthPlan(
     services: enhancedServices,
     totalCost: totalCost,
     planType: options.planType,
-    timeFrame: options.timeFrame,
-    expectedOutcomes: options.expectedOutcomes,
-    rationales: options.rationales,
-    progressTimeline: options.progressTimeline,
-    alternativeOptions: options.alternativeOptions
+    timeFrame: options.timeFrame
   };
+  
+  // Add optional fields if provided
+  if (options.expectedOutcomes) {
+    plan.expectedOutcomes = options.expectedOutcomes;
+  }
+  
+  if (options.rationales) {
+    plan.rationales = options.rationales;
+  }
+  
+  if (options.progressTimeline) {
+    plan.progressTimeline = options.progressTimeline;
+  }
+  
+  if (options.alternativeOptions) {
+    plan.alternativeOptions = options.alternativeOptions;
+  }
   
   return plan;
 }

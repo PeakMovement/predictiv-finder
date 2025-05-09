@@ -1,3 +1,4 @@
+
 export type ServiceCategory =
   | 'physiotherapist'
   | 'biokineticist'
@@ -102,6 +103,44 @@ export interface OptimizedService {
   totalCost: number;
 }
 
+// Updated PriceRange interface to include both min and max properties
+export interface PriceRange {
+  min: number;
+  max: number;
+}
+
+// Added this to fix the budgetConfig.ts errors - it should use min/max instead of affordable/highEnd
+export interface LegacyPriceRange {
+  affordable: number;
+  highEnd: number;
+}
+
+// Defining BudgetTier interface for budgetConfig.ts
+export interface BudgetTier {
+  name: string;
+  range: PriceRange;
+  maxSessions: number;
+}
+
+// Interface for service allocations in the plan context
+export interface ServiceAllocation {
+  type: ServiceCategory;
+  percentage: number;
+  priority: number;
+  minSessions?: number;
+  maxSessions?: number;
+}
+
+// Interface for plan context
+export interface PlanContext {
+  userInput: string;
+  budget: number;
+  isStrictBudget: boolean;
+  serviceCategories: ServiceCategory[];
+  categoryPriorities: Record<ServiceCategory, number>;
+  preferredPractitioners?: string[];
+}
+
 // New interface for special group discounts
 export interface SpecialGroupDiscount {
   group: 'student' | 'senior' | 'child' | 'loyalty' | 'athlete' | 'military';
@@ -152,17 +191,6 @@ export interface BudgetAllocationStrategy {
   maxOverspendPercentage?: number;
 }
 
-export interface BudgetTier {
-  name: string;
-  range: PriceRange;
-  maxSessions: number;
-}
-
-export interface PriceRange {
-  min: number;
-  max: number;
-}
-
 export interface ServiceConfigurationByBudget {
   [key: string]: {
     allocations: Array<{
@@ -175,21 +203,4 @@ export interface ServiceConfigurationByBudget {
     requiresDoctor: boolean;
     preferHighEnd: boolean;
   };
-}
-
-export interface PlanContext {
-  userInput: string;
-  budget: number;
-  isStrictBudget: boolean;
-  serviceCategories: ServiceCategory[];
-  categoryPriorities: Record<ServiceCategory, number>;
-  preferredPractitioners?: string[];
-}
-
-export interface ServiceAllocation {
-  type: ServiceCategory;
-  percentage: number;
-  priority: number;
-  minSessions?: number;
-  maxSessions?: number;
 }

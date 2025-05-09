@@ -368,26 +368,13 @@ export function getFallbackServices(
   unavailableServices: ServiceCategory[],
   userConditions: string[]
 ): { alternatives: Record<ServiceCategory, ServiceCategory[]>; explanation: string } {
-  const alternatives: Record<ServiceCategory, ServiceCategory[]> = {};
+  // Initialize the alternatives record with empty arrays for all service categories
+  const alternatives = Object.values(ServiceCategory).reduce((acc, category) => {
+    acc[category as ServiceCategory] = [];
+    return acc;
+  }, {} as Record<ServiceCategory, ServiceCategory[]>);
+  
   let explanation = "Some of your preferred services may not be available. Here are alternatives:";
-  
-  // Initialize the alternatives record with empty arrays for each service category
-  const allCategories = [
-    'physiotherapist', 'biokineticist', 'dietician', 'personal-trainer',
-    'pain-management', 'coaching', 'psychology', 'psychiatry', 'podiatrist',
-    'general-practitioner', 'sport-physician', 'orthopedic-surgeon', 'family-medicine',
-    'gastroenterology', 'massage-therapy', 'nutrition-coach', 'occupational-therapy',
-    'physical-therapy', 'chiropractor', 'nurse-practitioner', 'cardiology',
-    'dermatology', 'neurology', 'endocrinology', 'urology', 'oncology',
-    'rheumatology', 'pediatrics', 'geriatrics', 'sports-medicine',
-    'internal-medicine', 'orthopedics', 'neurosurgery', 'infectious-disease',
-    'plastic-surgery', 'obstetrics-gynecology', 'emergency-medicine',
-    'anesthesiology', 'radiology', 'geriatric-medicine'
-  ] as ServiceCategory[];
-  
-  allCategories.forEach(category => {
-    alternatives[category] = [];
-  });
   
   // Define fallback mapping
   const fallbackMap: Record<string, ServiceCategory[]> = {
@@ -395,7 +382,7 @@ export function getFallbackServices(
     'biokineticist': ['physiotherapist', 'personal-trainer'],
     'personal-trainer': ['biokineticist', 'coaching'],
     'dietician': ['coaching', 'nutrition-coach'],
-    'nutritionist': ['dietician', 'coaching'],
+    'nutritionist': ['dietician', 'coaching'] as ServiceCategory[],
     'coaching': ['personal-trainer', 'psychology'],
     'psychology': ['psychiatry', 'coaching'],
     'psychiatry': ['psychology', 'coaching'],
@@ -408,7 +395,31 @@ export function getFallbackServices(
     'gastroenterology': ['dietician', 'internal-medicine'],
     'neurology': ['psychiatry', 'pain-management'],
     'sports-medicine': ['sport-physician', 'personal-trainer'],
-    'geriatrics': ['geriatric-medicine', 'family-medicine']
+    'geriatrics': ['geriatric-medicine', 'family-medicine'],
+    'podiatrist': ['orthopedics', 'physical-therapy'],
+    'general-practitioner': ['family-medicine', 'internal-medicine'],
+    'sport-physician': ['sports-medicine', 'orthopedics'],
+    'orthopedic-surgeon': ['orthopedics', 'sport-physician'],
+    'massage-therapy': ['physical-therapy', 'chiropractor'],
+    'nutrition-coach': ['dietician', 'personal-trainer'],
+    'physical-therapy': ['physiotherapist', 'biokineticist'],
+    'chiropractor': ['physical-therapy', 'orthopedics'],
+    'nurse-practitioner': ['general-practitioner', 'family-medicine'],
+    'dermatology': ['general-practitioner'],
+    'endocrinology': ['internal-medicine', 'dietician'],
+    'urology': ['internal-medicine', 'general-practitioner'],
+    'oncology': ['internal-medicine', 'psychiatry'],
+    'rheumatology': ['internal-medicine', 'orthopedics'],
+    'pediatrics': ['family-medicine', 'general-practitioner'],
+    'neurosurgery': ['neurology', 'orthopedic-surgeon'],
+    'infectious-disease': ['internal-medicine', 'general-practitioner'],
+    'plastic-surgery': ['general-practitioner', 'dermatology'],
+    'obstetrics-gynecology': ['general-practitioner', 'family-medicine'],
+    'emergency-medicine': ['general-practitioner', 'family-medicine'],
+    'anesthesiology': ['pain-management', 'general-practitioner'],
+    'radiology': ['general-practitioner', 'orthopedics'],
+    'geriatric-medicine': ['geriatrics', 'general-practitioner'],
+    'all': ['general-practitioner', 'family-medicine']
   };
   
   // Generate alternatives for each unavailable service
