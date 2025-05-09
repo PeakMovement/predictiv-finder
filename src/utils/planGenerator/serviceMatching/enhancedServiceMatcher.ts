@@ -1,4 +1,4 @@
-import { ServiceCategory } from "../types";
+import { ServiceCategory, BASELINE_COSTS } from "../types";
 import { CONDITION_TO_SERVICES } from "../serviceMappings";
 import { SYMPTOM_MAPPINGS } from "../symptomMappings";
 
@@ -32,12 +32,16 @@ export function matchServicesToSymptoms(
 ): ServiceMatchResult[] {
   console.log("Matching services to symptoms:", symptoms, "with goals:", goals);
   
+  // Create a fully typed empty record for matches with all possible service categories
+  const createEmptyServiceRecord = (): Record<ServiceCategory, { score: number; factors: string[]; primaryCondition?: string }> => {
+    return Object.keys(BASELINE_COSTS).reduce((acc, key) => {
+      acc[key as ServiceCategory] = { score: 0, factors: [] };
+      return acc;
+    }, {} as Record<ServiceCategory, { score: number; factors: string[]; primaryCondition?: string }>);
+  };
+  
   // Track matches with detailed reasoning
-  const matches: Record<ServiceCategory, { 
-    score: number,
-    factors: string[],
-    primaryCondition?: string
-  }> = {};
+  const matches = createEmptyServiceRecord();
   
   try {
     // Step 1: Primary matching based on symptoms
@@ -149,6 +153,7 @@ export function matchServicesToSymptoms(
     
     // Convert to ranked results
     const results: ServiceMatchResult[] = Object.entries(matches)
+      .filter(([_, data]) => data.score > 0) // Only include services with positive scores
       .map(([category, data]) => ({
         category: category as ServiceCategory,
         score: data.score,
@@ -184,18 +189,16 @@ function addServiceMatch(
   reason: string,
   condition?: string
 ) {
-  if (!matches[service]) {
-    matches[service] = { score: 0, factors: [], primaryCondition: condition };
-  }
-  
-  // Use the highest score from multiple matches
-  matches[service].score = Math.max(matches[service].score, score);
-  matches[service].factors.push(reason);
-  
-  // Keep track of the highest priority condition linked to this service
-  if (condition && (!matches[service].primaryCondition || 
-      condition.length > matches[service].primaryCondition.length)) {
-    matches[service].primaryCondition = condition;
+  if (matches[service]) {
+    // Use the highest score from multiple matches
+    matches[service].score = Math.max(matches[service].score, score);
+    matches[service].factors.push(reason);
+    
+    // Keep track of the highest priority condition linked to this service
+    if (condition && (!matches[service].primaryCondition || 
+        condition.length > matches[service].primaryCondition.length)) {
+      matches[service].primaryCondition = condition;
+    }
   }
 }
 
@@ -209,20 +212,29 @@ function findComplementaryServices(
 ): ServiceCategory[] {
   const complementary: ServiceCategory[] = [];
   
-  // Common complementary pairs
-  const complementaryPairs: Record<ServiceCategory, ServiceCategory[]> = {
-    'personal-trainer': ['dietician', 'physiotherapist', 'coaching'],
-    'dietician': ['personal-trainer', 'coaching', 'family-medicine'],
-    'physiotherapist': ['personal-trainer', 'pain-management', 'orthopedics'],
-    'psychiatry': ['coaching', 'family-medicine'],
-    'family-medicine': ['dietician', 'physiotherapist'],
-    'orthopedics': ['physiotherapist', 'pain-management'],
-    'coaching': ['personal-trainer', 'dietician', 'psychiatry'],
-    'gastroenterology': ['dietician', 'family-medicine']
+  // Create a complete record for complementary pairs with type safety
+  const createComplementaryPairs = (): Record<ServiceCategory, ServiceCategory[]> => {
+    return Object.keys(BASELINE_COSTS).reduce((acc, key) => {
+      acc[key as ServiceCategory] = [];
+      return acc;
+    }, {} as Record<ServiceCategory, ServiceCategory[]>);
   };
   
+  // Common complementary pairs
+  const complementaryPairs = createComplementaryPairs();
+  
+  // Add the most common complementary service pairings
+  complementaryPairs['personal-trainer'] = ['dietician', 'physiotherapist', 'coaching'];
+  complementaryPairs['dietician'] = ['personal-trainer', 'coaching', 'family-medicine'];
+  complementaryPairs['physiotherapist'] = ['personal-trainer', 'pain-management', 'orthopedics'];
+  complementaryPairs['psychiatry'] = ['coaching', 'family-medicine'];
+  complementaryPairs['family-medicine'] = ['dietician', 'physiotherapist'];
+  complementaryPairs['orthopedics'] = ['physiotherapist', 'pain-management'];
+  complementaryPairs['coaching'] = ['personal-trainer', 'dietician', 'psychiatry'];
+  complementaryPairs['gastroenterology'] = ['dietician', 'family-medicine'];
+  
   // Add standard complementary services
-  if (complementaryPairs[category]) {
+  if (complementaryPairs[category] && complementaryPairs[category].length > 0) {
     complementary.push(...complementaryPairs[category]);
   }
   

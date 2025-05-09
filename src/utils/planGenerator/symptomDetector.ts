@@ -1,5 +1,5 @@
 
-import { ServiceCategory } from "./types";
+import { ServiceCategory, BASELINE_COSTS } from "./types";
 import { detectComprehensiveSymptoms } from "./detectors/comprehensiveSymptomDetector";
 
 /**

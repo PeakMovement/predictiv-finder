@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { AIHealthPlan, ServiceCategory } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -547,4 +546,3 @@ function generatePlanDescription(condition: string, goals: string[], budget: num
   
   return description;
 }
-

@@ -1,5 +1,5 @@
 
-import { ServiceCategory } from "../types";
+import { ServiceCategory, BASELINE_COSTS } from "../types";
 
 /**
  * Represents a budget tier with range and features
@@ -39,84 +39,99 @@ export function generateBudgetTiers(
     timeframeWeeks 
   });
   
-  // Common service maximum sessions by tier
-  const baseMaxSessions: Record<string, Record<ServiceCategory, number>> = {
-    economy: {
-      'personal-trainer': 2,
-      'dietician': 1,
-      'physiotherapist': 2,
-      'family-medicine': 1,
-      'coaching': 1,
-      'psychiatry': 1,
-      'gastroenterology': 1,
-      'cardiology': 1,
-      'orthopedics': 1,
-      'biokineticist': 1,
-      'pain-management': 1,
-      'endocrinology': 1
-    },
-    standard: {
-      'personal-trainer': 4,
-      'dietician': 2,
-      'physiotherapist': 3,
-      'family-medicine': 1,
-      'coaching': 2,
-      'psychiatry': 2,
-      'gastroenterology': 1,
-      'cardiology': 1,
-      'orthopedics': 1,
-      'biokineticist': 2,
-      'pain-management': 2,
-      'endocrinology': 1
-    },
-    premium: {
-      'personal-trainer': 8,
-      'dietician': 4,
-      'physiotherapist': 6,
-      'family-medicine': 2,
-      'coaching': 4,
-      'psychiatry': 4,
-      'gastroenterology': 2,
-      'cardiology': 2,
-      'orthopedics': 2,
-      'biokineticist': 3,
-      'pain-management': 3,
-      'endocrinology': 2
-    },
-    intensive: {
-      'personal-trainer': 12,
-      'dietician': 6,
-      'physiotherapist': 8,
-      'family-medicine': 3,
-      'coaching': 8,
-      'psychiatry': 6,
-      'gastroenterology': 3,
-      'cardiology': 3,
-      'orthopedics': 3,
-      'biokineticist': 4,
-      'pain-management': 4,
-      'endocrinology': 3
-    }
+  // Define a function to create complete service records with default values
+  const createFullServiceRecord = <T>(defaultValue: T): Record<ServiceCategory, T> => {
+    // Use the keys from BASELINE_COSTS which contains all ServiceCategory values
+    return Object.keys(BASELINE_COSTS).reduce((acc, key) => {
+      acc[key as ServiceCategory] = defaultValue;
+      return acc;
+    }, {} as Record<ServiceCategory, T>);
   };
   
-  // Session priorities by default
-  const baseServicePriorities: Record<ServiceCategory, number> = {
-    'personal-trainer': 0.8,
-    'dietician': 0.7,
-    'physiotherapist': 0.8,
-    'family-medicine': 0.6,
-    'coaching': 0.7,
-    'psychiatry': 0.8,
-    'gastroenterology': 0.6,
-    'cardiology': 0.6,
-    'orthopedics': 0.7,
-    'biokineticist': 0.6,
-    'pain-management': 0.7,
-    'endocrinology': 0.6
+  // Common service maximum sessions by tier - define complete records
+  const baseMaxSessions: Record<string, Record<ServiceCategory, number>> = {
+    economy: createFullServiceRecord(1),
+    standard: createFullServiceRecord(2),
+    premium: createFullServiceRecord(3),
+    intensive: createFullServiceRecord(4)
   };
+  
+  // Now override with specific values for common service categories
+  // Economy tier
+  baseMaxSessions.economy['personal-trainer'] = 2;
+  baseMaxSessions.economy['dietician'] = 1;
+  baseMaxSessions.economy['physiotherapist'] = 2;
+  baseMaxSessions.economy['family-medicine'] = 1;
+  baseMaxSessions.economy['coaching'] = 1;
+  baseMaxSessions.economy['psychiatry'] = 1;
+  baseMaxSessions.economy['gastroenterology'] = 1;
+  baseMaxSessions.economy['cardiology'] = 1;
+  baseMaxSessions.economy['orthopedics'] = 1;
+  baseMaxSessions.economy['biokineticist'] = 1;
+  baseMaxSessions.economy['pain-management'] = 1;
+  baseMaxSessions.economy['endocrinology'] = 1;
+  
+  // Standard tier
+  baseMaxSessions.standard['personal-trainer'] = 4;
+  baseMaxSessions.standard['dietician'] = 2;
+  baseMaxSessions.standard['physiotherapist'] = 3;
+  baseMaxSessions.standard['family-medicine'] = 1;
+  baseMaxSessions.standard['coaching'] = 2;
+  baseMaxSessions.standard['psychiatry'] = 2;
+  baseMaxSessions.standard['gastroenterology'] = 1;
+  baseMaxSessions.standard['cardiology'] = 1;
+  baseMaxSessions.standard['orthopedics'] = 1;
+  baseMaxSessions.standard['biokineticist'] = 2;
+  baseMaxSessions.standard['pain-management'] = 2;
+  baseMaxSessions.standard['endocrinology'] = 1;
+  
+  // Premium tier
+  baseMaxSessions.premium['personal-trainer'] = 8;
+  baseMaxSessions.premium['dietician'] = 4;
+  baseMaxSessions.premium['physiotherapist'] = 6;
+  baseMaxSessions.premium['family-medicine'] = 2;
+  baseMaxSessions.premium['coaching'] = 4;
+  baseMaxSessions.premium['psychiatry'] = 4;
+  baseMaxSessions.premium['gastroenterology'] = 2;
+  baseMaxSessions.premium['cardiology'] = 2;
+  baseMaxSessions.premium['orthopedics'] = 2;
+  baseMaxSessions.premium['biokineticist'] = 3;
+  baseMaxSessions.premium['pain-management'] = 3;
+  baseMaxSessions.premium['endocrinology'] = 2;
+  
+  // Intensive tier
+  baseMaxSessions.intensive['personal-trainer'] = 12;
+  baseMaxSessions.intensive['dietician'] = 6;
+  baseMaxSessions.intensive['physiotherapist'] = 8;
+  baseMaxSessions.intensive['family-medicine'] = 3;
+  baseMaxSessions.intensive['coaching'] = 8;
+  baseMaxSessions.intensive['psychiatry'] = 6;
+  baseMaxSessions.intensive['gastroenterology'] = 3;
+  baseMaxSessions.intensive['cardiology'] = 3;
+  baseMaxSessions.intensive['orthopedics'] = 3;
+  baseMaxSessions.intensive['biokineticist'] = 4;
+  baseMaxSessions.intensive['pain-management'] = 4;
+  baseMaxSessions.intensive['endocrinology'] = 3;
+  
+  // Session priorities by default, covering all service categories
+  const baseServicePriorities = createFullServiceRecord(0.5);
+  
+  // Override priorities for common categories
+  baseServicePriorities['personal-trainer'] = 0.8;
+  baseServicePriorities['dietician'] = 0.7;
+  baseServicePriorities['physiotherapist'] = 0.8;
+  baseServicePriorities['family-medicine'] = 0.6;
+  baseServicePriorities['coaching'] = 0.7;
+  baseServicePriorities['psychiatry'] = 0.8;
+  baseServicePriorities['gastroenterology'] = 0.6;
+  baseServicePriorities['cardiology'] = 0.6;
+  baseServicePriorities['orthopedics'] = 0.7;
+  baseServicePriorities['biokineticist'] = 0.6;
+  baseServicePriorities['pain-management'] = 0.7;
+  baseServicePriorities['endocrinology'] = 0.6;
   
   // Adjust service priorities based on user preferences
-  const servicePriorities = { ...baseServicePriorities };
+  const servicePriorities = {...baseServicePriorities};
   preferredServices.forEach(service => {
     servicePriorities[service] = Math.min((servicePriorities[service] || 0.5) + 0.2, 1.0);
   });
@@ -282,36 +297,8 @@ export function optimizeServiceAllocation(
 }> {
   console.log("Optimizing service allocation for budget:", budget);
   
-  // Base costs per session for each service type
-  const baseCosts: Record<ServiceCategory, number> = {
-    'dietician': 500,
-    'personal-trainer': 400,
-    'physiotherapist': 600,
-    'coaching': 400,
-    'family-medicine': 500,
-    'biokineticist': 600,
-    'internal-medicine': 800,
-    'cardiology': 900,
-    'dermatology': 700,
-    'orthopedics': 800,
-    'neurology': 900,
-    'gastroenterology': 700,
-    'psychiatry': 900,
-    'endocrinology': 800,
-    'pain-management': 700,
-    'pediatrics': 600,
-    'obstetrics-gynecology': 800,
-    'emergency-medicine': 1500,
-    'anesthesiology': 1200,
-    'urology': 800,
-    'oncology': 1000,
-    'neurosurgery': 1800,
-    'infectious-disease': 800,
-    'radiology': 700,
-    'geriatric-medicine': 700,
-    'plastic-surgery': 1500,
-    'rheumatology': 800,
-  };
+  // Base costs per session for each service type - using BASELINE_COSTS for complete typing
+  const baseCosts = {...BASELINE_COSTS};
   
   // Calculate total priority score for normalization
   const filteredServices = services.filter(s => priorities[s] > 0);
