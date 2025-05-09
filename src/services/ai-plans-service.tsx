@@ -1,6 +1,5 @@
-
 import { useState, useCallback } from "react";
-import { AIHealthPlan } from "@/types";
+import { AIHealthPlan, ServiceCategory } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { generateCustomAIPlans } from "@/utils/aiPlanGenerator";
 import { generateProfessionalRecommendations } from "@/utils/planGenerator/professionalRecommendation";
@@ -64,7 +63,7 @@ export function useAIPlansService() {
   const buildPlanForBudget = (params: {
     query: string, 
     primaryCondition: string, 
-    services: string[], 
+    services: ServiceCategory[], 
     budget: number, 
     timeframeWeeks: number, 
     isStrictBudget: boolean, 
@@ -112,7 +111,12 @@ export function useAIPlansService() {
 
     // Step 6: Extract primary condition and services
     const primaryCondition = recommendations[0].primaryCondition || symptoms[0] || "general health";
-    const services = recommendations.map(rec => rec.category).slice(0, 3); // Take top 3 recommendations
+    
+    // Fix: Cast the categories to ServiceCategory explicitly
+    // This addresses the TypeScript error by ensuring we're working with the correct type
+    const services = recommendations
+      .map(rec => rec.category as ServiceCategory)
+      .slice(0, 3); // Take top 3 recommendations
 
     // Step 7: Build multidisciplinary plans for different budget tiers
     const plans: AIHealthPlan[] = [];
