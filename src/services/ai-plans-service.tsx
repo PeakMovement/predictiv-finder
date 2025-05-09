@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { AIHealthPlan, ServiceCategory } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -5,8 +6,9 @@ import { detectComprehensiveSymptoms } from "@/utils/planGenerator/detectors/com
 import { matchServicesToSymptoms } from "@/utils/planGenerator/serviceMatching/enhancedServiceMatcher";
 import { generateBudgetTiers, optimizeServiceAllocation } from "@/utils/planGenerator/budgetHandling/enhancedBudgetHandler";
 import { detectTimeframes, extractGoalTimeframe } from "@/utils/planGenerator/detectors/timeframeDetector";
-import { buildMultidisciplinaryPlan } from "@/utils/planGenerator/multidisciplinaryPlanBuilder";
+import { buildMultidisciplinaryPlan as importedBuildMultidisciplinaryPlan } from "@/utils/planGenerator/multidisciplinaryPlanBuilder";
 import { safePlanOperation, validateHealthPlanInput, PlanGenerationError, PlanGenerationErrorType } from "@/utils/planGenerator/errorHandling";
+import { BASELINE_COSTS } from "@/utils/planGenerator/types";
 
 // Constants for default values
 const DEFAULT_BUDGET = 2000;
@@ -90,7 +92,13 @@ export function useAIPlansService() {
                               "general health";
       
       // Build service priorities mapping
-      const servicePriorities: Record<ServiceCategory, number> = {};
+      // Create with all service categories to satisfy TypeScript
+      const servicePriorities = Object.keys(BASELINE_COSTS).reduce((acc, key) => {
+        acc[key as ServiceCategory] = 0;
+        return acc;
+      }, {} as Record<ServiceCategory, number>);
+      
+      // Update with actual service matches
       serviceMatches.forEach(match => {
         servicePriorities[match.category] = match.score;
       });
@@ -171,7 +179,7 @@ export function useAIPlansService() {
     urgencyLevel: number,
     tierName: string
   }) => {
-    const plan = buildMultidisciplinaryPlan({
+    const plan = createHealthPlan({
       input: params.query,
       primaryCondition: params.primaryCondition,
       services: params.services,
@@ -310,7 +318,7 @@ export function useAIPlansService() {
  * Helper function for multidisciplinaryPlanBuilder compatibility
  * Will be refactored in a future update
  */
-function buildMultidisciplinaryPlan(params: {
+function createHealthPlan(params: {
   input: string;
   primaryCondition: string;
   services: ServiceCategory[];
@@ -321,28 +329,44 @@ function buildMultidisciplinaryPlan(params: {
   goals: string[];
   urgencyLevel: number;
 }): AIHealthPlan {
+  // Try to use the imported function first
+  try {
+    return importedBuildMultidisciplinaryPlan(params);
+  } catch (error) {
+    console.error("Error using imported builder:", error);
+    // Fall back to local implementation
+  }
+
   // This is a temporary compatibility function that will be replaced with the enhanced plan builder
   const planName = generatePlanName(params.primaryCondition, params.services, params.budget);
+  
+  // Define max sessions mapping for all service categories
+  const maxSessions: Record<ServiceCategory, number> = Object.keys(BASELINE_COSTS).reduce((acc, key) => {
+    const serviceCategory = key as ServiceCategory;
+    const isHighBudget = params.budget > 2000;
+    
+    // Set default values for all categories
+    acc[serviceCategory] = isHighBudget ? 2 : 1;
+    
+    // Override values for specific categories
+    if (serviceCategory === 'personal-trainer') acc[serviceCategory] = isHighBudget ? 8 : 4;
+    if (serviceCategory === 'dietician') acc[serviceCategory] = isHighBudget ? 4 : 2;
+    if (serviceCategory === 'physiotherapist') acc[serviceCategory] = isHighBudget ? 6 : 3;
+    if (serviceCategory === 'family-medicine') acc[serviceCategory] = isHighBudget ? 2 : 1;
+    if (serviceCategory === 'coaching') acc[serviceCategory] = isHighBudget ? 4 : 2; 
+    if (serviceCategory === 'psychiatry') acc[serviceCategory] = isHighBudget ? 3 : 2;
+    if (serviceCategory === 'biokineticist') acc[serviceCategory] = isHighBudget ? 3 : 2;
+    if (serviceCategory === 'pain-management') acc[serviceCategory] = isHighBudget ? 3 : 2;
+    
+    return acc;
+  }, {} as Record<ServiceCategory, number>);
   
   // Generate services based on optimized allocation
   const allocations = optimizeServiceAllocation(
     params.budget, 
     params.services,
     params.servicePriorities,
-    {
-      'personal-trainer': params.budget > 2000 ? 8 : 4,
-      'dietician': params.budget > 2000 ? 4 : 2,
-      'physiotherapist': params.budget > 2000 ? 6 : 3,
-      'family-medicine': params.budget > 2000 ? 2 : 1,
-      'coaching': params.budget > 2000 ? 4 : 2,
-      'psychiatry': params.budget > 2000 ? 3 : 2,
-      'gastroenterology': params.budget > 2000 ? 2 : 1,
-      'cardiology': params.budget > 2000 ? 2 : 1,
-      'orthopedics': params.budget > 2000 ? 2 : 1,
-      'biokineticist': params.budget > 2000 ? 3 : 2,
-      'pain-management': params.budget > 2000 ? 3 : 2,
-      'endocrinology': params.budget > 2000 ? 2 : 1
-    },
+    maxSessions,
     params.isStrictBudget
   );
   
@@ -405,7 +429,20 @@ function generatePlanName(primaryCondition: string, services: ServiceCategory[],
  * Generates a service description based on service type and context
  */
 function generateServiceDescription(type: ServiceCategory, condition: string, isPremium: boolean): string {
-  const baseDescriptions: Record<ServiceCategory, { standard: string, premium: string }> = {
+  // Create a complete mapping for all service categories
+  const allCategories = Object.keys(BASELINE_COSTS) as ServiceCategory[];
+  
+  // Create base descriptions with default values for all categories
+  const baseDescriptions = allCategories.reduce((acc, category) => {
+    acc[category] = {
+      standard: "Professional healthcare service",
+      premium: "Premium professional healthcare service"
+    };
+    return acc;
+  }, {} as Record<ServiceCategory, { standard: string, premium: string }>);
+  
+  // Override with specific descriptions for common categories
+  Object.assign(baseDescriptions, {
     'personal-trainer': {
       standard: "Guided exercise sessions tailored to your fitness level",
       premium: "Personalized training program with advanced exercise techniques"
@@ -433,12 +470,19 @@ function generateServiceDescription(type: ServiceCategory, condition: string, is
     'gastroenterology': {
       standard: "Digestive health assessment and treatment recommendations",
       premium: "Specialized gastrointestinal evaluation and management plan"
+    },
+    'biokineticist': {
+      standard: "Movement assessment and personalized exercise plan",
+      premium: "Advanced biomechanical analysis with personalized corrective program"
+    },
+    'pain-management': {
+      standard: "Pain assessment and relief strategies",
+      premium: "Comprehensive pain management program with integrated techniques"
     }
-  };
+  });
   
   // Get base description based on service type and premium level
-  const baseDescription = baseDescriptions[type]?.[isPremium ? 'premium' : 'standard'] || 
-    (isPremium ? "Premium specialized healthcare service" : "Standard healthcare service");
+  const baseDescription = baseDescriptions[type][isPremium ? 'premium' : 'standard'];
   
   // Customize further based on condition
   if (condition.includes("knee") && type === 'physiotherapist') {
@@ -503,3 +547,4 @@ function generatePlanDescription(condition: string, goals: string[], budget: num
   
   return description;
 }
+
