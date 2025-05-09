@@ -1,5 +1,4 @@
-
-import { ServiceCategory } from "./planGenerator/types";
+import { ServiceCategory } from "@/utils/planGenerator/types";
 
 /**
  * Utility functions for validating user inputs throughout the application
@@ -369,10 +368,22 @@ export function getFallbackServices(
   userConditions: string[]
 ): { alternatives: Record<ServiceCategory, ServiceCategory[]>; explanation: string } {
   // Initialize the alternatives record with empty arrays for all service categories
-  const alternatives = Object.values(ServiceCategory).reduce((acc, category) => {
-    acc[category as ServiceCategory] = [];
-    return acc;
-  }, {} as Record<ServiceCategory, ServiceCategory[]>);
+  const alternatives: Record<ServiceCategory, ServiceCategory[]> = {} as Record<ServiceCategory, ServiceCategory[]>;
+  const serviceCategories: ServiceCategory[] = [
+    'physiotherapist', 'biokineticist', 'dietician', 'personal-trainer', 'pain-management',
+    'coaching', 'psychology', 'psychiatry', 'podiatrist', 'general-practitioner',
+    'sport-physician', 'orthopedic-surgeon', 'family-medicine', 'gastroenterology',
+    'massage-therapy', 'nutrition-coach', 'occupational-therapy', 'physical-therapy',
+    'chiropractor', 'nurse-practitioner', 'cardiology', 'dermatology', 'neurology',
+    'endocrinology', 'urology', 'oncology', 'rheumatology', 'pediatrics', 'geriatrics',
+    'sports-medicine', 'internal-medicine', 'orthopedics', 'neurosurgery', 
+    'infectious-disease', 'plastic-surgery', 'obstetrics-gynecology', 'emergency-medicine',
+    'anesthesiology', 'radiology', 'geriatric-medicine', 'all'
+  ];
+  
+  serviceCategories.forEach(category => {
+    alternatives[category] = [];
+  });
   
   let explanation = "Some of your preferred services may not be available. Here are alternatives:";
   
@@ -382,7 +393,6 @@ export function getFallbackServices(
     'biokineticist': ['physiotherapist', 'personal-trainer'],
     'personal-trainer': ['biokineticist', 'coaching'],
     'dietician': ['coaching', 'nutrition-coach'],
-    'nutritionist': ['dietician', 'coaching'] as ServiceCategory[],
     'coaching': ['personal-trainer', 'psychology'],
     'psychology': ['psychiatry', 'coaching'],
     'psychiatry': ['psychology', 'coaching'],

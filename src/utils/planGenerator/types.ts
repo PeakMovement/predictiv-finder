@@ -1,4 +1,5 @@
 
+// Define ServiceCategory as a string enum equivalent for better type safety
 export type ServiceCategory =
   | 'physiotherapist'
   | 'biokineticist'
@@ -139,6 +140,11 @@ export interface PlanContext {
   serviceCategories: ServiceCategory[];
   categoryPriorities: Record<ServiceCategory, number>;
   preferredPractitioners?: string[];
+  budgetTier?: string; 
+  goal?: string;
+  medicalConditions?: string[];
+  location?: string;
+  preferOnline?: boolean;
 }
 
 // New interface for special group discounts

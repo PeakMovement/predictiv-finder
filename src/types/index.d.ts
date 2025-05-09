@@ -1,5 +1,5 @@
 
-// We'll import ServiceCategory from planGenerator/types to avoid duplication
+// Import ServiceCategory from planGenerator/types to use the same definition
 import { ServiceCategory } from "../utils/planGenerator/types";
 export { ServiceCategory };
 

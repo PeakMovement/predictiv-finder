@@ -1,6 +1,6 @@
 
-import { AIHealthPlan, Practitioner } from "@/types";
-import { ServiceCategory, OptimizedService } from "@/utils/planGenerator/types";
+import { AIHealthPlan, Practitioner, ServiceCategory } from "@/types";
+import { OptimizedService } from "@/utils/planGenerator/types";
 import { getMockPractitioners } from "./mockData";
 import { generateUniqueId } from "@/utils/idGenerator";
 
@@ -43,9 +43,11 @@ export function buildHealthPlan(
   }
   
   // Generate a default description if none provided
-  // Fix the type issue by mapping to an array properly
   const serviceTypes = services.map(s => s.type);
-  const serviceTypeNames = serviceTypes.map(type => type.replace(/-/g, ' ')).join(', ');
+  // Convert array to string first
+  const serviceTypeNames = Array.isArray(serviceTypes) ? 
+    serviceTypes.map(type => String(type).replace(/-/g, ' ')).join(', ') : 
+    String(serviceTypes).replace(/-/g, ' ');
   
   const description = options.description || 
     `A ${options.timeFrame} health plan designed to address your specific needs with a combination of ${serviceTypeNames}.`;
@@ -115,7 +117,7 @@ export function buildHealthPlan(
  * Generate a descriptive text for a service based on type and session count
  */
 function getServiceDescription(type: ServiceCategory, sessions: number): string {
-  const descriptions: Record<ServiceCategory, (sessions: number) => string> = {
+  const descriptions: Record<string, (sessions: number) => string> = {
     'physiotherapist': (sessions) => 
       `${sessions} sessions with a qualified physiotherapist to assess, treat, and rehabilitate physical conditions through specialized techniques.`,
     
@@ -243,5 +245,5 @@ function getServiceDescription(type: ServiceCategory, sessions: number): string 
   
   return descriptions[type] 
     ? descriptions[type](sessions) 
-    : `${sessions} sessions with a ${type.replace(/-/g, ' ')} specialist tailored to your specific health needs.`;
+    : `${sessions} sessions with a ${String(type).replace(/-/g, ' ')} specialist tailored to your specific health needs.`;
 }
