@@ -1,11 +1,28 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AIHealthPlan, ServiceCategory } from '@/types';
 import { PRACTITIONERS } from '@/data/mockData';
 import { addDays, format } from 'date-fns';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from '@/hooks/use-toast';
 
 interface PlanDetailsViewProps {
   plan: AIHealthPlan;
@@ -23,6 +40,12 @@ interface TreatmentSession {
 }
 
 const PlanDetailsView: React.FC<PlanDetailsViewProps> = ({ plan, userQuery, onBack }) => {
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const { toast } = useToast();
+
   // Generate a realistic timeline based on the plan
   const generateTreatmentTimeline = (plan: AIHealthPlan): TreatmentSession[] => {
     const timeline: TreatmentSession[] = [];
@@ -140,6 +163,38 @@ const PlanDetailsView: React.FC<PlanDetailsViewProps> = ({ plan, userQuery, onBa
   };
   
   const expectedResultsDate = getExpectedResultsDate();
+
+  // Available time slots for booking
+  const timeSlots = [
+    "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"
+  ];
+
+  // Handle booking confirmation
+  const handleConfirmBooking = () => {
+    if (!selectedService || !selectedDate || !selectedTime) {
+      toast({
+        title: "Missing information",
+        description: "Please select a service, date and time to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Here we would normally send the booking to an API
+    toast({
+      title: "Booking confirmed!",
+      description: `Your ${selectedService} appointment is scheduled for ${format(selectedDate, 'EEEE, MMMM dd, yyyy')} at ${selectedTime}.`,
+    });
+    setBookingOpen(false);
+  };
+
+  // Reset booking form when dialog is opened
+  const handleOpenBooking = () => {
+    setSelectedService(plan.services[0]?.type || null);
+    setSelectedDate(new Date());
+    setSelectedTime(null);
+    setBookingOpen(true);
+  };
   
   return (
     <motion.div
@@ -277,13 +332,99 @@ const PlanDetailsView: React.FC<PlanDetailsViewProps> = ({ plan, userQuery, onBa
       
       <div className="mt-8 flex justify-center">
         <Button 
-          onClick={() => alert('In a complete app, this would take you to payment and scheduling.')} 
+          onClick={handleOpenBooking}
           className="bg-health-purple hover:bg-health-purple-dark"
           size="lg"
         >
           Confirm & Book This Plan
         </Button>
       </div>
+
+      {/* Booking Dialog */}
+      <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Book Your First Appointment</DialogTitle>
+            <DialogDescription>
+              Select which specialist you'd like to see first, and choose a convenient date and time.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <div className="space-y-2">
+              <label htmlFor="service" className="text-sm font-medium">
+                Select a Service
+              </label>
+              <Select
+                value={selectedService || ""}
+                onValueChange={setSelectedService}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Choose a service" />
+                </SelectTrigger>
+                <SelectContent>
+                  {plan.services.map((service) => (
+                    <SelectItem key={service.type} value={service.type}>
+                      {service.type.replace('-', ' ')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Select a Date
+              </label>
+              <div className="border rounded-md p-1">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  disabled={(date) => {
+                    // Disable past dates and weekends
+                    return (
+                      date < new Date(new Date().setHours(0, 0, 0, 0)) ||
+                      date.getDay() === 0 ||
+                      date.getDay() === 6
+                    );
+                  }}
+                  initialFocus
+                  className="rounded-md border pointer-events-auto"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Select a Time
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {timeSlots.map((time) => (
+                  <Button
+                    key={time}
+                    type="button"
+                    variant={selectedTime === time ? "default" : "outline"}
+                    onClick={() => setSelectedTime(time)}
+                    className="text-center"
+                  >
+                    {time}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBookingOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmBooking} className="bg-health-purple hover:bg-health-purple-dark">
+              Confirm Booking
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 };
