@@ -1,100 +1,71 @@
 
-import { PlanGenerationError, PlanGenerationErrorType } from "./planGenerationError";
-
 /**
  * Validates user input for health plan generation
- * @param query User input query string
- * @throws PlanGenerationError if validation fails
+ * @param input User input text
+ * @returns True if input is valid, throws error otherwise
  */
-export function validateHealthPlanInput(query: string): void {
-  if (!query || typeof query !== "string") {
-    throw new PlanGenerationError(
-      "Invalid input: Input must be a non-empty string",
-      PlanGenerationErrorType.INPUT_VALIDATION,
-      "Please enter your health needs to generate a plan."
-    );
+export function validateHealthPlanInput(input: string): boolean {
+  if (!input || input.trim() === '') {
+    throw new Error('Please provide some information about your health needs.');
   }
   
-  if (query.trim().length < 5) {
-    throw new PlanGenerationError(
-      "Input too short: Please provide more details",
-      PlanGenerationErrorType.INPUT_VALIDATION,
-      "Please provide more details about your health needs.",
-      { inputLength: query.trim().length },
-      [
-        "Describe your symptoms or health goals",
-        "Mention any specific conditions you're experiencing",
-        "Include your fitness goals and timeframe",
-        "Specify your budget constraints if any"
-      ]
-    );
+  if (input.length < 10) {
+    throw new Error('Please provide more information about your health concerns.');
   }
   
-  // Check for potential non-health related queries
-  const nonHealthKeywords = [
-    'weather', 'stock', 'news', 'political', 'game', 'movie', 'covid', 
-    'election', 'bitcoin', 'crypto', 'sports'
-  ];
-  
-  const queryLower = query.toLowerCase();
-  const matchedKeywords = nonHealthKeywords.filter(keyword => queryLower.includes(keyword));
-  
-  if (matchedKeywords.length > 0 && !queryLower.includes('health') && !queryLower.includes('pain') && 
-      !queryLower.includes('doctor') && !queryLower.includes('diet')) {
-    throw new PlanGenerationError(
-      `Input may not be health-related: Contains keywords [${matchedKeywords.join(', ')}]`,
-      PlanGenerationErrorType.INPUT_VALIDATION,
-      "Your query doesn't appear to be health-related. Please describe your health needs or goals.",
-      { matchedKeywords },
-      ["Focus on your health symptoms or fitness goals", "Describe what you want to achieve with your health"]
-    );
+  if (input.length > 3000) {
+    throw new Error('Input exceeds maximum character limit. Please summarize your health needs.');
   }
+  
+  return true;
 }
 
 /**
- * Validates budget input
+ * Detects problematic input that may lead to inaccurate recommendations
+ * @param input User input text
+ * @returns Object containing validation results and improvement suggestions
  */
-export function validateBudgetInput(budget: any): number | undefined {
-  if (budget === undefined || budget === null) {
-    return undefined;
+export function detectLowQualityInput(input: string): {
+  isLowQuality: boolean;
+  suggestions: string[];
+  ambiguousTerms: string[];
+} {
+  const inputLower = input.toLowerCase();
+  const suggestions: string[] = [];
+  const ambiguousTerms: string[] = [];
+  
+  // Check for vague symptoms
+  const vagueTerms = ['pain', 'hurt', 'ache', 'bad', 'not good', 'issue', 'problem'];
+  const vagueDetected = vagueTerms.filter(term => inputLower.includes(term));
+  
+  if (vagueDetected.length > 0) {
+    suggestions.push('Be specific about where you experience pain or discomfort');
+    ambiguousTerms.push(...vagueDetected);
   }
   
-  // Try to convert to number if it's a string
-  const numBudget = typeof budget === 'string' ? parseFloat(budget) : budget;
-  
-  if (isNaN(numBudget) || typeof numBudget !== 'number') {
-    throw new PlanGenerationError(
-      "Invalid budget: Must be a number",
-      PlanGenerationErrorType.BUDGET_CALCULATION,
-      "Please provide a valid budget amount."
-    );
+  // Check for missing timeframe information
+  if (!inputLower.match(/\b(day|week|month|year|since|ago|for\s+\d+)\b/)) {
+    suggestions.push('Include information about how long you\'ve experienced these issues');
   }
   
-  if (numBudget < 0) {
-    throw new PlanGenerationError(
-      "Invalid budget: Cannot be negative",
-      PlanGenerationErrorType.BUDGET_CALCULATION,
-      "Budget amount cannot be negative."
-    );
+  // Check for missing severity indicators
+  if (!inputLower.match(/\b(mild|moderate|severe|intense|slight|bad|worse|better)\b/)) {
+    suggestions.push('Describe the severity of your symptoms');
   }
   
-  if (numBudget > 1000000) {
-    throw new PlanGenerationError(
-      "Invalid budget: Exceeds maximum allowed",
-      PlanGenerationErrorType.BUDGET_CALCULATION,
-      "The budget amount is unusually high. Please enter a more reasonable amount."
-    );
+  // Check for missing context
+  if (!inputLower.match(/\b(work|job|activity|exercise|sport|hobby|daily|routine)\b/)) {
+    suggestions.push('Mention how your symptoms affect your daily activities');
   }
   
-  return numBudget;
+  // Check for missing goals or desired outcomes
+  if (!inputLower.match(/\b(want|need|goal|aim|hope|improve|better|recover|heal)\b/)) {
+    suggestions.push('Include your health goals or what you want to achieve');
+  }
+  
+  return {
+    isLowQuality: suggestions.length > 2,
+    suggestions,
+    ambiguousTerms
+  };
 }
-
-/**
- * Exports all input validation functions
- */
-export const InputValidation = {
-  validateHealthPlanInput,
-  validateBudgetInput
-};
-
-export default InputValidation;

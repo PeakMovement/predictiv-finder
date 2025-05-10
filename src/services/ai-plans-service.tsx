@@ -8,6 +8,7 @@ import { detectTimeframes, extractGoalTimeframe } from "@/utils/planGenerator/de
 import { buildMultidisciplinaryPlan as importedBuildMultidisciplinaryPlan } from "@/utils/planGenerator/multidisciplinaryPlanBuilder";
 import { safePlanOperation, validateHealthPlanInput, PlanGenerationError, PlanGenerationErrorType } from "@/utils/planGenerator/errorHandling";
 import { BASELINE_COSTS } from "@/utils/planGenerator/types";
+import { matchProfessionalsEnhanced } from "@/utils/planGenerator/professionalRecommendation/enhancedMatcher";
 
 // Constants for default values
 const DEFAULT_BUDGET = 2000;
@@ -62,20 +63,21 @@ export function useAIPlansService() {
       const goals = goalKeywords.filter(goal => lowerQuery.includes(goal));
       if (!goals.length) goals.push("general wellness");
       
-      // Step 4: Enhanced service matching based on symptoms and goals
-      const serviceMatches = await safePlanOperation(
-        () => matchServicesToSymptoms(
+      // Step 4: Enhanced service matching with our new algorithm
+      const enhancedMatches = await safePlanOperation(
+        () => matchProfessionalsEnhanced(
+          symptomAnalysis.symptoms, // Using symptoms as conditions
           symptomAnalysis.symptoms,
-          symptomAnalysis.priorities,
           goals,
+          symptomAnalysis.priorities,
           undefined,
           isUrgent
         ),
         PlanGenerationErrorType.SERVICE_MATCHING,
-        "Service Matching"
+        "Enhanced Service Matching"
       );
       
-      if (!serviceMatches.length) {
+      if (!enhancedMatches.length) {
         throw new PlanGenerationError(
           "Failed to match services to user needs",
           PlanGenerationErrorType.SERVICE_MATCHING,
@@ -84,21 +86,22 @@ export function useAIPlansService() {
       }
       
       // Extract top services and their primary conditions
-      const topServices = serviceMatches.slice(0, 3).map(match => match.category);
-      const primaryCondition = serviceMatches[0].primaryCondition || 
+      const topServices = enhancedMatches.slice(0, 3).map(match => match.category);
+      const primaryCondition = enhancedMatches[0].primaryCondition || 
                               symptomAnalysis.primarySymptoms[0] ||
                               symptomAnalysis.symptoms[0] || 
                               "general health";
       
-      // Build service priorities mapping
-      // Create with all service categories to satisfy TypeScript
-      const servicePriorities = Object.keys(BASELINE_COSTS).reduce((acc, key) => {
-        acc[key as ServiceCategory] = 0;
-        return acc;
-      }, {} as Record<ServiceCategory, number>);
+      // Build service priorities mapping - properly initialize the record
+      const servicePriorities: Record<ServiceCategory, number> = {} as Record<ServiceCategory, number>;
+      
+      // Initialize all categories with zero
+      Object.keys(BASELINE_COSTS).forEach(key => {
+        servicePriorities[key as ServiceCategory] = 0;
+      });
       
       // Update with actual service matches
-      serviceMatches.forEach(match => {
+      enhancedMatches.forEach(match => {
         servicePriorities[match.category] = match.score;
       });
       
@@ -114,7 +117,7 @@ export function useAIPlansService() {
         effectiveTimeframe,
         isUrgent, 
         goals, 
-        serviceMatches,
+        enhancedMatches,
         topServices,
         primaryCondition,
         servicePriorities,

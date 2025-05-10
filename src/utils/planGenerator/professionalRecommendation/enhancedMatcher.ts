@@ -1,0 +1,513 @@
+
+import { ServiceCategory } from "../types";
+import { SYMPTOM_MAPPINGS } from "../symptomMappings";
+
+/**
+ * Enhanced interface for professional matching results
+ */
+export interface EnhancedMatchResult {
+  category: ServiceCategory;
+  score: number;
+  primaryCondition?: string;
+  matchReasons: string[];
+  relevance: "high" | "medium" | "low";
+}
+
+/**
+ * Enhanced professional matcher that uses contextual clues and semantic understanding
+ * to better match health professionals to user needs
+ * 
+ * @param conditions Array of detected conditions
+ * @param symptoms Array of symptoms
+ * @param goals User's goals
+ * @param severityScores Severity scores for conditions
+ * @param budget Available budget
+ * @param isUrgent Whether the condition is urgent
+ * @returns Array of matched professionals with scores and explanations
+ */
+export function matchProfessionalsEnhanced(
+  conditions: string[],
+  symptoms: string[],
+  goals: string[],
+  severityScores: Record<string, number>,
+  budget?: number,
+  isUrgent: boolean = false
+): EnhancedMatchResult[] {
+  const matches: Record<ServiceCategory, { 
+    score: number, 
+    reasons: string[], 
+    primaryCondition?: string 
+  }> = {};
+  
+  console.log("Enhanced matching with:", { conditions, symptoms, goals, budget, isUrgent });
+  
+  // Initialize with zero scores for all service categories
+  Object.values(ServiceCategory).forEach(category => {
+    matches[category as ServiceCategory] = { score: 0, reasons: [] };
+  });
+  
+  // 1. Match based on specific conditions
+  matchConditions(conditions, severityScores, matches);
+  
+  // 2. Match based on symptoms
+  matchSymptoms(symptoms, severityScores, matches);
+  
+  // 3. Apply goal-based adjustments
+  applyGoalAdjustments(goals, matches);
+  
+  // 4. Apply budget constraints if provided
+  if (budget !== undefined) {
+    applyBudgetAdjustments(budget, matches);
+  }
+  
+  // 5. Handle urgency factors
+  if (isUrgent) {
+    applyUrgencyAdjustments(matches);
+  }
+  
+  // 6. Apply multi-factor bonuses for comprehensive solutions
+  applyMultiFactorBonuses(conditions, symptoms, goals, matches);
+  
+  // Convert to sorted array of results
+  return Object.entries(matches)
+    .map(([category, data]): EnhancedMatchResult => ({
+      category: category as ServiceCategory,
+      score: data.score,
+      primaryCondition: data.primaryCondition,
+      matchReasons: data.reasons,
+      relevance: determineRelevance(data.score)
+    }))
+    .filter(match => match.score > 0)
+    .sort((a, b) => b.score - a.score);
+}
+
+/**
+ * Match conditions to professional categories
+ */
+function matchConditions(
+  conditions: string[],
+  severityScores: Record<string, number>,
+  matches: Record<ServiceCategory, { score: number, reasons: string[], primaryCondition?: string }>
+): void {
+  // Enhanced condition-to-service mappings with severity adjustments
+  const conditionMappings: Record<string, Array<{category: ServiceCategory, weight: number, primary?: boolean}>> = {
+    'back pain': [
+      { category: 'physiotherapist', weight: 0.9, primary: true },
+      { category: 'orthopedics', weight: 0.8 },
+      { category: 'pain-management', weight: 0.7 },
+      { category: 'biokineticist', weight: 0.6 }
+    ],
+    'knee pain': [
+      { category: 'physiotherapist', weight: 0.9, primary: true },
+      { category: 'orthopedics', weight: 0.8 },
+      { category: 'biokineticist', weight: 0.7 }
+    ],
+    'shoulder pain': [
+      { category: 'physiotherapist', weight: 0.9, primary: true },
+      { category: 'orthopedics', weight: 0.8 },
+      { category: 'biokineticist', weight: 0.7 }
+    ],
+    'neck pain': [
+      { category: 'physiotherapist', weight: 0.9, primary: true },
+      { category: 'biokineticist', weight: 0.7 },
+      { category: 'pain-management', weight: 0.7 }
+    ],
+    'weight loss': [
+      { category: 'dietician', weight: 0.9, primary: true },
+      { category: 'personal-trainer', weight: 0.8 },
+      { category: 'coaching', weight: 0.7 },
+      { category: 'endocrinology', weight: 0.6 }
+    ],
+    'insulin resistance': [
+      { category: 'dietician', weight: 0.9, primary: true },
+      { category: 'endocrinology', weight: 0.85 },
+      { category: 'family-medicine', weight: 0.7 }
+    ],
+    'diabetes': [
+      { category: 'endocrinology', weight: 0.9, primary: true },
+      { category: 'dietician', weight: 0.85 },
+      { category: 'family-medicine', weight: 0.75 }
+    ],
+    'fitness': [
+      { category: 'personal-trainer', weight: 0.9, primary: true },
+      { category: 'biokineticist', weight: 0.7 },
+      { category: 'coaching', weight: 0.6 }
+    ],
+    'strength training': [
+      { category: 'personal-trainer', weight: 0.9, primary: true },
+      { category: 'biokineticist', weight: 0.8 }
+    ],
+    'running': [
+      { category: 'personal-trainer', weight: 0.8, primary: true },
+      { category: 'coaching', weight: 0.8 },
+      { category: 'physiotherapist', weight: 0.6 }
+    ],
+    'bloating': [
+      { category: 'gastroenterology', weight: 0.9, primary: true },
+      { category: 'dietician', weight: 0.8 }
+    ],
+    'digestive issues': [
+      { category: 'gastroenterology', weight: 0.9, primary: true },
+      { category: 'dietician', weight: 0.8 }
+    ],
+    'fatigue': [
+      { category: 'family-medicine', weight: 0.8 },
+      { category: 'endocrinology', weight: 0.7 },
+      { category: 'dietician', weight: 0.6 }
+    ],
+    'poor concentration': [
+      { category: 'psychiatry', weight: 0.8 },
+      { category: 'family-medicine', weight: 0.7 }
+    ],
+    'anxiety': [
+      { category: 'psychiatry', weight: 0.9, primary: true },
+      { category: 'coaching', weight: 0.7 }
+    ],
+    'depression': [
+      { category: 'psychiatry', weight: 0.9, primary: true },
+      { category: 'coaching', weight: 0.6 }
+    ],
+    'stress': [
+      { category: 'psychiatry', weight: 0.8 },
+      { category: 'coaching', weight: 0.8 }
+    ],
+    'burnout': [
+      { category: 'psychiatry', weight: 0.8, primary: true },
+      { category: 'coaching', weight: 0.8 }
+    ],
+    'triathlon': [
+      { category: 'coaching', weight: 0.9, primary: true },
+      { category: 'personal-trainer', weight: 0.8 },
+      { category: 'biokineticist', weight: 0.7 }
+    ],
+    'hip pain': [
+      { category: 'physiotherapist', weight: 0.9, primary: true },
+      { category: 'orthopedics', weight: 0.8 },
+      { category: 'biokineticist', weight: 0.7 }
+    ],
+    'calf pain': [
+      { category: 'physiotherapist', weight: 0.9, primary: true },
+      { category: 'biokineticist', weight: 0.8 }
+    ],
+    'injury': [
+      { category: 'physiotherapist', weight: 0.9, primary: true },
+      { category: 'sports-medicine', weight: 0.8 }
+    ],
+    'recovery': [
+      { category: 'physiotherapist', weight: 0.8 },
+      { category: 'biokineticist', weight: 0.7 }
+    ]
+  };
+  
+  // Apply condition matching with severity adjustments
+  conditions.forEach(condition => {
+    const conditionLower = condition.toLowerCase();
+    const mappings = conditionMappings[conditionLower];
+    
+    if (mappings) {
+      const severity = severityScores[conditionLower] || 0.5;
+      
+      mappings.forEach(mapping => {
+        // Adjust weight based on severity
+        let adjustedWeight = mapping.weight;
+        if (severity > 0.7) {
+          // For high severity, boost medical professionals
+          if (['family-medicine', 'orthopedics', 'gastroenterology', 'psychiatry'].includes(mapping.category)) {
+            adjustedWeight *= 1.2;
+          }
+        }
+        
+        // Apply the score
+        matches[mapping.category].score += adjustedWeight;
+        matches[mapping.category].reasons.push(`Matches condition: ${condition}`);
+        
+        // Set as primary condition if marked as primary
+        if (mapping.primary && !matches[mapping.category].primaryCondition) {
+          matches[mapping.category].primaryCondition = condition;
+        }
+      });
+      
+      console.log(`Matched condition "${condition}" with severity ${severity}`);
+    }
+  });
+}
+
+/**
+ * Match symptoms to professional categories
+ */
+function matchSymptoms(
+  symptoms: string[],
+  severityScores: Record<string, number>,
+  matches: Record<ServiceCategory, { score: number, reasons: string[], primaryCondition?: string }>
+): void {
+  symptoms.forEach(symptom => {
+    const mapping = SYMPTOM_MAPPINGS[symptom.toLowerCase()];
+    
+    if (mapping) {
+      const severity = severityScores[symptom] || 0.5;
+      
+      // Add the primary category
+      const primaryCategory = mapping.primary;
+      matches[primaryCategory].score += 0.8 * (severity + 0.5); // Scale by severity
+      matches[primaryCategory].reasons.push(`Primary match for symptom: ${symptom}`);
+      
+      if (!matches[primaryCategory].primaryCondition) {
+        matches[primaryCategory].primaryCondition = symptom;
+      }
+      
+      // Add secondary categories with lower weights
+      (mapping.specialties || []).forEach(specialty => {
+        if (specialty !== primaryCategory) {
+          matches[specialty].score += 0.5 * (severity + 0.5);
+          matches[specialty].reasons.push(`Secondary match for symptom: ${symptom}`);
+        }
+      });
+      
+      // Tertiary connections
+      (mapping.secondary || []).forEach(secondary => {
+        matches[secondary].score += 0.3 * (severity + 0.5);
+        matches[secondary].reasons.push(`Complementary for symptom: ${symptom}`);
+      });
+      
+      console.log(`Matched symptom "${symptom}" with severity ${severity}`);
+    }
+  });
+}
+
+/**
+ * Apply goal-based adjustments to matches
+ */
+function applyGoalAdjustments(
+  goals: string[],
+  matches: Record<ServiceCategory, { score: number, reasons: string[], primaryCondition?: string }>
+): void {
+  // Goal to service category adjustments
+  const goalAdjustments: Record<string, Record<ServiceCategory, number>> = {
+    'weight loss': { 
+      'dietician': 0.8, 
+      'personal-trainer': 0.7, 
+      'coaching': 0.5, 
+      'endocrinology': 0.3
+    },
+    'strength': { 
+      'personal-trainer': 0.8, 
+      'biokineticist': 0.7 
+    },
+    'fitness': { 
+      'personal-trainer': 0.8, 
+      'coaching': 0.6, 
+      'biokineticist': 0.5 
+    },
+    'running': { 
+      'coaching': 0.8, 
+      'personal-trainer': 0.7, 
+      'physiotherapist': 0.4 
+    },
+    'training': { 
+      'personal-trainer': 0.7, 
+      'coaching': 0.6 
+    },
+    'motivation': { 
+      'coaching': 0.8, 
+      'personal-trainer': 0.5 
+    },
+    'nutrition': { 
+      'dietician': 0.8, 
+      'nutrition-coach': 0.6 
+    },
+    'recovery': { 
+      'physiotherapist': 0.7, 
+      'biokineticist': 0.6 
+    },
+    'triathlon': { 
+      'coaching': 0.8, 
+      'personal-trainer': 0.7, 
+      'sports-medicine': 0.6 
+    },
+    'lifestyle': { 
+      'coaching': 0.7, 
+      'dietician': 0.5, 
+      'personal-trainer': 0.5 
+    }
+  };
+  
+  goals.forEach(goal => {
+    const goalLower = goal.toLowerCase();
+    const adjustments = goalAdjustments[goalLower];
+    
+    if (adjustments) {
+      Object.entries(adjustments).forEach(([category, adjustment]) => {
+        matches[category as ServiceCategory].score += adjustment;
+        matches[category as ServiceCategory].reasons.push(`Matches goal: ${goal}`);
+      });
+      
+      console.log(`Applied adjustments for goal: ${goal}`);
+    }
+  });
+}
+
+/**
+ * Apply budget-based adjustments to matches
+ */
+function applyBudgetAdjustments(
+  budget: number,
+  matches: Record<ServiceCategory, { score: number, reasons: string[], primaryCondition?: string }>
+): void {
+  // Budget-sensitive adjustments
+  const budgetAdjustments: Record<string, number> = {};
+  
+  // For very tight budgets, adjust for cost-effectiveness
+  if (budget <= 1000) {
+    Object.assign(budgetAdjustments, {
+      'personal-trainer': 0.2,
+      'dietician': 0.3,
+      'family-medicine': 0.3,
+      'coaching': 0.2,
+      'endocrinology': -0.2,
+      'psychiatry': -0.2,
+      'orthopedics': -0.3,
+      'gastroenterology': -0.3,
+      'neurology': -0.3,
+      'cardiology': -0.3
+    });
+  } 
+  // For moderate budgets
+  else if (budget <= 2000) {
+    Object.assign(budgetAdjustments, {
+      'personal-trainer': 0.1,
+      'dietician': 0.1,
+      'family-medicine': 0.1,
+      'coaching': 0.1,
+      'physiotherapist': 0.1,
+      'endocrinology': -0.1,
+      'psychiatry': -0.1,
+      'orthopedics': -0.1
+    });
+  }
+  // Higher budgets can accommodate all services
+  
+  // Apply budget adjustments
+  Object.entries(budgetAdjustments).forEach(([category, adjustment]) => {
+    matches[category as ServiceCategory].score += adjustment;
+    
+    if (adjustment > 0) {
+      matches[category as ServiceCategory].reasons.push(`Budget-friendly option (${budget})`);
+    } else if (adjustment < 0) {
+      matches[category as ServiceCategory].reasons.push(`Less budget-optimal (${budget})`);
+    }
+  });
+  
+  console.log(`Applied budget adjustments for budget: ${budget}`);
+}
+
+/**
+ * Apply urgency-based adjustments to matches
+ */
+function applyUrgencyAdjustments(
+  matches: Record<ServiceCategory, { score: number, reasons: string[], primaryCondition?: string }>
+): void {
+  // For urgent cases, prioritize medical professionals
+  const urgentCategories: ServiceCategory[] = [
+    'family-medicine',
+    'orthopedics',
+    'emergency-medicine',
+    'pain-management',
+    'physiotherapist'
+  ];
+  
+  urgentCategories.forEach(category => {
+    matches[category].score += 0.3;
+    matches[category].reasons.push('Prioritized due to urgency');
+  });
+  
+  console.log('Applied urgency adjustments');
+}
+
+/**
+ * Apply multi-factor bonuses for comprehensive solutions
+ */
+function applyMultiFactorBonuses(
+  conditions: string[],
+  symptoms: string[],
+  goals: string[],
+  matches: Record<ServiceCategory, { score: number, reasons: string[], primaryCondition?: string }>
+): void {
+  // Special case bonuses for multi-factor situations
+  
+  // Case 1: Injured athlete (injury + performance goals)
+  const hasInjury = conditions.some(c => c.includes('injury') || c.includes('pain'));
+  const hasAthleteGoals = goals.some(g => 
+    g.includes('running') || g.includes('training') || g.includes('triathlon') || g.includes('strength')
+  );
+  
+  if (hasInjury && hasAthleteGoals) {
+    // Sports medicine and physiotherapist combo is ideal
+    matches['physiotherapist'].score += 0.2;
+    matches['sports-medicine'].score += 0.3;
+    matches['biokineticist'].score += 0.2;
+    
+    matches['physiotherapist'].reasons.push('Ideal for injured athlete');
+    matches['sports-medicine'].reasons.push('Specialized for athletic injuries');
+    matches['biokineticist'].reasons.push('Helpful for performance with injury');
+    
+    console.log('Applied injured athlete bonus');
+  }
+  
+  // Case 2: Weight management with metabolic issues
+  const hasWeightGoal = goals.some(g => g.includes('weight'));
+  const hasMetabolicIssue = conditions.some(c => 
+    c.includes('insulin') || c.includes('diabetes')
+  );
+  
+  if (hasWeightGoal && hasMetabolicIssue) {
+    // Dietician and endocrinology combo is ideal
+    matches['dietician'].score += 0.3;
+    matches['endocrinology'].score += 0.3;
+    
+    matches['dietician'].reasons.push('Essential for metabolic weight management');
+    matches['endocrinology'].reasons.push('Specialized for metabolic conditions');
+    
+    console.log('Applied metabolic weight management bonus');
+  }
+  
+  // Case 3: Chronic pain with burnout/stress
+  const hasPain = conditions.some(c => c.includes('pain'));
+  const hasStress = conditions.some(c => c.includes('stress') || c.includes('burnout'));
+  
+  if (hasPain && hasStress) {
+    matches['physiotherapist'].score += 0.2;
+    matches['coaching'].score += 0.2;
+    matches['psychiatry'].score += 0.1;
+    
+    matches['physiotherapist'].reasons.push('Primary for pain in stress context');
+    matches['coaching'].reasons.push('Helpful for managing pain-stress cycle');
+    matches['psychiatry'].reasons.push('May help with pain-related mental health');
+    
+    console.log('Applied pain-stress management bonus');
+  }
+  
+  // Case 4: Digestive issues with fatigue
+  const hasDigestive = symptoms.some(s => 
+    s.includes('bloat') || s.includes('stomach') || s.includes('digest')
+  );
+  const hasFatigue = symptoms.some(s => s.includes('fatigue') || s.includes('tired'));
+  
+  if (hasDigestive && hasFatigue) {
+    matches['gastroenterology'].score += 0.2;
+    matches['dietician'].score += 0.2;
+    
+    matches['gastroenterology'].reasons.push('Primary for digestive-fatigue issues');
+    matches['dietician'].reasons.push('Important for digestive health management');
+    
+    console.log('Applied digestive-fatigue bonus');
+  }
+}
+
+/**
+ * Determine relevance level based on score
+ */
+function determineRelevance(score: number): "high" | "medium" | "low" {
+  if (score >= 0.7) return "high";
+  if (score >= 0.4) return "medium";
+  return "low";
+}
