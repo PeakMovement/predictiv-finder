@@ -45,7 +45,7 @@ export function buildHealthPlan(
   // Generate a default description if none provided
   const serviceTypes = services.map(s => s.type);
   
-  // Convert array to string safely for description
+  // Convert serviceTypes array to string safely for description
   let serviceTypeNames = "";
   if (Array.isArray(serviceTypes)) {
     serviceTypeNames = serviceTypes
@@ -117,5 +117,36 @@ export function buildHealthPlan(
   return plan;
 }
 
-// Now let's move the large getServiceDescription function to a separate file
-import { getServiceDescription } from './serviceDescriptions';
+// Helper function for service descriptions
+function getServiceDescription(type: ServiceCategory, sessions: number): string {
+  const plural = sessions > 1 ? 's' : '';
+  
+  switch (type) {
+    case 'physiotherapist':
+      return `${sessions} physiotherapy session${plural} for assessment and treatment`;
+    case 'biokineticist':
+      return `${sessions} biokinetic session${plural} for movement assessment and rehabilitation`;
+    case 'dietician':
+      return `${sessions} dietician consultation${plural} for nutrition planning`;
+    case 'personal-trainer':
+      return `${sessions} personal training session${plural} for fitness coaching`;
+    case 'pain-management':
+      return `${sessions} pain management session${plural} for chronic pain relief`;
+    case 'coaching':
+      return `${sessions} coaching session${plural} for guidance and motivation`;
+    case 'psychology':
+      return `${sessions} psychology session${plural} for mental health support`;
+    case 'psychiatry':
+      return `${sessions} psychiatric consultation${plural} for mental health treatment`;
+    case 'podiatrist':
+      return `${sessions} podiatry session${plural} for foot and lower limb care`;
+    case 'general-practitioner':
+      return `${sessions} GP consultation${plural} for general health assessment`;
+    case 'sport-physician':
+      return `${sessions} sports medicine consultation${plural} for athletic health`;
+    case 'orthopedic-surgeon':
+      return `${sessions} orthopedic consultation${plural} for musculoskeletal assessment`;
+    default:
+      return `${sessions} ${String(type).replace('-', ' ')} session${plural}`;
+  }
+}

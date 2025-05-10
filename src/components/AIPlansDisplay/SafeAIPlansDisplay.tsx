@@ -3,8 +3,10 @@ import React, { useState } from 'react';
 import AIPlansDisplay from '@/components/AIPlansDisplay';
 import { AIHealthPlan } from '@/types';
 import { LoadingIndicator, ProgressBar } from '@/components/ui/loading-indicator';
-import { EnhancedErrorBoundary } from '@/components/enhanced-error-handling/EnhancedErrorBoundary';
+import { EnhancedErrorBoundary } from '@/components/enhanced-error-handling';
 import { PlanGenerationErrorFallback } from '@/components/enhanced-error-handling/PlanGenerationErrorFallback';
+import { PlanGenerationErrorHandler } from '@/components/enhanced-error-handling/PlanGenerationErrorHandler';
+import { isPlanGenerationError } from '@/utils/planGenerator/errorHandling';
 
 interface SafeAIPlansDisplayProps {
   plans: AIHealthPlan[];
@@ -21,6 +23,10 @@ const SafeAIPlansDisplay = (props: SafeAIPlansDisplayProps) => {
   const handleRetry = () => {
     setKey(prevKey => prevKey + 1); // Change key to remount error boundary
     props.onRetry?.(); // Call the parent retry handler if provided
+  };
+
+  const handleReset = () => {
+    setKey(prevKey => prevKey + 1); // Change key to remount error boundary
   };
 
   // If loading, show enhanced loading state
@@ -85,19 +91,34 @@ const SafeAIPlansDisplay = (props: SafeAIPlansDisplayProps) => {
   return (
     <EnhancedErrorBoundary
       key={key}
-      fallback={(error) => (
-        <PlanGenerationErrorFallback 
-          error={error}
-          onBack={props.onBack}
-          onRetry={handleRetry}
-          suggestions={[
-            "Try describing your health needs more specifically",
-            "Include details about your budget if possible",
-            "Mention any specific conditions you're experiencing",
-            "Specify your location for better practitioner matching"
-          ]}
-        />
-      )}
+      fallback={(error) => {
+        if (isPlanGenerationError(error)) {
+          // Use specialized error handler for plan generation errors
+          return (
+            <PlanGenerationErrorHandler
+              error={error}
+              resetError={handleReset}
+              onBack={props.onBack}
+              onRetry={handleRetry}
+            />
+          );
+        }
+        
+        // Use generic fallback for other errors
+        return (
+          <PlanGenerationErrorFallback 
+            error={error}
+            onBack={props.onBack}
+            onRetry={handleRetry}
+            suggestions={[
+              "Try describing your health needs more specifically",
+              "Include details about your budget if possible",
+              "Mention any specific conditions you're experiencing",
+              "Specify your location for better practitioner matching"
+            ]}
+          />
+        );
+      }}
       errorBoundaryKey={`ai-plans-${key}`}
     >
       <AIPlansDisplay {...props} />

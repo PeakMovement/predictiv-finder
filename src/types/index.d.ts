@@ -1,7 +1,7 @@
 
 // Import ServiceCategory from planGenerator/types to use the same definition
 import { ServiceCategory } from "../utils/planGenerator/types";
-export { ServiceCategory };
+export type { ServiceCategory };
 
 export type ServiceMode = 'online' | 'in-person' | 'both';
 
@@ -120,4 +120,25 @@ export interface CategorySelectionProps {
   onCategoryToggle: (category: ServiceCategory) => void;
   onContinue: (categories: ServiceCategory[]) => void;
   suggestedCategories?: ServiceCategory[];
+}
+
+// Explicitly export PlanContext type needed by planGenerator modules
+export interface PlanContext {
+  ageGroup?: 'child' | 'teen' | 'adult' | 'senior';
+  medicalConditions?: string[];
+  goal?: string;
+  budget?: number;
+  budgetTier?: string;
+  location?: string;
+  isUrgent?: boolean;
+  timeAvailability?: number;
+}
+
+// Explicitly export ServiceAllocation interface needed by planGenerator modules
+export interface ServiceAllocation {
+  type: ServiceCategory;
+  price: number;
+  sessions: number;
+  description: string;
+  frequency?: string;
 }

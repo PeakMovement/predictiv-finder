@@ -1,6 +1,6 @@
 
-import { PlanContext } from "@/types";
-import { ServiceCategory } from "../types";
+import { PlanContext } from "@/utils/planGenerator/types";
+import { ServiceCategory } from "@/utils/planGenerator/types";
 
 /**
  * Determines the type of plan based on user context and needs

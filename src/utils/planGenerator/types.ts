@@ -45,10 +45,7 @@ export type ServiceCategory =
   | 'geriatric-medicine'
   | 'all'; // Special case for filtering/selection
 
-// Re-export AIHealthPlan interface from types package for modules in this directory
-import { AIHealthPlan, ServiceMode, PlanContext, ServiceAllocation } from "@/types";
-export { AIHealthPlan, ServiceMode, PlanContext, ServiceAllocation };
-
+// Define shared types that are used across multiple modules
 export interface BaseCosts {
   [key: string]: number;
 }
@@ -182,4 +179,29 @@ export interface ServiceConfigurationByBudget {
     requiresDoctor: boolean;
     preferHighEnd: boolean;
   };
+}
+
+export interface PlanContext {
+  ageGroup?: 'child' | 'teen' | 'adult' | 'senior';
+  medicalConditions?: string[];
+  goal?: string;
+  budget?: number;
+  budgetTier?: string;
+  location?: string;
+  isUrgent?: boolean;
+  timeAvailability?: number;
+}
+
+export interface ServiceAllocation {
+  type: ServiceCategory;
+  price: number;
+  sessions: number;
+  description: string;
+  frequency?: string;
+}
+
+export interface SessionAllocation {
+  sessions: number;
+  costPerSession: number;
+  totalCost: number;
 }

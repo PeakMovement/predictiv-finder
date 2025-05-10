@@ -1,390 +1,187 @@
-import { AIHealthPlan, PlanContext, Practitioner, ServiceAllocation, ServiceCategory } from "@/types";
-import { PRACTITIONERS } from "@/data/mockData";
-import { COACHES } from "@/data/practitioners/coaches";
-import { CONDITION_TO_SERVICES } from "../serviceMappings";
-import { filterByLocation } from "../locationFilter";
-import { distributeSessionsByBudget } from "../sessionCalculator";
-import { generateServiceDescription } from "./serviceDescription";
 
-// Create a combined practitioners array that includes coaches
-const ALL_PRACTITIONERS = [...PRACTITIONERS, ...COACHES];
+import { PlanContext, ServiceAllocation, ServiceCategory, ServiceAllocationItem, SessionAllocation } from "@/utils/planGenerator/types";
+import { BASELINE_COSTS } from "@/utils/planGenerator/types";
 
 /**
- * Determines which services are required based on the user's context
+ * Determine required services based on user context
  */
 export const determineRequiredServices = (
   context: PlanContext,
-  allocations: ServiceAllocation[]
-): ServiceAllocation[] => {
-  let services: ServiceAllocation[] = [];
-
-  // Special case handling for combined conditions
-  const hasKneePainWithRace = context.medicalConditions?.some(c => 
-    c.toLowerCase().includes('knee') && c.toLowerCase().includes('pain')
-  ) && (
-    context.goal?.toLowerCase().includes('race') || 
-    context.goal?.toLowerCase().includes('run') ||
-    context.medicalConditions?.some(c => c.toLowerCase().includes('race preparation'))
-  );
-  
-  if (hasKneePainWithRace) {
-    console.log("Detected special case: knee pain with race preparation");
-    
-    // We need both physiotherapy and coaching for this case
-    const physiotherapy = allocations.find(a => a.type === 'physiotherapist');
-    const coaching = allocations.find(a => a.type === 'coaching');
-    const training = allocations.find(a => a.type === 'personal-trainer');
-    
-    if (physiotherapy) {
-      services.push({...physiotherapy, priority: 0.9}); // Slightly reduce priority to allow other services
-    }
-    
-    if (coaching) {
-      services.push({...coaching, priority: 1.0}); // Give coaching high priority for race prep
-    }
-    
-    if (training) {
-      services.push({...training, priority: 0.95}); // High priority for personal training
-    }
-    
-    // We can return early since we've handled this special case
-    return services;
+  allocations: ServiceAllocationItem[]
+): ServiceCategory[] => {
+  // Use allocations if provided, otherwise derive from context
+  if (allocations && allocations.length > 0) {
+    return allocations.map(item => item.type);
   }
   
-  // Special case for anxiety + nutrition + race preparation
-  const hasAnxietyNutritionRace = (
-    (context.goal?.toLowerCase().includes('anxiety') || context.medicalConditions?.some(c => c.toLowerCase().includes('anxiety'))) &&
-    (context.goal?.toLowerCase().includes('eat') || context.goal?.toLowerCase().includes('nutrition') || 
-     context.medicalConditions?.some(c => c.toLowerCase().includes('nutrition'))) &&
-    (context.goal?.toLowerCase().includes('race') || context.goal?.toLowerCase().includes('run') || 
-     context.medicalConditions?.some(c => c.toLowerCase().includes('race')))
-  );
+  // Basic service detection based on context
+  const services: ServiceCategory[] = [];
   
-  if (hasAnxietyNutritionRace) {
-    console.log("Detected special case: anxiety + nutrition + race preparation");
+  // Add general practitioner for medical conditions
+  if (context.medicalConditions && context.medicalConditions.length > 0) {
+    services.push('general-practitioner');
     
-    // We need dietician, coaching, and personal trainer
-    const dietician = allocations.find(a => a.type === 'dietician');
-    const coaching = allocations.find(a => a.type === 'coaching');
-    const training = allocations.find(a => a.type === 'personal-trainer');
+    // Check for specific conditions
+    const conditionsLower = context.medicalConditions.map(c => c.toLowerCase());
     
-    if (dietician) {
-      services.push({...dietician, priority: 1.0}); // Highest priority for nutrition
+    if (conditionsLower.some(c => c.includes('pain') || c.includes('injury'))) {
+      services.push('physiotherapist');
     }
     
-    if (coaching) {
-      services.push({...coaching, priority: 0.95}); // High priority for anxiety support
+    if (conditionsLower.some(c => c.includes('diet') || c.includes('nutrition') || c.includes('weight'))) {
+      services.push('dietician');
     }
     
-    if (training) {
-      services.push({...training, priority: 0.9}); // Also important for race prep
+    if (conditionsLower.some(c => c.includes('mental') || c.includes('anxiety') || c.includes('depression'))) {
+      services.push('psychology');
     }
-    
-    // We can return early since we've handled this special case
-    return services;
   }
-
-  // Handle other cases by checking goals and medical conditions
+  
+  // Add services based on goal
   if (context.goal) {
-    // If we have medical conditions, use those to determine services
-    if (context.medicalConditions?.length > 0) {
-      context.medicalConditions.forEach(condition => {
-        const conditionServices = CONDITION_TO_SERVICES[condition];
-        if (conditionServices) {
-          conditionServices.forEach(serviceType => {
-            const allocation = allocations.find(a => a.type === serviceType);
-            if (allocation && !services.some(s => s.type === serviceType)) {
-              services.push(allocation);
-            }
-          });
-        }
-      });
+    const goalLower = context.goal.toLowerCase();
+    
+    if (goalLower.includes('fitness') || goalLower.includes('strength')) {
+      services.push('personal-trainer');
     }
     
-    // If goal mentions specific keywords, add relevant services
-    if (context.goal.toLowerCase().includes('pain') || 
-        context.goal.toLowerCase().includes('injury')) {
-      const physiotherapy = allocations.find(a => a.type === 'physiotherapist');
-      if (physiotherapy && !services.some(s => s.type === 'physiotherapist')) {
-        services.push(physiotherapy);
-      }
+    if (goalLower.includes('running') || goalLower.includes('marathon')) {
+      services.push('personal-trainer');
+      services.push('biokineticist');
     }
     
-    if (context.goal.toLowerCase().includes('diet') || 
-        context.goal.toLowerCase().includes('nutrition') || 
-        context.goal.toLowerCase().includes('eat')) {
-      const dietician = allocations.find(a => a.type === 'dietician');
-      if (dietician && !services.some(s => s.type === 'dietician')) {
-        services.push(dietician);
-      }
+    if (goalLower.includes('diet') || goalLower.includes('nutrition')) {
+      services.push('dietician');
     }
-    
-    if (context.goal.toLowerCase().includes('train') || 
-        context.goal.toLowerCase().includes('exercise') || 
-        context.goal.toLowerCase().includes('fitness')) {
-      const trainer = allocations.find(a => a.type === 'personal-trainer');
-      if (trainer && !services.some(s => s.type === 'personal-trainer')) {
-        services.push(trainer);
-      }
-    }
-    
-    if (context.goal.toLowerCase().includes('anxiety') || 
-        context.goal.toLowerCase().includes('stress') || 
-        context.goal.toLowerCase().includes('mental')) {
-      const coaching = allocations.find(a => a.type === 'coaching');
-      if (coaching && !services.some(s => s.type === 'coaching')) {
-        services.push(coaching);
-      }
-    }
-    
-    // If race or running is mentioned, ensure proper coaching
-    if (context.goal.toLowerCase().includes('race') || 
-        context.goal.toLowerCase().includes('marathon') ||
-        context.goal.toLowerCase().includes('run')) {
-      const coaching = allocations.find(a => a.type === 'coaching');
-      const trainer = allocations.find(a => a.type === 'personal-trainer');
-      
-      if (coaching && !services.some(s => s.type === 'coaching')) {
-        services.push({...coaching, priority: 0.95}); // Higher priority for race preparation
-      }
-      
-      if (trainer && !services.some(s => s.type === 'personal-trainer')) {
-        services.push({...trainer, priority: 0.9});
-      }
-    }
-  }
-
-  // Handle other conditions and default cases
-  if (services.length === 0 && context.medicalConditions?.length > 0) {
-    context.medicalConditions.forEach(condition => {
-      const conditionServices = CONDITION_TO_SERVICES[condition];
-      if (conditionServices) {
-        conditionServices.forEach(serviceType => {
-          const allocation = allocations.find(a => a.type === serviceType);
-          if (allocation && !services.some(s => s.type === serviceType)) {
-            services.push(allocation);
-          }
-        });
-      }
-    });
-  }
-
-  // If no specific services were determined, use default allocations
-  if (services.length === 0) {
-    services = allocations;
   }
   
-  // Always include personal trainer for fitness/weight loss goals
-  if (context.goal?.toLowerCase().includes('weight') || 
-      context.goal?.toLowerCase().includes('tone') || 
-      context.goal?.toLowerCase().includes('fitness') ||
-      context.medicalConditions.includes('weight loss') ||
-      context.medicalConditions.includes('fitness goals')) {
-    
-    const hasPersonalTrainer = services.some(s => s.type === 'personal-trainer');
-    
-    if (!hasPersonalTrainer) {
-      const trainerAllocation = allocations.find(a => a.type === 'personal-trainer');
-      if (trainerAllocation) {
-        services.push(trainerAllocation);
-        console.log("Adding personal-trainer because of fitness/weight loss goals");
-      }
-    }
+  // Ensure at least one service is included
+  if (services.length === 0) {
+    services.push('general-practitioner');
   }
-
-  return services;
+  
+  // Return unique set of services
+  return Array.from(new Set(services));
 };
 
 /**
- * Allocates services based on requirements and budget
+ * Allocate services with proper sessions and costs
  */
 export const allocateServices = (
-  services: ServiceAllocation[],
+  services: ServiceCategory[],
   context: PlanContext
-): AIHealthPlan['services'] => {
-  const allocatedServices: AIHealthPlan['services'] = [];
+): ServiceAllocation[] => {
+  const allocatedServices: ServiceAllocation[] = [];
   
-  // Enhanced service distribution that ensures balanced allocation for multi-condition scenarios
-  let serviceDistribution = distributeSessionsByBudget(
-    context.budget,
-    services.map(s => ({ type: s.type, priority: s.priority }))
-  );
+  // Calculate base budget if available
+  const budget = context.budget || 5000;
+  const serviceCount = services.length;
+  const budgetPerService = budget / serviceCount;
+  
+  // Create a service allocation record for each service
+  services.forEach(serviceType => {
+    const baseCost = BASELINE_COSTS[serviceType];
+    const affordableSessions = Math.max(1, Math.floor(budgetPerService / baseCost));
+    
+    allocatedServices.push({
+      type: serviceType,
+      price: baseCost,
+      sessions: affordableSessions,
+      description: getServiceDescription(serviceType, affordableSessions)
+    });
+  });
+  
+  return allocatedServices;
+};
 
-  // Handle special cases and allocation
-  // Special cases - ensure coaching and physiotherapy get at least one session each
-  const hasKneePain = context.medicalConditions?.some(c => 
-    c.toLowerCase().includes('knee') && c.toLowerCase().includes('pain')
-  );
+/**
+ * Get appropriate description for a service
+ */
+const getServiceDescription = (type: ServiceCategory, sessions: number): string => {
+  const plural = sessions > 1 ? 's' : '';
   
-  const hasRacePrep = context.goal?.toLowerCase().includes('race') || 
-                      context.goal?.toLowerCase().includes('run') ||
-                      context.medicalConditions?.some(c => c.toLowerCase().includes('race preparation'));
-  
-  if (hasKneePain && hasRacePrep) {
-    // For very low budgets, make sure we have at least one session of each critical service
-    if (context.budget < 1000) {
-      // Get the minimum allocations we need
-      const hasPhysiotherapy = serviceDistribution['physiotherapist'] && serviceDistribution['physiotherapist'].sessions > 0;
-      const hasCoaching = serviceDistribution['coaching'] && serviceDistribution['coaching'].sessions > 0;
-      
-      // If we're missing critical services, override the distribution
-      if (!hasPhysiotherapy || !hasCoaching) {
-        // Calculate an affordable cost per session based on budget
-        const affordableSessionCost = Math.floor(context.budget / 2) - 50; // Leave a small buffer
-        
-        // Create a custom distribution
-        serviceDistribution = {
-          'physiotherapist': {
-            sessions: 1,
-            costPerSession: affordableSessionCost,
-            totalCost: affordableSessionCost
-          },
-          'coaching': {
-            sessions: 1,
-            costPerSession: affordableSessionCost,
-            totalCost: affordableSessionCost
-          }
-        };
-        
-        console.log("Applied special budget handling for knee pain + race preparation");
-      }
-    }
+  switch (type) {
+    case 'physiotherapist':
+      return `${sessions} physiotherapy session${plural} for assessment and treatment`;
+    case 'biokineticist':
+      return `${sessions} biokinetic session${plural} for movement assessment and rehabilitation`;
+    case 'dietician':
+      return `${sessions} dietician consultation${plural} for nutrition planning`;
+    case 'personal-trainer':
+      return `${sessions} personal training session${plural} for fitness coaching`;
+    case 'pain-management':
+      return `${sessions} pain management session${plural} for chronic pain relief`;
+    case 'coaching':
+      return `${sessions} coaching session${plural} for guidance and motivation`;
+    case 'psychology':
+      return `${sessions} psychology session${plural} for mental health support`;
+    case 'psychiatry':
+      return `${sessions} psychiatric consultation${plural} for mental health treatment`;
+    case 'podiatrist':
+      return `${sessions} podiatry session${plural} for foot and lower limb care`;
+    case 'general-practitioner':
+      return `${sessions} GP consultation${plural} for general health assessment`;
+    case 'sport-physician':
+      return `${sessions} sports medicine consultation${plural} for athletic health`;
+    case 'orthopedic-surgeon':
+      return `${sessions} orthopedic consultation${plural} for musculoskeletal assessment`;
+    case 'family-medicine':
+      return `${sessions} family medicine consultation${plural}`;
+    case 'gastroenterology':
+      return `${sessions} gastroenterology consultation${plural}`;
+    case 'massage-therapy':
+      return `${sessions} massage therapy session${plural}`;
+    case 'nutrition-coach':
+      return `${sessions} nutrition coaching session${plural}`;
+    case 'occupational-therapy':
+      return `${sessions} occupational therapy session${plural}`;
+    case 'physical-therapy':
+      return `${sessions} physical therapy session${plural}`;
+    case 'chiropractor':
+      return `${sessions} chiropractic adjustment${plural}`;
+    case 'nurse-practitioner':
+      return `${sessions} nurse practitioner consultation${plural}`;
+    default:
+      return `${sessions} ${type.replace('-', ' ')} session${plural}`;
   }
+};
+
+/**
+ * Calculate session allocations based on budget and services
+ */
+export const calculateServiceAllocations = (
+  budget: number,
+  services: ServiceCategory[]
+): Record<ServiceCategory, SessionAllocation> => {
+  const result: Partial<Record<ServiceCategory, SessionAllocation>> = {};
+  
+  // Simple allocation: divide budget equally
+  const serviceCount = services.length;
+  const budgetPerService = budget / serviceCount;
   
   services.forEach(service => {
-    const sessionAllocation = serviceDistribution[service.type];
-    if (!sessionAllocation) return;
-
-    let availablePractitioners = ALL_PRACTITIONERS.filter(p => 
-      p.serviceType === service.type
-    );
-
-    // Apply filters for location and online preference
-    if (context.location) {
-      availablePractitioners = filterByLocation(
-        availablePractitioners,
-        { 
-          location: context.location, 
-          radius: context.preferOnline ? 'anywhere' : 'nearby' 
-        }
-      );
-    }
-
-    // Add online preference filtering
-    if (context.preferOnline !== undefined) {
-      availablePractitioners = availablePractitioners.filter(p => 
-        p.isOnline === context.preferOnline
-      );
-    }
-
-    // More practitioner matching logic
-    // Enhanced matching - consider both goals and medical conditions
-    availablePractitioners = availablePractitioners.sort((a, b) => {
-      let aRelevance = 0;
-      let bRelevance = 0;
-      
-      // Check if practitioners have tags relevant to goal
-      if (context.goal) {
-        const goalLower = context.goal.toLowerCase();
-        
-        aRelevance += a.serviceTags.some(tag => 
-          goalLower.includes(tag.toLowerCase()) || tag.toLowerCase().includes('weight') || 
-          tag.toLowerCase().includes('tone') || tag.toLowerCase().includes('fitness')
-        ) ? 2 : 0;
-        
-        bRelevance += b.serviceTags.some(tag => 
-          goalLower.includes(tag.toLowerCase()) || tag.toLowerCase().includes('weight') || 
-          tag.toLowerCase().includes('tone') || tag.toLowerCase().includes('fitness')
-        ) ? 2 : 0;
-      }
-      
-      // Special case for knee pain + race prep
-      if (hasKneePain && hasRacePrep) {
-        if (service.type === 'physiotherapist') {
-          // Prioritize physiotherapists with running or knee specialties
-          aRelevance += a.serviceTags.some(tag => 
-            tag.toLowerCase().includes('run') || tag.toLowerCase().includes('knee') ||
-            tag.toLowerCase().includes('sports')
-          ) ? 3 : 0;
-          
-          bRelevance += b.serviceTags.some(tag => 
-            tag.toLowerCase().includes('run') || tag.toLowerCase().includes('knee') ||
-            tag.toLowerCase().includes('sports')
-          ) ? 3 : 0;
-        }
-        else if (service.type === 'coaching') {
-          // Prioritize coaches who can handle injuries
-          aRelevance += a.serviceTags.some(tag => 
-            tag.toLowerCase().includes('injury') || tag.toLowerCase().includes('rehab') ||
-            tag.toLowerCase().includes('recovery')
-          ) ? 3 : 0;
-          
-          bRelevance += b.serviceTags.some(tag => 
-            tag.toLowerCase().includes('injury') || tag.toLowerCase().includes('rehab') ||
-            tag.toLowerCase().includes('recovery')
-          ) ? 3 : 0;
-        }
-      }
-      
-      // Check for medical condition relevance
-      if (context.medicalConditions?.length) {
-        for (const condition of context.medicalConditions) {
-          const condLower = condition.toLowerCase();
-          
-          aRelevance += a.serviceTags.some(tag => 
-            condLower.includes(tag.toLowerCase()) || tag.toLowerCase().includes(condLower)
-          ) ? 1 : 0;
-          
-          bRelevance += b.serviceTags.some(tag => 
-            condLower.includes(tag.toLowerCase()) || tag.toLowerCase().includes(condLower)
-          ) ? 1 : 0;
-        }
-      }
-      
-      if (aRelevance !== bRelevance) return bRelevance - aRelevance;
-      
-      // If relevance is the same, sort by rating
-      return b.rating - a.rating;
-    });
-
-    // If we found practitioners for this service
-    if (availablePractitioners.length > 0) {
-      // Take the best matches
-      const recommendedPractitioners = availablePractitioners.slice(0, 3);
-      
-      allocatedServices.push({
-        type: service.type,
-        price: sessionAllocation.costPerSession,
-        sessions: sessionAllocation.sessions,
-        description: generateServiceDescription(
-          service.type, 
-          context.budgetTier === 'high',
-          hasKneePain && hasRacePrep,
-          context.medicalConditions
-        ),
-        recommendedPractitioners: recommendedPractitioners
-      });
-    } else {
-      // Even if we don't find exact matches, include the service with general practitioners
-      // Get practitioners of this service type, regardless of other filters
-      const generalPractitioners = ALL_PRACTITIONERS.filter(p => p.serviceType === service.type).slice(0, 3);
-      
-      if (generalPractitioners.length > 0) {
-        allocatedServices.push({
-          type: service.type,
-          price: sessionAllocation.costPerSession,
-          sessions: sessionAllocation.sessions,
-          description: generateServiceDescription(
-            service.type, 
-            context.budgetTier === 'high',
-            hasKneePain && hasRacePrep,
-            context.medicalConditions
-          ),
-          recommendedPractitioners: generalPractitioners
-        });
-      }
+    const baseCost = BASELINE_COSTS[service];
+    const affordableSessions = Math.max(1, Math.floor(budgetPerService / baseCost));
+    
+    result[service] = {
+      sessions: affordableSessions,
+      costPerSession: baseCost,
+      totalCost: baseCost * affordableSessions
+    };
+  });
+  
+  // Initialize all remaining services with 0 sessions
+  // This is needed to satisfy TypeScript's Record type requirement
+  const allServices = Object.keys(BASELINE_COSTS) as ServiceCategory[];
+  allServices.forEach(service => {
+    if (!result[service]) {
+      result[service] = {
+        sessions: 0,
+        costPerSession: BASELINE_COSTS[service],
+        totalCost: 0
+      };
     }
   });
-
-  return allocatedServices;
+  
+  return result as Record<ServiceCategory, SessionAllocation>;
 };
