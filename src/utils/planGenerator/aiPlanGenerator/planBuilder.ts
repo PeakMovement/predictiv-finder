@@ -1,154 +1,151 @@
+import { ServiceCategory } from "@/types";
+import { generatePlanName, generatePlanDescription } from "./planNaming";
+import { optimizeServiceAllocation } from "../budgetHandling/enhancedBudgetHandler";
+import { BASELINE_COSTS } from "../types";
 
-import { AIHealthPlan, ServiceCategory } from "@/types";
-import { OptimizedService } from "@/utils/planGenerator/types";
-import { getMockPractitioners } from "./mockData";
-import { generateUniqueId } from "@/utils/idGenerator";
+/**
+ * Builds a health plan based on service options, preferred services, and budget.
+ */
+function buildPlan(serviceOptions: any, preferredServices: ServiceCategory | ServiceCategory[], budget: number) {
+  // Convert string to array if needed
+  const services = Array.isArray(preferredServices) ? preferredServices : [preferredServices];
 
-interface PlanBuilderOptions {
-  planType: AIHealthPlan['planType'];
-  timeFrame: string;
-  description?: string;
-  customName?: string;
-  customTotalCost?: number;
-  includePractitioners?: boolean;
-  expectedOutcomes?: AIHealthPlan['expectedOutcomes'];
-  rationales?: AIHealthPlan['rationales'];
-  progressTimeline?: AIHealthPlan['progressTimeline'];
-  alternativeOptions?: AIHealthPlan['alternativeOptions'];
-}
+  const planName = generatePlanName(serviceOptions.primaryCondition, services, budget);
+  const planDescription = generatePlanDescription(serviceOptions.primaryCondition, serviceOptions.goals, budget);
 
-export function buildHealthPlan(
-  services: OptimizedService[],
-  options: PlanBuilderOptions
-): AIHealthPlan {
-  // Default name based on plan type
-  let planName = "";
-  switch (options.planType) {
-    case 'best-fit':
-      planName = "Balanced Health Plan";
-      break;
-    case 'high-impact':
-      planName = "Intensive Health Plan";
-      break;
-    case 'progressive':
-      planName = "Progressive Health Plan";
-      break;
-    default:
-      planName = "Customized Health Plan";
-  }
-  
-  // Use custom name if provided
-  if (options.customName) {
-    planName = options.customName;
-  }
-  
-  // Generate a default description if none provided
-  const serviceTypes = services.map(s => s.type);
-  
-  // Convert serviceTypes array to string safely for description
-  let serviceTypeNames = "";
-  if (Array.isArray(serviceTypes) && serviceTypes.length > 0) {
-    serviceTypeNames = serviceTypes
-      .map(type => String(type).replace(/-/g, ' '))
-      .join(', ');
-  } else {
-    serviceTypeNames = "professional services";
-  }
-  
-  const description = options.description || 
-    `A ${options.timeFrame} health plan designed to address your specific needs with a combination of ${serviceTypeNames}.`;
-  
-  // Calculate total cost or use provided cost
-  const totalCost = options.customTotalCost !== undefined
-    ? options.customTotalCost
-    : services.reduce((sum, service) => sum + service.totalCost, 0);
-  
-  // Get practitioners if needed
-  let enhancedServices = services.map(service => {
-    // Ensure frequency is present for all services
-    const frequency = service.frequency || "weekly";
-    
-    const planService = {
-      type: service.type,
-      price: service.costPerSession,
-      sessions: service.sessions,
-      description: getServiceDescription(service.type, service.sessions),
-      frequency: frequency
+  // Define max sessions mapping for all service categories
+  const maxSessions: Record<ServiceCategory, number> = Object.keys(BASELINE_COSTS).reduce((acc, key) => {
+    const serviceCategory = key as ServiceCategory;
+    const isHighBudget = budget > 2000;
+
+    // Set default values for all categories
+    acc[serviceCategory] = isHighBudget ? 2 : 1;
+
+    // Override values for specific categories
+    if (serviceCategory === 'personal-trainer') acc[serviceCategory] = isHighBudget ? 8 : 4;
+    if (serviceCategory === 'dietician') acc[serviceCategory] = isHighBudget ? 4 : 2;
+    if (serviceCategory === 'physiotherapist') acc[serviceCategory] = isHighBudget ? 6 : 3;
+    if (serviceCategory === 'family-medicine') acc[serviceCategory] = isHighBudget ? 2 : 1;
+    if (serviceCategory === 'coaching') acc[serviceCategory] = isHighBudget ? 4 : 2;
+    if (serviceCategory === 'psychiatry') acc[serviceCategory] = isHighBudget ? 3 : 2;
+    if (serviceCategory === 'biokineticist') acc[serviceCategory] = isHighBudget ? 3 : 2;
+    if (serviceCategory === 'pain-management') acc[serviceCategory] = isHighBudget ? 3 : 2;
+
+    return acc;
+  }, {} as Record<ServiceCategory, number>);
+
+  // Generate services based on optimized allocation
+  const allocations = optimizeServiceAllocation(
+    budget,
+    services,
+    serviceOptions.servicePriorities,
+    maxSessions,
+    serviceOptions.isStrictBudget
+  );
+
+  // Create services for the plan
+  const planServices = allocations.map(allocation => {
+    return {
+      type: allocation.type,
+      sessions: allocation.sessions,
+      price: allocation.costPerSession,
+      description: generateServiceDescription(allocation.type, serviceOptions.primaryCondition, budget > 2000)
     };
-    
-    // Add practitioners if needed
-    if (options.includePractitioners) {
-      const practitioners = getMockPractitioners(service.type, 2);
-      return {
-        ...planService,
-        recommendedPractitioners: practitioners
-      };
-    }
-    
-    return planService;
   });
-  
-  // Build the complete health plan
-  const plan: AIHealthPlan = {
-    id: generateUniqueId(),
+
+  // Calculate total cost
+  const totalCost = allocations.reduce((sum, allocation) => sum + allocation.totalCost, 0);
+
+  return {
+    id: `plan-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     name: planName,
-    description: description,
-    services: enhancedServices,
-    totalCost: totalCost,
-    planType: options.planType,
-    timeFrame: options.timeFrame
+    description: planDescription,
+    services: planServices,
+    totalCost,
+    planType: 'best-fit',
+    timeFrame: `${serviceOptions.timeframeWeeks} weeks`
   };
-  
-  // Add optional fields if provided
-  if (options.expectedOutcomes) {
-    plan.expectedOutcomes = options.expectedOutcomes;
-  }
-  
-  if (options.rationales) {
-    plan.rationales = options.rationales;
-  }
-  
-  if (options.progressTimeline) {
-    plan.progressTimeline = options.progressTimeline;
-  }
-  
-  if (options.alternativeOptions) {
-    plan.alternativeOptions = options.alternativeOptions;
-  }
-  
-  return plan;
 }
 
-// Helper function for service descriptions
-function getServiceDescription(type: ServiceCategory, sessions: number): string {
-  const plural = sessions > 1 ? 's' : '';
-  
-  switch (type) {
-    case 'physiotherapist':
-      return `${sessions} physiotherapy session${plural} for assessment and treatment`;
-    case 'biokineticist':
-      return `${sessions} biokinetic session${plural} for movement assessment and rehabilitation`;
-    case 'dietician':
-      return `${sessions} dietician consultation${plural} for nutrition planning`;
-    case 'personal-trainer':
-      return `${sessions} personal training session${plural} for fitness coaching`;
-    case 'pain-management':
-      return `${sessions} pain management session${plural} for chronic pain relief`;
-    case 'coaching':
-      return `${sessions} coaching session${plural} for guidance and motivation`;
-    case 'psychology':
-      return `${sessions} psychology session${plural} for mental health support`;
-    case 'psychiatry':
-      return `${sessions} psychiatric consultation${plural} for mental health treatment`;
-    case 'podiatrist':
-      return `${sessions} podiatry session${plural} for foot and lower limb care`;
-    case 'general-practitioner':
-      return `${sessions} GP consultation${plural} for general health assessment`;
-    case 'sport-physician':
-      return `${sessions} sports medicine consultation${plural} for athletic health`;
-    case 'orthopedic-surgeon':
-      return `${sessions} orthopedic consultation${plural} for musculoskeletal assessment`;
-    default:
-      return `${sessions} ${String(type).replace('-', ' ')} session${plural}`;
+/**
+ * Generates a service description based on service type and context
+ */
+function generateServiceDescription(type: ServiceCategory, condition: string, isPremium: boolean): string {
+  // Create a complete mapping for all service categories
+  const allCategories = Object.keys(BASELINE_COSTS) as ServiceCategory[];
+
+  // Create base descriptions with default values for all categories
+  const baseDescriptions = allCategories.reduce((acc, category) => {
+    acc[category] = {
+      standard: "Professional healthcare service",
+      premium: "Premium professional healthcare service"
+    };
+    return acc;
+  }, {} as Record<ServiceCategory, { standard: string, premium: string }>);
+
+  // Override with specific descriptions for common categories
+  Object.assign(baseDescriptions, {
+    'personal-trainer': {
+      standard: "Guided exercise sessions tailored to your fitness level",
+      premium: "Personalized training program with advanced exercise techniques"
+    },
+    'dietician': {
+      standard: "Nutritional guidance with meal planning support",
+      premium: "Comprehensive nutritional assessment with customized meal plans"
+    },
+    'physiotherapist': {
+      standard: "Focused treatment to improve movement and function",
+      premium: "Advanced rehabilitation with specialized manual techniques"
+    },
+    'coaching': {
+      standard: "Supportive guidance for achieving your health goals",
+      premium: "Strategic coaching with performance optimization techniques"
+    },
+    'psychiatry': {
+      standard: "Professional mental health support and treatment",
+      premium: "Comprehensive mental wellness program with personalized strategies"
+    },
+    'family-medicine': {
+      standard: "General healthcare consultation and basic assessment",
+      premium: "Thorough medical evaluation with ongoing monitoring"
+    },
+    'gastroenterology': {
+      standard: "Digestive health assessment and treatment recommendations",
+      premium: "Specialized gastrointestinal evaluation and management plan"
+    },
+    'biokineticist': {
+      standard: "Movement assessment and personalized exercise plan",
+      premium: "Advanced biomechanical analysis with personalized corrective program"
+    },
+    'pain-management': {
+      standard: "Pain assessment and relief strategies",
+      premium: "Comprehensive pain management program with integrated techniques"
+    }
+  });
+
+  // Get base description based on service type and premium level
+  const baseDescription = baseDescriptions[type][isPremium ? 'premium' : 'standard'];
+
+  // Customize further based on condition
+  if (condition.includes("knee") && type === 'physiotherapist') {
+    return isPremium ?
+      "Specialized knee rehabilitation with advanced techniques and progressive exercises" :
+      "Targeted knee therapy to improve movement and reduce pain";
+  } else if (condition.includes("back") && type === 'physiotherapist') {
+    return isPremium ?
+      "Comprehensive back assessment with specialized manual therapy and corrective exercises" :
+      "Back pain treatment with personalized exercises and techniques";
+  } else if (condition.includes("weight") && type === 'dietician') {
+    return isPremium ?
+      "Personalized weight management nutrition plan with detailed meal strategies" :
+      "Nutritional guidance focused on sustainable weight management";
+  } else if (condition.includes("race") && type === 'personal-trainer') {
+    return isPremium ?
+      "Specialized race preparation program with periodized training and performance analysis" :
+      "Structured training plans to prepare you for your upcoming race";
   }
+
+  return baseDescription;
 }
+
+export { buildPlan };
