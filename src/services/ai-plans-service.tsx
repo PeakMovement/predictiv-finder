@@ -231,6 +231,7 @@ export function useAIPlansService() {
           console.log(`Generating ${tier.name} tier plan with budget ${tier.budget}`);
           
           // Optimize service allocation within this budget tier
+          // Fix: Create a properly initialized service priorities object
           const defaultPriorities: Record<ServiceCategory, number> = {};
           Object.keys(BASELINE_COSTS).forEach(key => {
             defaultPriorities[key as ServiceCategory] = 0;
@@ -340,7 +341,12 @@ function createHealthPlan(params: {
 }): AIHealthPlan {
   // Try to use the imported function first
   try {
-    return importedBuildMultidisciplinaryPlan(params);
+    // Fix: Pass the correct number of arguments or use the correct function
+    return importedBuildMultidisciplinaryPlan(
+      params,
+      params.services,
+      params.budget
+    );
   } catch (error) {
     console.error("Error using imported builder:", error);
     // Fall back to local implementation

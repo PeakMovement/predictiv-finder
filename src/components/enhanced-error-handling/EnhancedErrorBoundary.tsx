@@ -67,11 +67,8 @@ export class EnhancedErrorBoundary extends Component<Props, State> {
       // If a custom fallback is provided
       if (this.props.fallback) {
         if (typeof this.props.fallback === 'function' && this.state.error) {
-          // Use createElement to fix the TypeScript error properly
-          return React.createElement(this.props.fallback, {
-            error: this.state.error,
-            reset: this.reset
-          });
+          // Fix: Call the function directly and return its result
+          return this.props.fallback(this.state.error, this.reset);
         }
         return this.props.fallback;
       }
