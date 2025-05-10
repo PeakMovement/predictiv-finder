@@ -1,4 +1,3 @@
-
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
@@ -67,10 +66,8 @@ export class EnhancedErrorBoundary extends Component<Props, State> {
       // If a custom fallback is provided
       if (this.props.fallback) {
         if (typeof this.props.fallback === 'function' && this.state.error) {
-          return (this.props.fallback as (error: Error, reset: () => void) => ReactNode)(
-            this.state.error, 
-            this.reset
-          );
+          // Cast to ReactNode to fix TypeScript error
+          return this.props.fallback(this.state.error, this.reset) as ReactNode;
         }
         return this.props.fallback;
       }

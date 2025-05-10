@@ -1,4 +1,15 @@
+
 import { ServiceCategory } from '@/types';
+
+/**
+ * Interface defining a group of related medical conditions
+ */
+interface ComorbidityGroup {
+  name: string;
+  conditions: string[];
+  recommendedServices: ServiceCategory[];
+  specialConsiderations?: string[];
+}
 
 /**
  * Common co-morbidity groups with their recommended service bundles

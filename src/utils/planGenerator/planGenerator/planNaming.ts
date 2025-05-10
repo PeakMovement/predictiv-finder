@@ -9,23 +9,14 @@ export function generatePlanName(context: PlanContext): string {
   if (!context) return "Custom Health Plan";
   
   // If primary condition is directly accessible
-  if (context.condition) {
-    const condition = context.condition;
-    
-    if (typeof condition === 'string') {
-      // Handle when condition is a simple string
-      return `${condition.charAt(0).toUpperCase() + condition.slice(1)} Health Plan`;
-    } else if (condition && typeof condition === 'object' && 'name' in condition) {
-      // Handle when condition is an object with a name property
-      const conditionName = condition.name;
-      return `${conditionName} Health Plan`;
-    }
+  if (context.medicalConditions && context.medicalConditions.length > 0) {
+    const condition = context.medicalConditions[0];
+    return `${condition.charAt(0).toUpperCase() + condition.slice(1)} Health Plan`;
   }
   
-  // Handle medical conditions array if available
-  if (context.medicalConditions && context.medicalConditions.length > 0) {
-    const primaryCondition = context.medicalConditions[0];
-    return `${primaryCondition.charAt(0).toUpperCase() + primaryCondition.slice(1)} Health Plan`;
+  // Handle goal if available
+  if (context.goal) {
+    return `${context.goal.charAt(0).toUpperCase() + context.goal.slice(1)} Plan`;
   }
   
   // Fallback to a generic name
@@ -40,19 +31,10 @@ export function generatePlanDescription(context: PlanContext): string {
   
   if (!context) return baseDescription;
   
-  // Check for condition in multiple places
-  let conditionName = '';
-  
-  if (context.condition) {
-    conditionName = typeof context.condition === 'string' 
-      ? context.condition
-      : (context.condition?.name || '');
-  } else if (context.medicalConditions && context.medicalConditions.length > 0) {
-    conditionName = context.medicalConditions[0];
-  }
-  
-  if (conditionName) {
-    return `${baseDescription} focusing on ${conditionName.toLowerCase()}.`;
+  // Check for medical conditions
+  if (context.medicalConditions && context.medicalConditions.length > 0) {
+    const condition = context.medicalConditions[0];
+    return `${baseDescription} focusing on ${condition.toLowerCase()}.`;
   }
   
   // If goal is available but no condition

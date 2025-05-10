@@ -127,7 +127,8 @@ export function useAIPlansService() {
         const message = error instanceof Error ? error.message : String(error);
         throw new PlanGenerationError(
           `Error analyzing user input: ${message}`,
-          PlanGenerationErrorType.UNEXPECTED
+          PlanGenerationErrorType.UNEXPECTED,
+          "An unexpected error occurred while analyzing your input."
         );
       }
     }

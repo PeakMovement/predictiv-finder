@@ -1,7 +1,6 @@
-
 import { ServiceCategory } from "@/types";
-import { generatePlanName } from "../../planGenerator/planStructure/planNaming";
-import { generatePlanDescription } from "../../planGenerator/planStructure/planNaming";
+import { generatePlanName } from "../../planGenerator/planGenerator/planNaming";
+import { generatePlanDescription } from "../../planGenerator/planGenerator/planNaming";
 import { optimizeServiceAllocation } from "../budgetHandling/enhancedBudgetHandler";
 import { BASELINE_COSTS } from "../types";
 
@@ -12,12 +11,17 @@ function buildPlan(serviceOptions: any, preferredServices: ServiceCategory | Ser
   // Convert string to array if needed
   const services = Array.isArray(preferredServices) ? preferredServices : [preferredServices];
 
-  const planName = generatePlanName(
-    'standard',
-    Array.isArray(serviceOptions.primaryCondition) ? serviceOptions.primaryCondition : [serviceOptions.primaryCondition], 
-    typeof serviceOptions.primaryCondition === 'string' ? serviceOptions.primaryCondition : undefined);
+  // Create a context object for the plan naming functions
+  const planContext = {
+    medicalConditions: Array.isArray(serviceOptions.primaryCondition) 
+      ? serviceOptions.primaryCondition 
+      : [serviceOptions.primaryCondition],
+    goal: typeof serviceOptions.goal === 'string' ? serviceOptions.goal : undefined,
+    budget: budget
+  };
 
-  const planDescription = `A personalized health plan designed for your specific needs focusing on ${serviceOptions.primaryCondition}.`;
+  const planName = generatePlanName(planContext);
+  const planDescription = generatePlanDescription(planContext);
 
   // Define max sessions mapping for all service categories
   const maxSessions: Record<ServiceCategory, number> = Object.keys(BASELINE_COSTS).reduce((acc, key) => {
