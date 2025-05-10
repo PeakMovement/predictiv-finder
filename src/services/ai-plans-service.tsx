@@ -234,7 +234,7 @@ export function useAIPlansService() {
           const serviceAllocations = optimizeServiceAllocation(
             tier.budget,
             analysis.topServices,
-            tier.servicePriorities,
+            tier.servicePriorities || {},
             tier.maxSessions,
             tier.isStrictBudget
           );

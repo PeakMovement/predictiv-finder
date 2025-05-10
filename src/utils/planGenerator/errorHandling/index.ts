@@ -14,6 +14,6 @@ export const validateHealthPlanInput = validateInput;
 export * from './serviceErrors';
 
 // Provide a convenience function for checking if an error is a PlanGenerationError
-export function isPlanGenerationError(error: any): error is PlanGenerationError {
+export function isPlanGenerationError(error: any): error is typeof PlanGenError {
   return error && error.name === 'PlanGenerationError';
 }
