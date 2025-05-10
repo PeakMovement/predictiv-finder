@@ -16,14 +16,6 @@ export interface EnhancedMatchResult {
 /**
  * Enhanced professional matcher that uses contextual clues and semantic understanding
  * to better match health professionals to user needs
- * 
- * @param conditions Array of detected conditions
- * @param symptoms Array of symptoms
- * @param goals User's goals
- * @param severityScores Severity scores for conditions
- * @param budget Available budget
- * @param isUrgent Whether the condition is urgent
- * @returns Array of matched professionals with scores and explanations
  */
 export function matchProfessionalsEnhanced(
   conditions: string[],
@@ -33,6 +25,7 @@ export function matchProfessionalsEnhanced(
   budget?: number,
   isUrgent: boolean = false
 ): EnhancedMatchResult[] {
+  // Initialize the matches record with all service categories
   const matches: Record<ServiceCategory, { 
     score: number, 
     reasons: string[], 
@@ -42,8 +35,22 @@ export function matchProfessionalsEnhanced(
   console.log("Enhanced matching with:", { conditions, symptoms, goals, budget, isUrgent });
   
   // Initialize with zero scores for all service categories
-  Object.values(ServiceCategory).forEach(category => {
-    matches[category as ServiceCategory] = { score: 0, reasons: [] };
+  // Fix: Use explicit initialization instead of Object.values(ServiceCategory)
+  const serviceCategories: ServiceCategory[] = [
+    'physiotherapist', 'biokineticist', 'dietician', 'personal-trainer',
+    'pain-management', 'coaching', 'psychology', 'psychiatry',
+    'podiatrist', 'general-practitioner', 'sport-physician', 'orthopedic-surgeon',
+    'family-medicine', 'gastroenterology', 'massage-therapy', 'nutrition-coach',
+    'occupational-therapy', 'physical-therapy', 'chiropractor', 'nurse-practitioner',
+    'cardiology', 'dermatology', 'neurology', 'endocrinology', 'urology', 'oncology',
+    'rheumatology', 'pediatrics', 'geriatrics', 'sports-medicine', 'internal-medicine',
+    'orthopedics', 'neurosurgery', 'infectious-disease', 'plastic-surgery',
+    'obstetrics-gynecology', 'emergency-medicine', 'anesthesiology', 'radiology',
+    'geriatric-medicine', 'all'
+  ];
+  
+  serviceCategories.forEach(category => {
+    matches[category] = { score: 0, reasons: [] };
   });
   
   // 1. Match based on specific conditions
@@ -282,7 +289,7 @@ function applyGoalAdjustments(
   matches: Record<ServiceCategory, { score: number, reasons: string[], primaryCondition?: string }>
 ): void {
   // Goal to service category adjustments
-  const goalAdjustments: Record<string, Record<ServiceCategory, number>> = {
+  const goalAdjustments: Record<string, Partial<Record<ServiceCategory, number>>> = {
     'weight loss': { 
       'dietician': 0.8, 
       'personal-trainer': 0.7, 
@@ -337,8 +344,11 @@ function applyGoalAdjustments(
     
     if (adjustments) {
       Object.entries(adjustments).forEach(([category, adjustment]) => {
-        matches[category as ServiceCategory].score += adjustment;
-        matches[category as ServiceCategory].reasons.push(`Matches goal: ${goal}`);
+        const serviceCategory = category as ServiceCategory;
+        if (matches[serviceCategory]) {
+          matches[serviceCategory].score += adjustment;
+          matches[serviceCategory].reasons.push(`Matches goal: ${goal}`);
+        }
       });
       
       console.log(`Applied adjustments for goal: ${goal}`);
@@ -354,46 +364,45 @@ function applyBudgetAdjustments(
   matches: Record<ServiceCategory, { score: number, reasons: string[], primaryCondition?: string }>
 ): void {
   // Budget-sensitive adjustments
-  const budgetAdjustments: Record<string, number> = {};
+  const budgetAdjustments: Partial<Record<ServiceCategory, number>> = {};
   
   // For very tight budgets, adjust for cost-effectiveness
   if (budget <= 1000) {
-    Object.assign(budgetAdjustments, {
-      'personal-trainer': 0.2,
-      'dietician': 0.3,
-      'family-medicine': 0.3,
-      'coaching': 0.2,
-      'endocrinology': -0.2,
-      'psychiatry': -0.2,
-      'orthopedics': -0.3,
-      'gastroenterology': -0.3,
-      'neurology': -0.3,
-      'cardiology': -0.3
-    });
+    // Type-safe assignment
+    budgetAdjustments['personal-trainer'] = 0.2;
+    budgetAdjustments['dietician'] = 0.3;
+    budgetAdjustments['family-medicine'] = 0.3;
+    budgetAdjustments['coaching'] = 0.2;
+    budgetAdjustments['endocrinology'] = -0.2;
+    budgetAdjustments['psychiatry'] = -0.2;
+    budgetAdjustments['orthopedics'] = -0.3;
+    budgetAdjustments['gastroenterology'] = -0.3;
+    budgetAdjustments['neurology'] = -0.3;
+    budgetAdjustments['cardiology'] = -0.3;
   } 
   // For moderate budgets
   else if (budget <= 2000) {
-    Object.assign(budgetAdjustments, {
-      'personal-trainer': 0.1,
-      'dietician': 0.1,
-      'family-medicine': 0.1,
-      'coaching': 0.1,
-      'physiotherapist': 0.1,
-      'endocrinology': -0.1,
-      'psychiatry': -0.1,
-      'orthopedics': -0.1
-    });
+    budgetAdjustments['personal-trainer'] = 0.1;
+    budgetAdjustments['dietician'] = 0.1;
+    budgetAdjustments['family-medicine'] = 0.1;
+    budgetAdjustments['coaching'] = 0.1;
+    budgetAdjustments['physiotherapist'] = 0.1;
+    budgetAdjustments['endocrinology'] = -0.1;
+    budgetAdjustments['psychiatry'] = -0.1;
+    budgetAdjustments['orthopedics'] = -0.1;
   }
-  // Higher budgets can accommodate all services
   
   // Apply budget adjustments
   Object.entries(budgetAdjustments).forEach(([category, adjustment]) => {
-    matches[category as ServiceCategory].score += adjustment;
-    
-    if (adjustment > 0) {
-      matches[category as ServiceCategory].reasons.push(`Budget-friendly option (${budget})`);
-    } else if (adjustment < 0) {
-      matches[category as ServiceCategory].reasons.push(`Less budget-optimal (${budget})`);
+    const serviceCategory = category as ServiceCategory;
+    if (matches[serviceCategory]) {
+      matches[serviceCategory].score += adjustment;
+      
+      if (adjustment > 0) {
+        matches[serviceCategory].reasons.push(`Budget-friendly option (${budget})`);
+      } else if (adjustment < 0) {
+        matches[serviceCategory].reasons.push(`Less budget-optimal (${budget})`);
+      }
     }
   });
   
@@ -416,8 +425,10 @@ function applyUrgencyAdjustments(
   ];
   
   urgentCategories.forEach(category => {
-    matches[category].score += 0.3;
-    matches[category].reasons.push('Prioritized due to urgency');
+    if (matches[category]) {
+      matches[category].score += 0.3;
+      matches[category].reasons.push('Prioritized due to urgency');
+    }
   });
   
   console.log('Applied urgency adjustments');

@@ -12,6 +12,7 @@ export enum PlanGenerationErrorType {
   PLAN_CREATION = "plan-creation",
   INPUT_VALIDATION = "input-validation",
   EXTERNAL_SERVICE = "external-service",
+  PRACTITIONER_MATCHING = "practitioner-matching", // Added missing type
 }
 
 /**

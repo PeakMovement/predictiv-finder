@@ -5,7 +5,7 @@ import { detectComprehensiveSymptoms } from "@/utils/planGenerator/detectors/com
 import { matchServicesToSymptoms } from "@/utils/planGenerator/serviceMatching/enhancedServiceMatcher";
 import { generateBudgetTiers, optimizeServiceAllocation } from "@/utils/planGenerator/budgetHandling/enhancedBudgetHandler";
 import { detectTimeframes, extractGoalTimeframe } from "@/utils/planGenerator/detectors/timeframeDetector";
-import { buildMultidisciplinaryPlan as importedBuildMultidisciplinaryPlan } from "@/utils/planGenerator/multidisciplinaryPlanBuilder";
+import { buildMultidisciplinaryPlan } from "@/utils/planGenerator/multidisciplinaryPlanBuilder";
 import { safePlanOperation, validateHealthPlanInput, PlanGenerationError, PlanGenerationErrorType } from "@/utils/planGenerator/errorHandling";
 import { BASELINE_COSTS } from "@/utils/planGenerator/types";
 import { matchProfessionalsEnhanced } from "@/utils/planGenerator/professionalRecommendation/enhancedMatcher";
@@ -96,8 +96,21 @@ export function useAIPlansService() {
       const servicePriorities: Record<ServiceCategory, number> = {} as Record<ServiceCategory, number>;
       
       // Initialize all categories with zero
-      Object.keys(BASELINE_COSTS).forEach(key => {
-        servicePriorities[key as ServiceCategory] = 0;
+      const serviceCategories: ServiceCategory[] = [
+        'physiotherapist', 'biokineticist', 'dietician', 'personal-trainer',
+        'pain-management', 'coaching', 'psychology', 'psychiatry', 'podiatrist',
+        'general-practitioner', 'sport-physician', 'orthopedic-surgeon',
+        'family-medicine', 'gastroenterology', 'massage-therapy', 'nutrition-coach',
+        'occupational-therapy', 'physical-therapy', 'chiropractor', 'nurse-practitioner',
+        'cardiology', 'dermatology', 'neurology', 'endocrinology', 'urology',
+        'oncology', 'rheumatology', 'pediatrics', 'geriatrics', 'sports-medicine',
+        'internal-medicine', 'orthopedics', 'neurosurgery', 'infectious-disease',
+        'plastic-surgery', 'obstetrics-gynecology', 'emergency-medicine',
+        'anesthesiology', 'radiology', 'geriatric-medicine', 'all'
+      ];
+      
+      serviceCategories.forEach(key => {
+        servicePriorities[key] = 0;
       });
       
       // Update with actual service matches
@@ -182,17 +195,17 @@ export function useAIPlansService() {
     urgencyLevel: number,
     tierName: string
   }) => {
-    const plan = createHealthPlan({
-      input: params.query,
-      primaryCondition: params.primaryCondition,
-      services: params.services,
-      servicePriorities: params.servicePriorities,
-      budget: params.budget,
-      timeframeWeeks: params.timeframeWeeks,
-      isStrictBudget: params.isStrictBudget,
-      goals: params.goals,
-      urgencyLevel: params.urgencyLevel
-    });
+    const plan = createHealthPlan(
+      params.query,
+      params.primaryCondition,
+      params.services,
+      params.servicePriorities,
+      params.budget,
+      params.timeframeWeeks,
+      params.isStrictBudget,
+      params.goals,
+      params.urgencyLevel
+    );
     
     if (params.tierName) {
       plan.name = `${params.tierName}: ${plan.name}`;
@@ -234,15 +247,28 @@ export function useAIPlansService() {
           console.log(`Generating ${tier.name} tier plan with budget ${tier.budget}`);
           
           // Optimize service allocation within this budget tier
-          // Fix: Create a properly initialized service priorities object
+          // Create a properly initialized service priorities object
+          const serviceCategories: ServiceCategory[] = [
+            'physiotherapist', 'biokineticist', 'dietician', 'personal-trainer',
+            'pain-management', 'coaching', 'psychology', 'psychiatry', 'podiatrist',
+            'general-practitioner', 'sport-physician', 'orthopedic-surgeon',
+            'family-medicine', 'gastroenterology', 'massage-therapy', 'nutrition-coach',
+            'occupational-therapy', 'physical-therapy', 'chiropractor', 'nurse-practitioner',
+            'cardiology', 'dermatology', 'neurology', 'endocrinology', 'urology',
+            'oncology', 'rheumatology', 'pediatrics', 'geriatrics', 'sports-medicine',
+            'internal-medicine', 'orthopedics', 'neurosurgery', 'infectious-disease',
+            'plastic-surgery', 'obstetrics-gynecology', 'emergency-medicine',
+            'anesthesiology', 'radiology', 'geriatric-medicine', 'all'
+          ];
+          
           const defaultPriorities: Record<ServiceCategory, number> = {};
-          Object.keys(BASELINE_COSTS).forEach(key => {
-            defaultPriorities[key as ServiceCategory] = 0;
+          serviceCategories.forEach(key => {
+            defaultPriorities[key] = 0;
           });
           
           const servicePriorities = tier.servicePriorities 
             ? { ...defaultPriorities, ...tier.servicePriorities } 
-            : defaultPriorities;
+            : { ...defaultPriorities, ...analysis.servicePriorities };
 
           const serviceAllocations = optimizeServiceAllocation(
             tier.budget,
@@ -331,24 +357,34 @@ export function useAIPlansService() {
  * Helper function for multidisciplinaryPlanBuilder compatibility
  * Will be refactored in a future update
  */
-function createHealthPlan(params: {
-  input: string;
-  primaryCondition: string;
-  services: ServiceCategory[];
-  servicePriorities: Record<ServiceCategory, number>;
-  budget: number;
-  timeframeWeeks: number;
-  isStrictBudget: boolean;
-  goals: string[];
-  urgencyLevel: number;
-}): AIHealthPlan {
+function createHealthPlan(
+  input: string,
+  primaryCondition: string,
+  services: ServiceCategory[],
+  servicePriorities: Record<ServiceCategory, number>,
+  budget: number,
+  timeframeWeeks: number,
+  isStrictBudget: boolean,
+  goals: string[],
+  urgencyLevel: number
+): AIHealthPlan {
   // Try to use the imported function first
   try {
-    // Fix: Pass the correct number of arguments or use the correct function
-    return importedBuildMultidisciplinaryPlan(
-      params,
-      params.services,
-      params.budget
+    // Fix: Use correct parameter structure
+    return buildMultidisciplinaryPlan(
+      {
+        input,
+        primaryCondition,
+        services,
+        servicePriorities,
+        budget,
+        timeframeWeeks,
+        isStrictBudget,
+        goals,
+        urgencyLevel
+      },
+      services,
+      budget
     );
   } catch (error) {
     console.error("Error using imported builder:", error);
@@ -356,12 +392,12 @@ function createHealthPlan(params: {
   }
 
   // This is a temporary compatibility function that will be replaced with the enhanced plan builder
-  const planName = generatePlanName(params.primaryCondition, params.services, params.budget);
+  const planName = generatePlanName(primaryCondition, services, budget);
   
   // Define max sessions mapping for all service categories
   const maxSessions: Record<ServiceCategory, number> = Object.keys(BASELINE_COSTS).reduce((acc, key) => {
     const serviceCategory = key as ServiceCategory;
-    const isHighBudget = params.budget > 2000;
+    const isHighBudget = budget > 2000;
     
     // Set default values for all categories
     acc[serviceCategory] = isHighBudget ? 2 : 1;
@@ -381,11 +417,11 @@ function createHealthPlan(params: {
   
   // Generate services based on optimized allocation
   const allocations = optimizeServiceAllocation(
-    params.budget, 
-    params.services,
-    params.servicePriorities,
+    budget, 
+    services,
+    servicePriorities,
     maxSessions,
-    params.isStrictBudget
+    isStrictBudget
   );
   
   // Create services for the plan
@@ -394,7 +430,7 @@ function createHealthPlan(params: {
       type: allocation.type,
       sessions: allocation.sessions,
       price: allocation.costPerSession,
-      description: generateServiceDescription(allocation.type, params.primaryCondition, params.budget > 2000)
+      description: generateServiceDescription(allocation.type, primaryCondition, budget > 2000)
     };
   });
   
@@ -404,11 +440,11 @@ function createHealthPlan(params: {
   return {
     id: `plan-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     name: planName,
-    description: generatePlanDescription(params.primaryCondition, params.goals, params.budget),
+    description: generatePlanDescription(primaryCondition, goals, budget),
     services: planServices,
     totalCost,
     planType: 'best-fit',
-    timeFrame: `${params.timeframeWeeks} weeks`
+    timeFrame: `${timeframeWeeks} weeks`
   };
 }
 
@@ -417,7 +453,7 @@ function createHealthPlan(params: {
  */
 function generatePlanName(primaryCondition: string, services: ServiceCategory[], budget: number): string {
   // Create a descriptive plan name
-  let baseName = "Wellness Plan";
+  let baseName = "Custom Health Plan";
   
   if (primaryCondition.includes("pain")) {
     baseName = "Pain Management Plan";

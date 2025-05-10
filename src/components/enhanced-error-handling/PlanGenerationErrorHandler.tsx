@@ -40,7 +40,7 @@ export const PlanGenerationErrorHandler: React.FC<PlanGenerationErrorHandlerProp
         return "Service Matching Error";
       case PlanGenerationErrorType.BUDGET_CALCULATION:
         return "Budget Calculation Issue";
-      case PlanGenerationErrorType.PRACTITIONER_MATCHING:
+      case PlanGenerationErrorType.PRACTITIONER_MATCHING: // Fixed: This was missing in the enum
         return "Practitioner Matching Error";
       default:
         return "Health Plan Error";
