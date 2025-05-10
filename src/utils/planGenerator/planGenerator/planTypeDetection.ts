@@ -1,10 +1,11 @@
 
-import { AIHealthPlan, PlanContext } from "../types";
+import { PlanContext } from "@/types";
+import { ServiceCategory } from "../types";
 
 /**
  * Determines the type of plan based on user context and needs
  */
-export const determinePlanType = (context: PlanContext): AIHealthPlan['planType'] => {
+export const determinePlanType = (context: PlanContext): 'best-fit' | 'high-impact' | 'progressive' => {
   const hasRacePrep = context.goal?.toLowerCase().includes('race') || 
                       context.goal?.toLowerCase().includes('run') ||
                       context.medicalConditions?.some(c => c.toLowerCase().includes('race preparation'));

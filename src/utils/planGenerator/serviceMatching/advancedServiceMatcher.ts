@@ -1,17 +1,26 @@
 import { ServiceCategory, ComorbidityGroup, SpecialPopulation, UserPreference } from "../types";
 import { ServiceMatchResult } from "./serviceMatchTypes";
 
+// Define the evidence level type to help with TypeScript errors
+type EvidenceLevel = 'high' | 'medium' | 'low';
+
+// Define a partial evidence level mapping type that won't cause strict TypeScript errors
+type EvidenceLevelMapping = Partial<Record<ServiceCategory, EvidenceLevel>>;
+
+// Define the special population overrides type with optional fields
+type SpecialPopulationOverrides = Partial<Record<'child' | 'elderly' | 'athlete' | 'pregnant', {
+  recommended: ServiceCategory[];
+  contraindicated?: ServiceCategory[];
+}>>;
+
 /**
  * Enhanced condition/symptom to service mapping with evidence levels and specialized populations
  */
 interface EnhancedServiceMapping {
   primaryServices: ServiceCategory[];
   secondaryServices: ServiceCategory[];
-  evidenceLevels: Record<ServiceCategory, 'high' | 'medium' | 'low'>;
-  specialPopulationOverrides?: Record<'child' | 'elderly' | 'athlete' | 'pregnant', {
-    recommended: ServiceCategory[];
-    contraindicated?: ServiceCategory[];
-  }>;
+  evidenceLevels: EvidenceLevelMapping;
+  specialPopulationOverrides?: SpecialPopulationOverrides;
   urgentCareServices?: ServiceCategory[];
 }
 
@@ -321,11 +330,12 @@ export function matchServicesToConditionsAdvanced(
   console.log("Detected comorbidities:", comorbidities.map(c => c.name));
   
   // Step 3: Initialize results collection
-  const serviceScores: Record<ServiceCategory, { 
+  // Use a partial type to avoid TypeScript errors when building this dynamically
+  const serviceScores: Record<string, { 
     score: number;
     factors: string[];
     primaryCondition?: string;
-    evidenceLevel: 'high' | 'medium' | 'low';
+    evidenceLevel: EvidenceLevel;
     isContraindicated: boolean;
   }> = {};
   
@@ -546,8 +556,8 @@ function findAlternativeServices(
   serviceCategory: ServiceCategory, 
   conditions: string[]
 ): ServiceCategory[] {
-  // Service alternatives mapping
-  const SERVICE_ALTERNATIVES: Record<ServiceCategory, ServiceCategory[]> = {
+  // Define a partial record for service alternatives to avoid TypeScript errors
+  const SERVICE_ALTERNATIVES: Partial<Record<ServiceCategory, ServiceCategory[]>> = {
     'physiotherapist': ['biokineticist', 'physical-therapy', 'chiropractor'],
     'biokineticist': ['physiotherapist', 'personal-trainer'],
     'dietician': ['nutrition-coach', 'coaching'],

@@ -5,17 +5,20 @@ export const BUDGET_TIERS: BudgetTier[] = [
   {
     name: 'low',
     range: { min: 0, max: 1000 },
-    maxSessions: 2
+    maxSessions: 2,
+    budget: 1000
   },
   {
     name: 'medium',
     range: { min: 1001, max: 2500 },
-    maxSessions: 3
+    maxSessions: 3,
+    budget: 2000
   },
   {
     name: 'high',
     range: { min: 2501, max: 10000 },
-    maxSessions: 4
+    maxSessions: 4,
+    budget: 4000
   }
 ];
 

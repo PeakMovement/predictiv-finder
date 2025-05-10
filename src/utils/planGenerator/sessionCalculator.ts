@@ -1,5 +1,11 @@
-import { ServiceCategory } from "./types";
-import { SERVICE_PRICE_RANGES } from "./serviceMappings";
+
+import { PriceRange, ServiceCategory } from './types';
+
+interface ServiceAllocation {
+  type: ServiceCategory;
+  priority: number;
+  minSessions?: number;
+}
 
 interface SessionAllocation {
   sessions: number;
@@ -7,233 +13,67 @@ interface SessionAllocation {
   totalCost: number;
 }
 
-export const calculateSessions = (
-  monthlyBudget: number,
-  serviceType: ServiceCategory,
-  priority: number = 1,
-  preferences: Record<string, string> = {},
-  severity: Record<string, number> = {},
-  preferHighEnd: boolean = false
-): SessionAllocation => {
-  // Adjust budget based on priority
-  const allocatedBudget = monthlyBudget * priority;
-  
-  // Define minimum and maximum sessions per month for each service type
-  const SESSION_LIMITS: Partial<Record<ServiceCategory, { min: number; max: number }>> = {
-    'dietician': { min: 1, max: 4 },
-    'personal-trainer': { min: 1, max: 8 },
-    'physiotherapist': { min: 1, max: 8 },
-    'coaching': { min: 1, max: 4 },
-    'family-medicine': { min: 1, max: 2 },
-    'biokineticist': { min: 1, max: 4 },
-    'internal-medicine': { min: 1, max: 2 },
-    'pediatrics': { min: 1, max: 2 },
-    'cardiology': { min: 1, max: 2 },
-    'dermatology': { min: 1, max: 2 },
-    'orthopedics': { min: 1, max: 2 },
-    'neurology': { min: 1, max: 2 },
-    'gastroenterology': { min: 1, max: 2 },
-    'obstetrics-gynecology': { min: 1, max: 2 },
-    'emergency-medicine': { min: 1, max: 1 },
-    'psychiatry': { min: 1, max: 4 },
-    'anesthesiology': { min: 1, max: 1 },
-    'endocrinology': { min: 1, max: 2 },
-    'urology': { min: 1, max: 2 },
-    'oncology': { min: 1, max: 4 },
-    'neurosurgery': { min: 1, max: 1 },
-    'infectious-disease': { min: 1, max: 2 },
-    'radiology': { min: 1, max: 1 },
-    'geriatric-medicine': { min: 1, max: 2 },
-    'plastic-surgery': { min: 1, max: 1 },
-    'rheumatology': { min: 1, max: 2 },
-    'pain-management': { min: 1, max: 3 },
-  };
-
-  // Get price range for the service type
-  const priceRange = SERVICE_PRICE_RANGES[serviceType] || { affordable: 500, highEnd: 800 };
-  
-  // Determine base cost based on preference for high-end services
-  let baseCost = preferHighEnd ? priceRange.highEnd : priceRange.affordable;
-  
-  // Apply discounts for certain user categories
-  if (preferences.occupation === 'student') {
-    baseCost = Math.floor(baseCost * 0.85); // 15% student discount
-  }
-  
-  // For severe conditions, we might need higher quality services
-  const relatedConditions = Object.entries(severity)
-    .filter(([_, value]) => value > 0.7) // High severity
-    .map(([condition, _]) => condition);
-    
-  if (relatedConditions.length > 0) {
-    // For severe conditions, prefer higher quality services
-    baseCost = Math.floor(baseCost * 1.1); // 10% premium for serious conditions
-  }
-  
-  const defaultLimits = { min: 1, max: 4 };
-  const limits = SESSION_LIMITS[serviceType] || defaultLimits;
-
-  // Adjust cost if budget is too low but still allow at least 1 session
-  let adjustedCost = baseCost;
-  if (allocatedBudget < baseCost && allocatedBudget > 0) {
-    // For very low budgets, be more flexible with pricing
-    if (allocatedBudget < 500 && monthlyBudget < 1000) {
-      // Significant price reduction for very tight budgets
-      adjustedCost = Math.max(allocatedBudget * 0.8, 200); // Allow much lower minimums
-      console.log(`Reduced ${serviceType} session cost to ${adjustedCost} due to tight budget`);
-    } else {
-      // Standard price reduction for moderately tight budgets
-      adjustedCost = Math.max(allocatedBudget * 0.9, 300); // Minimum viable cost
-    }
-  }
-
-  // Calculate maximum possible sessions within budget
-  let possibleSessions = Math.floor(allocatedBudget / adjustedCost);
-  
-  // Constrain to limits
-  possibleSessions = Math.max(
-    1, // Always allow at least 1 session
-    Math.min(possibleSessions, limits.max)
-  );
-  
-  // For busy people, limit sessions further
-  if (preferences.schedule === 'busy') {
-    possibleSessions = Math.min(possibleSessions, 2); // Limit to 1-2 sessions for busy people
-  }
-
-  return {
-    sessions: possibleSessions,
-    costPerSession: adjustedCost,
-    totalCost: possibleSessions * adjustedCost
-  };
-};
-
 export const distributeSessionsByBudget = (
-  monthlyBudget: number,
-  services: { type: ServiceCategory; priority: number }[],
-  preferences: Record<string, string> = {},
-  severity: Record<string, number> = {},
-  preferHighEnd: boolean = false
-): Partial<Record<ServiceCategory, SessionAllocation>> => {
-  const allocations: Partial<Record<ServiceCategory, SessionAllocation>> = {};
+  budget: number,
+  services: ServiceAllocation[]
+): Record<ServiceCategory, SessionAllocation> => {
+  if (!budget || budget <= 0 || !Array.isArray(services) || services.length === 0) {
+    return {};
+  }
   
-  // Sort services by priority (highest priority = lowest number)
-  const sortedServices = [...services].sort((a, b) => {
-    // Consider both priority value and service type
-    if (a.priority !== b.priority) {
-      return a.priority - b.priority;
+  // Sort services by priority (highest to lowest)
+  const sortedServices = [...services].sort((a, b) => b.priority - a.priority);
+  
+  // Calculate total priority points to get relative weights
+  const totalPriorityPoints = sortedServices.reduce((sum, service) => sum + service.priority, 0);
+  
+  // Initialize allocations
+  const allocations: Record<ServiceCategory, SessionAllocation> = {};
+  
+  // First pass: allocate budget proportionally based on priority
+  let remainingBudget = budget;
+  sortedServices.forEach(service => {
+    const relativePriority = service.priority / totalPriorityPoints;
+    const serviceBudget = Math.floor(budget * relativePriority);
+    
+    // Start with a reasonable cost per session based on service type
+    const baseCost = getBaseServiceCost(service.type);
+    
+    // Calculate how many sessions we can afford
+    let sessions = Math.max(1, Math.floor(serviceBudget / baseCost));
+    
+    // Enforce minimum sessions if specified
+    if (service.minSessions !== undefined) {
+      sessions = Math.max(sessions, service.minSessions);
     }
     
-    // If priorities are equal, prefer certain service types for specific cases
-    // Coaching and physiotherapy should both be included in injury + race situations
-    const isInjuryRelated = (type: ServiceCategory) => 
-      type === 'physiotherapist' || type === 'biokineticist';
-    const isPerformanceRelated = (type: ServiceCategory) => 
-      type === 'coaching' || type === 'personal-trainer';
-      
-    // If very low budget, try to spread across service types
-    if (monthlyBudget < 1000) {
-      // Give slight preference to coaching for race preparation
-      if (isPerformanceRelated(a.type) && !isPerformanceRelated(b.type)) return -1;
-      if (!isPerformanceRelated(a.type) && isPerformanceRelated(b.type)) return 1;
-      
-      // Also consider rehab needs
-      if (isInjuryRelated(a.type) && !isInjuryRelated(b.type)) return -1;
-      if (!isInjuryRelated(a.type) && isInjuryRelated(b.type)) return 1;
-    }
+    // Calculate actual cost per session, adjusting for budget
+    const costPerSession = sessions > 0 ? Math.min(baseCost, serviceBudget / sessions) : baseCost;
+    const totalServiceCost = sessions * costPerSession;
     
-    return 0; // Keep original order if no other criteria apply
+    allocations[service.type] = {
+      sessions,
+      costPerSession,
+      totalCost: totalServiceCost
+    };
+    
+    remainingBudget -= totalServiceCost;
   });
   
-  // Track remaining budget
-  let remainingBudget = monthlyBudget;
-  
-  // First pass - try to allocate at least one session to each service
-  for (const service of sortedServices) {
-    // For very low budgets, be more flexible with pricing
-    const isLowBudget = monthlyBudget < 1000;
-    
-    // Calculate with minimum possible allocation
-    const allocation = calculateSessions(
-      remainingBudget,
-      service.type,
-      service.priority,
-      preferences,
-      severity,
-      preferHighEnd
-    );
-    
-    // For very low budgets, ensure critical services get at least 1 session
-    if (isLowBudget && allocation.sessions === 0 && 
-        (service.type === 'physiotherapist' || service.type === 'coaching')) {
-      // Force allocation by reducing cost dramatically if needed
-      const minCost = Math.min(400, remainingBudget * 0.9);
-      if (minCost > 0 && remainingBudget >= minCost) {
-        allocations[service.type] = {
-          sessions: 1,
-          costPerSession: minCost,
-          totalCost: minCost
-        };
-        remainingBudget -= minCost;
-        console.log(`Forced allocation for ${service.type} at reduced cost ${minCost}`);
-      }
-    }
-    else if (allocation.sessions > 0) {
-      allocations[service.type] = allocation;
-      remainingBudget -= allocation.totalCost;
-    }
-    
-    // For low budgets, stop after allocating 2 critical services
-    if (isLowBudget && Object.keys(allocations).length >= 2) {
-      console.log("Limited to 2 services due to tight budget");
-      break;
-    }
-    
-    // For very low budgets, stop after any allocation to ensure we get something
-    if (monthlyBudget < 600 && Object.keys(allocations).length >= 1) {
-      console.log("Limited to 1 service due to extremely tight budget");
-      break;
-    }
-  }
-  
-  // If we still have budget left, allocate more sessions to priority services
+  // Use any remaining budget to add sessions to high priority services
   if (remainingBudget > 0 && sortedServices.length > 0) {
-    // Start with highest priority service
-    const topService = sortedServices[0];
-    const currentAllocation = allocations[topService.type];
-    
-    if (currentAllocation) {
-      // Try to add one more session if budget allows
-      const additionalCost = currentAllocation.costPerSession;
+    for (const service of sortedServices) {
+      const currentAllocation = allocations[service.type];
+      const priceForOneSession = currentAllocation.costPerSession;
       
-      if (remainingBudget >= additionalCost) {
-        allocations[topService.type] = {
-          sessions: currentAllocation.sessions + 1,
-          costPerSession: currentAllocation.costPerSession,
-          totalCost: currentAllocation.totalCost + additionalCost
-        };
-        
-        remainingBudget -= additionalCost;
+      if (remainingBudget >= priceForOneSession) {
+        currentAllocation.sessions += 1;
+        currentAllocation.totalCost += priceForOneSession;
+        remainingBudget -= priceForOneSession;
       }
-    }
-    
-    // Try to add a second service if budget allows and we don't have one yet
-    if (remainingBudget > 0 && Object.keys(allocations).length < 2 && sortedServices.length > 1) {
-      const secondService = sortedServices[1];
       
-      if (!allocations[secondService.type]) {
-        const allocation = calculateSessions(
-          remainingBudget,
-          secondService.type,
-          secondService.priority,
-          preferences,
-          severity,
-          preferHighEnd
-        );
-        
-        if (allocation.sessions > 0) {
-          allocations[secondService.type] = allocation;
-        }
+      if (remainingBudget < 100) {
+        break;
       }
     }
   }
@@ -241,32 +81,82 @@ export const distributeSessionsByBudget = (
   return allocations;
 };
 
-/**
- * Determines the optimal session cost based on budget and service type importance
- */
-export function determineSessionCost(
-  serviceType: ServiceCategory,
-  pricing: PriceRange | LegacyPriceRange,
-  importance: number
-): number {
-  // Handle different pricing structure formats
-  let max = 0;
-  let min = 0;
+function getBaseServiceCost(serviceType: ServiceCategory): number {
+  // These should be custom calculated based on market data and quality tier
+  const costMap: Record<ServiceCategory, number> = {
+    'physiotherapist': 600,
+    'biokineticist': 550,
+    'dietician': 500,
+    'personal-trainer': 450,
+    'pain-management': 700,
+    'coaching': 400,
+    'psychology': 800,
+    'psychiatry': 1000,
+    'podiatrist': 550,
+    'general-practitioner': 600,
+    'sport-physician': 800,
+    'orthopedic-surgeon': 1200,
+    'family-medicine': 550,
+    'gastroenterology': 900,
+    'massage-therapy': 350,
+    'nutrition-coach': 400,
+    'occupational-therapy': 500,
+    'physical-therapy': 550,
+    'chiropractor': 450,
+    'nurse-practitioner': 400,
+    'cardiology': 900,
+    'dermatology': 700,
+    'neurology': 850,
+    'endocrinology': 800,
+    'urology': 750,
+    'oncology': 1100,
+    'rheumatology': 750,
+    'pediatrics': 600,
+    'geriatrics': 650,
+    'sports-medicine': 700,
+    'internal-medicine': 700,
+    'orthopedics': 900,
+    'neurosurgery': 1500,
+    'infectious-disease': 850,
+    'plastic-surgery': 1400,
+    'obstetrics-gynecology': 750,
+    'emergency-medicine': 1000,
+    'anesthesiology': 1100,
+    'radiology': 800,
+    'geriatric-medicine': 650,
+    'all': 500 // Default value
+  };
   
-  if ('max' in pricing) {
-    max = pricing.max;
-    min = pricing.min;
-  } else if ('highEnd' in pricing && 'affordable' in pricing) {
-    max = pricing.highEnd;
-    min = pricing.affordable;
-  } else {
-    // Fallback to default values if pricing structure is invalid
-    max = BASELINE_COSTS[serviceType] * 1.5;
-    min = BASELINE_COSTS[serviceType] * 0.7;
+  return costMap[serviceType] || 500; // Default to 500 if not found
+}
+
+export const getPriceRangeForService = (
+  serviceType: ServiceCategory,
+  tierName: string
+): PriceRange => {
+  // This is a simplified version - in production, this would come from a data source
+  const defaultRange: PriceRange = { min: 400, max: 800 };
+  
+  // Example ranges by service and tier
+  const ranges: Record<ServiceCategory, Record<string, PriceRange>> = {
+    'physiotherapist': {
+      'low': { min: 400, max: 600 },
+      'medium': { min: 500, max: 800 },
+      'high': { min: 700, max: 1200 }
+    },
+    'personal-trainer': {
+      'low': { min: 300, max: 500 },
+      'medium': { min: 450, max: 700 },
+      'high': { min: 600, max: 1000 }
+    },
+    // Add more as needed
+  };
+  
+  const serviceRanges = ranges[serviceType];
+  if (serviceRanges && serviceRanges[tierName]) {
+    return serviceRanges[tierName];
   }
   
-  // Calculate session cost based on importance
-  // For high importance services, we want costs closer to max
-  // For lower importance, we can use more affordable options
-  return min + (max - min) * Math.min(importance, 1);
-}
+  // Fall back to default if not specified
+  return defaultRange;
+};

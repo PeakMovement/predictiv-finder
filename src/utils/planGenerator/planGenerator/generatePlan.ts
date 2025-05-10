@@ -1,5 +1,6 @@
 
-import { AIHealthPlan, PlanContext, ServiceAllocation } from "@/utils/planGenerator/types";
+import { PlanContext, ServiceAllocationItem } from "@/utils/planGenerator/types";
+import { AIHealthPlan } from "@/types";
 import { determineRequiredServices } from './serviceAllocation';
 import { allocateServices } from './serviceAllocation';
 import { calculateTotalCost } from './costCalculation';

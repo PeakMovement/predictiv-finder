@@ -62,7 +62,7 @@ export class EnhancedErrorBoundary extends Component<Props, State> {
     });
   };
 
-  render() {
+  render(): ReactNode {
     if (this.state.hasError) {
       // If a custom fallback is provided
       if (this.props.fallback) {

@@ -45,6 +45,10 @@ export type ServiceCategory =
   | 'geriatric-medicine'
   | 'all'; // Special case for filtering/selection
 
+// Re-export AIHealthPlan interface from types package for modules in this directory
+import { AIHealthPlan, ServiceMode, PlanContext, ServiceAllocation } from "@/types";
+export { AIHealthPlan, ServiceMode, PlanContext, ServiceAllocation };
+
 export interface BaseCosts {
   [key: string]: number;
 }
@@ -70,7 +74,6 @@ export const BASELINE_COSTS: Record<ServiceCategory, number> = {
   'physical-therapy': 800,
   'chiropractor': 650,
   'nurse-practitioner': 600,
-  // Added costs for new categories
   'cardiology': 1400,
   'dermatology': 1000,
   'neurology': 1300,
@@ -81,7 +84,6 @@ export const BASELINE_COSTS: Record<ServiceCategory, number> = {
   'pediatrics': 900,
   'geriatrics': 950,
   'sports-medicine': 1100,
-  // Add the missing service types with reasonable costs
   'internal-medicine': 1000,
   'orthopedics': 1400,
   'neurosurgery': 2200,
@@ -92,31 +94,28 @@ export const BASELINE_COSTS: Record<ServiceCategory, number> = {
   'anesthesiology': 1700,
   'radiology': 1200,
   'geriatric-medicine': 900,
-  'all': 0 // Special case for filtering/selection
+  'all': 0
 };
 
 export interface OptimizedService {
   type: ServiceCategory;
   sessions: number;
   cost: number;
-  frequency?: string; // Making this optional to match existing usage
+  frequency?: string;
   costPerSession: number;
   totalCost: number;
 }
 
-// Updated PriceRange interface to include both min and max properties
 export interface PriceRange {
   min: number;
   max: number;
 }
 
-// Added this to fix the budgetConfig.ts errors - it should use min/max instead of affordable/highEnd
 export interface LegacyPriceRange {
   affordable: number;
   highEnd: number;
 }
 
-// Defining BudgetTier interface for budgetConfig.ts
 export interface BudgetTier {
   name: string;
   range: PriceRange;
@@ -124,8 +123,7 @@ export interface BudgetTier {
   budget: number;
 }
 
-// Interface for service allocations in the plan context
-export interface ServiceAllocation {
+export interface ServiceAllocationItem {
   type: ServiceCategory;
   percentage: number;
   priority: number;
@@ -133,22 +131,6 @@ export interface ServiceAllocation {
   maxSessions?: number;
 }
 
-// Interface for plan context
-export interface PlanContext {
-  userInput: string;
-  budget: number;
-  isStrictBudget: boolean;
-  serviceCategories: ServiceCategory[];
-  categoryPriorities: Record<ServiceCategory, number>;
-  preferredPractitioners?: string[];
-  budgetTier?: string; 
-  goal?: string;
-  medicalConditions?: string[];
-  location?: string;
-  preferOnline?: boolean;
-}
-
-// New interface for special group discounts
 export interface SpecialGroupDiscount {
   group: 'student' | 'senior' | 'child' | 'loyalty' | 'athlete' | 'military';
   discountPercentage: number;
@@ -156,7 +138,6 @@ export interface SpecialGroupDiscount {
   minimumSessions?: number;
 }
 
-// New interface for comorbidity detection
 export interface ComorbidityGroup {
   name: string;
   conditions: string[];
@@ -164,7 +145,6 @@ export interface ComorbidityGroup {
   specialConsiderations?: string[];
 }
 
-// New interface for special population handling
 export interface SpecialPopulation {
   type: 'child' | 'elderly' | 'athlete' | 'pregnant' | 'chronic';
   ageRange?: [number, number];
@@ -173,7 +153,6 @@ export interface SpecialPopulation {
   specializedProviders?: ServiceCategory[];
 }
 
-// New interface to track user preferences and history
 export interface UserPreference {
   preferredServiceTypes?: ServiceCategory[];
   avoidServiceTypes?: ServiceCategory[];
@@ -187,26 +166,19 @@ export interface UserPreference {
   budgetSensitivity?: 'very-sensitive' | 'somewhat-sensitive' | 'not-sensitive';
 }
 
-// New interface for enhanced budget allocation strategies
 export interface BudgetAllocationStrategy {
   name: string;
   description: string;
   priorityServices: ServiceCategory[];
   minimumSessionsPerService: Record<ServiceCategory, number>;
-  balancingFactor: number; // 0-1, how much to balance vs prioritize
+  balancingFactor: number;
   overspendAllowed: boolean;
   maxOverspendPercentage?: number;
 }
 
 export interface ServiceConfigurationByBudget {
   [key: string]: {
-    allocations: Array<{
-      type: ServiceCategory;
-      percentage: number;
-      priority: number;
-      minSessions?: number;
-      maxSessions?: number;
-    }>;
+    allocations: ServiceAllocationItem[];
     requiresDoctor: boolean;
     preferHighEnd: boolean;
   };
