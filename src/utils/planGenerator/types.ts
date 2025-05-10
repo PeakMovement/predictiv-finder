@@ -121,6 +121,7 @@ export interface BudgetTier {
   name: string;
   range: PriceRange;
   maxSessions: number;
+  budget: number;
 }
 
 // Interface for service allocations in the plan context

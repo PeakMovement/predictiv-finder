@@ -1,34 +1,28 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import AIPlansDisplay from '@/components/AIPlansDisplay';
-import ErrorBoundary from '@/components/ErrorBoundary';
 import { AIHealthPlan } from '@/types';
 import { LoadingIndicator, ProgressBar } from '@/components/ui/loading-indicator';
+import { EnhancedErrorBoundary } from '@/components/enhanced-error-handling/EnhancedErrorBoundary';
+import { PlanGenerationErrorFallback } from '@/components/enhanced-error-handling/PlanGenerationErrorFallback';
 
 interface SafeAIPlansDisplayProps {
   plans: AIHealthPlan[];
   userQuery: string;
   onSelectPlan: (plan: AIHealthPlan) => void;
   onBack: () => void;
+  onRetry?: () => void;
   isLoading: boolean;
 }
 
-const AIPlansErrorFallback = ({ onBack }: { onBack: () => void }) => (
-  <div className="p-6 bg-red-50 border border-red-200 rounded-lg">
-    <h2 className="text-xl font-semibold text-red-800 mb-2">Unable to display health plans</h2>
-    <p className="text-red-700 mb-4">
-      We encountered a problem displaying your health plans. Please try again with different wording.
-    </p>
-    <button
-      onClick={onBack}
-      className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-    >
-      Go Back
-    </button>
-  </div>
-);
-
 const SafeAIPlansDisplay = (props: SafeAIPlansDisplayProps) => {
+  const [key, setKey] = useState(0); // Used to reset the error boundary
+  
+  const handleRetry = () => {
+    setKey(prevKey => prevKey + 1); // Change key to remount error boundary
+    props.onRetry?.(); // Call the parent retry handler if provided
+  };
+
   // If loading, show enhanced loading state
   if (props.isLoading) {
     return (
@@ -89,11 +83,25 @@ const SafeAIPlansDisplay = (props: SafeAIPlansDisplayProps) => {
   }
 
   return (
-    <ErrorBoundary
-      fallback={<AIPlansErrorFallback onBack={props.onBack} />}
+    <EnhancedErrorBoundary
+      key={key}
+      fallback={(error) => (
+        <PlanGenerationErrorFallback 
+          error={error}
+          onBack={props.onBack}
+          onRetry={handleRetry}
+          suggestions={[
+            "Try describing your health needs more specifically",
+            "Include details about your budget if possible",
+            "Mention any specific conditions you're experiencing",
+            "Specify your location for better practitioner matching"
+          ]}
+        />
+      )}
+      errorBoundaryKey={`ai-plans-${key}`}
     >
       <AIPlansDisplay {...props} />
-    </ErrorBoundary>
+    </EnhancedErrorBoundary>
   );
 };
 

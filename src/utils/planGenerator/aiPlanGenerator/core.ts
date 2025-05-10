@@ -8,6 +8,7 @@ import { analyzeUserInput } from '../inputAnalyzer';
 import { handleSpecialCases } from './complexity';
 import { analyzeUserForPlanning } from './userAnalysis';
 import { buildHealthPlan } from './planBuilder';
+import { BudgetTier } from '../types';
 
 // Function to generate custom AI health plans based on user text input
 export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
@@ -50,7 +51,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     analysis.preferences ? analysis.preferences : {}, 
     analysis.userType, 
     analysis.contextualFactors ? (Array.isArray(analysis.contextualFactors) ? analysis.contextualFactors : []) : []
-  );
+  ) as BudgetTier[];
   
   console.log("Generated budget tiers:", budgetTiers);
   

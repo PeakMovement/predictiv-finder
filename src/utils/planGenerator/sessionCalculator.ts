@@ -1,4 +1,3 @@
-
 import { ServiceCategory } from "./types";
 import { SERVICE_PRICE_RANGES } from "./serviceMappings";
 
@@ -241,3 +240,33 @@ export const distributeSessionsByBudget = (
   
   return allocations;
 };
+
+/**
+ * Determines the optimal session cost based on budget and service type importance
+ */
+export function determineSessionCost(
+  serviceType: ServiceCategory,
+  pricing: PriceRange | LegacyPriceRange,
+  importance: number
+): number {
+  // Handle different pricing structure formats
+  let max = 0;
+  let min = 0;
+  
+  if ('max' in pricing) {
+    max = pricing.max;
+    min = pricing.min;
+  } else if ('highEnd' in pricing && 'affordable' in pricing) {
+    max = pricing.highEnd;
+    min = pricing.affordable;
+  } else {
+    // Fallback to default values if pricing structure is invalid
+    max = BASELINE_COSTS[serviceType] * 1.5;
+    min = BASELINE_COSTS[serviceType] * 0.7;
+  }
+  
+  // Calculate session cost based on importance
+  // For high importance services, we want costs closer to max
+  // For lower importance, we can use more affordable options
+  return min + (max - min) * Math.min(importance, 1);
+}
