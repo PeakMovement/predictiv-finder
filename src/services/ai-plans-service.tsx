@@ -231,10 +231,19 @@ export function useAIPlansService() {
           console.log(`Generating ${tier.name} tier plan with budget ${tier.budget}`);
           
           // Optimize service allocation within this budget tier
+          const defaultPriorities: Record<ServiceCategory, number> = {};
+          Object.keys(BASELINE_COSTS).forEach(key => {
+            defaultPriorities[key as ServiceCategory] = 0;
+          });
+          
+          const servicePriorities = tier.servicePriorities 
+            ? { ...defaultPriorities, ...tier.servicePriorities } 
+            : defaultPriorities;
+
           const serviceAllocations = optimizeServiceAllocation(
             tier.budget,
             analysis.topServices,
-            tier.servicePriorities || {},
+            servicePriorities,
             tier.maxSessions,
             tier.isStrictBudget
           );

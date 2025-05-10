@@ -1,4 +1,3 @@
-
 import { ServiceCategory } from '@/types';
 
 /**
@@ -36,7 +35,7 @@ export const COMORBIDITY_GROUPS: ComorbidityGroup[] = [
   {
     name: "Back Pain + Sedentary Lifestyle",
     conditions: ["back pain", "sedentary", "desk job", "sitting", "office work"],
-    recommendedServices: ["physiotherapist", "personal-trainer", "ergonomic assessment"],
+    recommendedServices: ["physiotherapist", "personal-trainer", "occupational-therapy"],
     specialConsiderations: [
       "Workplace ergonomics assessment recommended",
       "Focus on core strengthening and posture correction"
