@@ -1,4 +1,4 @@
-import { ServiceCategory, ComorbidityGroup } from "../types";
+import { ServiceCategory } from '@/types';
 
 /**
  * Common co-morbidity groups with their recommended service bundles
@@ -235,7 +235,7 @@ export function checkCoMorbidities(conditions: string[] = []): ServiceCategory[]
   // Back pain + sedentary
   if (containsConditions(normalizedConditions, ['back', 'pain']) &&
       containsConditions(normalizedConditions, ['sitting', 'sedentary', 'desk'])) {
-    return ['physiotherapist', 'biokineticist', 'ergonomic assessment'];
+    return ['physiotherapist', 'biokineticist', 'occupational-therapy'];
   }
   
   // Anxiety + nutrition/diet

@@ -5,15 +5,27 @@ import { PlanContext } from '@/utils/planGenerator/types';
  * Generate a descriptive plan name based on the plan context
  */
 export function generatePlanName(context: PlanContext): string {
-  const condition = context.primaryCondition || '';
+  // Check if context has a condition property otherwise use default
+  if (!context) return "Custom Health Plan";
   
-  if (typeof condition === 'string') {
-    // Handle when condition is a simple string
-    return `${condition.charAt(0).toUpperCase() + condition.slice(1)} Health Plan`;
-  } else if (condition && typeof condition === 'object' && 'name' in condition) {
-    // Handle when condition is an object with a name property
-    const conditionName = condition.name;
-    return `${conditionName} Health Plan`;
+  // If primary condition is directly accessible
+  if (context.condition) {
+    const condition = context.condition;
+    
+    if (typeof condition === 'string') {
+      // Handle when condition is a simple string
+      return `${condition.charAt(0).toUpperCase() + condition.slice(1)} Health Plan`;
+    } else if (condition && typeof condition === 'object' && 'name' in condition) {
+      // Handle when condition is an object with a name property
+      const conditionName = condition.name;
+      return `${conditionName} Health Plan`;
+    }
+  }
+  
+  // Handle medical conditions array if available
+  if (context.medicalConditions && context.medicalConditions.length > 0) {
+    const primaryCondition = context.medicalConditions[0];
+    return `${primaryCondition.charAt(0).toUpperCase() + primaryCondition.slice(1)} Health Plan`;
   }
   
   // Fallback to a generic name
@@ -28,12 +40,24 @@ export function generatePlanDescription(context: PlanContext): string {
   
   if (!context) return baseDescription;
   
-  const conditionName = typeof context.primaryCondition === 'string' 
-    ? context.primaryCondition
-    : (context.primaryCondition?.name || '');
+  // Check for condition in multiple places
+  let conditionName = '';
+  
+  if (context.condition) {
+    conditionName = typeof context.condition === 'string' 
+      ? context.condition
+      : (context.condition?.name || '');
+  } else if (context.medicalConditions && context.medicalConditions.length > 0) {
+    conditionName = context.medicalConditions[0];
+  }
   
   if (conditionName) {
     return `${baseDescription} focusing on ${conditionName.toLowerCase()}.`;
+  }
+  
+  // If goal is available but no condition
+  if (context.goal) {
+    return `${baseDescription} designed to help you achieve your ${context.goal.toLowerCase()} goals.`;
   }
   
   return baseDescription;

@@ -1,5 +1,7 @@
+
 import { ServiceCategory } from "@/types";
-import { generatePlanName, generatePlanDescription } from "./planNaming";
+import { generatePlanName } from "../../planGenerator/planStructure/planNaming";
+import { generatePlanDescription } from "../../planGenerator/planStructure/planNaming";
 import { optimizeServiceAllocation } from "../budgetHandling/enhancedBudgetHandler";
 import { BASELINE_COSTS } from "../types";
 
@@ -10,8 +12,12 @@ function buildPlan(serviceOptions: any, preferredServices: ServiceCategory | Ser
   // Convert string to array if needed
   const services = Array.isArray(preferredServices) ? preferredServices : [preferredServices];
 
-  const planName = generatePlanName(serviceOptions.primaryCondition, services, budget);
-  const planDescription = generatePlanDescription(serviceOptions.primaryCondition, serviceOptions.goals, budget);
+  const planName = generatePlanName(
+    'standard',
+    Array.isArray(serviceOptions.primaryCondition) ? serviceOptions.primaryCondition : [serviceOptions.primaryCondition], 
+    typeof serviceOptions.primaryCondition === 'string' ? serviceOptions.primaryCondition : undefined);
+
+  const planDescription = `A personalized health plan designed for your specific needs focusing on ${serviceOptions.primaryCondition}.`;
 
   // Define max sessions mapping for all service categories
   const maxSessions: Record<ServiceCategory, number> = Object.keys(BASELINE_COSTS).reduce((acc, key) => {
@@ -63,7 +69,7 @@ function buildPlan(serviceOptions: any, preferredServices: ServiceCategory | Ser
     services: planServices,
     totalCost,
     planType: 'best-fit',
-    timeFrame: `${serviceOptions.timeframeWeeks} weeks`
+    timeFrame: `${serviceOptions.timeframeWeeks || 4} weeks`
   };
 }
 
@@ -124,25 +130,28 @@ function generateServiceDescription(type: ServiceCategory, condition: string, is
   });
 
   // Get base description based on service type and premium level
-  const baseDescription = baseDescriptions[type][isPremium ? 'premium' : 'standard'];
+  const baseDescription = baseDescriptions[type]?.[isPremium ? 'premium' : 'standard'] || 
+    (isPremium ? "Premium healthcare service" : "Standard healthcare service");
 
   // Customize further based on condition
-  if (condition.includes("knee") && type === 'physiotherapist') {
-    return isPremium ?
-      "Specialized knee rehabilitation with advanced techniques and progressive exercises" :
-      "Targeted knee therapy to improve movement and reduce pain";
-  } else if (condition.includes("back") && type === 'physiotherapist') {
-    return isPremium ?
-      "Comprehensive back assessment with specialized manual therapy and corrective exercises" :
-      "Back pain treatment with personalized exercises and techniques";
-  } else if (condition.includes("weight") && type === 'dietician') {
-    return isPremium ?
-      "Personalized weight management nutrition plan with detailed meal strategies" :
-      "Nutritional guidance focused on sustainable weight management";
-  } else if (condition.includes("race") && type === 'personal-trainer') {
-    return isPremium ?
-      "Specialized race preparation program with periodized training and performance analysis" :
-      "Structured training plans to prepare you for your upcoming race";
+  if (condition && typeof condition === 'string') {
+    if (condition.includes("knee") && type === 'physiotherapist') {
+      return isPremium 
+        ? "Specialized knee rehabilitation with advanced techniques and progressive exercises" 
+        : "Targeted knee therapy to improve movement and reduce pain";
+    } else if (condition.includes("back") && type === 'physiotherapist') {
+      return isPremium 
+        ? "Comprehensive back assessment with specialized manual therapy and corrective exercises" 
+        : "Back pain treatment with personalized exercises and techniques";
+    } else if (condition.includes("weight") && type === 'dietician') {
+      return isPremium 
+        ? "Personalized weight management nutrition plan with detailed meal strategies" 
+        : "Nutritional guidance focused on sustainable weight management";
+    } else if (condition.includes("race") && type === 'personal-trainer') {
+      return isPremium 
+        ? "Specialized race preparation program with periodized training and performance analysis" 
+        : "Structured training plans to prepare you for your upcoming race";
+    }
   }
 
   return baseDescription;

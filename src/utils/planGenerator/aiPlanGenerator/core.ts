@@ -7,8 +7,36 @@ import { generatePlan } from '../planGenerator';
 import { analyzeUserInput } from '../inputAnalyzer';
 import { handleSpecialCases } from './complexity';
 import { analyzeUserForPlanning } from './userAnalysis';
-import { buildHealthPlan } from './planBuilder';
+import { buildPlan } from './planBuilder';
 import { BudgetTier } from '../types';
+
+// Function to build a health plan based on optimized services
+const buildHealthPlan = (
+  optimizedServices: any[],
+  options: {
+    planType: 'best-fit' | 'high-impact' | 'progressive';
+    timeFrame: string;
+    customName?: string;
+    includePractitioners?: boolean;
+  }
+): AIHealthPlan => {
+  return {
+    id: `plan-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    name: options.customName || "Custom Health Plan",
+    description: "A personalized health plan designed for your specific needs",
+    services: optimizedServices.map(service => ({
+      type: service.type,
+      price: service.costPerSession || 500,
+      sessions: service.sessions || 4,
+      description: service.description || `Professional ${service.type.replace('-', ' ')} service`,
+      recommendedPractitioners: []
+    })),
+    totalCost: optimizedServices.reduce((total, service) => 
+      total + ((service.totalCost) || service.costPerSession * service.sessions || 2000), 0),
+    planType: options.planType,
+    timeFrame: options.timeFrame
+  };
+};
 
 // Function to generate custom AI health plans based on user text input
 export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
@@ -145,5 +173,6 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
 // Export our original functions for compatibility
 export {
   generatePlan,
-  findAlternativeCategories
+  findAlternativeCategories,
+  buildHealthPlan
 };
