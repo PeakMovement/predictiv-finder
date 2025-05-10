@@ -45,6 +45,49 @@ export type ServiceCategory =
   | 'geriatric-medicine'
   | 'all'; // Special case for filtering/selection
 
+// Re-export AIHealthPlan interface
+export interface AIHealthPlan {
+  id: string;
+  name: string;
+  description: string;
+  services: Array<{
+    type: ServiceCategory;
+    price: number;
+    sessions: number;
+    description: string;
+    recommendedPractitioners?: any[];
+    frequency?: string;
+  }>;
+  totalCost: number;
+  planType: 'best-fit' | 'high-impact' | 'progressive';
+  timeFrame: string;
+  
+  // Fields for UI/UX enhancements
+  expectedOutcomes?: Array<{
+    milestone: string;
+    timeframe: string;
+    description: string;
+  }>;
+  
+  rationales?: Array<{
+    service: ServiceCategory;
+    rationale: string;
+    evidenceLevel: "high" | "medium" | "low";
+  }>;
+  
+  progressTimeline?: Array<{
+    week: number;
+    milestone: string;
+    focus: string;
+  }>;
+  
+  alternativeOptions?: Array<{
+    originalService: ServiceCategory;
+    alternatives: ServiceCategory[];
+    reason: string;
+  }>;
+}
+
 // Define shared types that are used across multiple modules
 export interface BaseCosts {
   [key: string]: number;
@@ -128,6 +171,16 @@ export interface ServiceAllocationItem {
   maxSessions?: number;
 }
 
+// Updated ServiceAllocation to include priority
+export interface ServiceAllocation {
+  type: ServiceCategory;
+  price: number;
+  sessions: number;
+  description: string;
+  frequency?: string;
+  priority?: number; // Added priority field to resolve errors
+}
+
 export interface SpecialGroupDiscount {
   group: 'student' | 'senior' | 'child' | 'loyalty' | 'athlete' | 'military';
   discountPercentage: number;
@@ -186,18 +239,11 @@ export interface PlanContext {
   medicalConditions?: string[];
   goal?: string;
   budget?: number;
-  budgetTier?: string;
+  budgetTier?: { name: string }; // Updated to object with name property
   location?: string;
   isUrgent?: boolean;
   timeAvailability?: number;
-}
-
-export interface ServiceAllocation {
-  type: ServiceCategory;
-  price: number;
-  sessions: number;
-  description: string;
-  frequency?: string;
+  preferOnline?: boolean; // Added missing property
 }
 
 export interface SessionAllocation {

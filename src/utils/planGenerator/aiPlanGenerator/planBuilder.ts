@@ -47,10 +47,12 @@ export function buildHealthPlan(
   
   // Convert serviceTypes array to string safely for description
   let serviceTypeNames = "";
-  if (Array.isArray(serviceTypes)) {
+  if (Array.isArray(serviceTypes) && serviceTypes.length > 0) {
     serviceTypeNames = serviceTypes
       .map(type => String(type).replace(/-/g, ' '))
       .join(', ');
+  } else {
+    serviceTypeNames = "professional services";
   }
   
   const description = options.description || 

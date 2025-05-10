@@ -1,7 +1,7 @@
 import { AIHealthPlan, Practitioner, ServiceCategory } from "@/types";
 import { PRACTITIONERS } from "@/data/mockData";
 import { COACHES } from "@/data/practitioners/coaches";
-import { PlanContext, ServiceAllocation } from "./types";
+import { PlanContext, ServiceAllocation, ServiceAllocationItem, SessionAllocation } from "./types";
 import { CONDITION_TO_SERVICES, SERVICE_CONFIGS_BY_BUDGET } from "./serviceMappings";
 import { filterByLocation } from "./locationFilter";
 import { distributeSessionsByBudget } from "./sessionCalculator";
@@ -11,7 +11,10 @@ const ALL_PRACTITIONERS = [...PRACTITIONERS, ...COACHES];
 
 // Export the generatePlan function
 export const generatePlan = (context: PlanContext): AIHealthPlan => {
-  const config = SERVICE_CONFIGS_BY_BUDGET[context.budgetTier.name];
+  const config = context.budgetTier ? 
+    SERVICE_CONFIGS_BY_BUDGET[context.budgetTier.name] : 
+    { allocations: [], requiresDoctor: false, preferHighEnd: false };
+  
   const services = determineRequiredServices(context, config.allocations);
   
   return {
@@ -28,9 +31,9 @@ export const generatePlan = (context: PlanContext): AIHealthPlan => {
 // Export the rest of the functions used in the module
 const determineRequiredServices = (
   context: PlanContext,
-  allocations: ServiceAllocation[]
-): ServiceAllocation[] => {
-  let services: ServiceAllocation[] = [];
+  allocations: ServiceAllocationItem[]
+): ServiceAllocationItem[] => {
+  let services: ServiceAllocationItem[] = [];
 
   // Special case handling for combined conditions
   const hasKneePainWithRace = context.medicalConditions?.some(c => 
@@ -193,8 +196,8 @@ const determineRequiredServices = (
   if (context.goal?.toLowerCase().includes('weight') || 
       context.goal?.toLowerCase().includes('tone') || 
       context.goal?.toLowerCase().includes('fitness') ||
-      context.medicalConditions.includes('weight loss') ||
-      context.medicalConditions.includes('fitness goals')) {
+      context.medicalConditions?.some(c => c.includes('weight loss')) ||
+      context.medicalConditions?.some(c => c.includes('fitness goals'))) {
     
     const hasPersonalTrainer = services.some(s => s.type === 'personal-trainer');
     
@@ -211,16 +214,17 @@ const determineRequiredServices = (
 };
 
 const allocateServices = (
-  services: ServiceAllocation[],
+  services: ServiceAllocationItem[],
   context: PlanContext
 ): AIHealthPlan['services'] => {
   const allocatedServices: AIHealthPlan['services'] = [];
   
   // Enhanced service distribution that ensures balanced allocation for multi-condition scenarios
-  let serviceDistribution = distributeSessionsByBudget(
-    context.budget,
-    services.map(s => ({ type: s.type, priority: s.priority }))
-  );
+  let serviceDistribution: Record<ServiceCategory, SessionAllocation> = {} as Record<ServiceCategory, SessionAllocation>;
+  
+  // Initialize serviceDistribution with required structure
+  const serviceTypes = services.map(s => ({ type: s.type, priority: s.priority || 1 }));
+  serviceDistribution = distributeSessionsByBudget(context.budget, serviceTypes);
 
   // Special cases - ensure coaching and physiotherapy get at least one session each
   const hasKneePain = context.medicalConditions?.some(c => 
@@ -233,7 +237,7 @@ const allocateServices = (
   
   if (hasKneePain && hasRacePrep) {
     // For very low budgets, make sure we have at least one session of each critical service
-    if (context.budget < 1000) {
+    if (context.budget && context.budget < 1000) {
       // Get the minimum allocations we need
       const hasPhysiotherapy = serviceDistribution['physiotherapist'] && serviceDistribution['physiotherapist'].sessions > 0;
       const hasCoaching = serviceDistribution['coaching'] && serviceDistribution['coaching'].sessions > 0;
@@ -243,18 +247,69 @@ const allocateServices = (
         // Calculate an affordable cost per session based on budget
         const affordableSessionCost = Math.floor(context.budget / 2) - 50; // Leave a small buffer
         
-        // Create a custom distribution
+        // Custom distribution for knee pain + race prep case
+        const defaultDistribution = {
+          sessions: 0,
+          costPerSession: 0,
+          totalCost: 0
+        };
+        
+        // Start with a fresh default distribution
         serviceDistribution = {
-          'physiotherapist': {
-            sessions: 1,
-            costPerSession: affordableSessionCost,
-            totalCost: affordableSessionCost
-          },
-          'coaching': {
-            sessions: 1,
-            costPerSession: affordableSessionCost,
-            totalCost: affordableSessionCost
-          }
+          'physiotherapist': { ...defaultDistribution },
+          'biokineticist': { ...defaultDistribution },
+          'dietician': { ...defaultDistribution },
+          'personal-trainer': { ...defaultDistribution },
+          'pain-management': { ...defaultDistribution },
+          'coaching': { ...defaultDistribution },
+          'psychology': { ...defaultDistribution },
+          'psychiatry': { ...defaultDistribution },
+          'podiatrist': { ...defaultDistribution },
+          'general-practitioner': { ...defaultDistribution },
+          'sport-physician': { ...defaultDistribution },
+          'orthopedic-surgeon': { ...defaultDistribution },
+          'family-medicine': { ...defaultDistribution },
+          'gastroenterology': { ...defaultDistribution },
+          'massage-therapy': { ...defaultDistribution },
+          'nutrition-coach': { ...defaultDistribution },
+          'occupational-therapy': { ...defaultDistribution },
+          'physical-therapy': { ...defaultDistribution },
+          'chiropractor': { ...defaultDistribution },
+          'nurse-practitioner': { ...defaultDistribution },
+          'cardiology': { ...defaultDistribution },
+          'dermatology': { ...defaultDistribution },
+          'neurology': { ...defaultDistribution },
+          'endocrinology': { ...defaultDistribution },
+          'urology': { ...defaultDistribution },
+          'oncology': { ...defaultDistribution },
+          'rheumatology': { ...defaultDistribution },
+          'pediatrics': { ...defaultDistribution },
+          'geriatrics': { ...defaultDistribution },
+          'sports-medicine': { ...defaultDistribution },
+          'internal-medicine': { ...defaultDistribution },
+          'orthopedics': { ...defaultDistribution },
+          'neurosurgery': { ...defaultDistribution },
+          'infectious-disease': { ...defaultDistribution },
+          'plastic-surgery': { ...defaultDistribution },
+          'obstetrics-gynecology': { ...defaultDistribution },
+          'emergency-medicine': { ...defaultDistribution },
+          'anesthesiology': { ...defaultDistribution },
+          'radiology': { ...defaultDistribution },
+          'geriatric-medicine': { ...defaultDistribution },
+          'all': { ...defaultDistribution }
+        };
+        
+        // Set physiotherapy and coaching
+        serviceDistribution['physiotherapist'] = {
+          sessions: 1,
+          costPerSession: affordableSessionCost,
+          totalCost: affordableSessionCost
+        };
+        
+        serviceDistribution['coaching'] = {
+          sessions: 1,
+          costPerSession: affordableSessionCost,
+          totalCost: affordableSessionCost
         };
         
         console.log("Applied special budget handling for knee pain + race preparation");
@@ -264,7 +319,7 @@ const allocateServices = (
   
   services.forEach(service => {
     const sessionAllocation = serviceDistribution[service.type];
-    if (!sessionAllocation) return;
+    if (!sessionAllocation || sessionAllocation.sessions === 0) return;
 
     let availablePractitioners = ALL_PRACTITIONERS.filter(p => 
       p.serviceType === service.type
@@ -367,7 +422,7 @@ const allocateServices = (
         sessions: sessionAllocation.sessions,
         description: generateServiceDescription(
           service.type, 
-          context.budgetTier.name === 'high',
+          context.budgetTier && context.budgetTier.name === 'high',
           hasKneePain && hasRacePrep,
           context.medicalConditions
         ),
@@ -385,7 +440,7 @@ const allocateServices = (
           sessions: sessionAllocation.sessions,
           description: generateServiceDescription(
             service.type, 
-            context.budgetTier.name === 'high',
+            context.budgetTier && context.budgetTier.name === 'high',
             hasKneePain && hasRacePrep,
             context.medicalConditions
           ),
@@ -463,7 +518,7 @@ const generateServiceDescription = (
   }
   
   // Special case for any back pain condition
-  const hasBackPain = medicalConditions.some(c => c.toLowerCase().includes('back') && c.toLowerCase().includes('pain'));
+  const hasBackPain = medicalConditions?.some(c => c.toLowerCase().includes('back') && c.toLowerCase().includes('pain'));
   if (hasBackPain) {
     switch (serviceType) {
       case 'physiotherapist':
@@ -478,7 +533,7 @@ const generateServiceDescription = (
   }
   
   // Special case for anxiety
-  const hasAnxiety = medicalConditions.some(c => c.toLowerCase().includes('anxiety'));
+  const hasAnxiety = medicalConditions?.some(c => c.toLowerCase().includes('anxiety'));
   if (hasAnxiety) {
     switch (serviceType) {
       case 'coaching':
@@ -614,7 +669,9 @@ const calculateTotalCost = (services: AIHealthPlan['services']): number => {
 };
 
 const generatePlanName = (context: PlanContext): string => {
-  const budgetTierPrefix = `${context.budgetTier.name.charAt(0).toUpperCase() + context.budgetTier.name.slice(1)} Budget:`;
+  const budgetTierPrefix = context.budgetTier ? 
+    `${context.budgetTier.name.charAt(0).toUpperCase() + context.budgetTier.name.slice(1)} Budget:` : 
+    "Custom Budget:";
   
   // Special case for knee pain + race preparation
   const hasKneePain = context.medicalConditions?.some(c => 

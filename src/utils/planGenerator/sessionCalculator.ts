@@ -1,162 +1,215 @@
 
-import { PriceRange, ServiceCategory } from './types';
+import { ServiceAllocation, ServiceCategory, SessionAllocation, PriceRange } from './types';
 
-interface ServiceAllocation {
-  type: ServiceCategory;
-  priority: number;
-  minSessions?: number;
-}
+// Re-export as calculateSessions for backwards compatibility
+export const calculateSessions = distributeSessionsByBudget;
 
-interface SessionAllocation {
-  sessions: number;
-  costPerSession: number;
-  totalCost: number;
-}
+/**
+ * Distributes sessions based on budget and service priorities
+ */
+export function distributeSessionsByBudget(
+  budget: number = 2500,
+  services: Array<{ type: ServiceCategory; priority: number }>
+): Record<ServiceCategory, SessionAllocation> {
+  // Create a default empty allocation
+  const defaultSessionAllocation: Record<ServiceCategory, SessionAllocation> = {
+    'physiotherapist': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'biokineticist': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'dietician': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'personal-trainer': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'pain-management': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'coaching': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'psychology': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'psychiatry': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'podiatrist': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'general-practitioner': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'sport-physician': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'orthopedic-surgeon': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'family-medicine': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'gastroenterology': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'massage-therapy': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'nutrition-coach': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'occupational-therapy': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'physical-therapy': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'chiropractor': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'nurse-practitioner': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'cardiology': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'dermatology': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'neurology': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'endocrinology': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'urology': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'oncology': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'rheumatology': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'pediatrics': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'geriatrics': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'sports-medicine': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'internal-medicine': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'orthopedics': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'neurosurgery': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'infectious-disease': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'plastic-surgery': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'obstetrics-gynecology': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'emergency-medicine': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'anesthesiology': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'radiology': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'geriatric-medicine': { sessions: 0, costPerSession: 0, totalCost: 0 },
+    'all': { sessions: 0, costPerSession: 0, totalCost: 0 }
+  };
 
-export const distributeSessionsByBudget = (
-  budget: number,
-  services: ServiceAllocation[]
-): Record<ServiceCategory, SessionAllocation> => {
-  if (!budget || budget <= 0 || !Array.isArray(services) || services.length === 0) {
-    return {};
+  // Basic validation
+  if (!budget || budget <= 0 || !services || services.length === 0) {
+    return defaultSessionAllocation;
   }
+
+  const sessionAllocation: Record<ServiceCategory, SessionAllocation> = { ...defaultSessionAllocation };
   
-  // Sort services by priority (highest to lowest)
+  // Calculate total priority
+  const totalPriority = services.reduce((sum, service) => sum + service.priority, 0) || 1;
+  
+  // Get price ranges for services
+  const priceRanges = getServicePriceRanges();
+  
+  // Sort services by priority (highest first)
   const sortedServices = [...services].sort((a, b) => b.priority - a.priority);
   
-  // Calculate total priority points to get relative weights
-  const totalPriorityPoints = sortedServices.reduce((sum, service) => sum + service.priority, 0);
+  // Phase 1: Initial session allocation based on priority
+  const totalServices = sortedServices.length;
   
-  // Initialize allocations
-  const allocations: Record<ServiceCategory, SessionAllocation> = {};
+  // Base number of sessions per service
+  const baseSessionsPerService = budget >= 2000 ? 2 : 1;
   
-  // First pass: allocate budget proportionally based on priority
+  // Available budget after initial allocation
   let remainingBudget = budget;
-  sortedServices.forEach(service => {
-    const relativePriority = service.priority / totalPriorityPoints;
-    const serviceBudget = Math.floor(budget * relativePriority);
-    
-    // Start with a reasonable cost per session based on service type
-    const baseCost = getBaseServiceCost(service.type);
-    
-    // Calculate how many sessions we can afford
-    let sessions = Math.max(1, Math.floor(serviceBudget / baseCost));
-    
-    // Enforce minimum sessions if specified
-    if (service.minSessions !== undefined) {
-      sessions = Math.max(sessions, service.minSessions);
-    }
-    
-    // Calculate actual cost per session, adjusting for budget
-    const costPerSession = sessions > 0 ? Math.min(baseCost, serviceBudget / sessions) : baseCost;
-    const totalServiceCost = sessions * costPerSession;
-    
-    allocations[service.type] = {
-      sessions,
-      costPerSession,
-      totalCost: totalServiceCost
+  
+  // First pass: Allocate base sessions to all services
+  for (const service of sortedServices) {
+    const priceRange = priceRanges[service.type] || { 
+      low: { min: 400, max: 600 },
+      medium: { min: 500, max: 800 }, 
+      high: { min: 700, max: 1200 }
     };
     
-    remainingBudget -= totalServiceCost;
-  });
-  
-  // Use any remaining budget to add sessions to high priority services
-  if (remainingBudget > 0 && sortedServices.length > 0) {
-    for (const service of sortedServices) {
-      const currentAllocation = allocations[service.type];
-      const priceForOneSession = currentAllocation.costPerSession;
+    // Use medium tier pricing for initial allocation
+    const costPerSession = Math.floor((priceRange.medium.min + priceRange.medium.max) / 2);
+    
+    // Ensure we have enough budget for base sessions
+    if (costPerSession * baseSessionsPerService <= remainingBudget) {
+      sessionAllocation[service.type] = {
+        sessions: baseSessionsPerService,
+        costPerSession: costPerSession,
+        totalCost: costPerSession * baseSessionsPerService
+      };
       
-      if (remainingBudget >= priceForOneSession) {
-        currentAllocation.sessions += 1;
-        currentAllocation.totalCost += priceForOneSession;
-        remainingBudget -= priceForOneSession;
-      }
-      
-      if (remainingBudget < 100) {
-        break;
-      }
+      remainingBudget -= costPerSession * baseSessionsPerService;
     }
   }
   
-  return allocations;
-};
+  // Second pass: Distribute remaining budget based on priority
+  if (remainingBudget > 0) {
+    for (const service of sortedServices) {
+      if (sessionAllocation[service.type].sessions === 0) continue;
+      
+      // Calculate share of remaining budget
+      const priorityShare = service.priority / totalPriority;
+      const additionalBudget = remainingBudget * priorityShare;
+      const costPerSession = sessionAllocation[service.type].costPerSession;
+      
+      // Calculate additional sessions
+      const additionalSessions = Math.floor(additionalBudget / costPerSession);
+      
+      if (additionalSessions > 0) {
+        sessionAllocation[service.type].sessions += additionalSessions;
+        sessionAllocation[service.type].totalCost += additionalSessions * costPerSession;
+        remainingBudget -= additionalSessions * costPerSession;
+      }
+    }
+  }
 
-function getBaseServiceCost(serviceType: ServiceCategory): number {
-  // These should be custom calculated based on market data and quality tier
-  const costMap: Record<ServiceCategory, number> = {
-    'physiotherapist': 600,
-    'biokineticist': 550,
-    'dietician': 500,
-    'personal-trainer': 450,
-    'pain-management': 700,
-    'coaching': 400,
-    'psychology': 800,
-    'psychiatry': 1000,
-    'podiatrist': 550,
-    'general-practitioner': 600,
-    'sport-physician': 800,
-    'orthopedic-surgeon': 1200,
-    'family-medicine': 550,
-    'gastroenterology': 900,
-    'massage-therapy': 350,
-    'nutrition-coach': 400,
-    'occupational-therapy': 500,
-    'physical-therapy': 550,
-    'chiropractor': 450,
-    'nurse-practitioner': 400,
-    'cardiology': 900,
-    'dermatology': 700,
-    'neurology': 850,
-    'endocrinology': 800,
-    'urology': 750,
-    'oncology': 1100,
-    'rheumatology': 750,
-    'pediatrics': 600,
-    'geriatrics': 650,
-    'sports-medicine': 700,
-    'internal-medicine': 700,
-    'orthopedics': 900,
-    'neurosurgery': 1500,
-    'infectious-disease': 850,
-    'plastic-surgery': 1400,
-    'obstetrics-gynecology': 750,
-    'emergency-medicine': 1000,
-    'anesthesiology': 1100,
-    'radiology': 800,
-    'geriatric-medicine': 650,
-    'all': 500 // Default value
-  };
-  
-  return costMap[serviceType] || 500; // Default to 500 if not found
+  return sessionAllocation;
 }
 
-export const getPriceRangeForService = (
-  serviceType: ServiceCategory,
-  tierName: string
-): PriceRange => {
-  // This is a simplified version - in production, this would come from a data source
-  const defaultRange: PriceRange = { min: 400, max: 800 };
-  
-  // Example ranges by service and tier
-  const ranges: Record<ServiceCategory, Record<string, PriceRange>> = {
+/**
+ * Get price ranges for different service types and budget tiers
+ */
+function getServicePriceRanges(): Record<ServiceCategory, Record<string, PriceRange>> {
+  // Initialize with basic price ranges for common services
+  const priceRanges: Partial<Record<ServiceCategory, Record<string, PriceRange>>> = {
     'physiotherapist': {
-      'low': { min: 400, max: 600 },
-      'medium': { min: 500, max: 800 },
-      'high': { min: 700, max: 1200 }
+      low: { min: 400, max: 600 },
+      medium: { min: 600, max: 900 },
+      high: { min: 900, max: 1200 }
     },
     'personal-trainer': {
-      'low': { min: 300, max: 500 },
-      'medium': { min: 450, max: 700 },
-      'high': { min: 600, max: 1000 }
-    },
-    // Add more as needed
+      low: { min: 300, max: 450 },
+      medium: { min: 450, max: 700 },
+      high: { min: 700, max: 1000 }
+    }
   };
   
-  const serviceRanges = ranges[serviceType];
-  if (serviceRanges && serviceRanges[tierName]) {
-    return serviceRanges[tierName];
+  // Default price ranges for all other services
+  const defaultRanges = {
+    low: { min: 400, max: 600 },
+    medium: { min: 600, max: 900 },
+    high: { min: 900, max: 1500 }
+  };
+  
+  // Create a complete record with all service categories
+  const fullPriceRanges: Record<ServiceCategory, Record<string, PriceRange>> = {} as Record<ServiceCategory, Record<string, PriceRange>>;
+  
+  // Add all service categories
+  const allServiceCategories: ServiceCategory[] = [
+    'physiotherapist', 'biokineticist', 'dietician', 'personal-trainer',
+    'pain-management', 'coaching', 'psychology', 'psychiatry', 
+    'podiatrist', 'general-practitioner', 'sport-physician', 'orthopedic-surgeon',
+    'family-medicine', 'gastroenterology', 'massage-therapy', 'nutrition-coach',
+    'occupational-therapy', 'physical-therapy', 'chiropractor', 'nurse-practitioner',
+    'cardiology', 'dermatology', 'neurology', 'endocrinology',
+    'urology', 'oncology', 'rheumatology', 'pediatrics',
+    'geriatrics', 'sports-medicine', 'internal-medicine', 'orthopedics',
+    'neurosurgery', 'infectious-disease', 'plastic-surgery', 'obstetrics-gynecology',
+    'emergency-medicine', 'anesthesiology', 'radiology', 'geriatric-medicine',
+    'all'
+  ];
+  
+  // Fill in all service categories with default or specific ranges
+  for (const category of allServiceCategories) {
+    fullPriceRanges[category] = priceRanges[category] || { ...defaultRanges };
   }
   
-  // Fall back to default if not specified
-  return defaultRange;
-};
+  return fullPriceRanges;
+}
+
+/**
+ * Legacy function for determining session count based on budget
+ */
+export function calculateSessionsForBudget(
+  budget: number,
+  costPerSession: number | PriceRange | LegacyPriceRange,
+  minSessions: number = 1,
+  maxSessions: number = 8
+): number {
+  // Determine the actual cost per session
+  let actualCostPerSession: number;
+  
+  if (typeof costPerSession === 'number') {
+    actualCostPerSession = costPerSession;
+  } else if ('min' in costPerSession && 'max' in costPerSession) {
+    // Use average cost for PriceRange
+    actualCostPerSession = (costPerSession.min + costPerSession.max) / 2;
+  } else {
+    // Use average cost for LegacyPriceRange
+    actualCostPerSession = (costPerSession.affordable + costPerSession.highEnd) / 2;
+  }
+  
+  // Calculate affordable sessions based on budget
+  let affordableSessions = Math.floor(budget / actualCostPerSession);
+  
+  // Constrain within min and max sessions
+  return Math.min(Math.max(affordableSessions, minSessions), maxSessions);
+}
+
+// Add missing LegacyPriceRange interface if it doesn't exist in types.ts
+interface LegacyPriceRange {
+  affordable: number;
+  highEnd: number;
+}

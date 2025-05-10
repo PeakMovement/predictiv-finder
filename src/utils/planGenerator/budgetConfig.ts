@@ -1,238 +1,116 @@
+import { BudgetTier } from "./types";
 
-import { BudgetTier, PriceRange, ServiceCategory } from "./types";
-
-export const BUDGET_TIERS: BudgetTier[] = [
+export const DEFAULT_BUDGET_TIERS: BudgetTier[] = [
   {
-    name: 'low',
+    name: "low",
     range: { min: 0, max: 1000 },
     maxSessions: 2,
     budget: 1000
   },
   {
-    name: 'medium',
+    name: "medium",
     range: { min: 1001, max: 2500 },
     maxSessions: 3,
-    budget: 2000
+    budget: 2500
   },
   {
-    name: 'high',
+    name: "high",
     range: { min: 2501, max: 10000 },
     maxSessions: 4,
-    budget: 4000
+    budget: 5000
   }
 ];
 
-// Fix PriceRange format from affordable/highEnd to min/max to match the defined interface
-export const PRICE_RANGES: Record<ServiceCategory, Record<BudgetTier['name'], PriceRange>> = {
-  'physiotherapist': {
-    low: { min: 200, max: 400 },
-    medium: { min: 400, max: 700 },
-    high: { min: 700, max: 1200 }
-  },
-  'biokineticist': {
-    low: { min: 180, max: 350 },
-    medium: { min: 350, max: 600 },
-    high: { min: 600, max: 1000 }
-  },
-  'dietician': {
-    low: { min: 150, max: 300 },
-    medium: { min: 300, max: 600 },
-    high: { min: 600, max: 1000 }
-  },
-  'personal-trainer': {
-    low: { min: 100, max: 250 },
-    medium: { min: 250, max: 500 },
-    high: { min: 500, max: 800 }
-  },
-  'coaching': {
-    low: { min: 80, max: 200 },
-    medium: { min: 200, max: 400 },
-    high: { min: 400, max: 700 }
-  },
-  'family-medicine': {
-    low: { min: 250, max: 450 },
-    medium: { min: 450, max: 800 },
-    high: { min: 800, max: 1400 }
-  },
-  'internal-medicine': {
-    low: { min: 300, max: 500 },
-    medium: { min: 500, max: 900 },
-    high: { min: 900, max: 1500 }
-  },
-  'pediatrics': {
-    low: { min: 200, max: 400 },
-    medium: { min: 400, max: 700 },
-    high: { min: 700, max: 1200 }
-  },
-  'cardiology': {
-    low: { min: 350, max: 600 },
-    medium: { min: 600, max: 1000 },
-    high: { min: 1000, max: 1800 }
-  },
-  'dermatology': {
-    low: { min: 200, max: 400 },
-    medium: { min: 400, max: 700 },
-    high: { min: 700, max: 1200 }
-  },
-  'orthopedics': {
-    low: { min: 350, max: 600 },
-    medium: { min: 600, max: 1000 },
-    high: { min: 1000, max: 1800 }
-  },
-  'neurology': {
-    low: { min: 350, max: 600 },
-    medium: { min: 600, max: 1000 },
-    high: { min: 1000, max: 1800 }
-  },
-  'gastroenterology': {
-    low: { min: 250, max: 450 },
-    medium: { min: 450, max: 800 },
-    high: { min: 800, max: 1400 }
-  },
-  'obstetrics-gynecology': {
-    low: { min: 200, max: 400 },
-    medium: { min: 400, max: 700 },
-    high: { min: 700, max: 1200 }
-  },
-  'emergency-medicine': {
-    low: { min: 350, max: 600 },
-    medium: { min: 600, max: 1000 },
-    high: { min: 1000, max: 1800 }
-  },
-  'psychiatry': {
-    low: { min: 350, max: 600 },
-    medium: { min: 600, max: 1000 },
-    high: { min: 1000, max: 1800 }
-  },
-  'anesthesiology': {
-    low: { min: 350, max: 600 },
-    medium: { min: 600, max: 1000 },
-    high: { min: 1000, max: 1800 }
-  },
-  'endocrinology': {
-    low: { min: 350, max: 600 },
-    medium: { min: 600, max: 1000 },
-    high: { min: 1000, max: 1800 }
-  },
-  'urology': {
-    low: { min: 350, max: 600 },
-    medium: { min: 600, max: 1000 },
-    high: { min: 1000, max: 1800 }
-  },
-  'oncology': {
-    low: { min: 400, max: 700 },
-    medium: { min: 700, max: 1200 },
-    high: { min: 1200, max: 2000 }
-  },
-  'neurosurgery': {
-    low: { min: 400, max: 700 },
-    medium: { min: 700, max: 1200 },
-    high: { min: 1200, max: 2000 }
-  },
-  'infectious-disease': {
-    low: { min: 350, max: 600 },
-    medium: { min: 600, max: 1000 },
-    high: { min: 1000, max: 1800 }
-  },
-  'radiology': {
-    low: { min: 350, max: 600 },
-    medium: { min: 600, max: 1000 },
-    high: { min: 1000, max: 1800 }
-  },
-  'geriatric-medicine': {
-    low: { min: 250, max: 450 },
-    medium: { min: 450, max: 800 },
-    high: { min: 800, max: 1400 }
-  },
-  'plastic-surgery': {
-    low: { min: 400, max: 800 },
-    medium: { min: 800, max: 1500 },
-    high: { min: 1500, max: 3000 }
-  },
-  'rheumatology': {
-    low: { min: 350, max: 600 },
-    medium: { min: 600, max: 1000 },
-    high: { min: 1000, max: 1800 }
-  },
-  'pain-management': {
-    low: { min: 350, max: 600 },
-    medium: { min: 600, max: 1000 },
-    high: { min: 1000, max: 1800 }
-  },
-  'psychology': {
-    low: { min: 350, max: 600 },
-    medium: { min: 600, max: 1000 },
-    high: { min: 1000, max: 1800 }
-  },
-  'podiatrist': {
-    low: { min: 200, max: 400 },
-    medium: { min: 400, max: 700 },
-    high: { min: 700, max: 1200 }
-  },
-  'general-practitioner': {
-    low: { min: 250, max: 450 },
-    medium: { min: 450, max: 800 },
-    high: { min: 800, max: 1400 }
-  },
-  'sport-physician': {
-    low: { min: 350, max: 600 },
-    medium: { min: 600, max: 1000 },
-    high: { min: 1000, max: 1800 }
-  },
-  'orthopedic-surgeon': {
-    low: { min: 400, max: 800 },
-    medium: { min: 800, max: 1400 },
-    high: { min: 1400, max: 2200 }
-  },
-  'massage-therapy': {
-    low: { min: 150, max: 300 },
-    medium: { min: 300, max: 500 },
-    high: { min: 500, max: 800 }
-  },
-  'nutrition-coach': {
-    low: { min: 100, max: 250 },
-    medium: { min: 250, max: 450 },
-    high: { min: 450, max: 700 }
-  },
-  'occupational-therapy': {
-    low: { min: 200, max: 400 },
-    medium: { min: 400, max: 650 },
-    high: { min: 650, max: 1000 }
-  },
-  'physical-therapy': {
-    low: { min: 200, max: 400 },
-    medium: { min: 400, max: 700 },
-    high: { min: 700, max: 1200 }
-  },
-  'chiropractor': {
-    low: { min: 150, max: 350 },
-    medium: { min: 350, max: 600 },
-    high: { min: 600, max: 1000 }
-  },
-  'nurse-practitioner': {
-    low: { min: 150, max: 300 },
-    medium: { min: 300, max: 500 },
-    high: { min: 500, max: 800 }
-  },
-  'sports-medicine': {
-    low: { min: 300, max: 500 },
-    medium: { min: 500, max: 800 },
-    high: { min: 800, max: 1400 }
-  },
-  'geriatrics': {
-    low: { min: 250, max: 450 },
-    medium: { min: 450, max: 800 },
-    high: { min: 800, max: 1400 }
-  },
-  'all': {
-    low: { min: 200, max: 400 },
-    medium: { min: 400, max: 700 },
-    high: { min: 700, max: 1200 }
+/**
+ * Gets the budget tiers with custom adjustments if needed
+ */
+export function getBudgetTiers(
+  userBudget?: number, 
+  userPreferences?: Record<string, string>
+): BudgetTier[] {
+  const tiers = [...DEFAULT_BUDGET_TIERS];
+  
+  // If user has specified a budget, update the tier that contains it
+  if (userBudget && userBudget > 0) {
+    for (const tier of tiers) {
+      if (userBudget >= tier.range.min && userBudget <= tier.range.max) {
+        tier.budget = userBudget;
+        break;
+      }
+    }
   }
-};
+  
+  return tiers;
+}
 
-export const determineBudgetTier = (budget: number): BudgetTier => {
-  return BUDGET_TIERS.find(
-    tier => budget >= tier.range.min && budget <= tier.range.max
-  ) || BUDGET_TIERS[0];
-};
+/**
+ * Calculates a budget range based on user input
+ */
+export function calculateBudgetRange(
+  explicitBudget?: number,
+  budgetPreference?: string
+): { min: number; max: number; recommended: number } {
+  // If user specified an exact budget, use that
+  if (explicitBudget && explicitBudget > 0) {
+    // Give a range of ±15% around the specified budget
+    const min = Math.floor(explicitBudget * 0.85);
+    const max = Math.ceil(explicitBudget * 1.15);
+    return { min, max, recommended: explicitBudget };
+  }
+  
+  // Otherwise use budget preference to determine range
+  switch (budgetPreference?.toLowerCase()) {
+    case 'low':
+      return { min: 500, max: 1500, recommended: 1000 };
+    case 'medium':
+      return { min: 1500, max: 3000, recommended: 2250 };
+    case 'high':
+      return { min: 3000, max: 8000, recommended: 5000 };
+    case 'premium':
+      return { min: 8000, max: 15000, recommended: 10000 };
+    default:
+      // Default to medium budget range
+      return { min: 1500, max: 3000, recommended: 2250 };
+  }
+}
+
+/**
+ * Attempts to infer budget from user input text
+ */
+export function inferBudgetFromInput(inputText: string): number | undefined {
+  if (!inputText) return undefined;
+  
+  // Look for budget mentions with currency symbols
+  const currencyRegex = /(?:R\s*|ZAR\s*|budget\s*:?\s*R\s*)(\d[,\.\d]*)/i;
+  const currencyMatch = inputText.match(currencyRegex);
+  
+  if (currencyMatch && currencyMatch[1]) {
+    // Parse the matched number, handling commas and decimals
+    const parsedValue = parseFloat(currencyMatch[1].replace(/,/g, ''));
+    if (!isNaN(parsedValue)) {
+      return parsedValue;
+    }
+  }
+  
+  // Look for budget mentions without currency symbols
+  const budgetRegex = /budget\s*:?\s*(\d[,\.\d]*)/i;
+  const budgetMatch = inputText.match(budgetRegex);
+  
+  if (budgetMatch && budgetMatch[1]) {
+    const parsedValue = parseFloat(budgetMatch[1].replace(/,/g, ''));
+    if (!isNaN(parsedValue)) {
+      return parsedValue;
+    }
+  }
+  
+  // Check for budget qualifiers
+  if (/low\s*(?:cost|budget)/i.test(inputText)) {
+    return 1000;
+  } else if (/high\s*(?:cost|budget|end)/i.test(inputText)) {
+    return 5000;
+  } else if (/medium\s*(?:cost|budget|range)/i.test(inputText)) {
+    return 2500;
+  }
+  
+  return undefined;
+}
