@@ -1,4 +1,3 @@
-
 import { ServiceCategory } from "../types";
 import { ProfessionalRecommendation, CategoryRecommendation } from "./types";
 import { identifySymptoms } from "../symptomDetector";
@@ -11,6 +10,7 @@ import { calculateBudget, detectBudgetConstraint, baseCosts } from "./budgetEsti
 import { determineIdealTiming } from "./timingRecommender";
 import { generateRecommendationNotes, generatePreferredTraits } from "./notesGenerator";
 import { enhancedMemoize, logger } from "@/utils/cache";
+import { processHealthScenario } from "./scenarioHandler";
 
 export interface SymptomAnalysisResult {
   symptoms: string[];
@@ -67,6 +67,69 @@ export function generateProfessionalRecommendations(
     if (!validation.isValid) {
       throw new Error(validation.errorMessage);
     }
+    
+    // Check for specific health scenarios first
+    const scenarioResult = processHealthScenario(userInput);
+    if (scenarioResult && scenarioResult.confidence > 0.8) {
+      logger.debug("Detected specific health scenario:", scenarioResult.scenario);
+      
+      // Convert the scenario recommendation to our standard format
+      const { recommendations, mainIssue } = scenarioResult;
+      
+      // Calculate severity and sessions based on the scenario
+      const severity = 0.7; // Default to moderately high severity
+      const sessionCount = calculateIdealSessions(recommendations.primaryProfessional, severity);
+      
+      // Generate recommendations array starting with primary professional
+      const result: ProfessionalRecommendation[] = [{
+        category: recommendations.primaryProfessional,
+        score: 0.9,
+        primaryCondition: mainIssue,
+        idealSessions: sessionCount,
+        estimatedBudget: calculateBudget(recommendations.primaryProfessional, sessionCount),
+        idealTiming: determineIdealTiming(recommendations.primaryProfessional, severity),
+        severity,
+        notes: [recommendations.rationale],
+        preferredTraits: []
+      }];
+      
+      // Add secondary professional if present
+      if (recommendations.secondaryProfessional) {
+        const secondarySessionCount = Math.max(2, Math.floor(sessionCount * 0.7));
+        result.push({
+          category: recommendations.secondaryProfessional,
+          score: 0.8,
+          primaryCondition: mainIssue,
+          idealSessions: secondarySessionCount,
+          estimatedBudget: calculateBudget(recommendations.secondaryProfessional, secondarySessionCount),
+          idealTiming: determineIdealTiming(recommendations.secondaryProfessional, severity),
+          severity,
+          notes: [recommendations.rationale],
+          preferredTraits: []
+        });
+      }
+      
+      // Add supporting professionals
+      recommendations.supportingProfessionals.forEach((category, index) => {
+        const supportSessionCount = Math.max(2, Math.floor(sessionCount * 0.5));
+        result.push({
+          category,
+          score: 0.7 - (index * 0.1), // Decreasing score for each additional professional
+          primaryCondition: mainIssue,
+          idealSessions: supportSessionCount,
+          estimatedBudget: calculateBudget(category, supportSessionCount),
+          idealTiming: determineIdealTiming(category, severity),
+          severity,
+          notes: [recommendations.rationale],
+          preferredTraits: []
+        });
+      });
+      
+      return result;
+    }
+    
+    // If no specific scenario matched, continue with standard analysis process
+    logger.debug("No specific health scenario detected, proceeding with standard analysis.");
     
     // Extract conditions and symptoms with error handling
     let symptomAnalysisResult: SymptomAnalysisResult;

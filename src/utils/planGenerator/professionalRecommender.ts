@@ -1,7 +1,6 @@
 
 // This file is now a thin wrapper over our new modular structure
 import { generateProfessionalRecommendations } from "./professionalRecommendation";
-import { ServiceCategory } from "./types";
-
-// Re-export the types and main function
-export { generateProfessionalRecommendations, ServiceCategory };
+// Use export type for re-exporting types when isolatedModules is enabled
+export { generateProfessionalRecommendations };
+export type { ServiceCategory } from "./types";

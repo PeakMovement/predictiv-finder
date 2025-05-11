@@ -6,3 +6,5 @@ export * from "./budgetEstimator";
 export * from "./sessionCalculator";
 export * from "./timingRecommender";
 export * from "./notesGenerator";
+export * from "./enhancedMatcher";
+export * from "./scenarioHandler";

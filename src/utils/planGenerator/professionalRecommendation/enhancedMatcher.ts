@@ -30,7 +30,7 @@ export function matchProfessionalsEnhanced(
     score: number, 
     reasons: string[], 
     primaryCondition?: string 
-  }> = {};
+  }> = {} as Record<ServiceCategory, { score: number, reasons: string[], primaryCondition?: string }>;
   
   console.log("Enhanced matching with:", { conditions, symptoms, goals, budget, isUrgent });
   
@@ -203,6 +203,28 @@ function matchConditions(
     'recovery': [
       { category: 'physiotherapist', weight: 0.8 },
       { category: 'biokineticist', weight: 0.7 }
+    ],
+    'posture': [
+      { category: 'physiotherapist', weight: 0.9, primary: true },
+      { category: 'biokineticist', weight: 0.7 }
+    ],
+    'core weakness': [
+      { category: 'physiotherapist', weight: 0.8, primary: true },
+      { category: 'personal-trainer', weight: 0.7 },
+      { category: 'biokineticist', weight: 0.75 }
+    ],
+    'gut health': [
+      { category: 'dietician', weight: 0.9, primary: true },
+      { category: 'gastroenterology', weight: 0.8 }
+    ],
+    'postpartum': [
+      { category: 'physiotherapist', weight: 0.9, primary: true },
+      { category: 'personal-trainer', weight: 0.7 }
+    ],
+    'low energy': [
+      { category: 'dietician', weight: 0.8 },
+      { category: 'family-medicine', weight: 0.7 },
+      { category: 'endocrinology', weight: 0.6 }
     ]
   };
   
@@ -288,58 +310,75 @@ function applyGoalAdjustments(
   goals: string[],
   matches: Record<ServiceCategory, { score: number, reasons: string[], primaryCondition?: string }>
 ): void {
-  // Goal to service category adjustments
-  const goalAdjustments: Record<string, Partial<Record<ServiceCategory, number>>> = {
+  // Goal to service category adjustments - with proper type annotations
+  interface GoalAdjustments {
+    [key: string]: Partial<Record<ServiceCategory, number>>;
+  }
+  
+  const goalAdjustments: GoalAdjustments = {
     'weight loss': { 
       'dietician': 0.8, 
       'personal-trainer': 0.7, 
       'coaching': 0.5, 
       'endocrinology': 0.3
-    },
+    } as Partial<Record<ServiceCategory, number>>,
     'strength': { 
       'personal-trainer': 0.8, 
       'biokineticist': 0.7 
-    },
+    } as Partial<Record<ServiceCategory, number>>,
     'fitness': { 
       'personal-trainer': 0.8, 
       'coaching': 0.6, 
       'biokineticist': 0.5 
-    },
+    } as Partial<Record<ServiceCategory, number>>,
     'running': { 
       'coaching': 0.8, 
       'personal-trainer': 0.7, 
       'physiotherapist': 0.4 
-    },
+    } as Partial<Record<ServiceCategory, number>>,
     'training': { 
       'personal-trainer': 0.7, 
       'coaching': 0.6 
-    },
+    } as Partial<Record<ServiceCategory, number>>,
     'motivation': { 
       'coaching': 0.8, 
       'personal-trainer': 0.5 
-    },
+    } as Partial<Record<ServiceCategory, number>>,
     'nutrition': { 
       'dietician': 0.8, 
       'nutrition-coach': 0.6 
-    },
+    } as Partial<Record<ServiceCategory, number>>,
     'recovery': { 
       'physiotherapist': 0.7, 
       'biokineticist': 0.6 
-    },
+    } as Partial<Record<ServiceCategory, number>>,
     'triathlon': { 
       'coaching': 0.8, 
       'personal-trainer': 0.7, 
       'sports-medicine': 0.6 
-    },
+    } as Partial<Record<ServiceCategory, number>>,
     'lifestyle': { 
       'coaching': 0.7, 
       'dietician': 0.5, 
       'personal-trainer': 0.5 
-    }
+    } as Partial<Record<ServiceCategory, number>>,
+    'posture': {
+      'physiotherapist': 0.9,
+      'biokineticist': 0.7
+    } as Partial<Record<ServiceCategory, number>>,
+    'core strength': {
+      'physiotherapist': 0.7,
+      'personal-trainer': 0.8
+    } as Partial<Record<ServiceCategory, number>>,
+    'gut health': {
+      'dietician': 0.9,
+      'gastroenterology': 0.7
+    } as Partial<Record<ServiceCategory, number>>
   };
   
   goals.forEach(goal => {
     const goalLower = goal.toLowerCase();
+    // Check for exact match first
     const adjustments = goalAdjustments[goalLower];
     
     if (adjustments) {
@@ -352,6 +391,20 @@ function applyGoalAdjustments(
       });
       
       console.log(`Applied adjustments for goal: ${goal}`);
+    } else {
+      // Check for partial matches
+      Object.entries(goalAdjustments).forEach(([key, adjustments]) => {
+        if (goalLower.includes(key)) {
+          Object.entries(adjustments).forEach(([category, adjustment]) => {
+            const serviceCategory = category as ServiceCategory;
+            if (matches[serviceCategory]) {
+              matches[serviceCategory].score += adjustment * 0.8; // Partial match gets 80% of score
+              matches[serviceCategory].reasons.push(`Partially matches goal: ${goal} (via ${key})`);
+            }
+          });
+          console.log(`Applied partial adjustments for goal: ${goal} via ${key}`);
+        }
+      });
     }
   });
 }
@@ -363,33 +416,36 @@ function applyBudgetAdjustments(
   budget: number,
   matches: Record<ServiceCategory, { score: number, reasons: string[], primaryCondition?: string }>
 ): void {
-  // Budget-sensitive adjustments
-  const budgetAdjustments: Partial<Record<ServiceCategory, number>> = {};
+  // Budget-sensitive adjustments with proper typing
+  let budgetAdjustments: Partial<Record<ServiceCategory, number>> = {};
   
   // For very tight budgets, adjust for cost-effectiveness
   if (budget <= 1000) {
-    // Type-safe assignment
-    budgetAdjustments['personal-trainer'] = 0.2;
-    budgetAdjustments['dietician'] = 0.3;
-    budgetAdjustments['family-medicine'] = 0.3;
-    budgetAdjustments['coaching'] = 0.2;
-    budgetAdjustments['endocrinology'] = -0.2;
-    budgetAdjustments['psychiatry'] = -0.2;
-    budgetAdjustments['orthopedics'] = -0.3;
-    budgetAdjustments['gastroenterology'] = -0.3;
-    budgetAdjustments['neurology'] = -0.3;
-    budgetAdjustments['cardiology'] = -0.3;
+    budgetAdjustments = {
+      'personal-trainer': 0.2,
+      'dietician': 0.3,
+      'family-medicine': 0.3,
+      'coaching': 0.2,
+      'endocrinology': -0.2,
+      'psychiatry': -0.2,
+      'orthopedics': -0.3,
+      'gastroenterology': -0.3,
+      'neurology': -0.3,
+      'cardiology': -0.3
+    } as Partial<Record<ServiceCategory, number>>;
   } 
   // For moderate budgets
   else if (budget <= 2000) {
-    budgetAdjustments['personal-trainer'] = 0.1;
-    budgetAdjustments['dietician'] = 0.1;
-    budgetAdjustments['family-medicine'] = 0.1;
-    budgetAdjustments['coaching'] = 0.1;
-    budgetAdjustments['physiotherapist'] = 0.1;
-    budgetAdjustments['endocrinology'] = -0.1;
-    budgetAdjustments['psychiatry'] = -0.1;
-    budgetAdjustments['orthopedics'] = -0.1;
+    budgetAdjustments = {
+      'personal-trainer': 0.1,
+      'dietician': 0.1,
+      'family-medicine': 0.1,
+      'coaching': 0.1,
+      'physiotherapist': 0.1,
+      'endocrinology': -0.1,
+      'psychiatry': -0.1,
+      'orthopedics': -0.1
+    } as Partial<Record<ServiceCategory, number>>;
   }
   
   // Apply budget adjustments
@@ -501,7 +557,7 @@ function applyMultiFactorBonuses(
   const hasDigestive = symptoms.some(s => 
     s.includes('bloat') || s.includes('stomach') || s.includes('digest')
   );
-  const hasFatigue = symptoms.some(s => s.includes('fatigue') || s.includes('tired'));
+  const hasFatigue = symptoms.some(s => s.includes('fatigue') || s.includes('tired') || s.includes('energy'));
   
   if (hasDigestive && hasFatigue) {
     matches['gastroenterology'].score += 0.2;
@@ -511,6 +567,38 @@ function applyMultiFactorBonuses(
     matches['dietician'].reasons.push('Important for digestive health management');
     
     console.log('Applied digestive-fatigue bonus');
+  }
+  
+  // Case 5: Desk job with posture issues
+  const hasPostureIssue = conditions.some(c => c.includes('posture'));
+  const hasDeskJob = symptoms.some(s => s.includes('desk') || s.includes('sitting'));
+  
+  if (hasPostureIssue || hasDeskJob) {
+    matches['physiotherapist'].score += 0.2;
+    matches['biokineticist'].score += 0.15;
+    
+    matches['physiotherapist'].reasons.push('Primary for posture correction');
+    matches['biokineticist'].reasons.push('Helpful for posture-specific exercises');
+    
+    console.log('Applied desk job/posture bonus');
+  }
+  
+  // Case 6: Post-pregnancy recovery
+  const hasPostpartum = conditions.some(c => 
+    c.includes('birth') || c.includes('postpartum') || c.includes('pregnancy')
+  );
+  const hasCoreIssues = conditions.some(c => 
+    c.includes('core') || c.includes('diastasis') || c.includes('abdominal')
+  );
+  
+  if (hasPostpartum || (hasCoreIssues && goals.some(g => g.includes('birth') || g.includes('pregnancy')))) {
+    matches['physiotherapist'].score += 0.25;
+    matches['personal-trainer'].score += 0.15;
+    
+    matches['physiotherapist'].reasons.push('Specialized for postpartum recovery');
+    matches['personal-trainer'].reasons.push('Helpful for post-pregnancy fitness');
+    
+    console.log('Applied postpartum recovery bonus');
   }
 }
 
