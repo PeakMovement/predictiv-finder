@@ -1,4 +1,3 @@
-
 import { ServiceCategory } from "../types";
 import { SYMPTOM_MAPPINGS } from "../symptomMappings";
 
@@ -35,7 +34,6 @@ export function matchProfessionalsEnhanced(
   console.log("Enhanced matching with:", { conditions, symptoms, goals, budget, isUrgent });
   
   // Initialize with zero scores for all service categories
-  // Fix: Use explicit initialization instead of Object.values(ServiceCategory)
   const serviceCategories: ServiceCategory[] = [
     'physiotherapist', 'biokineticist', 'dietician', 'personal-trainer',
     'pain-management', 'coaching', 'psychology', 'psychiatry',
@@ -310,101 +308,148 @@ function applyGoalAdjustments(
   goals: string[],
   matches: Record<ServiceCategory, { score: number, reasons: string[], primaryCondition?: string }>
 ): void {
-  // Goal to service category adjustments - with proper type annotations
-  interface GoalAdjustments {
-    [key: string]: Partial<Record<ServiceCategory, number>>;
-  }
-  
-  const goalAdjustments: GoalAdjustments = {
-    'weight loss': { 
-      'dietician': 0.8, 
-      'personal-trainer': 0.7, 
-      'coaching': 0.5, 
-      'endocrinology': 0.3
-    } as Partial<Record<ServiceCategory, number>>,
-    'strength': { 
-      'personal-trainer': 0.8, 
-      'biokineticist': 0.7 
-    } as Partial<Record<ServiceCategory, number>>,
-    'fitness': { 
-      'personal-trainer': 0.8, 
-      'coaching': 0.6, 
-      'biokineticist': 0.5 
-    } as Partial<Record<ServiceCategory, number>>,
-    'running': { 
-      'coaching': 0.8, 
-      'personal-trainer': 0.7, 
-      'physiotherapist': 0.4 
-    } as Partial<Record<ServiceCategory, number>>,
-    'training': { 
-      'personal-trainer': 0.7, 
-      'coaching': 0.6 
-    } as Partial<Record<ServiceCategory, number>>,
-    'motivation': { 
-      'coaching': 0.8, 
-      'personal-trainer': 0.5 
-    } as Partial<Record<ServiceCategory, number>>,
-    'nutrition': { 
-      'dietician': 0.8, 
-      'nutrition-coach': 0.6 
-    } as Partial<Record<ServiceCategory, number>>,
-    'recovery': { 
-      'physiotherapist': 0.7, 
-      'biokineticist': 0.6 
-    } as Partial<Record<ServiceCategory, number>>,
-    'triathlon': { 
-      'coaching': 0.8, 
-      'personal-trainer': 0.7, 
-      'sports-medicine': 0.6 
-    } as Partial<Record<ServiceCategory, number>>,
-    'lifestyle': { 
-      'coaching': 0.7, 
-      'dietician': 0.5, 
-      'personal-trainer': 0.5 
-    } as Partial<Record<ServiceCategory, number>>,
-    'posture': {
-      'physiotherapist': 0.9,
-      'biokineticist': 0.7
-    } as Partial<Record<ServiceCategory, number>>,
-    'core strength': {
-      'physiotherapist': 0.7,
-      'personal-trainer': 0.8
-    } as Partial<Record<ServiceCategory, number>>,
-    'gut health': {
-      'dietician': 0.9,
-      'gastroenterology': 0.7
-    } as Partial<Record<ServiceCategory, number>>
-  };
-  
   goals.forEach(goal => {
     const goalLower = goal.toLowerCase();
-    // Check for exact match first
-    const adjustments = goalAdjustments[goalLower];
     
-    if (adjustments) {
-      Object.entries(adjustments).forEach(([category, adjustment]) => {
-        const serviceCategory = category as ServiceCategory;
-        if (matches[serviceCategory]) {
-          matches[serviceCategory].score += adjustment;
-          matches[serviceCategory].reasons.push(`Matches goal: ${goal}`);
-        }
-      });
+    // Weight loss and fitness goals
+    if (goalLower.includes('weight') || goalLower.includes('fit') || 
+        goalLower.includes('tone') || goalLower.includes('strong')) {
+      if (matches['dietician']) matches['dietician'].score += 0.8;
+      if (matches['personal-trainer']) matches['personal-trainer'].score += 0.7;
+      if (matches['coaching']) matches['coaching'].score += 0.5;
+      if (matches['endocrinology']) matches['endocrinology'].score += 0.3;
       
-      console.log(`Applied adjustments for goal: ${goal}`);
-    } else {
-      // Check for partial matches
-      Object.entries(goalAdjustments).forEach(([key, adjustments]) => {
-        if (goalLower.includes(key)) {
-          Object.entries(adjustments).forEach(([category, adjustment]) => {
-            const serviceCategory = category as ServiceCategory;
-            if (matches[serviceCategory]) {
-              matches[serviceCategory].score += adjustment * 0.8; // Partial match gets 80% of score
-              matches[serviceCategory].reasons.push(`Partially matches goal: ${goal} (via ${key})`);
-            }
-          });
-          console.log(`Applied partial adjustments for goal: ${goal} via ${key}`);
-        }
-      });
+      if (matches['dietician']) matches['dietician'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['personal-trainer']) matches['personal-trainer'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['coaching']) matches['coaching'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['endocrinology']) matches['endocrinology'].reasons.push(`Matches goal: ${goal}`);
+    }
+    
+    // Strength goals
+    if (goalLower.includes('strength')) {
+      if (matches['personal-trainer']) matches['personal-trainer'].score += 0.8;
+      if (matches['biokineticist']) matches['biokineticist'].score += 0.7;
+      
+      if (matches['personal-trainer']) matches['personal-trainer'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['biokineticist']) matches['biokineticist'].reasons.push(`Matches goal: ${goal}`);
+    }
+    
+    // Fitness goals
+    if (goalLower.includes('fit') || goalLower.includes('tone') || goalLower.includes('strong')) {
+      if (matches['personal-trainer']) matches['personal-trainer'].score += 0.8;
+      if (matches['coaching']) matches['coaching'].score += 0.6;
+      if (matches['biokineticist']) matches['biokineticist'].score += 0.5;
+      
+      if (matches['personal-trainer']) matches['personal-trainer'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['coaching']) matches['coaching'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['biokineticist']) matches['biokineticist'].reasons.push(`Matches goal: ${goal}`);
+    }
+    
+    // Running goals
+    if (goalLower.includes('run') || goalLower.includes('running')) {
+      if (matches['personal-trainer']) matches['personal-trainer'].score += 0.8;
+      if (matches['coaching']) matches['coaching'].score += 0.8;
+      if (matches['physiotherapist']) matches['physiotherapist'].score += 0.6;
+      
+      if (matches['personal-trainer']) matches['personal-trainer'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['coaching']) matches['coaching'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['physiotherapist']) matches['physiotherapist'].reasons.push(`Matches goal: ${goal}`);
+    }
+    
+    // Training goals
+    if (goalLower.includes('train') || goalLower.includes('training')) {
+      if (matches['personal-trainer']) matches['personal-trainer'].score += 0.7;
+      if (matches['coaching']) matches['coaching'].score += 0.6;
+      
+      if (matches['personal-trainer']) matches['personal-trainer'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['coaching']) matches['coaching'].reasons.push(`Matches goal: ${goal}`);
+    }
+    
+    // Motivation goals
+    if (goalLower.includes('motivation')) {
+      if (matches['coaching']) matches['coaching'].score += 0.8;
+      if (matches['personal-trainer']) matches['personal-trainer'].score += 0.5;
+      
+      if (matches['coaching']) matches['coaching'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['personal-trainer']) matches['personal-trainer'].reasons.push(`Matches goal: ${goal}`);
+    }
+    
+    // Nutrition goals
+    if (goalLower.includes('nut') || goalLower.includes('nutr')) {
+      if (matches['dietician']) matches['dietician'].score += 0.8;
+      if (matches['nutrition-coach']) matches['nutrition-coach'].score += 0.6;
+      
+      if (matches['dietician']) matches['dietician'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['nutrition-coach']) matches['nutrition-coach'].reasons.push(`Matches goal: ${goal}`);
+    }
+    
+    // Recovery goals
+    if (goalLower.includes('recov') || goalLower.includes('recov')) {
+      if (matches['physiotherapist']) matches['physiotherapist'].score += 0.8;
+      if (matches['biokineticist']) matches['biokineticist'].score += 0.7;
+      
+      if (matches['physiotherapist']) matches['physiotherapist'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['biokineticist']) matches['biokineticist'].reasons.push(`Matches goal: ${goal}`);
+    }
+    
+    // Triathlon goals
+    if (goalLower.includes('triathlon')) {
+      if (matches['coaching']) matches['coaching'].score += 0.9;
+      if (matches['personal-trainer']) matches['personal-trainer'].score += 0.8;
+      if (matches['biokineticist']) matches['biokineticist'].score += 0.7;
+      
+      if (matches['coaching']) matches['coaching'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['personal-trainer']) matches['personal-trainer'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['biokineticist']) matches['biokineticist'].reasons.push(`Matches goal: ${goal}`);
+    }
+    
+    // Lifestyle goals
+    if (goalLower.includes('lif') || goalLower.includes('lif')) {
+      if (matches['coaching']) matches['coaching'].score += 0.7;
+      if (matches['dietician']) matches['dietician'].score += 0.5;
+      if (matches['personal-trainer']) matches['personal-trainer'].score += 0.5;
+      
+      if (matches['coaching']) matches['coaching'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['dietician']) matches['dietician'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['personal-trainer']) matches['personal-trainer'].reasons.push(`Matches goal: ${goal}`);
+    }
+    
+    // Posture goals
+    if (goalLower.includes('posture')) {
+      if (matches['physiotherapist']) matches['physiotherapist'].score += 0.9;
+      if (matches['biokineticist']) matches['biokineticist'].score += 0.7;
+      
+      if (matches['physiotherapist']) matches['physiotherapist'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['biokineticist']) matches['biokineticist'].reasons.push(`Matches goal: ${goal}`);
+    }
+    
+    // Core strength goals
+    if (goalLower.includes('core') || goalLower.includes('core')) {
+      if (matches['physiotherapist']) matches['physiotherapist'].score += 0.8;
+      if (matches['personal-trainer']) matches['personal-trainer'].score += 0.7;
+      if (matches['biokineticist']) matches['biokineticist'].score += 0.75;
+      
+      if (matches['physiotherapist']) matches['physiotherapist'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['personal-trainer']) matches['personal-trainer'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['biokineticist']) matches['biokineticist'].reasons.push(`Matches goal: ${goal}`);
+    }
+    
+    // Gut health goals
+    if (goalLower.includes('gut') || goalLower.includes('gut')) {
+      if (matches['dietician']) matches['dietician'].score += 0.9;
+      if (matches['gastroenterology']) matches['gastroenterology'].score += 0.7;
+      
+      if (matches['dietician']) matches['dietician'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['gastroenterology']) matches['gastroenterology'].reasons.push(`Matches goal: ${goal}`);
+    }
+    
+    // Postpartum goals
+    if (goalLower.includes('postpartum') || goalLower.includes('postpartum')) {
+      if (matches['physiotherapist']) matches['physiotherapist'].score += 0.9;
+      if (matches['personal-trainer']) matches['personal-trainer'].score += 0.7;
+      
+      if (matches['physiotherapist']) matches['physiotherapist'].reasons.push(`Matches goal: ${goal}`);
+      if (matches['personal-trainer']) matches['personal-trainer'].reasons.push(`Matches goal: ${goal}`);
     }
   });
 }
@@ -416,51 +461,52 @@ function applyBudgetAdjustments(
   budget: number,
   matches: Record<ServiceCategory, { score: number, reasons: string[], primaryCondition?: string }>
 ): void {
-  // Budget-sensitive adjustments with proper typing
-  let budgetAdjustments: Partial<Record<ServiceCategory, number>> = {};
+  // Budget-sensitive adjustments
   
   // For very tight budgets, adjust for cost-effectiveness
   if (budget <= 1000) {
-    budgetAdjustments = {
-      'personal-trainer': 0.2,
-      'dietician': 0.3,
-      'family-medicine': 0.3,
-      'coaching': 0.2,
-      'endocrinology': -0.2,
-      'psychiatry': -0.2,
-      'orthopedics': -0.3,
-      'gastroenterology': -0.3,
-      'neurology': -0.3,
-      'cardiology': -0.3
-    } as Partial<Record<ServiceCategory, number>>;
+    if (matches['personal-trainer']) matches['personal-trainer'].score += 0.2;
+    if (matches['dietician']) matches['dietician'].score += 0.3;
+    if (matches['family-medicine']) matches['family-medicine'].score += 0.3;
+    if (matches['coaching']) matches['coaching'].score += 0.2;
+    
+    if (matches['endocrinology']) matches['endocrinology'].score -= 0.2;
+    if (matches['psychiatry']) matches['psychiatry'].score -= 0.2;
+    if (matches['orthopedics']) matches['orthopedics'].score -= 0.3;
+    if (matches['gastroenterology']) matches['gastroenterology'].score -= 0.3;
+    if (matches['neurology']) matches['neurology'].score -= 0.3;
+    if (matches['cardiology']) matches['cardiology'].score -= 0.3;
+    
+    // Add reasons for budget adjustments
+    if (matches['personal-trainer']) matches['personal-trainer'].reasons.push(`Budget-friendly option (${budget})`);
+    if (matches['dietician']) matches['dietician'].reasons.push(`Budget-friendly option (${budget})`);
+    if (matches['endocrinology']) matches['endocrinology'].reasons.push(`Less budget-optimal (${budget})`);
+    if (matches['psychiatry']) matches['psychiatry'].reasons.push(`Less budget-optimal (${budget})`);
+    if (matches['orthopedics']) matches['orthopedics'].reasons.push(`Less budget-optimal (${budget})`);
+    if (matches['gastroenterology']) matches['gastroenterology'].reasons.push(`Less budget-optimal (${budget})`);
+    if (matches['neurology']) matches['neurology'].reasons.push(`Less budget-optimal (${budget})`);
+    if (matches['cardiology']) matches['cardiology'].reasons.push(`Less budget-optimal (${budget})`);
   } 
   // For moderate budgets
   else if (budget <= 2000) {
-    budgetAdjustments = {
-      'personal-trainer': 0.1,
-      'dietician': 0.1,
-      'family-medicine': 0.1,
-      'coaching': 0.1,
-      'physiotherapist': 0.1,
-      'endocrinology': -0.1,
-      'psychiatry': -0.1,
-      'orthopedics': -0.1
-    } as Partial<Record<ServiceCategory, number>>;
+    if (matches['personal-trainer']) matches['personal-trainer'].score += 0.1;
+    if (matches['dietician']) matches['dietician'].score += 0.1;
+    if (matches['family-medicine']) matches['family-medicine'].score += 0.1;
+    if (matches['coaching']) matches['coaching'].score += 0.1;
+    
+    if (matches['physiotherapist']) matches['physiotherapist'].score += 0.1;
+    if (matches['endocrinology']) matches['endocrinology'].score -= 0.1;
+    if (matches['psychiatry']) matches['psychiatry'].score -= 0.1;
+    if (matches['orthopedics']) matches['orthopedics'].score -= 0.1;
+    
+    // Add reasons for budget adjustments
+    if (matches['personal-trainer']) matches['personal-trainer'].reasons.push(`Budget-friendly option (${budget})`);
+    if (matches['dietician']) matches['dietician'].reasons.push(`Budget-friendly option (${budget})`);
+    if (matches['endocrinology']) matches['endocrinology'].reasons.push(`Less budget-optimal (${budget})`);
+    if (matches['psychiatry']) matches['psychiatry'].reasons.push(`Less budget-optimal (${budget})`);
+    if (matches['orthopedics']) matches['orthopedics'].reasons.push(`Less budget-optimal (${budget})`);
+    if (matches['physiotherapist']) matches['physiotherapist'].reasons.push(`Less budget-optimal (${budget})`);
   }
-  
-  // Apply budget adjustments
-  Object.entries(budgetAdjustments).forEach(([category, adjustment]) => {
-    const serviceCategory = category as ServiceCategory;
-    if (matches[serviceCategory]) {
-      matches[serviceCategory].score += adjustment;
-      
-      if (adjustment > 0) {
-        matches[serviceCategory].reasons.push(`Budget-friendly option (${budget})`);
-      } else if (adjustment < 0) {
-        matches[serviceCategory].reasons.push(`Less budget-optimal (${budget})`);
-      }
-    }
-  });
   
   console.log(`Applied budget adjustments for budget: ${budget}`);
 }

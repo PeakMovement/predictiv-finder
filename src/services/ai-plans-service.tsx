@@ -1,38 +1,29 @@
-import { generateCustomAIPlans, generatePlan } from '@/utils/aiPlanGenerator';
-import { NextRequest, NextResponse } from 'next/server';
 
-export const maxDuration = 30; // This function can run for a maximum of 30 seconds
-export const dynamic = 'force-dynamic'; // Ensure the function is always dynamically executed
+import { generateCustomAIPlans } from '@/utils/aiPlanGenerator';
+import { ServiceCategory } from '@/utils/planGenerator/types';
 
-export async function POST(req: NextRequest) {
+// Replace Next.js specific code with browser-compatible equivalents
+export async function generatePlan(userInput: string) {
   try {
-    const requestBody = await req.json();
-    const userInput = requestBody.userQuery;
-
-    if (!userInput) {
-      return NextResponse.json({ error: 'User query is required' }, { status: 400 });
-    }
-
     // Log the incoming user query for debugging
-    console.log("Received user query:", userInput);
+    console.log("Processing user query:", userInput);
 
     // Call the AI plan generator with the user input
-    const result = await generatePlan(userInput);
+    const result = await generateCustomAIPlans(userInput);
 
     // Log the generated plans for debugging
     console.log("Generated AI plans:", result);
 
-    // Return the generated plans as a JSON response
-    return NextResponse.json({ plans: [result] }, { status: 200 });
-
+    // Return the generated plan
+    return result;
   } catch (error: any) {
-    // Log the error for server-side debugging
+    // Log the error for debugging
     console.error("Error generating AI plans:", error);
 
     // Construct an error message based on the error type
     let errorMessage = 'Failed to generate AI health plans. Please try again.';
 
-    // Return an error response
-    return NextResponse.json({ error: errorMessage, details: error.message }, { status: 500 });
+    // Return an error
+    throw new Error(errorMessage);
   }
 }

@@ -10,6 +10,7 @@ export enum PlanGenerationErrorType {
   SERVICE_MATCHING = 'service_matching',
   BUDGET_CALCULATION = 'budget_calculation',
   PLAN_CREATION = 'plan_creation',
+  PRACTITIONER_MATCHING = 'practitioner_matching', // Add missing error type
   UNEXPECTED = 'unexpected'
 }
 

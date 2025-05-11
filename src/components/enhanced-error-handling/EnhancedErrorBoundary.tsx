@@ -5,7 +5,7 @@ import { toast } from '@/hooks/use-toast';
 
 interface Props {
   children: ReactNode;
-  fallback?: ReactNode | ((error: Error, reset: () => void) => JSX.Element);
+  fallback?: ReactNode | ((props: { error: Error; resetErrorBoundary: () => void }) => JSX.Element);
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
   errorBoundaryKey?: string;
 }
@@ -67,8 +67,10 @@ export class EnhancedErrorBoundary extends Component<Props, State> {
       // If a custom fallback is provided
       if (this.props.fallback) {
         if (typeof this.props.fallback === 'function' && this.state.error) {
-          // Fix: Cast the function result explicitly to JSX.Element
-          return this.props.fallback(this.state.error, this.reset);
+          return this.props.fallback({ 
+            error: this.state.error, 
+            resetErrorBoundary: this.reset 
+          });
         }
         return this.props.fallback;
       }
