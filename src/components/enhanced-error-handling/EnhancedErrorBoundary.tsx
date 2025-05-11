@@ -5,7 +5,7 @@ import { toast } from '@/hooks/use-toast';
 
 interface Props {
   children: ReactNode;
-  fallback?: ReactNode | ((props: { error: Error; resetErrorBoundary: () => void }) => JSX.Element);
+  fallback?: ReactNode | ((props: { error: Error; resetErrorBoundary: () => void }) => ReactNode);
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
   errorBoundaryKey?: string;
 }

@@ -6,7 +6,7 @@ import { LoadingIndicator, ProgressBar } from '@/components/ui/loading-indicator
 import { EnhancedErrorBoundary } from '@/components/enhanced-error-handling';
 import { PlanGenerationErrorFallback } from '@/components/enhanced-error-handling/PlanGenerationErrorFallback';
 import { PlanGenerationErrorHandler } from '@/components/enhanced-error-handling/PlanGenerationErrorHandler';
-import { isPlanGenerationError } from '@/utils/planGenerator/errorHandling/index';
+import { isPlanGenerationError } from '@/utils/planGenerator/errorHandling';
 
 interface SafeAIPlansDisplayProps {
   plans: AIHealthPlan[];

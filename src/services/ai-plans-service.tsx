@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { generateCustomAIPlans } from '@/utils/aiPlanGenerator';
 import { AIHealthPlan, ServiceCategory } from '@/types';
-import { isPlanGenerationError } from '@/utils/planGenerator/errorHandling';
 import { toast } from '@/hooks/use-toast';
 
 // AI Plans Service hook for managing plan generation state
@@ -48,7 +47,7 @@ export function useAIPlansService() {
       });
       
       // Store the error message
-      setError(isPlanGenerationError(error) 
+      setError(error.name === 'PlanGenerationError'
         ? error.userMessage 
         : 'Failed to generate AI health plans. Please try again.');
         
