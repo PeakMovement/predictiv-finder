@@ -67,10 +67,11 @@ export class EnhancedErrorBoundary extends Component<Props, State> {
       // If a custom fallback is provided
       if (this.props.fallback) {
         if (typeof this.props.fallback === 'function' && this.state.error) {
-          return this.props.fallback({ 
-            error: this.state.error, 
-            resetErrorBoundary: this.reset 
-          });
+          const FallbackComponent = this.props.fallback;
+          return <FallbackComponent 
+            error={this.state.error} 
+            resetErrorBoundary={this.reset} 
+          />;
         }
         return this.props.fallback;
       }

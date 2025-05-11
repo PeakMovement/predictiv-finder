@@ -91,13 +91,13 @@ const SafeAIPlansDisplay = (props: SafeAIPlansDisplayProps) => {
   return (
     <EnhancedErrorBoundary
       key={key}
-      fallback={(error) => {
+      fallback={({ error, resetErrorBoundary }) => {
         if (isPlanGenerationError(error)) {
           // Use specialized error handler for plan generation errors
           return (
             <PlanGenerationErrorHandler
               error={error}
-              resetError={handleReset}
+              resetError={resetErrorBoundary}
               onBack={props.onBack}
               onRetry={handleRetry}
             />
