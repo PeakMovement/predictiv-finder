@@ -67,12 +67,14 @@ export class EnhancedErrorBoundary extends Component<Props, State> {
       // If a custom fallback is provided
       if (this.props.fallback) {
         if (typeof this.props.fallback === 'function' && this.state.error) {
-          // Fix type error by using a type assertion for the function result
-          const FallbackFn = this.props.fallback;
-          return FallbackFn({ 
-            error: this.state.error, 
-            resetErrorBoundary: this.reset 
-          }) as ReactNode;
+          // Create a proper React element from the function
+          return React.createElement(this.props.fallback as React.FC<{
+            error: Error;
+            resetErrorBoundary: () => void;
+          }>, {
+            error: this.state.error,
+            resetErrorBoundary: this.reset
+          });
         }
         return this.props.fallback;
       }
