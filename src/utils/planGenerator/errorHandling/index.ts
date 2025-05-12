@@ -12,7 +12,10 @@ export {
 
 export * from './serviceErrors';
 
-// Function to check if an error is a PlanGenerationError
+/**
+ * Function to check if an error is a PlanGenerationError
+ * @param error Any error object to check
+ */
 export function isPlanGenerationError(error: any): boolean {
   return error && error.name === 'PlanGenerationError';
 }
