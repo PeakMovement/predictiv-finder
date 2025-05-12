@@ -1,10 +1,17 @@
 
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
+import { UserProfileMenu } from './auth/UserProfileMenu';
+import { LoginModal } from './auth/LoginModal';
 
 export const Header = () => {
   const navigate = useNavigate();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  
+  const openLoginModal = () => setIsLoginModalOpen(true);
+  const closeLoginModal = () => setIsLoginModalOpen(false);
   
   return (
     <motion.header
@@ -40,16 +47,11 @@ export const Header = () => {
       </nav>
       
       <div className="flex items-center space-x-2">
-        <Button variant="outline" className="hidden md:inline-flex border-health-teal text-health-teal hover:bg-health-teal/10">
-          Sign In
-        </Button>
-        <Button 
-          onClick={() => navigate('/')} 
-          className="bg-health-purple hover:bg-health-purple-dark"
-        >
-          Get Started
-        </Button>
+        <UserProfileMenu openLoginModal={openLoginModal} />
       </div>
+
+      {/* Login Modal */}
+      <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
     </motion.header>
   );
 };
