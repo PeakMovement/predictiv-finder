@@ -68,14 +68,13 @@ export class EnhancedErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) {
         // If fallback is a function, call it with the error and reset function
         if (typeof this.props.fallback === 'function' && this.state.error) {
-          // Create a React element wrapper to satisfy the TypeScript requirements
-          const fallbackElement = this.props.fallback({
-            error: this.state.error,
-            resetErrorBoundary: this.reset
-          });
-          
-          // Return the result wrapped in a fragment to ensure it's a valid ReactNode
-          return <React.Fragment>{fallbackElement}</React.Fragment>;
+          // Convert the function to an element directly using React.createElement
+          return React.createElement(React.Fragment, null, 
+            this.props.fallback({
+              error: this.state.error,
+              resetErrorBoundary: this.reset
+            })
+          );
         }
         return this.props.fallback;
       }
