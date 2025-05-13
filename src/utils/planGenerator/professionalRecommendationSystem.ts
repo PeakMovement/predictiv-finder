@@ -1,7 +1,20 @@
 
-// This file is now a thin wrapper over our new modular structure
-import { generateProfessionalRecommendations, ProfessionalRecommendation } from "./professionalRecommendation";
+// Re-export from the new modular structure
+import { 
+  generateProfessionalRecommendations,
+  ProfessionalRecommendationOptions,
+  ProfessionalRecommendationResult
+} from "./professionalRecommendation";
 
-// Re-export the types and main function
-export type { ProfessionalRecommendation };
-export { generateProfessionalRecommendations };
+/**
+ * Generate professional recommendations based on user input
+ */
+export function getProfessionalRecommendations(
+  userInput: string,
+  options: ProfessionalRecommendationOptions = {}
+): ProfessionalRecommendationResult {
+  return generateProfessionalRecommendations(userInput, options);
+}
+
+// Re-export types and other utilities for backward compatibility
+export * from "./professionalRecommendation/types";

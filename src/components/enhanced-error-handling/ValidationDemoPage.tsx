@@ -1,185 +1,183 @@
 
 import React, { useState } from 'react';
-import { HealthInputWithValidation } from '@/components/enhanced-input/HealthInputWithValidation';
-import { EnhancedErrorDisplay } from '@/components/enhanced-error-handling/EnhancedErrorDisplay';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle, 
+  CardDescription 
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
-import { PlanGenerationError, PlanGenerationErrorType } from '@/utils/planGenerator/errorHandling';
-import EnhancedErrorBoundary from './EnhancedErrorBoundary';
+import { Textarea } from '@/components/ui/textarea';
+import { validateHealthPlanInput } from '@/utils/inputValidation';
+import { FormFeedback } from '@/components/ui/form-feedback';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  PlanGenerationError, 
+  PlanGenerationErrorType 
+} from '@/utils/planGenerator/errorHandling/planGenerationError';
 
 /**
- * Demonstration component for the enhanced validation
- * and error handling system
+ * Demo page to showcase validation features
  */
 const ValidationDemoPage: React.FC = () => {
-  const [query, setQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<PlanGenerationError | null>(null);
+  const [input, setInput] = useState('');
+  const [validationResult, setValidationResult] = useState<ReturnType<typeof validateHealthPlanInput> | null>(null);
+  const [showError, setShowError] = useState(false);
+  const { toast } = useToast();
   
-  const handleSubmit = (healthQuery: string) => {
-    setQuery(healthQuery);
-    setIsLoading(true);
-    setError(null);
+  const handleValidate = () => {
+    const result = validateHealthPlanInput(input);
+    setValidationResult(result);
     
-    // Simulate processing
-    setTimeout(() => {
-      setIsLoading(false);
-      
-      // Randomly show different error examples (for demo purposes)
-      const demoAction = Math.floor(Math.random() * 4);
-      
-      if (demoAction === 0) {
-        // Success case
-        toast({
-          title: "Health Plan Generated",
-          description: "Successfully processed your health query.",
-          variant: "default",
-        });
-      } else if (demoAction === 1) {
-        // Input validation error
-        setError(new PlanGenerationError(
-          "Input validation failed",
-          PlanGenerationErrorType.INPUT_VALIDATION,
-          "We need more specific information about your symptoms.",
-          { input: healthQuery },
-          [
-            "Describe when your symptoms started",
-            "Rate the severity of your pain or discomfort",
-            "Mention any previous treatments you've tried"
-          ]
-        ));
-      } else if (demoAction === 2) {
-        // Service matching error
-        setError(new PlanGenerationError(
-          "Service matching failed",
-          PlanGenerationErrorType.SERVICE_MATCHING,
-          "We couldn't match appropriate health services to your needs.",
-          { query: healthQuery },
-          [
-            "Try describing your symptoms more specifically",
-            "Mention the body parts affected",
-            "Include any diagnosed conditions you have"
-          ]
-        ));
-      } else {
-        // External service error
-        setError(new PlanGenerationError(
-          "External service error",
-          PlanGenerationErrorType.EXTERNAL_SERVICE,
-          "We're experiencing technical difficulties processing your request.",
-          { timestamp: new Date().toISOString() },
-          [
-            "Please try again in a few minutes",
-            "If the problem persists, contact support"
-          ]
-        ));
-      }
-    }, 1500);
+    if (!result.isValid) {
+      toast({
+        title: "Validation Error",
+        description: result.errorMessage,
+        variant: "destructive"
+      });
+    } else if (result.suggestions && result.suggestions.length > 0) {
+      toast({
+        title: "Input can be improved",
+        description: "We have some suggestions to improve your query.",
+        variant: "default"
+      });
+    } else {
+      toast({
+        title: "Input is valid",
+        description: "Your health query is detailed and well-formed.",
+        variant: "success"
+      });
+    }
   };
   
-  // Simulate an error boundary error
-  const triggerErrorBoundary = () => {
-    throw new Error("This is a demonstration of the error boundary");
+  const triggerValidationError = () => {
+    toast({
+      title: "Input validation failed",
+      description: "Your input is missing important details like timeframe and budget.",
+      variant: "destructive"
+    });
+  };
+  
+  const triggerNetworkError = () => {
+    setShowError(true);
+    toast({
+      title: "Network Error",
+      description: "Failed to connect to our health plan services. Please try again.",
+      variant: "destructive"
+    });
+  };
+  
+  const triggerInputError = () => {
+    // Create an error similar to what would happen in production
+    const error = new PlanGenerationError(
+      "Invalid input parameters",
+      PlanGenerationErrorType.INPUT_VALIDATION,
+      { 
+        inputLength: input.length,
+        missingFields: ["budget", "timeframe"]
+      }
+    );
+    
+    toast({
+      title: "Input Error",
+      description: error.message,
+      variant: "destructive"
+    });
+  };
+  
+  const handleClearError = () => {
+    setShowError(false);
   };
   
   return (
-    <div className="container py-8 space-y-8">
-      <div className="text-center mb-12">
-        <h1 className="text-3xl font-bold mb-2">Enhanced Validation & Error Handling</h1>
-        <p className="text-gray-600 dark:text-gray-300 max-w-xl mx-auto">
-          This demonstration showcases improved input validation with real-time feedback
-          and enhanced error handling with user-friendly displays.
-        </p>
-      </div>
+    <div className="container max-w-3xl mx-auto py-8">
+      <h1 className="text-3xl font-bold mb-6">Validation System Demo</h1>
       
-      <div className="grid md:grid-cols-2 gap-8">
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Health Input with Enhanced Validation</h2>
-          <HealthInputWithValidation 
-            onSubmit={handleSubmit}
-            isLoading={isLoading}
-          />
-        </div>
-        
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold mb-4">Error Display Examples</h2>
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Test Input Validation</CardTitle>
+          <CardDescription>
+            Enter a health query to test our enhanced validation system
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4">
+            <Textarea 
+              placeholder="E.g., I need help with back pain..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              className="min-h-[120px]"
+            />
+          </div>
           
-          {error && (
-            <div className="mb-6">
-              <h3 className="text-lg font-medium mb-2">Current Error</h3>
-              <EnhancedErrorDisplay
-                title={`Error: ${error.type}`}
-                message={error.userMessage}
-                severity="error"
-                suggestions={error.suggestions}
-                details={JSON.stringify(error.context, null, 2)}
-                onRetry={() => handleSubmit(query)}
-                onDismiss={() => setError(null)}
-              />
-            </div>
+          <div className="flex gap-3">
+            <Button onClick={handleValidate}>
+              Validate Input
+            </Button>
+            <Button variant="outline" onClick={triggerValidationError}>
+              Trigger Validation Error
+            </Button>
+          </div>
+          
+          {validationResult && !validationResult.isValid && (
+            <FormFeedback 
+              className="mt-4"
+              variant="error"
+              message={validationResult.errorMessage || "Invalid input"}
+            />
           )}
           
-          <Card>
-            <CardHeader>
-              <CardTitle>Error Display Variations</CardTitle>
-              <CardDescription>Different severity levels and presentations</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <EnhancedErrorDisplay
-                title="Information Message"
-                message="This is a simple information message with helpful context."
-                severity="info"
-                onDismiss={() => toast({ title: "Dismissed", description: "Info message dismissed" })}
-              />
-              
-              <EnhancedErrorDisplay
-                title="Warning Notification"
-                message="Some parts of your health plan may not be accurate due to limited information."
-                severity="warning"
-                suggestions={["Provide more details about your symptoms", "Include your medical history"]}
-                onHelp={() => toast({ title: "Help", description: "Help information would appear here" })}
-              />
-              
-              <EnhancedErrorDisplay
-                title="Critical System Error"
-                message="Unable to generate health plan due to a system issue."
-                severity="critical"
-                details="Error code: SERVER_TIMEOUT\nTimestamp: 2023-05-15T12:34:56Z"
-                onRetry={() => toast({ title: "Retry", description: "Retrying operation" })}
-              />
-              
-              <EnhancedErrorDisplay
-                title="Success Message"
-                message="Your health plan has been successfully generated and saved."
-                severity="success"
-              />
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Error Boundary Demo</CardTitle>
-              <CardDescription>Test the enhanced error boundary component</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <EnhancedErrorBoundary>
-                <div className="text-center">
-                  <p className="mb-4">
-                    Click the button below to trigger an error that will be caught by the error boundary.
-                  </p>
-                  <Button 
-                    variant="destructive"
-                    onClick={triggerErrorBoundary}
-                  >
-                    Trigger Error
-                  </Button>
-                </div>
-              </EnhancedErrorBoundary>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+          {validationResult && validationResult.isValid && validationResult.suggestions && (
+            <div className="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+              <h3 className="font-medium text-blue-800">Suggestions to improve your query:</h3>
+              <ul className="list-disc list-inside mt-2 text-blue-700">
+                {validationResult.suggestions.map((suggestion, idx) => (
+                  <li key={idx}>{suggestion}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Error Handling Demo</CardTitle>
+          <CardDescription>
+            Test various error handling scenarios
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={triggerNetworkError}>
+                Simulate Network Error
+              </Button>
+              <Button variant="outline" onClick={triggerInputError}>
+                Simulate Input Error
+              </Button>
+            </div>
+            
+            {showError && (
+              <div className="bg-red-50 border border-red-200 rounded p-4">
+                <h3 className="text-red-800 font-medium">Network Error</h3>
+                <p className="text-red-700 mt-1">
+                  Unable to connect to health plan services. Please check your connection and try again.
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-3" 
+                  onClick={handleClearError}
+                >
+                  Dismiss
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
