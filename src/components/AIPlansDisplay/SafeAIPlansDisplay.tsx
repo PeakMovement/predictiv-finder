@@ -6,7 +6,7 @@ import { LoadingIndicator, ProgressBar } from '@/components/ui/loading-indicator
 import { EnhancedErrorBoundary } from '@/components/enhanced-error-handling';
 import { PlanGenerationErrorFallback } from '@/components/enhanced-error-handling/PlanGenerationErrorFallback';
 import { PlanGenerationErrorHandler } from '@/components/enhanced-error-handling/PlanGenerationErrorHandler';
-import { isPlanGenerationError } from '@/utils/planGenerator/errorHandling';
+import { PlanGenerationError } from '@/utils/planGenerator/errorHandling';
 
 interface SafeAIPlansDisplayProps {
   plans: AIHealthPlan[];
@@ -95,7 +95,7 @@ const SafeAIPlansDisplay = (props: SafeAIPlansDisplayProps) => {
     <EnhancedErrorBoundary
       key={key}
       fallback={({ error, resetErrorBoundary }) => {
-        if (isPlanGenerationError(error)) {
+        if (error instanceof PlanGenerationError) {
           // Use specialized error handler for plan generation errors
           return (
             <PlanGenerationErrorHandler

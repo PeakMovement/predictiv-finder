@@ -1,3 +1,11 @@
+
+User-agent: *
+Allow: /
+
+# Sitemap and specific paths
+Sitemap: https://predictiv.co.za/sitemap.xml
+
+# Allow all bots to index the site
 User-agent: Googlebot
 Allow: /
 
@@ -10,5 +18,3 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: *
-Allow: /

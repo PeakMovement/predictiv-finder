@@ -197,7 +197,7 @@ const AppContent: React.FC = () => {
             </div>
             <SafeAIPlansDisplay 
               plans={aiPlans}
-              userQuery={userQuery}
+              userInput={userQuery}
               onSelectPlan={handleSelectPlan}
               onBack={() => setStage('ai-input')}
               isLoading={isGenerating}
