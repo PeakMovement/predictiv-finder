@@ -5,7 +5,11 @@
  */
 
 import { ServiceCategory } from "../types";
-import { ProfessionalRecommendation, CategoryRecommendation } from "./types";
+import { 
+  ProfessionalRecommendation, 
+  CategoryRecommendation,
+  ProfessionalRecommendationResult 
+} from "./types";
 import { matchPractitionersToNeeds } from "../categoryMatcher";
 import { validateUserInput } from "./validators";
 import { analyzeUserHealth } from "./analysis";
@@ -21,7 +25,7 @@ import { enhancedMemoize, logger } from "@/utils/cache";
  */
 export function generateProfessionalRecommendations(
   userInput: string
-): ProfessionalRecommendation[] {
+): ProfessionalRecommendationResult {
   try {
     logger.debug("Generating professional recommendations for input:", userInput);
     
@@ -41,54 +45,35 @@ export function generateProfessionalRecommendations(
       // Convert the scenario recommendation to our standard format
       const { recommendations, mainIssue } = analysis.scenarioResult;
       
-      // Calculate severity and sessions based on the scenario
-      const severity = 0.7; // Default to moderately high severity
-      const sessionCount = calculateIdealSessions(recommendations.primaryProfessional, severity);
-      
-      // Generate recommendations array starting with primary professional
-      const result: ProfessionalRecommendation[] = [{
-        category: recommendations.primaryProfessional,
-        score: 0.9,
-        primaryCondition: mainIssue,
-        idealSessions: sessionCount,
-        estimatedBudget: calculateBudget(recommendations.primaryProfessional, sessionCount),
-        idealTiming: determineIdealTiming(recommendations.primaryProfessional, severity),
-        severity,
-        notes: [recommendations.rationale],
-        preferredTraits: []
-      }];
+      // Build the response structure
+      const result: ProfessionalRecommendationResult = {
+        primaryRecommendations: [{
+          category: recommendations.primaryProfessional,
+          sessions: 4,
+          priority: 'high',
+          reasoning: recommendations.rationale
+        }],
+        notes: [recommendations.rationale]
+      };
       
       // Add secondary professional if present
       if (recommendations.secondaryProfessional) {
-        const secondarySessionCount = Math.max(2, Math.floor(sessionCount * 0.7));
-        result.push({
+        result.primaryRecommendations.push({
           category: recommendations.secondaryProfessional,
-          score: 0.8,
-          primaryCondition: mainIssue,
-          idealSessions: secondarySessionCount,
-          estimatedBudget: calculateBudget(recommendations.secondaryProfessional, secondarySessionCount),
-          idealTiming: determineIdealTiming(recommendations.secondaryProfessional, severity),
-          severity,
-          notes: [recommendations.rationale],
-          preferredTraits: []
+          sessions: 3,
+          priority: 'medium',
+          reasoning: recommendations.rationale
         });
       }
       
-      // Add supporting professionals
-      recommendations.supportingProfessionals.forEach((category, index) => {
-        const supportSessionCount = Math.max(2, Math.floor(sessionCount * 0.5));
-        result.push({
+      // Add complementary recommendations
+      if (recommendations.supportingProfessionals.length > 0) {
+        result.complementaryRecommendations = recommendations.supportingProfessionals.map(category => ({
           category,
-          score: 0.7 - (index * 0.1), // Decreasing score for each additional professional
-          primaryCondition: mainIssue,
-          idealSessions: supportSessionCount,
-          estimatedBudget: calculateBudget(category, supportSessionCount),
-          idealTiming: determineIdealTiming(category, severity),
-          severity,
-          notes: [recommendations.rationale],
-          preferredTraits: []
-        });
-      });
+          sessions: 2,
+          reasoning: "Supporting professional for your condition"
+        }));
+      }
       
       return result;
     }
@@ -100,7 +85,8 @@ export function generateProfessionalRecommendations(
       goals,
       severityScores,
       locationInfo,
-      hasBudgetConstraint
+      hasBudgetConstraint,
+      budget
     } = analysis;
     
     // Match practitioners to needs with enhanced caching
@@ -124,13 +110,21 @@ export function generateProfessionalRecommendations(
     
     if (rankedCategories.length === 0) {
       logger.warn("No professional categories matched to user needs");
-      return [];
+      return {
+        primaryRecommendations: []
+      };
     }
     
+    // Format the result for the API contract
+    const result: ProfessionalRecommendationResult = {
+      primaryRecommendations: []
+    };
+    
     // Convert to detailed recommendations
-    const recommendations: ProfessionalRecommendation[] = rankedCategories
-      .filter(rc => !contraindications.includes(rc.category)) // Filter out contraindicated services
-      .map(rankedCategory => {
+    rankedCategories
+      .filter(rc => !contraindications.includes(rc.category as ServiceCategory))
+      .slice(0, 3) // Take top 3
+      .forEach((rankedCategory, index) => {
         try {
           const { category, score, primaryCondition } = rankedCategory;
           
@@ -139,50 +133,48 @@ export function generateProfessionalRecommendations(
             severityScores[primaryCondition] : 0.5;
           const idealSessions = calculateIdealSessions(category, conditionSeverity);
           
-          // Calculate budget and timing
-          const estimatedBudget = calculateBudget(category, idealSessions);
-          const idealTiming = determineIdealTiming(category, conditionSeverity);
-          
-          // Generate notes and preferred traits
-          const notes = generateRecommendationNotes(
+          // Add to primary recommendations
+          result.primaryRecommendations.push({
             category,
-            primaryCondition,
-            conditionSeverity,
-            goals,
-            hasBudgetConstraint
-          );
-          
-          const preferredTraits = generatePreferredTraits(primaryCondition || "", goals);
-          
-          return {
-            category,
-            score,
-            primaryCondition,
-            idealSessions,
-            estimatedBudget,
-            idealTiming,
-            severity: conditionSeverity,
-            notes,
-            preferredTraits
-          };
+            sessions: idealSessions,
+            priority: index === 0 ? 'high' : (index === 1 ? 'medium' : 'low'),
+            reasoning: `Recommended for ${primaryCondition || 'your condition'}`
+          });
         } catch (error) {
           logger.error(`Error generating recommendation for ${rankedCategory.category}:`, error);
-          // Return a minimal valid recommendation to prevent complete failure
-          return {
-            category: rankedCategory.category,
-            score: rankedCategory.score,
-            primaryCondition: rankedCategory.primaryCondition,
-            idealSessions: 4,
-            estimatedBudget: 2400,
-            idealTiming: "Weekly sessions for 1 month",
-            severity: 0.5,
-            notes: ["Unable to generate detailed recommendations."],
-            preferredTraits: []
-          };
         }
       });
     
-    return recommendations;
+    // If we have budget info, add budget allocation
+    if (budget) {
+      result.budgetAllocation = {
+        total: budget,
+        breakdown: {}
+      };
+      
+      result.primaryRecommendations.forEach(rec => {
+        const sessionCost = calculateBudget(rec.category, 1); 
+        result.budgetAllocation!.breakdown[rec.category] = sessionCost * rec.sessions;
+      });
+    }
+    
+    // Add notes if we have any useful context
+    const notes = [];
+    if (goals && goals.length > 0) {
+      notes.push(`Recommendations are aligned with your goals: ${goals.join(', ')}`);
+    }
+    if (locationInfo.location) {
+      notes.push(`Considered your location: ${locationInfo.location}`);
+    }
+    if (locationInfo.isRemote) {
+      notes.push('Prioritized professionals who offer remote services');
+    }
+    
+    if (notes.length > 0) {
+      result.notes = notes;
+    }
+    
+    return result;
   } catch (error) {
     logger.error("Error in generateProfessionalRecommendations:", error);
     throw error;

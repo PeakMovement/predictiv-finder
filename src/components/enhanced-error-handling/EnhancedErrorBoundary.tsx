@@ -1,7 +1,11 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { FallbackProps } from 'react-error-boundary';
 import { PlanGenerationError } from '@/utils/planGenerator/errorHandling';
+
+export interface FallbackProps {
+  error: Error;
+  resetErrorBoundary: () => void;
+}
 
 export interface EnhancedErrorBoundaryProps {
   children: ReactNode;

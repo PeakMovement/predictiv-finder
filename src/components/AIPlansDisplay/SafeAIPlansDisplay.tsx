@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import AIPlansDisplay from '@/components/AIPlansDisplay';
 import { AIHealthPlan } from '@/types';
@@ -5,15 +6,15 @@ import { LoadingIndicator, ProgressBar } from '@/components/ui/loading-indicator
 import { EnhancedErrorBoundary } from '@/components/enhanced-error-handling';
 import { PlanGenerationErrorFallback } from '@/components/enhanced-error-handling/PlanGenerationErrorFallback';
 import { PlanGenerationErrorHandler } from '@/components/enhanced-error-handling/PlanGenerationErrorHandler';
-import { isPlanGenerationError } from '@/utils/planGenerator/errorHandling/index';
+import { isPlanGenerationError } from '@/utils/planGenerator/errorHandling';
 
 interface SafeAIPlansDisplayProps {
   plans: AIHealthPlan[];
-  userQuery: string;
-  onSelectPlan: (plan: AIHealthPlan) => void;
-  onBack: () => void;
-  onRetry?: () => void;
+  userInput: string;
   isLoading: boolean;
+  onBack?: () => void;
+  onRetry?: () => void;
+  onSelectPlan?: (plan: AIHealthPlan) => void;
 }
 
 const SafeAIPlansDisplay = (props: SafeAIPlansDisplayProps) => {
@@ -28,6 +29,9 @@ const SafeAIPlansDisplay = (props: SafeAIPlansDisplayProps) => {
     setKey(prevKey => prevKey + 1); // Change key to remount error boundary
   };
 
+  // Provide a default onBack function if none is provided
+  const onBack = props.onBack || (() => {});
+
   // If loading, show enhanced loading state
   if (props.isLoading) {
     return (
@@ -35,7 +39,7 @@ const SafeAIPlansDisplay = (props: SafeAIPlansDisplayProps) => {
         <div className="flex items-center mb-6">
           <button 
             className="mr-2 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
-            onClick={props.onBack}
+            onClick={onBack}
             aria-label="Go back"
           >
             ←
@@ -97,7 +101,7 @@ const SafeAIPlansDisplay = (props: SafeAIPlansDisplayProps) => {
             <PlanGenerationErrorHandler
               error={error}
               resetError={resetErrorBoundary}
-              onBack={props.onBack}
+              onBack={onBack}
               onRetry={handleRetry}
             />
           );
@@ -107,7 +111,7 @@ const SafeAIPlansDisplay = (props: SafeAIPlansDisplayProps) => {
         return (
           <PlanGenerationErrorFallback 
             error={error}
-            onBack={props.onBack}
+            onBack={onBack}
             onRetry={handleRetry}
             suggestions={[
               "Try describing your health needs more specifically",
@@ -118,9 +122,15 @@ const SafeAIPlansDisplay = (props: SafeAIPlansDisplayProps) => {
           />
         );
       }}
-      errorBoundaryKey={`ai-plans-${key}`}
+      resetKeys={[key]}
     >
-      <AIPlansDisplay {...props} />
+      <AIPlansDisplay 
+        plans={props.plans}
+        userQuery={props.userInput}
+        onSelectPlan={props.onSelectPlan || (() => {})}
+        onBack={onBack}
+        isLoading={props.isLoading}
+      />
     </EnhancedErrorBoundary>
   );
 };

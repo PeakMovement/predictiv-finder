@@ -3,14 +3,14 @@ import { useState } from 'react';
 import './App.css';
 import Header from './components/Header';
 import AIAssistantInput from './components/AIAssistantInput';
-import { SafeAIPlansDisplay } from './components/AIPlansDisplay/SafeAIPlansDisplay';
-import { HealthPlan } from './types';
-import { generateHealthPlans } from './utils/aiPlanGenerator';
+import SafeAIPlansDisplay from './components/AIPlansDisplay/SafeAIPlansDisplay';
+import { AIHealthPlan } from './types';
+import { generateCustomAIPlans } from './utils/aiPlanGenerator';
 import { EnhancedErrorBoundary } from './components/enhanced-error-handling';
 
 function App() {
   const [userInput, setUserInput] = useState<string>('');
-  const [plans, setPlans] = useState<HealthPlan[]>([]);
+  const [plans, setPlans] = useState<AIHealthPlan[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorKey, setErrorKey] = useState('initial');
 
@@ -20,7 +20,7 @@ function App() {
     setErrorKey(prev => `${prev}-${Date.now()}`); // Reset error boundary on new submission
     
     try {
-      const generatedPlans = await generateHealthPlans(input);
+      const generatedPlans = await generateCustomAIPlans(input);
       setPlans(generatedPlans);
     } catch (error) {
       console.error("Error generating health plans:", error);

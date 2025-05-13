@@ -4,7 +4,10 @@
  */
 
 import { ServiceCategory } from "../types";
-import { ProfessionalRecommendation, CategoryRecommendation } from "./types";
+import { 
+  ProfessionalRecommendation, 
+  CategoryRecommendation 
+} from "./types";
 import { identifySymptoms } from "../symptomDetector";
 import { extractGoals } from "./goalExtractor";
 import { calculateSeverityScores, extractLocationDetails } from "../inputAnalyzer/weightingSystem";

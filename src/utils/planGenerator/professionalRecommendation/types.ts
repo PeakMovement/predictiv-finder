@@ -26,3 +26,22 @@ export interface ProfessionalRecommendationResult {
   };
   notes?: string[];
 }
+
+// Additional types needed by the recommendation generator
+export interface ProfessionalRecommendation {
+  category: string;
+  score: number;
+  primaryCondition?: string;
+  idealSessions: number;
+  estimatedBudget: number;
+  idealTiming: string;
+  severity: number;
+  notes: string[];
+  preferredTraits: string[];
+}
+
+export interface CategoryRecommendation {
+  category: string;
+  score: number;
+  primaryCondition?: string;
+}

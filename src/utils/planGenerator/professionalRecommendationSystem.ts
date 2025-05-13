@@ -1,10 +1,13 @@
 
 // Re-export from the new modular structure
 import { 
-  generateProfessionalRecommendations,
+  generateProfessionalRecommendations 
+} from "./professionalRecommendation";
+
+import {
   ProfessionalRecommendationOptions,
   ProfessionalRecommendationResult
-} from "./professionalRecommendation";
+} from "./professionalRecommendation/types";
 
 /**
  * Generate professional recommendations based on user input
@@ -13,7 +16,7 @@ export function getProfessionalRecommendations(
   userInput: string,
   options: ProfessionalRecommendationOptions = {}
 ): ProfessionalRecommendationResult {
-  return generateProfessionalRecommendations(userInput, options);
+  return generateProfessionalRecommendations(userInput);
 }
 
 // Re-export types and other utilities for backward compatibility
