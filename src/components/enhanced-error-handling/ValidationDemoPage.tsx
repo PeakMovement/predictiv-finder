@@ -1,181 +1,128 @@
 
 import React, { useState } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription 
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { validateHealthPlanInput } from '@/utils/inputValidation';
-import { FormFeedback } from '@/components/ui/form-feedback';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  PlanGenerationError, 
-  PlanGenerationErrorType 
-} from '@/utils/planGenerator/errorHandling/planGenerationError';
+import { toast } from '@/hooks/use-toast';
+import { EnhancedErrorDisplay } from './EnhancedErrorDisplay';
+import { validateHealthQueryInput } from '@/utils/inputValidation/enhancedInputValidator';
+import { Separator } from '@/components/ui/separator';
+import HealthInputWithValidation from '@/components/enhanced-input/HealthInputWithValidation';
 
 /**
- * Demo page to showcase validation features
+ * Demo page to showcase validation and error handling features
  */
 const ValidationDemoPage: React.FC = () => {
-  const [input, setInput] = useState('');
-  const [validationResult, setValidationResult] = useState<ReturnType<typeof validateHealthPlanInput> | null>(null);
-  const [showError, setShowError] = useState(false);
-  const { toast } = useToast();
-  
-  const handleValidate = () => {
-    const result = validateHealthPlanInput(input);
-    setValidationResult(result);
-    
-    if (!result.isValid) {
-      toast({
-        title: "Validation Error",
-        description: result.errorMessage,
-        variant: "destructive"
-      });
-    } else if (result.suggestions && result.suggestions.length > 0) {
-      toast({
-        title: "Input can be improved",
-        description: "We have some suggestions to improve your query.",
-        variant: "default"
-      });
-    } else {
-      toast({
-        title: "Input is valid",
-        description: "Your health query is detailed and well-formed.",
-        variant: "success"
-      });
-    }
-  };
-  
+  const [errorType, setErrorType] = useState<string>('');
+
   const triggerValidationError = () => {
+    setErrorType('validation');
     toast({
-      title: "Input validation failed",
-      description: "Your input is missing important details like timeframe and budget.",
+      title: "Validation Error",
+      description: "Input failed validation checks",
       variant: "destructive"
     });
   };
   
-  const triggerNetworkError = () => {
-    setShowError(true);
+  const triggerSuccessToast = () => {
     toast({
-      title: "Network Error",
-      description: "Failed to connect to our health plan services. Please try again.",
-      variant: "destructive"
+      title: "Success",
+      description: "Operation completed successfully",
+      variant: "default"
     });
   };
   
-  const triggerInputError = () => {
-    // Create an error similar to what would happen in production
-    const error = new PlanGenerationError(
-      "Invalid input parameters",
-      PlanGenerationErrorType.INPUT_VALIDATION,
-      { 
-        inputLength: input.length,
-        missingFields: ["budget", "timeframe"]
-      }
-    );
-    
+  const triggerWarningToast = () => {
     toast({
-      title: "Input Error",
-      description: error.message,
-      variant: "destructive"
+      title: "Warning",
+      description: "Some fields might need attention",
+      variant: "default",
+      className: "bg-amber-500"
     });
   };
   
-  const handleClearError = () => {
-    setShowError(false);
+  const triggerMissingFieldsError = () => {
+    setErrorType('missing-fields');
+  };
+  
+  const clearError = () => {
+    setErrorType('');
   };
   
   return (
-    <div className="container max-w-3xl mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Validation System Demo</h1>
-      
-      <Card className="mb-8">
+    <div className="container py-8 space-y-8">
+      <Card>
         <CardHeader>
-          <CardTitle>Test Input Validation</CardTitle>
+          <CardTitle>Validation & Error Handling Demo</CardTitle>
           <CardDescription>
-            Enter a health query to test our enhanced validation system
+            Test different validation and error handling functionalities
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="mb-4">
-            <Textarea 
-              placeholder="E.g., I need help with back pain..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              className="min-h-[120px]"
-            />
-          </div>
-          
-          <div className="flex gap-3">
-            <Button onClick={handleValidate}>
-              Validate Input
-            </Button>
-            <Button variant="outline" onClick={triggerValidationError}>
-              Trigger Validation Error
-            </Button>
-          </div>
-          
-          {validationResult && !validationResult.isValid && (
-            <FormFeedback 
-              className="mt-4"
-              variant="error"
-              message={validationResult.errorMessage || "Invalid input"}
+        <CardContent className="space-y-6">
+          {errorType === 'validation' && (
+            <EnhancedErrorDisplay
+              title="Validation Failed"
+              message="The provided input doesn't meet our validation requirements"
+              severity="error"
+              suggestions={[
+                "Check that all required fields are filled",
+                "Ensure the input matches the expected format",
+                "Try providing more details about your needs"
+              ]}
             />
           )}
           
-          {validationResult && validationResult.isValid && validationResult.suggestions && (
-            <div className="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-              <h3 className="font-medium text-blue-800">Suggestions to improve your query:</h3>
-              <ul className="list-disc list-inside mt-2 text-blue-700">
-                {validationResult.suggestions.map((suggestion, idx) => (
-                  <li key={idx}>{suggestion}</li>
-                ))}
-              </ul>
-            </div>
+          {errorType === 'missing-fields' && (
+            <EnhancedErrorDisplay
+              title="Missing Required Information"
+              message="Please provide all required fields to continue"
+              severity="warning"
+              suggestions={[
+                "Add your health goals",
+                "Specify your timeline",
+                "Include your budget information"
+              ]}
+            />
           )}
+          
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={triggerValidationError}>
+              Show Validation Error
+            </Button>
+            <Button onClick={triggerSuccessToast} variant="default">
+              Show Success Toast
+            </Button>
+            <Button onClick={triggerWarningToast} variant="outline">
+              Show Warning Toast
+            </Button>
+            <Button onClick={triggerMissingFieldsError} variant="secondary">
+              Show Missing Fields
+            </Button>
+            <Button onClick={clearError} variant="ghost">
+              Clear Errors
+            </Button>
+          </div>
         </CardContent>
       </Card>
       
+      <Separator />
+      
       <Card>
         <CardHeader>
-          <CardTitle>Error Handling Demo</CardTitle>
+          <CardTitle>Enhanced Health Input Component</CardTitle>
           <CardDescription>
-            Test various error handling scenarios
+            Try our improved input component with real-time validation
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={triggerNetworkError}>
-                Simulate Network Error
-              </Button>
-              <Button variant="outline" onClick={triggerInputError}>
-                Simulate Input Error
-              </Button>
-            </div>
-            
-            {showError && (
-              <div className="bg-red-50 border border-red-200 rounded p-4">
-                <h3 className="text-red-800 font-medium">Network Error</h3>
-                <p className="text-red-700 mt-1">
-                  Unable to connect to health plan services. Please check your connection and try again.
-                </p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="mt-3" 
-                  onClick={handleClearError}
-                >
-                  Dismiss
-                </Button>
-              </div>
-            )}
-          </div>
+          <HealthInputWithValidation 
+            onSubmit={(input) => {
+              toast({
+                title: "Input Received",
+                description: `Received ${input.length} characters of input`,
+                variant: "default"
+              });
+            }}
+          />
         </CardContent>
       </Card>
     </div>

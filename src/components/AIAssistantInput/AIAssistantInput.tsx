@@ -1,170 +1,156 @@
 
-import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Spinner } from "@/components/ui/spinner"; 
-import { LoadingIndicator, ProgressBar } from "@/components/ui/loading-indicator";
-import { validateStringInput } from '@/utils/inputValidation';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { FormError } from '@/components/ui/form-feedback';
+import { BrainCircuit, MessageSquare, Sparkles, Clock, DollarSign, Target } from 'lucide-react';
+import { analyzeUserInput } from '@/utils/planGenerator/inputAnalyzer';
+
+// Import our new modular components
+import InputAnalysisDisplay from './components/InputAnalysisDisplay';
+import InputTips from './components/InputTips';
+import ExamplePrompts from './components/ExamplePrompts';
 
 interface AIAssistantInputProps {
   onSubmit: (input: string) => void;
   isLoading?: boolean;
 }
 
+// Common tips for better results
+const tipItems = [
+  "Include your specific goal (e.g., weight loss, pain relief, performance)",
+  "Mention any relevant health conditions or injuries",
+  "Tell us your monthly budget for health services",
+  "Let us know your location or if you prefer online options",
+  "Share your timeline (how quickly you need results)"
+];
+
+// Example prompts for user reference
+const promptExamples = [
+  {
+    title: "I need help with my back pain",
+    content: "I've been experiencing lower back pain for 3 weeks, especially when sitting. My budget is around R1000/month, and I'd prefer something close to Sandton.",
+    icon: <MessageSquare className="w-4 h-4" />
+  },
+  {
+    title: "Weight loss journey",
+    content: "I want to lose 10kg in the next 3 months. I have R1500/month to spend and I'm looking for a combination of nutrition advice and exercise support.",
+    icon: <Target className="w-4 h-4" />
+  },
+  {
+    title: "Marathon training",
+    content: "I'm training for my first marathon in 4 months and need help with conditioning, recovery, and injury prevention. My budget is R2000/month.",
+    icon: <Clock className="w-4 h-4" />
+  },
+  {
+    title: "Stress and anxiety management",
+    content: "Looking for affordable ways to manage my stress and anxiety. I can spend about R800 monthly and would prefer online options.",
+    icon: <DollarSign className="w-4 h-4" />
+  }
+];
+
 /**
- * Input component for the AI Assistant feature
- * Allows users to describe their health needs for AI analysis
+ * Enhanced AI Assistant Input component with real-time analysis
+ * and improved UI for better user experience
  */
-const AIAssistantInput: React.FC<AIAssistantInputProps> = ({ onSubmit, isLoading = false }) => {
-  const [inputText, setInputText] = useState('');
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [isFormTouched, setIsFormTouched] = useState(false);
+export const AIAssistantInput = ({ 
+  onSubmit, 
+  isLoading = false 
+}: AIAssistantInputProps) => {
+  const [input, setInput] = useState('');
+  const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeUserInput> | null>(null);
   const { toast } = useToast();
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value;
-    setInputText(value);
-    
-    // Mark form as touched once user starts typing
-    if (!isFormTouched) {
-      setIsFormTouched(true);
-    }
-    
-    // Live validation after user has started typing
-    if (isFormTouched) {
-      const validation = validateStringInput(value, 20, 1000);
-      setValidationError(validation.isValid ? null : validation.errorMessage);
+  // Handle input changes with real-time analysis
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    if (e.target.value.length > 20) {
+      const quickAnalysis = analyzeUserInput(e.target.value);
+      setAnalysis(quickAnalysis);
+    } else {
+      setAnalysis(null);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsFormTouched(true);
-    
-    // Validate the input
-    const validation = validateStringInput(inputText, 20, 1000);
-    
-    if (!validation.isValid) {
-      setValidationError(validation.errorMessage);
+  // Handle form submission with validation
+  const handleSubmit = () => {
+    if (input.trim().length < 10) {
       toast({
-        title: "Input validation error",
-        description: validation.errorMessage,
+        title: "Input too short",
+        description: "Please provide more details about your needs",
         variant: "destructive",
       });
       return;
     }
     
-    // Clear any validation errors
-    setValidationError(null);
-    
-    // Submit if valid
-    onSubmit(inputText);
+    onSubmit(input);
   };
 
-  // Calculate input quality score based on length and detail
-  const getInputQualityScore = (): number => {
-    if (!inputText || inputText.length < 20) return 0;
-    
-    // Base score on length
-    let score = Math.min(100, Math.max(0, (inputText.length / 200) * 100));
-    
-    // Bonus for including specific details
-    if (inputText.includes("pain") || inputText.includes("symptom")) score += 5;
-    if (inputText.includes("month") || inputText.includes("week") || inputText.includes("year")) score += 5;
-    if (inputText.includes("budget") || inputText.includes("cost")) score += 5;
-    if (inputText.includes("goal")) score += 5;
-    if (inputText.includes("location") || inputText.includes("online")) score += 5;
-    
-    // Cap at 100
-    return Math.min(100, score);
-  };
-
-  const inputQuality = getInputQualityScore();
-  const showQualityIndicator = inputText.length > 10;
-  
-  // Determine quality label
-  const getQualityLabel = (): string => {
-    if (inputQuality < 30) return 'Basic';
-    if (inputQuality < 70) return 'Good';
-    return 'Detailed';
-  };
-  
-  // Determine quality color
-  const getQualityColor = (): string => {
-    if (inputQuality < 30) return 'text-yellow-600'; 
-    if (inputQuality < 70) return 'text-blue-600';
-    return 'text-green-600';
+  // Handle clicking on an example prompt
+  const handleExampleClick = (example: string) => {
+    setInput(example);
+    const quickAnalysis = analyzeUserInput(example);
+    setAnalysis(quickAnalysis);
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-      <h3 className="text-2xl font-bold mb-4">Tell us what you need</h3>
-      <p className="text-gray-600 dark:text-gray-300 mb-6">
-        Describe your health needs, concerns, or goals in detail. Our AI will create personalized plans to help you.
-      </p>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="health-input" className="sr-only">Health needs input</label>
-          <Textarea
-            id="health-input"
-            placeholder="For example: I need help with lower back pain that started 2 months ago. I work at a desk all day and I want to be able to play tennis again."
-            value={inputText}
-            onChange={handleChange}
-            className={`min-h-32 ${validationError ? 'border-red-500 focus:ring-red-500' : ''}`}
-            disabled={isLoading}
-            aria-invalid={!!validationError}
-            aria-describedby={validationError ? "input-error" : undefined}
-          />
-          
-          <FormError 
-            id="input-error"
-            message={validationError || ""} 
-          />
-          
-          {showQualityIndicator && (
-            <div className="mt-2">
-              <div className="flex justify-between text-sm text-gray-500 mb-1">
-                <span>Input quality</span>
-                <span className={getQualityColor()}>{getQualityLabel()}</span>
-              </div>
-              <ProgressBar value={inputQuality} />
-            </div>
-          )}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full max-w-3xl mx-auto"
+    >
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <BrainCircuit className="w-6 h-6 text-health-purple" />
+          <h2 className="text-xl font-semibold">Tell us what you're looking for</h2>
         </div>
         
-        <div className="flex justify-end">
-          <Button 
-            type="submit" 
-            size="lg" 
-            className="px-8"
-            disabled={isLoading || !inputText.trim() || !!validationError}
-            aria-busy={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Spinner variant="dots" className="mr-2 h-4 w-4" />
-                Generating plans...
-              </>
-            ) : (
-              'Generate Health Plans'
+        <div className="flex gap-6 mb-6 flex-col md:flex-row">
+          <div className="md:w-2/3">
+            <Textarea
+              placeholder="Describe your health goals, challenges, or what you're looking to improve..."
+              value={input}
+              onChange={handleInputChange}
+              className="h-64 mb-4"
+            />
+            
+            {analysis && input.length > 20 && (
+              <InputAnalysisDisplay analysis={analysis} />
             )}
-          </Button>
+            
+            <div className="flex justify-end">
+              <Button 
+                onClick={handleSubmit} 
+                disabled={isLoading}
+                className="bg-health-purple hover:bg-health-purple-dark flex items-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-opacity-50 border-t-transparent rounded-full" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Create My Plan
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+          
+          <div className="md:w-1/3">
+            <InputTips tipItems={tipItems} />
+            
+            <ExamplePrompts 
+              examples={promptExamples} 
+              onExampleClick={handleExampleClick}
+            />
+          </div>
         </div>
-      </form>
-      
-      <div className="mt-8">
-        <h4 className="font-medium mb-2">Tips for best results:</h4>
-        <ul className="list-disc pl-6 text-sm text-gray-600 dark:text-gray-300">
-          <li>Include any specific symptoms or conditions</li>
-          <li>Mention your goals and timeline</li>
-          <li>Share relevant limitations (e.g., budget constraints, location)</li>
-          <li>Specify if you prefer remote/online services</li>
-        </ul>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

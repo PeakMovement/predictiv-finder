@@ -1,28 +1,14 @@
 
-import React, { 
-  Component, 
-  ErrorInfo, 
-  ReactNode, 
-  useState, 
-  useEffect, 
-  useCallback 
-} from 'react';
-import { AlertCircle } from 'lucide-react';
-import { logger } from '@/utils/logger';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { FallbackProps } from 'react-error-boundary';
+import { PlanGenerationError } from '@/utils/planGenerator/errorHandling';
 
-interface FallbackProps {
-  error: Error;
-  resetErrorBoundary: () => void;
-}
-
-type FallbackComponent = React.ComponentType<FallbackProps>;
-
-interface EnhancedErrorBoundaryProps {
+export interface EnhancedErrorBoundaryProps {
   children: ReactNode;
-  fallback?: ReactNode | ((props: FallbackProps) => ReactNode);
+  fallback: (props: FallbackProps) => ReactNode;
   onError?: (error: Error, info: ErrorInfo) => void;
-  onReset?: () => void;
   resetKeys?: Array<unknown>;
+  onReset?: () => void;
 }
 
 interface EnhancedErrorBoundaryState {
@@ -31,131 +17,76 @@ interface EnhancedErrorBoundaryState {
 }
 
 /**
- * Enhanced error boundary component that provides better error handling and feedback
+ * Enhanced error boundary component with detailed error handling
  */
 class EnhancedErrorBoundary extends Component<EnhancedErrorBoundaryProps, EnhancedErrorBoundaryState> {
+  // Constructor initializes state with no error
   constructor(props: EnhancedErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null };
-    this.resetErrorBoundary = this.resetErrorBoundary.bind(this);
+    this.state = {
+      hasError: false,
+      error: null
+    };
   }
 
+  // Get derived state from error
   static getDerivedStateFromError(error: Error): EnhancedErrorBoundaryState {
-    return { hasError: true, error };
+    return {
+      hasError: true,
+      error
+    };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo): void {
-    logger.error('EnhancedErrorBoundary caught an error:', error, info);
+  // ComponentDidCatch logs the error and calls onError if provided
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    console.error('Enhanced error boundary caught an error:', error, errorInfo);
     
-    // Call onError prop if provided
     if (this.props.onError) {
-      this.props.onError(error, info);
+      this.props.onError(error, errorInfo);
     }
   }
 
-  resetErrorBoundary(): void {
+  // Reset the error state
+  resetErrorBoundary = (): void => {
     if (this.props.onReset) {
       this.props.onReset();
     }
-    this.setState({ hasError: false, error: null });
-  }
-
-  componentDidUpdate(prevProps: EnhancedErrorBoundaryProps): void {
-    const { resetKeys } = this.props;
     
-    // Reset the error state if any of the resetKeys have changed
-    if (resetKeys && this.state.hasError) {
-      const hasKeyChanged = resetKeys.some(
-        (key, idx) => key !== ((prevProps.resetKeys || [])[idx])
-      );
-      
-      if (hasKeyChanged) {
+    this.setState({
+      hasError: false,
+      error: null
+    });
+  };
+
+  // Check if error state should be reset based on resetKeys
+  componentDidUpdate(prevProps: EnhancedErrorBoundaryProps): void {
+    if (this.state.hasError && this.props.resetKeys) {
+      if (
+        !prevProps.resetKeys ||
+        this.props.resetKeys.some(
+          (key, index) => key !== prevProps.resetKeys?.[index]
+        )
+      ) {
         this.resetErrorBoundary();
       }
     }
   }
 
+  // Render the fallback UI if there's an error
   render(): ReactNode {
-    const { hasError, error } = this.state;
-    const { fallback, children } = this.props;
-    
-    if (hasError && error) {
-      // The proper way to handle different fallback types while ensuring TypeScript is happy
-      if (fallback) {
-        if (typeof fallback === 'function') {
-          // Type assertion to help TypeScript understand this is a valid ReactNode
-          return fallback({ 
-            error, 
-            resetErrorBoundary: this.resetErrorBoundary 
-          }) as ReactNode;
-        }
-        return fallback;
-      }
-      
-      // Default fallback UI
-      return (
-        <div className="p-4 border border-red-300 rounded bg-red-50 text-red-900">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <AlertCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium">Something went wrong</h3>
-              <div className="mt-2 text-sm text-red-700">
-                <p>
-                  {error.message || 'An unexpected error occurred'}
-                </p>
-              </div>
-              <div className="mt-4">
-                <button
-                  type="button"
-                  onClick={this.resetErrorBoundary}
-                  className="px-2 py-1 text-sm rounded bg-red-100 text-red-800 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                >
-                  Try again
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
+    if (this.state.hasError && this.state.error) {
+      const enhancedError = this.state.error instanceof PlanGenerationError
+        ? this.state.error
+        : new Error(this.state.error.message);
+        
+      return this.props.fallback({
+        error: enhancedError,
+        resetErrorBoundary: this.resetErrorBoundary
+      });
     }
-    
-    return children;
+
+    return this.props.children;
   }
 }
 
 export default EnhancedErrorBoundary;
-
-/**
- * Hook to safely use error boundaries with functional components
- */
-export function useErrorBoundary(): { 
-  ErrorBoundary: typeof EnhancedErrorBoundary; 
-  error: Error | null;
-  resetBoundary: () => void;
-} {
-  const [error, setError] = useState<Error | null>(null);
-  
-  const resetBoundary = useCallback(() => {
-    setError(null);
-  }, []);
-  
-  const handleError = useCallback((error: Error) => {
-    setError(error);
-    logger.error('Error boundary caught an error:', error);
-  }, []);
-  
-  // Clear error on unmount
-  useEffect(() => {
-    return () => {
-      setError(null);
-    };
-  }, []);
-  
-  return {
-    ErrorBoundary: EnhancedErrorBoundary,
-    error,
-    resetBoundary
-  };
-}
