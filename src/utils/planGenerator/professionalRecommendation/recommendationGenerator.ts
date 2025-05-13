@@ -1,54 +1,17 @@
-import { ServiceCategory } from "../types";
-import { ProfessionalRecommendation, CategoryRecommendation } from "./types";
-import { identifySymptoms } from "../symptomDetector";
-import { matchPractitionersToNeeds } from "../categoryMatcher";
-import { calculateSeverityScores, extractLocationDetails } from "../inputAnalyzer/weightingSystem";
-import { extractBudget } from "../inputAnalyzer/budgetExtractor";
-import { extractGoals } from "./goalExtractor";
-import { calculateIdealSessions } from "./sessionCalculator";
-import { calculateBudget, detectBudgetConstraint, baseCosts } from "./budgetEstimator";
-import { determineIdealTiming } from "./timingRecommender";
-import { generateRecommendationNotes, generatePreferredTraits } from "./notesGenerator";
-import { enhancedMemoize, logger } from "@/utils/cache";
-import { processHealthScenario } from "./scenarioHandler";
-
-export interface SymptomAnalysisResult {
-  symptoms: string[];
-  priorities: Record<string, number>;
-  contraindications: ServiceCategory[];
-}
-
-// Fix the TypeScript error by making location optional in the interface
-export interface LocationAnalysis {
-  location?: string;
-  isRemote: boolean;
-}
-
-export interface BudgetAnalysis {
-  budget: number | undefined;
-  hasBudgetConstraint: boolean;
-}
 
 /**
- * Validates the user input for professional recommendation generation
- * @param userInput Text input from the user
- * @returns Object with validation result and error message if any
+ * Main recommendation generator module
+ * Refactored from the original large file
  */
-export function validateUserInput(userInput: string): { isValid: boolean; errorMessage?: string } {
-  if (!userInput || userInput.trim() === '') {
-    return { isValid: false, errorMessage: "Please provide some information about your health needs." };
-  }
-  
-  if (userInput.length < 10) {
-    return { isValid: false, errorMessage: "Please provide more details for better recommendations." };
-  }
-  
-  if (userInput.length > 2000) {
-    return { isValid: false, errorMessage: "Input exceeds maximum length (2000 characters)." };
-  }
-  
-  return { isValid: true };
-}
+
+import { ServiceCategory } from "../types";
+import { ProfessionalRecommendation, CategoryRecommendation } from "./types";
+import { matchPractitionersToNeeds } from "../categoryMatcher";
+import { validateUserInput } from "./validators";
+import { analyzeUserHealth } from "./analysis";
+import { calculateBudget, calculateIdealSessions } from "./budget";
+import { determineIdealTiming, generateRecommendationNotes, generatePreferredTraits } from "./utils";
+import { enhancedMemoize, logger } from "@/utils/cache";
 
 /**
  * Generates comprehensive professional recommendations based on user input
@@ -68,13 +31,15 @@ export function generateProfessionalRecommendations(
       throw new Error(validation.errorMessage);
     }
     
-    // Check for specific health scenarios first
-    const scenarioResult = processHealthScenario(userInput);
-    if (scenarioResult && scenarioResult.confidence > 0.8) {
-      logger.debug("Detected specific health scenario:", scenarioResult.scenario);
+    // Analyze user input to get health information
+    const analysis = analyzeUserHealth(userInput);
+    
+    // Handle specific health scenario if detected
+    if (analysis.isSpecificScenario && analysis.scenarioResult) {
+      logger.debug("Processing specific health scenario");
       
       // Convert the scenario recommendation to our standard format
-      const { recommendations, mainIssue } = scenarioResult;
+      const { recommendations, mainIssue } = analysis.scenarioResult;
       
       // Calculate severity and sessions based on the scenario
       const severity = 0.7; // Default to moderately high severity
@@ -128,73 +93,17 @@ export function generateProfessionalRecommendations(
       return result;
     }
     
-    // If no specific scenario matched, continue with standard analysis process
-    logger.debug("No specific health scenario detected, proceeding with standard analysis.");
+    // If no specific scenario, process with standard flow
+    const {
+      symptoms,
+      contraindications,
+      goals,
+      severityScores,
+      locationInfo,
+      hasBudgetConstraint
+    } = analysis;
     
-    // Extract conditions and symptoms with error handling
-    let symptomAnalysisResult: SymptomAnalysisResult;
-    try {
-      symptomAnalysisResult = identifySymptoms(userInput);
-    } catch (error) {
-      logger.error("Error identifying symptoms:", error);
-      throw new Error("Failed to analyze health symptoms. Please try different wording.");
-    }
-    
-    const { symptoms, priorities, contraindications } = symptomAnalysisResult;
-    logger.debug("Identified symptoms:", symptoms);
-    logger.debug("Contraindicated services:", contraindications);
-    
-    if (symptoms.length === 0) {
-      logger.warn("No symptoms identified from input");
-    }
-    
-    // Extract goals with error handling
-    let goals;
-    try {
-      goals = extractGoals(userInput);
-    } catch (error) {
-      logger.error("Error extracting goals:", error);
-      goals = [];
-    }
-    logger.debug("Extracted goals:", goals);
-    
-    // Calculate severity scores for each condition with error handling
-    let severityScores;
-    try {
-      severityScores = calculateSeverityScores(symptoms, userInput);
-    } catch (error) {
-      logger.error("Error calculating severity scores:", error);
-      severityScores = symptoms.reduce((acc, symptom) => {
-        acc[symptom] = 0.5; // Default medium severity
-        return acc;
-      }, {} as Record<string, number>);
-    }
-    logger.debug("Severity scores:", severityScores);
-    
-    // Extract location and online preference with error handling
-    let locationInfo: LocationAnalysis;
-    try {
-      locationInfo = extractLocationDetails(userInput);
-    } catch (error) {
-      logger.error("Error extracting location details:", error);
-      locationInfo = { location: undefined, isRemote: false };
-    }
-    logger.debug("Location info:", locationInfo);
-    
-    // Extract budget information with error handling
-    let budget;
-    let hasBudgetConstraint;
-    try {
-      budget = extractBudget(userInput);
-      hasBudgetConstraint = detectBudgetConstraint(userInput, budget);
-    } catch (error) {
-      logger.error("Error extracting budget information:", error);
-      budget = undefined;
-      hasBudgetConstraint = false;
-    }
-    logger.debug("Budget info:", { budget, hasBudgetConstraint });
-    
-    // Match practitioners to needs with error handling and enhanced caching
+    // Match practitioners to needs with enhanced caching
     let rankedCategories: CategoryRecommendation[];
     try {
       // Use enhanced memoization wrapper for expensive calculations
@@ -218,70 +127,32 @@ export function generateProfessionalRecommendations(
       return [];
     }
     
-    // Convert to detailed recommendations with error handling
+    // Convert to detailed recommendations
     const recommendations: ProfessionalRecommendation[] = rankedCategories
       .filter(rc => !contraindications.includes(rc.category)) // Filter out contraindicated services
       .map(rankedCategory => {
         try {
           const { category, score, primaryCondition } = rankedCategory;
           
-          // Calculate ideal number of sessions based on severity and professional type
+          // Calculate severity and session count
           const conditionSeverity = primaryCondition && severityScores[primaryCondition] !== undefined ? 
             severityScores[primaryCondition] : 0.5;
+          const idealSessions = calculateIdealSessions(category, conditionSeverity);
           
-          // Use try/catch blocks for each calculation to prevent cascading failures
-          let idealSessions;
-          try {
-            idealSessions = calculateIdealSessions(category, conditionSeverity);
-          } catch (error) {
-            logger.error(`Error calculating ideal sessions for ${category}:`, error);
-            idealSessions = 4; // Default value
-          }
+          // Calculate budget and timing
+          const estimatedBudget = calculateBudget(category, idealSessions);
+          const idealTiming = determineIdealTiming(category, conditionSeverity);
           
-          // Use base cost or default to 600
-          const sessionCost = baseCosts[category] || 600;
+          // Generate notes and preferred traits
+          const notes = generateRecommendationNotes(
+            category,
+            primaryCondition,
+            conditionSeverity,
+            goals,
+            hasBudgetConstraint
+          );
           
-          let estimatedBudget;
-          try {
-            estimatedBudget = calculateBudget(category, idealSessions);
-          } catch (error) {
-            logger.error(`Error calculating budget for ${category}:`, error);
-            estimatedBudget = sessionCost * idealSessions;
-          }
-          
-          // Determine ideal timing
-          let idealTiming;
-          try {
-            idealTiming = determineIdealTiming(category, conditionSeverity);
-          } catch (error) {
-            logger.error(`Error determining ideal timing for ${category}:`, error);
-            idealTiming = "Weekly sessions for 1 month";
-          }
-          
-          // Generate recommendation notes
-          let notes;
-          try {
-            notes = generateRecommendationNotes(
-              category,
-              primaryCondition,
-              conditionSeverity,
-              goals,
-              hasBudgetConstraint,
-              sessionCost
-            );
-          } catch (error) {
-            logger.error(`Error generating recommendation notes for ${category}:`, error);
-            notes = [`Consider working with a ${category.replace('-', ' ')} professional.`];
-          }
-          
-          // Preferred traits for professionals
-          let preferredTraits;
-          try {
-            preferredTraits = generatePreferredTraits(primaryCondition || "", goals);
-          } catch (error) {
-            logger.error(`Error generating preferred traits for ${category}:`, error);
-            preferredTraits = [];
-          }
+          const preferredTraits = generatePreferredTraits(primaryCondition || "", goals);
           
           return {
             category,

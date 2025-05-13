@@ -12,8 +12,35 @@ export interface AIHealthPlan {
     price: number;
     sessions: number;
     description: string;
+    recommendedPractitioners?: any[];
+    frequency?: string;
   }>;
   totalCost: number;
   planType: string;
   timeFrame: string;
+  
+  // Optional enhanced properties
+  expectedOutcomes?: Array<{
+    milestone: string;
+    timeframe: string;
+    description: string;
+  }>;
+  
+  rationales?: Array<{
+    service: string;
+    rationale: string;
+    evidenceLevel: "high" | "medium" | "low";
+  }>;
+  
+  progressTimeline?: Array<{
+    week: number;
+    milestone: string;
+    focus: string;
+  }>;
+  
+  alternativeOptions?: Array<{
+    originalService: string;
+    alternatives: string[];
+    reason: string;
+  }>;
 }

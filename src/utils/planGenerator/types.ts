@@ -43,6 +43,7 @@ export type ServiceCategory =
   | 'anesthesiology'
   | 'radiology'
   | 'geriatric-medicine'
+  | string // Allow string type to be compatible with AIHealthPlan
   | 'all'; // Special case for filtering/selection
 
 // Re-export AIHealthPlan interface

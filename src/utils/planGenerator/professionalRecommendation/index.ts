@@ -1,10 +1,9 @@
 
-export * from "./types";
-export * from "./recommendationGenerator";
-export * from "./goalExtractor";
-export * from "./budgetEstimator";
-export * from "./sessionCalculator";
-export * from "./timingRecommender";
-export * from "./notesGenerator";
-export * from "./enhancedMatcher";
-export * from "./scenarioHandler";
+// Main entry point for professional recommendation module
+// Re-export all the functionality from submodules
+
+export * from './recommendationGenerator';
+export * from './validators';
+export * from './analysis';
+export * from './budget';
+export * from './utils';
