@@ -2,24 +2,24 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 
-interface PromptExample {
+interface ExamplePrompt {
   title: string;
   content: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
 }
 
 interface ExamplePromptsProps {
-  examples: PromptExample[];
-  onExampleClick: (example: string) => void;
+  examples: ExamplePrompt[];
+  onExampleClick: (content: string) => void;
 }
 
-/**
- * Displays clickable example prompts for the AI assistant
- */
 const ExamplePrompts: React.FC<ExamplePromptsProps> = ({ examples, onExampleClick }) => {
   return (
     <div>
-      <h3 className="font-medium text-sm mb-2">Try an example:</h3>
+      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        Example queries
+      </h3>
+      
       <div className="space-y-2">
         {examples.map((example, index) => (
           <Button
@@ -28,9 +28,9 @@ const ExamplePrompts: React.FC<ExamplePromptsProps> = ({ examples, onExampleClic
             className="w-full justify-start text-left h-auto py-2 px-3"
             onClick={() => onExampleClick(example.content)}
           >
-            <div className="flex items-center gap-2">
-              <div className="text-health-purple">{example.icon}</div>
-              <div className="truncate">{example.title}</div>
+            <div className="flex items-center">
+              {example.icon && <span className="mr-2">{example.icon}</span>}
+              <span className="truncate">{example.title}</span>
             </div>
           </Button>
         ))}

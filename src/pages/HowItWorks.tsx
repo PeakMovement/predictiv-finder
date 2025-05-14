@@ -1,165 +1,93 @@
 
-import { motion } from 'framer-motion';
-import { ArrowRight, CheckCircle, Clock, HeartPulse, HelpCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useIsMobile } from '@/hooks/use-mobile';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import React from "react";
+import Header from "@/components/Header";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
-/**
- * Step interface representing a step in the user journey
- * 
- * @interface Step
- * @property {string} title - Title of the step
- * @property {string} description - Description of what happens in this step
- * @property {React.ElementType} icon - Icon component to represent the step
- * @property {string} tooltip - Additional information shown in tooltip
- */
-interface Step {
-  title: string;
-  description: string;
-  icon: React.ElementType;
-  tooltip: string;
-}
-
-/**
- * HowItWorks page component
- * Explains the process of using the health planning service
- */
-const HowItWorks = () => {
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
-
-  /**
-   * List of steps in the user journey
-   */
-  const steps: Step[] = [
-    {
-      title: "Step 1: Tell Us What You Need",
-      description: "Share your health goals, challenges, or just chat with our AI to get personalized recommendations.",
-      icon: HeartPulse,
-      tooltip: "No pressure! You can be as specific or general as you like. We'll guide you through it."
-    },
-    {
-      title: "Step 2: Explore Your Options",
-      description: "Browse matching professionals or review your custom wellness plans that fit your budget and goals.",
-      icon: CheckCircle,
-      tooltip: "All recommendations are tailored to what matters most to you - whether that's budget, location, or specific health needs."
-    },
-    {
-      title: "Step 3: Book & Begin Your Journey",
-      description: "Connect with your chosen professionals and kick off your personalized wellness path.",
-      icon: Clock,
-      tooltip: "We'll help you every step of the way, with regular check-ins and plan adjustments as needed."
-    }
-  ];
-
+const HowItWorks: React.FC = () => {
   return (
-    <ScrollArea className="h-full">
-      <div className="container max-w-6xl mx-auto px-4 py-8 sm:py-12">
+    <div className="min-h-screen bg-health-blue-light dark:bg-gray-900">
+      <Header />
+      
+      <main className="container max-w-6xl mx-auto px-4 py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8 sm:mb-12"
+          transition={{ delay: 0.2 }}
         >
-          <h1 className="text-3xl sm:text-4xl font-bold mb-2 sm:mb-4">How It Works</h1>
-          <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300">
-            Your journey to feeling better starts here - it's easier than you think!
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mb-10 sm:mb-16">
-          {steps.map((step, index) => (
-            <motion.div
-              key={step.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.2 }}
-              className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-md relative"
-            >
-              <div className="flex justify-center mb-3 sm:mb-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-health-purple/10 rounded-full flex items-center justify-center">
-                  <step.icon className="w-5 h-5 sm:w-6 sm:h-6 text-health-purple" />
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white mb-6">
+            How Predictiv Works
+          </h1>
+          
+          <div className="prose prose-lg dark:prose-invert max-w-none">
+            <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
+              Your personalized health plan is just a few steps away. Here's how our AI-powered system helps you optimize your health journey.
+            </p>
+            
+            <div className="grid md:grid-cols-2 gap-8 my-12">
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                <div className="flex items-center mb-4">
+                  <div className="bg-health-purple/20 rounded-full p-3 mr-4">
+                    <span className="text-2xl font-bold text-health-purple">1</span>
+                  </div>
+                  <h3 className="text-xl font-semibold">Share Your Health Needs</h3>
                 </div>
-              </div>
-              <div className="flex items-center justify-center mb-2">
-                <h3 className="text-base sm:text-xl font-semibold">{step.title}</h3>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <HelpCircle className="w-4 h-4 ml-2 text-gray-400" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">{step.tooltip}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">{step.description}</p>
-              {index < steps.length - 1 && (
-                <div className="hidden md:block absolute -right-4 top-1/2 transform -translate-y-1/2 z-10">
-                  <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-health-purple" />
-                </div>
-              )}
-              {/* Mobile arrows - show between steps */}
-              {index < steps.length - 1 && isMobile && (
-                <div className="flex justify-center mt-2 md:hidden">
-                  <ArrowRight className="w-5 h-5 text-health-purple transform rotate-90" />
-                </div>
-              )}
-            </motion.div>
-          ))}
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="text-center"
-        >
-          <div className="bg-health-purple/10 p-4 sm:p-6 rounded-xl max-w-3xl mx-auto mb-6 sm:mb-8">
-            <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Why people love our approach</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
-              <div className="flex flex-col">
-                <span className="text-xl sm:text-2xl mb-1 sm:mb-2">🔍</span>
-                <h4 className="font-medium mb-1">Personalized Care</h4>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
-                  No one-size-fits-all solutions here, just what works for you.
+                <p className="text-gray-700 dark:text-gray-300">
+                  Tell us about your health goals, challenges, and preferences. The more details you provide, the more tailored your plan will be.
                 </p>
               </div>
-              <div className="flex flex-col">
-                <span className="text-xl sm:text-2xl mb-1 sm:mb-2">💰</span>
-                <h4 className="font-medium mb-1">Budget-Friendly</h4>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
-                  Plans that respect your wallet while delivering results.
+              
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                <div className="flex items-center mb-4">
+                  <div className="bg-health-purple/20 rounded-full p-3 mr-4">
+                    <span className="text-2xl font-bold text-health-purple">2</span>
+                  </div>
+                  <h3 className="text-xl font-semibold">AI Analysis</h3>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300">
+                  Our advanced AI analyzes your information to understand your unique situation and identify the most beneficial combination of health services.
                 </p>
               </div>
-              <div className="flex flex-col">
-                <span className="text-xl sm:text-2xl mb-1 sm:mb-2">🤝</span>
-                <h4 className="font-medium mb-1">Expert Support</h4>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
-                  Real professionals who genuinely care about your progress.
+              
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                <div className="flex items-center mb-4">
+                  <div className="bg-health-purple/20 rounded-full p-3 mr-4">
+                    <span className="text-2xl font-bold text-health-purple">3</span>
+                  </div>
+                  <h3 className="text-xl font-semibold">Multiple Plan Options</h3>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300">
+                  Review several personalized health plans created specifically for your needs, with different approaches and budget considerations.
+                </p>
+              </div>
+              
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                <div className="flex items-center mb-4">
+                  <div className="bg-health-purple/20 rounded-full p-3 mr-4">
+                    <span className="text-2xl font-bold text-health-purple">4</span>
+                  </div>
+                  <h3 className="text-xl font-semibold">Implementation & Support</h3>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300">
+                  Choose your preferred plan and get connected with the right health professionals to start your journey, with ongoing tracking and support.
                 </p>
               </div>
             </div>
+            
+            <div className="my-12 bg-health-blue-light/30 dark:bg-gray-800 p-8 rounded-xl">
+              <h2 className="text-2xl font-bold mb-4">Ready to get started?</h2>
+              <p className="mb-6">Create your personalized health plan now and take the first step toward your health goals.</p>
+              <Link to="/">
+                <Button className="bg-health-purple hover:bg-health-purple-dark text-lg px-6 py-3">
+                  Create Your Health Plan
+                </Button>
+              </Link>
+            </div>
           </div>
-          
-          <Button 
-            onClick={() => navigate('/')}
-            className="bg-health-purple hover:bg-health-purple-dark w-full sm:w-auto"
-            size={isMobile ? "default" : "lg"}
-          >
-            Start Your Journey
-          </Button>
         </motion.div>
-      </div>
-    </ScrollArea>
+      </main>
+    </div>
   );
 };
 

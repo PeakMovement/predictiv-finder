@@ -1,77 +1,110 @@
 
 import React from 'react';
-import { Info } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
+import { Check, X } from 'lucide-react';
 
-interface InputAnalysisDisplayProps {
+// Define the types for the analysis props
+interface AnalysisProps {
   analysis: {
-    medicalConditions: string[];
-    suggestedCategories: string[];
+    suggestedCategories?: string[];
     budget?: number;
-    location?: string;
-    preferOnline?: boolean;
-  } | null;
+    hasBudgetConstraint?: boolean;
+    primaryIssue?: string;
+    medicalConditions?: string[];
+    timeAvailability?: number;
+    locationInfo?: {
+      location?: string;
+      isRemote: boolean;
+    };
+    specificGoals?: string[];
+    hasEnoughInformation?: boolean;
+    servicePriorities?: Record<string, number>;
+    contextualFactors?: string[];
+  }
 }
 
-/**
- * Displays real-time analysis of user input
- */
-const InputAnalysisDisplay: React.FC<InputAnalysisDisplayProps> = ({ analysis }) => {
-  if (!analysis) return null;
+const InputAnalysisDisplay: React.FC<AnalysisProps> = ({ analysis }) => {
+  // Ensure we have services to display
+  const hasServices = analysis.suggestedCategories && analysis.suggestedCategories.length > 0;
+  const hasConditions = analysis.medicalConditions && analysis.medicalConditions.length > 0;
+  const hasGoals = analysis.specificGoals && analysis.specificGoals.length > 0;
+  
+  // Format budget for display
+  const formattedBudget = analysis.budget ? 
+    new Intl.NumberFormat('en-ZA', { 
+      style: 'currency', 
+      currency: 'ZAR',
+      maximumFractionDigits: 0 
+    }).format(analysis.budget) : 
+    'Not specified';
 
   return (
-    <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-medium text-health-purple">Our Analysis</h3>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-              <Info className="h-4 w-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent>
-            <p className="text-sm">This shows what our AI has detected from your input. We'll use this to create your custom plan.</p>
-          </PopoverContent>
-        </Popover>
-      </div>
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        {analysis.medicalConditions.length > 0 && (
+    <div className="mt-4 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Analysis Preview</h3>
+      
+      <div className="mt-2 space-y-3 text-sm">
+        {analysis.primaryIssue && (
           <div>
-            <span className="font-semibold block">Detected conditions:</span>
-            <span className="text-gray-600 dark:text-gray-300">
-              {analysis.medicalConditions.join(', ')}
+            <span className="font-medium text-gray-700 dark:text-gray-300">Primary concern:</span>{' '}
+            <span className="text-health-purple font-medium">{analysis.primaryIssue}</span>
+          </div>
+        )}
+        
+        {hasConditions && (
+          <div>
+            <span className="font-medium text-gray-700 dark:text-gray-300">Identified conditions:</span>{' '}
+            <span>{analysis.medicalConditions.join(', ')}</span>
+          </div>
+        )}
+        
+        {hasGoals && (
+          <div>
+            <span className="font-medium text-gray-700 dark:text-gray-300">Goals:</span>{' '}
+            <span>{analysis.specificGoals.join(', ')}</span>
+          </div>
+        )}
+        
+        {hasServices && (
+          <div>
+            <span className="font-medium text-gray-700 dark:text-gray-300">Recommended services:</span>{' '}
+            <span>{analysis.suggestedCategories.map(cat => cat.replace('-', ' ')).join(', ')}</span>
+          </div>
+        )}
+        
+        <div>
+          <span className="font-medium text-gray-700 dark:text-gray-300">Budget:</span>{' '}
+          <span>{formattedBudget}</span>
+        </div>
+        
+        {analysis.timeAvailability && (
+          <div>
+            <span className="font-medium text-gray-700 dark:text-gray-300">Timeframe:</span>{' '}
+            <span>~{analysis.timeAvailability} weeks</span>
+          </div>
+        )}
+        
+        {analysis.locationInfo && (
+          <div>
+            <span className="font-medium text-gray-700 dark:text-gray-300">Location preference:</span>{' '}
+            <span>
+              {analysis.locationInfo.location || 'Not specified'} 
+              {analysis.locationInfo.isRemote ? ' (Remote options preferred)' : ''}
             </span>
           </div>
         )}
-        {analysis.suggestedCategories.length > 0 && (
-          <div>
-            <span className="font-semibold block">Suggested specialists:</span>
-            <span className="text-gray-600 dark:text-gray-300">
-              {analysis.suggestedCategories.map(cat => cat.replace('-', ' ')).join(', ')}
-            </span>
-          </div>
-        )}
-        {analysis.budget && (
-          <div>
-            <span className="font-semibold block">Detected budget:</span>
-            <span className="text-gray-600 dark:text-gray-300">R{analysis.budget}/month</span>
-          </div>
-        )}
-        {analysis.location && (
-          <div>
-            <span className="font-semibold block">Location:</span>
-            <span className="text-gray-600 dark:text-gray-300">{analysis.location}</span>
-          </div>
-        )}
-        {analysis.preferOnline !== undefined && (
-          <div>
-            <span className="font-semibold block">Preference:</span>
-            <span className="text-gray-600 dark:text-gray-300">
-              {analysis.preferOnline ? 'Online sessions' : 'In-person sessions'}
-            </span>
-          </div>
-        )}
+        
+        <div className="pt-2 border-t border-gray-200 dark:border-gray-700 flex items-center">
+          {analysis.hasEnoughInformation ? (
+            <div className="flex items-center text-green-600 dark:text-green-500">
+              <Check className="w-4 h-4 mr-1" />
+              <span>Sufficient information for recommendations</span>
+            </div>
+          ) : (
+            <div className="flex items-center text-amber-600 dark:text-amber-500">
+              <X className="w-4 h-4 mr-1" />
+              <span>More details would improve your recommendations</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

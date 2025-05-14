@@ -1,137 +1,130 @@
 
-import React, { useState } from 'react';
-import AIPlansDisplay from '@/components/AIPlansDisplay';
+import React from 'react';
 import { AIHealthPlan } from '@/types';
-import { LoadingIndicator, ProgressBar } from '@/components/ui/loading-indicator';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { ArrowLeft, RefreshCw } from 'lucide-react';
+import PlanDetailsView from '@/components/PlanDetailsView';
+import { Spinner } from '@/components/ui/spinner';
+import HealthPlanCard from '@/components/HealthPlanCard';
 import { EnhancedErrorBoundary } from '@/components/enhanced-error-handling';
-import { PlanGenerationErrorFallback } from '@/components/enhanced-error-handling/PlanGenerationErrorFallback';
+import { FallbackProps } from '@/components/enhanced-error-handling/EnhancedErrorBoundary';
 import { PlanGenerationErrorHandler } from '@/components/enhanced-error-handling/PlanGenerationErrorHandler';
-import { PlanGenerationError } from '@/utils/planGenerator/errorHandling';
 
 interface SafeAIPlansDisplayProps {
   plans: AIHealthPlan[];
+  isLoading?: boolean;
   userInput: string;
-  isLoading: boolean;
-  onBack?: () => void;
-  onRetry?: () => void;
   onSelectPlan?: (plan: AIHealthPlan) => void;
+  onBack?: () => void;
 }
 
-const SafeAIPlansDisplay = (props: SafeAIPlansDisplayProps) => {
-  const [key, setKey] = useState(0); // Used to reset the error boundary
-  
-  const handleRetry = () => {
-    setKey(prevKey => prevKey + 1); // Change key to remount error boundary
-    props.onRetry?.(); // Call the parent retry handler if provided
+/**
+ * SafeAIPlansDisplay component renders the AI-generated health plans with error handling
+ */
+const SafeAIPlansDisplay: React.FC<SafeAIPlansDisplayProps> = ({
+  plans,
+  isLoading = false,
+  userInput,
+  onSelectPlan,
+  onBack,
+}) => {
+  // Error state
+  const [errorKey, setErrorKey] = React.useState<string>('ai-plans-error-boundary');
+
+  // Handlers
+  const handleSelectPlan = (plan: AIHealthPlan) => {
+    if (onSelectPlan) {
+      onSelectPlan(plan);
+    }
   };
 
-  const handleReset = () => {
-    setKey(prevKey => prevKey + 1); // Change key to remount error boundary
-  };
-
-  // Provide a default onBack function if none is provided
-  const onBack = props.onBack || (() => {});
-
-  // If loading, show enhanced loading state
-  if (props.isLoading) {
+  // Render loading state
+  if (isLoading) {
     return (
-      <div className="w-full max-w-4xl mx-auto">
-        <div className="flex items-center mb-6">
-          <button 
-            className="mr-2 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
-            onClick={onBack}
-            aria-label="Go back"
-          >
-            ←
-          </button>
-          <h2 className="text-2xl font-semibold">Analyzing Your Health Needs</h2>
-        </div>
-        
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
-          <div className="inline-block mb-6">
-            <span className="text-4xl animate-pulse">🧠</span>
-          </div>
-          
-          <h3 className="text-xl font-medium mb-3">Creating your personalized health plans</h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-8">
-            Our AI is analyzing your needs and creating customized recommendations...
-          </p>
-
-          <div className="flex flex-col items-center gap-6 max-w-md mx-auto">
-            <div className="w-full space-y-1">
-              <div className="flex justify-between text-sm">
-                <span>Analyzing symptoms</span>
-                <span>Complete</span>
-              </div>
-              <ProgressBar value={100} />
-            </div>
-            
-            <div className="w-full space-y-1">
-              <div className="flex justify-between text-sm">
-                <span>Matching with professionals</span>
-                <span>In progress</span>
-              </div>
-              <ProgressBar value={65} />
-            </div>
-            
-            <div className="w-full space-y-1">
-              <div className="flex justify-between text-sm">
-                <span>Building recommendations</span>
-                <span>Starting</span>
-              </div>
-              <ProgressBar value={25} />
-            </div>
-          </div>
-          
-          <p className="mt-8 text-sm text-gray-500">
-            This usually takes less than 15 seconds
-          </p>
-        </div>
+      <div className="p-8 flex flex-col items-center justify-center min-h-[400px]">
+        <Spinner size="lg" className="mb-4" />
+        <h2 className="text-2xl font-semibold text-center mb-2">Generating Your Custom Health Plans</h2>
+        <p className="text-gray-600 dark:text-gray-400 text-center max-w-md">
+          Our AI is analyzing your health needs and creating personalized plans to help you reach your goals.
+        </p>
       </div>
     );
   }
 
+  // Render empty state
+  if (plans.length === 0 && !isLoading) {
+    return (
+      <div className="p-8 border border-gray-200 dark:border-gray-700 rounded-lg text-center">
+        <h2 className="text-2xl font-semibold mb-2">No Plans Generated Yet</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">
+          Please provide information about your health needs to generate personalized plans.
+        </p>
+        {onBack && (
+          <Button onClick={onBack} variant="outline" className="mt-2">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Go Back
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  // Fallback component for error handling
+  const ErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => (
+    <PlanGenerationErrorHandler
+      error={error}
+      resetError={resetErrorBoundary}
+      onBack={() => onBack && onBack()}
+      onRetry={() => setErrorKey(`ai-plans-${Date.now()}`)}
+    />
+  );
+
   return (
-    <EnhancedErrorBoundary
-      key={key}
-      fallback={({ error, resetErrorBoundary }) => {
-        if (error instanceof PlanGenerationError) {
-          // Use specialized error handler for plan generation errors
-          return (
-            <PlanGenerationErrorHandler
-              error={error}
-              resetError={resetErrorBoundary}
-              onBack={onBack}
-              onRetry={handleRetry}
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold mb-1">Your Personalized Health Plans</h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Based on your health needs, we've generated these customized plans
+          </p>
+        </div>
+        {onBack && (
+          <Button
+            onClick={onBack}
+            variant="ghost"
+            className="flex items-center gap-2 text-gray-600 dark:text-gray-400"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back
+          </Button>
+        )}
+      </div>
+
+      <Separator className="my-6" />
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {plans.map((plan, index) => (
+          <EnhancedErrorBoundary
+            key={index}
+            fallback={ErrorFallback}
+            resetKeys={[errorKey]}
+          >
+            <HealthPlanCard
+              key={plan.id || index}
+              plan={plan}
+              userQuery={userInput}
+              onClick={() => handleSelectPlan(plan)}
             />
-          );
-        }
-        
-        // Use generic fallback for other errors
-        return (
-          <PlanGenerationErrorFallback 
-            error={error}
-            onBack={onBack}
-            onRetry={handleRetry}
-            suggestions={[
-              "Try describing your health needs more specifically",
-              "Include details about your budget if possible",
-              "Mention any specific conditions you're experiencing",
-              "Specify your location for better practitioner matching"
-            ]}
-          />
-        );
-      }}
-      resetKeys={[key]}
-    >
-      <AIPlansDisplay 
-        plans={props.plans}
-        userQuery={props.userInput}
-        onSelectPlan={props.onSelectPlan || (() => {})}
-        onBack={onBack}
-        isLoading={props.isLoading}
-      />
-    </EnhancedErrorBoundary>
+          </EnhancedErrorBoundary>
+        ))}
+      </div>
+
+      {plans.length > 0 && (
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
+          These plans are customized based on your input. Select any plan to view detailed information.
+        </p>
+      )}
+    </div>
   );
 };
 
