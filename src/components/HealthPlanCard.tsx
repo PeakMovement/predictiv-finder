@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { AIHealthPlan } from "@/types";
 import { Avatar } from "@/components/ui/avatar";
 
-interface HealthPlanCardProps {
+export interface HealthPlanCardProps {
   plan: AIHealthPlan;
-  onSelect: (plan: AIHealthPlan) => void;
+  onSelect?: (plan: AIHealthPlan) => void;
   featured?: boolean;
+  userQuery?: string; // Add this prop to fix the type error
 }
 
 const getPlanTypeStyles = (planType: AIHealthPlan['planType']) => {
@@ -41,7 +42,7 @@ const planTypeLabels = {
   'progressive': 'Progressive Plan'
 };
 
-export const HealthPlanCard = ({ plan, onSelect, featured = false }: HealthPlanCardProps) => {
+export const HealthPlanCard = ({ plan, onSelect, featured = false, userQuery }: HealthPlanCardProps) => {
   const { bgGradient, icon } = getPlanTypeStyles(plan.planType);
   const planTypeLabel = planTypeLabels[plan.planType];
 
@@ -122,7 +123,7 @@ export const HealthPlanCard = ({ plan, onSelect, featured = false }: HealthPlanC
               <span className="text-xl font-bold">R{plan.totalCost}</span>
             </div>
             <Button 
-              onClick={() => onSelect(plan)} 
+              onClick={() => onSelect && onSelect(plan)} 
               className="w-full bg-health-purple hover:bg-health-purple-dark"
             >
               Select This Plan

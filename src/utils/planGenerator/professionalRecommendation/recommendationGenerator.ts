@@ -193,7 +193,7 @@ const cachedMatchPractitioners = enhancedMemoize(
     hasBudgetConstraint?: boolean
   ): CategoryRecommendation[] => {
     logger.debug("Cache miss - computing practitioner matches");
-    return matchPractitionersToNeeds(
+    const matches = matchPractitionersToNeeds(
       symptoms,
       severityScores,
       goals,
@@ -201,6 +201,15 @@ const cachedMatchPractitioners = enhancedMemoize(
       isRemote,
       hasBudgetConstraint
     );
+    
+    // Convert to proper CategoryRecommendation objects
+    return matches.map(match => ({
+      category: match.category,
+      score: match.score, // Keep for internal use
+      importance: match.score, // Map score to importance for type compatibility
+      reasoning: match.matchReasons[0] || `Match for your health needs`,
+      primaryCondition: match.primaryCondition // Keep for internal use
+    }));
   },
   // Custom key generator
   (symptoms, severityScores, goals, location, isRemote, hasBudgetConstraint) => 

@@ -17,11 +17,11 @@ export interface ProfessionalRecommendationOptions {
  * Structure of a professional recommendation
  */
 export interface ProfessionalRecommendation {
-  serviceCategory: ServiceCategory;
-  recommendedSessions: number;
-  estimatedCost: number | null;
-  urgency: 'high' | 'medium' | 'low';
+  category: ServiceCategory;
+  sessions: number;
+  priority?: 'high' | 'medium' | 'low';
   reasoning: string;
+  estimatedCost?: number | null;
   practitioners?: {
     id: string;
     name: string;
@@ -36,6 +36,8 @@ export interface CategoryRecommendation {
   category: ServiceCategory;
   importance: number;
   reasoning: string;
+  score?: number; // Add this to match actual usage
+  primaryCondition?: string; // Add this to match actual usage
   suggestedSchedule?: string;
 }
 
@@ -43,10 +45,11 @@ export interface CategoryRecommendation {
  * Complete result of professional recommendations
  */
 export interface ProfessionalRecommendationResult {
-  recommendations: ProfessionalRecommendation[];
-  totalEstimatedCost: number | null;
-  suggestedTimeframe: string;
-  primaryRecommendation?: ProfessionalRecommendation;
+  primaryRecommendations: ProfessionalRecommendation[]; // Changed from recommendations to primaryRecommendations
+  primaryRecommendation?: ProfessionalRecommendation; // Keep for backward compatibility
+  complementaryRecommendations?: ProfessionalRecommendation[]; // Add this to match actual usage
+  totalEstimatedCost?: number | null;
+  suggestedTimeframe?: string;
   alternativeApproaches?: {
     title: string;
     description: string;
@@ -58,6 +61,11 @@ export interface ProfessionalRecommendationResult {
     time?: boolean;
   };
   categoryRecommendations?: CategoryRecommendation[];
+  notes?: string[]; // Add this to match actual usage
+  budgetAllocation?: {   // Add this to match actual usage
+    total: number;
+    breakdown: Record<string, number>;
+  };
 }
 
 /**
