@@ -1,8 +1,8 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import EnhancedHealthQueryInput from "@/components/enhanced-input/EnhancedHealthQueryInput";
+import AIAssistantInput from "@/components/AIAssistantInput";
+import { PlanGenerationErrorType } from "@/utils/planGenerator/errorHandling";
 
 interface AIInputStageProps {
   onSubmit: (input: string) => void;
@@ -10,7 +10,25 @@ interface AIInputStageProps {
   onBack: () => void;
 }
 
-const AIInputStage: React.FC<AIInputStageProps> = ({ onSubmit, isLoading, onBack }) => {
+const AIInputStage: React.FC<AIInputStageProps> = ({
+  onSubmit,
+  isLoading,
+  onBack
+}) => {
+  const [inputError, setInputError] = useState<{
+    type: PlanGenerationErrorType;
+    message: string;
+  } | null>(null);
+
+  const handleError = (type: PlanGenerationErrorType, message: string) => {
+    setInputError({ type, message });
+  };
+
+  const handleSubmit = (input: string) => {
+    setInputError(null);
+    onSubmit(input);
+  };
+
   return (
     <motion.div
       key="ai-input"
@@ -19,20 +37,10 @@ const AIInputStage: React.FC<AIInputStageProps> = ({ onSubmit, isLoading, onBack
       exit={{ opacity: 0 }}
       className="py-8"
     >
-      <div className="flex items-center mb-8">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={onBack} 
-          className="mr-2"
-        >
-          ←
-        </Button>
-        <h2 className="text-3xl font-bold">Create Your Custom Health Plan</h2>
-      </div>
-      <EnhancedHealthQueryInput
-        onSubmit={onSubmit}
-        isLoading={isLoading}
+      <AIAssistantInput 
+        onSubmit={handleSubmit} 
+        isLoading={isLoading} 
+        onError={handleError}
       />
     </motion.div>
   );

@@ -1,4 +1,3 @@
-
 /**
  * Main recommendation generator module
  * Refactored from the original large file
@@ -205,9 +204,9 @@ const cachedMatchPractitioners = enhancedMemoize(
     // Fixed: Convert to proper CategoryRecommendation objects
     return matches.map(match => ({
       category: match.category,
-      score: match.score, // Keep for internal use
-      importance: match.score, // Map score to importance for type compatibility
-      reasoning: match.matchReasons ? match.matchReasons[0] : `Match for your health needs`,
+      score: match.score || 0, // Keep for internal use
+      importance: match.score || 0.5, // Map score to importance for type compatibility
+      reasoning: match.reason || `Match for your health needs`,
       primaryCondition: match.primaryCondition // Keep for internal use
     }));
   },

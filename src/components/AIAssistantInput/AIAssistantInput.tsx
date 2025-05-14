@@ -6,8 +6,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { BrainCircuit, MessageSquare, Sparkles, Clock, DollarSign, Target } from 'lucide-react';
 import { analyzeUserInput } from '@/utils/planGenerator/inputAnalyzer';
+import { PlanGenerationErrorType } from '@/utils/planGenerator/errorHandling';
 
-// Import our new modular components
+// Import our modular components
 import InputAnalysisDisplay from './components/InputAnalysisDisplay';
 import InputTips from './components/InputTips';
 import ExamplePrompts from './components/ExamplePrompts';
@@ -15,6 +16,7 @@ import ExamplePrompts from './components/ExamplePrompts';
 interface AIAssistantInputProps {
   onSubmit: (input: string) => void;
   isLoading?: boolean;
+  onError?: (errorType: PlanGenerationErrorType, message: string) => void;
 }
 
 // Common tips for better results
@@ -56,7 +58,8 @@ const promptExamples = [
  */
 export const AIAssistantInput = ({ 
   onSubmit, 
-  isLoading = false 
+  isLoading = false,
+  onError
 }: AIAssistantInputProps) => {
   const [input, setInput] = useState('');
   const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeUserInput> | null>(null);
@@ -66,8 +69,13 @@ export const AIAssistantInput = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
     if (e.target.value.length > 20) {
-      const quickAnalysis = analyzeUserInput(e.target.value);
-      setAnalysis(quickAnalysis);
+      try {
+        const quickAnalysis = analyzeUserInput(e.target.value);
+        setAnalysis(quickAnalysis);
+      } catch (error) {
+        console.error("Error analyzing input:", error);
+        // Don't show toast for analysis errors during typing
+      }
     } else {
       setAnalysis(null);
     }
@@ -81,17 +89,44 @@ export const AIAssistantInput = ({
         description: "Please provide more details about your needs",
         variant: "destructive",
       });
+      
+      if (onError) {
+        onError(
+          PlanGenerationErrorType.INPUT_VALIDATION, 
+          "Your input is too short. Please provide more details about your health needs."
+        );
+      }
       return;
     }
     
-    onSubmit(input);
+    try {
+      onSubmit(input);
+    } catch (error) {
+      console.error("Error submitting input:", error);
+      toast({
+        title: "Error submitting request",
+        description: "There was a problem processing your request. Please try again.",
+        variant: "destructive",
+      });
+      
+      if (onError) {
+        onError(
+          PlanGenerationErrorType.UNEXPECTED,
+          "There was a problem processing your request. Please try again."
+        );
+      }
+    }
   };
 
   // Handle clicking on an example prompt
   const handleExampleClick = (example: string) => {
     setInput(example);
-    const quickAnalysis = analyzeUserInput(example);
-    setAnalysis(quickAnalysis);
+    try {
+      const quickAnalysis = analyzeUserInput(example);
+      setAnalysis(quickAnalysis);
+    } catch (error) {
+      console.error("Error analyzing example:", error);
+    }
   };
 
   return (

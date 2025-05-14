@@ -3,18 +3,21 @@ import { useState } from 'react';
 import { generateCustomAIPlans } from '@/utils/aiPlanGenerator';
 import { AIHealthPlan, ServiceCategory } from '@/types';
 import { toast } from '@/hooks/use-toast';
+import { PlanGenerationError, isPlanGenerationError } from '@/utils/planGenerator/errorHandling';
 
 // AI Plans Service hook for managing plan generation state
 export function useAIPlansService() {
   const [aiPlans, setAIPlans] = useState<AIHealthPlan[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<any | null>(null);
 
   const generateAIPlans = async (userInput: string) => {
     try {
       // Reset states
       setIsGenerating(true);
       setError(null);
+      setErrorDetails(null);
       
       // Log the incoming user query for debugging
       console.log("Processing user query:", userInput);
@@ -39,29 +42,67 @@ export function useAIPlansService() {
       // Log the error for debugging
       console.error("Error generating AI plans:", error);
       
-      // Show error toast
-      toast({
-        variant: "destructive",
-        title: "Failed to generate plans",
-        description: error.message || "An unexpected error occurred. Please try again.",
+      // Store detailed error information for debugging
+      setErrorDetails({
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+        type: isPlanGenerationError(error) ? error.type : 'unknown'
       });
       
-      // Store the error message
-      setError(error.name === 'PlanGenerationError'
-        ? error.userMessage 
-        : 'Failed to generate AI health plans. Please try again.');
+      // Handle PlanGenerationError type specifically
+      if (isPlanGenerationError(error)) {
+        // Show specific error toast
+        toast({
+          variant: "destructive",
+          title: "Failed to generate plans",
+          description: error.userMessage || "An unexpected error occurred. Please try again.",
+        });
+        
+        // Store the user-friendly error message
+        setError(error.userMessage);
+        
+        if (error.suggestions && error.suggestions.length > 0) {
+          // Show a follow-up toast with suggestions
+          setTimeout(() => {
+            toast({
+              title: "Try this instead",
+              description: error.suggestions[0],
+              variant: "default",
+            });
+          }, 1000);
+        }
+      } else {
+        // Show generic error toast
+        toast({
+          variant: "destructive",
+          title: "Failed to generate plans",
+          description: error.message || "An unexpected error occurred. Please try again.",
+        });
+        
+        // Store a generic error message
+        setError('Failed to generate AI health plans. Please try again.');
+      }
         
       return [];
     } finally {
       setIsGenerating(false);
     }
   };
+  
+  const clearPlans = () => {
+    setAIPlans([]);
+    setError(null);
+    setErrorDetails(null);
+  };
 
   return {
     aiPlans,
     isGenerating,
     error,
-    generateAIPlans
+    errorDetails,
+    generateAIPlans,
+    clearPlans
   };
 }
 
@@ -83,10 +124,7 @@ export async function generatePlan(userInput: string) {
     // Log the error for debugging
     console.error("Error generating AI plans:", error);
 
-    // Construct an error message based on the error type
-    let errorMessage = 'Failed to generate AI health plans. Please try again.';
-
-    // Return an error
-    throw new Error(errorMessage);
+    // Re-throw the error to be handled by the calling function
+    throw error;
   }
 }
