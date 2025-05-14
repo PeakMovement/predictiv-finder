@@ -1,17 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-
-interface ExamplePrompt {
-  title: string;
-  content: string;
-  icon?: React.ReactNode;
-}
-
-interface ExamplePromptsProps {
-  examples: ExamplePrompt[];
-  onExampleClick: (content: string) => void;
-}
+import { ExamplePromptsProps } from '../AIAssistantInput';
 
 const ExamplePrompts: React.FC<ExamplePromptsProps> = ({ examples, onExampleClick }) => {
   return (

@@ -16,6 +16,38 @@ export interface AIAssistantInputProps {
   initialInput?: string;
 }
 
+export interface InputTipsProps {
+  tipItems: string[];
+}
+
+export interface ExamplePromptsProps {
+  examples: Array<{
+    title: string;
+    content: string;
+    icon?: React.ReactNode;
+  }>;
+  onExampleClick: (content: string) => void;
+}
+
+export interface AnalysisProps {
+  analysis: {
+    suggestedCategories?: string[];
+    budget?: number;
+    hasBudgetConstraint?: boolean;
+    primaryIssue?: string;
+    medicalConditions?: string[];
+    timeAvailability?: number;
+    locationInfo?: {
+      location?: string;
+      isRemote: boolean;
+    };
+    specificGoals?: string[];
+    hasEnoughInformation?: boolean;
+    servicePriorities?: Record<string, number>;
+    contextualFactors?: string[];
+  }
+}
+
 const AIAssistantInput: React.FC<AIAssistantInputProps> = ({
   onSubmit,
   isLoading = false,
@@ -71,6 +103,53 @@ const AIAssistantInput: React.FC<AIAssistantInputProps> = ({
       textareaRef.current.focus();
     }
   };
+
+  // Sample health tips to show to users
+  const healthTips = [
+    'Be specific about your symptoms, their duration, and severity',
+    'Mention any relevant medical history or conditions',
+    'Include any treatments you\'ve already tried',
+    'Specify if you have budget constraints or preferences',
+    'Mention your location if relevant for in-person services',
+  ];
+
+  // Sample example queries
+  const exampleQueries = [
+    {
+      title: 'Back pain after working out',
+      content: 'I\'ve been experiencing lower back pain after weightlifting sessions for about 3 weeks. Looking for a treatment plan and ways to prevent it.'
+    },
+    {
+      title: 'Weight loss support plan',
+      content: 'Looking for a comprehensive plan to lose 10kg in the next 3 months. I prefer a mix of nutrition guidance and exercise.'
+    },
+    {
+      title: 'Stress and anxiety management',
+      content: 'I need help managing work-related stress and anxiety. Open to both therapy and holistic approaches.'
+    }
+  ];
+
+  // Mock analysis for the input preview
+  const generateMockAnalysis = (input: string) => {
+    if (!input || input.length < 20) return null;
+    
+    return {
+      primaryIssue: input.includes('pain') ? 'Pain management' : 'Health optimization',
+      medicalConditions: input.includes('pain') ? ['Back pain'] : [],
+      specificGoals: ['Improve overall health'],
+      suggestedCategories: ['physiotherapy', 'nutrition-coaching'],
+      budget: input.includes('budget') ? 5000 : undefined,
+      hasBudgetConstraint: input.includes('budget'),
+      timeAvailability: 8,
+      locationInfo: {
+        location: input.includes('Cape Town') ? 'Cape Town' : undefined,
+        isRemote: input.includes('online') || input.includes('remote')
+      },
+      hasEnoughInformation: input.length > 50
+    };
+  };
+
+  const mockAnalysis = generateMockAnalysis(input);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -130,14 +209,14 @@ const AIAssistantInput: React.FC<AIAssistantInputProps> = ({
           </div>
         </form>
         
-        {showTips && <InputTips />}
+        {showTips && <InputTips tipItems={healthTips} />}
         
         <div className="mt-6">
-          <ExamplePrompts onSelect={handleUseExample} />
+          <ExamplePrompts examples={exampleQueries} onExampleClick={handleUseExample} />
         </div>
         
-        {input.length > 20 && !isLoading && (
-          <InputAnalysisDisplay input={input} />
+        {input.length > 20 && !isLoading && mockAnalysis && (
+          <InputAnalysisDisplay analysis={mockAnalysis} />
         )}
       </Card>
     </div>

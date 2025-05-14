@@ -1,3 +1,4 @@
+
 /**
  * Main recommendation generator module
  * Refactored from the original large file
@@ -137,7 +138,7 @@ export function generateProfessionalRecommendations(
             category,
             sessions: idealSessions,
             priority: index === 0 ? 'high' : (index === 1 ? 'medium' : 'low'),
-            reasoning: `Recommended for ${primaryCondition || 'your condition'}`
+            reasoning: rankedCategory.reasoning || `Recommended for ${primaryCondition || 'your condition'}`
           });
         } catch (error) {
           logger.error(`Error generating recommendation for ${rankedCategory.category}:`, error);

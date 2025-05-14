@@ -1,26 +1,7 @@
 
 import React from 'react';
 import { Check, X } from 'lucide-react';
-
-// Define the types for the analysis props
-interface AnalysisProps {
-  analysis: {
-    suggestedCategories?: string[];
-    budget?: number;
-    hasBudgetConstraint?: boolean;
-    primaryIssue?: string;
-    medicalConditions?: string[];
-    timeAvailability?: number;
-    locationInfo?: {
-      location?: string;
-      isRemote: boolean;
-    };
-    specificGoals?: string[];
-    hasEnoughInformation?: boolean;
-    servicePriorities?: Record<string, number>;
-    contextualFactors?: string[];
-  }
-}
+import { AnalysisProps } from '../AIAssistantInput';
 
 const InputAnalysisDisplay: React.FC<AnalysisProps> = ({ analysis }) => {
   // Ensure we have services to display

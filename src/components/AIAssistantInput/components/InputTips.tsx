@@ -1,10 +1,7 @@
 
 import React from 'react';
 import { Lightbulb } from 'lucide-react';
-
-interface InputTipsProps {
-  tipItems: string[];
-}
+import { InputTipsProps } from '../AIAssistantInput';
 
 const InputTips: React.FC<InputTipsProps> = ({ tipItems }) => {
   return (
