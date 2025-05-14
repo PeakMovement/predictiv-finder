@@ -114,7 +114,7 @@ const SafeAIPlansDisplay: React.FC<SafeAIPlansDisplayProps> = ({
             key={plan.id || index}
             plan={plan}
             userQuery={userInput}
-            onClick={() => onSelectPlan(plan)}
+            onSelectPlan={() => onSelectPlan(plan)}
           />
         ))}
       </div>

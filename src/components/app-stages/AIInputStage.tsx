@@ -24,11 +24,6 @@ const AIInputStage: React.FC<AIInputStageProps> = ({
     setInputError({ type, message });
   };
 
-  const handleSubmit = (input: string) => {
-    setInputError(null);
-    onSubmit(input);
-  };
-
   return (
     <motion.div
       key="ai-input"
@@ -38,9 +33,8 @@ const AIInputStage: React.FC<AIInputStageProps> = ({
       className="py-8"
     >
       <AIAssistantInput 
-        onSubmit={handleSubmit} 
-        isLoading={isLoading} 
-        onError={handleError}
+        onSubmit={onSubmit} 
+        isLoading={isLoading}
       />
     </motion.div>
   );

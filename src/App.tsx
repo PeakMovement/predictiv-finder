@@ -13,7 +13,7 @@ function App() {
 
   return (
     <div className="app min-h-screen bg-gray-50 dark:bg-gray-900">
-      <EnhancedErrorBoundary key={errorKey} resetKey={() => setErrorKey(`reset-${Date.now()}`)}>
+      <EnhancedErrorBoundary key={errorKey} resetKeys={() => setErrorKey(`reset-${Date.now()}`)}>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/how-it-works" element={<HowItWorks />} />

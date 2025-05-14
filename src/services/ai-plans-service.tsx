@@ -3,7 +3,12 @@ import { useState } from 'react';
 import { generateCustomAIPlans } from '@/utils/aiPlanGenerator';
 import { AIHealthPlan, ServiceCategory } from '@/types';
 import { toast } from '@/hooks/use-toast';
-import { PlanGenerationError, isPlanGenerationError } from '@/utils/planGenerator/errorHandling';
+import { PlanGenerationError, PlanGenerationErrorType } from '@/utils/planGenerator/errorHandling';
+
+// Helper function to check if an error is PlanGenerationError
+function isPlanGenerationError(error: any): boolean {
+  return error && error.name === 'PlanGenerationError';
+}
 
 // AI Plans Service hook for managing plan generation state
 export function useAIPlansService() {

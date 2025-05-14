@@ -1,191 +1,146 @@
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { BrainCircuit, MessageSquare, Sparkles, Clock, DollarSign, Target } from 'lucide-react';
-import { analyzeUserInput } from '@/utils/planGenerator/inputAnalyzer';
-import { PlanGenerationErrorType } from '@/utils/planGenerator/errorHandling';
-
-// Import our modular components
-import InputAnalysisDisplay from './components/InputAnalysisDisplay';
-import InputTips from './components/InputTips';
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, HelpCircle, AlertTriangle } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Textarea } from '../ui/textarea';
+import { Card } from '../ui/card';
+import { cn } from '@/lib/utils';
 import ExamplePrompts from './components/ExamplePrompts';
+import InputTips from './components/InputTips';
+import InputAnalysisDisplay from './components/InputAnalysisDisplay';
 
-interface AIAssistantInputProps {
+export interface AIAssistantInputProps {
   onSubmit: (input: string) => void;
   isLoading?: boolean;
-  onError?: (errorType: PlanGenerationErrorType, message: string) => void;
+  onError?: (type: any, message: string) => void;
+  initialInput?: string;
 }
 
-// Common tips for better results
-const tipItems = [
-  "Include your specific goal (e.g., weight loss, pain relief, performance)",
-  "Mention any relevant health conditions or injuries",
-  "Tell us your monthly budget for health services",
-  "Let us know your location or if you prefer online options",
-  "Share your timeline (how quickly you need results)"
-];
-
-// Example prompts for user reference
-const promptExamples = [
-  {
-    title: "I need help with my back pain",
-    content: "I've been experiencing lower back pain for 3 weeks, especially when sitting. My budget is around R1000/month, and I'd prefer something close to Sandton.",
-    icon: <MessageSquare className="w-4 h-4" />
-  },
-  {
-    title: "Weight loss journey",
-    content: "I want to lose 10kg in the next 3 months. I have R1500/month to spend and I'm looking for a combination of nutrition advice and exercise support.",
-    icon: <Target className="w-4 h-4" />
-  },
-  {
-    title: "Marathon training",
-    content: "I'm training for my first marathon in 4 months and need help with conditioning, recovery, and injury prevention. My budget is R2000/month.",
-    icon: <Clock className="w-4 h-4" />
-  },
-  {
-    title: "Stress and anxiety management",
-    content: "Looking for affordable ways to manage my stress and anxiety. I can spend about R800 monthly and would prefer online options.",
-    icon: <DollarSign className="w-4 h-4" />
-  }
-];
-
-/**
- * Enhanced AI Assistant Input component with real-time analysis
- * and improved UI for better user experience
- */
-export const AIAssistantInput = ({ 
-  onSubmit, 
+const AIAssistantInput: React.FC<AIAssistantInputProps> = ({
+  onSubmit,
   isLoading = false,
-  onError
-}: AIAssistantInputProps) => {
-  const [input, setInput] = useState('');
-  const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeUserInput> | null>(null);
-  const { toast } = useToast();
-
-  // Handle input changes with real-time analysis
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
-    if (e.target.value.length > 20) {
-      try {
-        const quickAnalysis = analyzeUserInput(e.target.value);
-        setAnalysis(quickAnalysis);
-      } catch (error) {
-        console.error("Error analyzing input:", error);
-        // Don't show toast for analysis errors during typing
-      }
-    } else {
-      setAnalysis(null);
+  onError,
+  initialInput = ''
+}) => {
+  const [input, setInput] = useState(initialInput);
+  const [showTips, setShowTips] = useState(false);
+  const [error, setError] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  // Reset error when input changes
+  useEffect(() => {
+    if (error && input) {
+      setError('');
     }
-  };
-
-  // Handle form submission with validation
-  const handleSubmit = () => {
-    if (input.trim().length < 10) {
-      toast({
-        title: "Input too short",
-        description: "Please provide more details about your needs",
-        variant: "destructive",
-      });
-      
-      if (onError) {
-        onError(
-          PlanGenerationErrorType.INPUT_VALIDATION, 
-          "Your input is too short. Please provide more details about your health needs."
-        );
-      }
+  }, [input, error]);
+  
+  // Auto-resize textarea as content changes
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, [input]);
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Basic validation
+    if (!input.trim()) {
+      const errorMessage = 'Please describe your health concerns or goals';
+      setError(errorMessage);
+      if (onError) onError('input_validation', errorMessage);
       return;
     }
     
-    try {
-      onSubmit(input);
-    } catch (error) {
-      console.error("Error submitting input:", error);
-      toast({
-        title: "Error submitting request",
-        description: "There was a problem processing your request. Please try again.",
-        variant: "destructive",
-      });
-      
-      if (onError) {
-        onError(
-          PlanGenerationErrorType.UNEXPECTED,
-          "There was a problem processing your request. Please try again."
-        );
-      }
+    if (input.trim().length < 10) {
+      const errorMessage = 'Please provide more details about your health needs';
+      setError(errorMessage);
+      if (onError) onError('input_validation', errorMessage);
+      return;
     }
+    
+    // Submit the input
+    onSubmit(input.trim());
   };
-
-  // Handle clicking on an example prompt
-  const handleExampleClick = (example: string) => {
+  
+  const handleUseExample = (example: string) => {
     setInput(example);
-    try {
-      const quickAnalysis = analyzeUserInput(example);
-      setAnalysis(quickAnalysis);
-    } catch (error) {
-      console.error("Error analyzing example:", error);
+    if (textareaRef.current) {
+      textareaRef.current.focus();
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-3xl mx-auto"
-    >
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <BrainCircuit className="w-6 h-6 text-health-purple" />
-          <h2 className="text-xl font-semibold">Tell us what you're looking for</h2>
-        </div>
-        
-        <div className="flex gap-6 mb-6 flex-col md:flex-row">
-          <div className="md:w-2/3">
+    <div className="max-w-3xl mx-auto">
+      <Card className="p-6 shadow-md">
+        <form onSubmit={handleSubmit}>
+          <h2 className="text-2xl font-bold mb-3">Describe Your Health Needs</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">
+            Tell us about your health concerns, goals, or what you're looking for help with
+          </p>
+          
+          <div className="relative mb-2">
             <Textarea
-              placeholder="Describe your health goals, challenges, or what you're looking to improve..."
+              ref={textareaRef}
               value={input}
-              onChange={handleInputChange}
-              className="h-64 mb-4"
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Example: I've been experiencing lower back pain for about 3 weeks and would like to find some relief..."
+              className={cn(
+                "min-h-[120px] resize-none transition-all",
+                error ? "border-red-500 focus-visible:ring-red-500" : ""
+              )}
+              disabled={isLoading}
             />
-            
-            {analysis && input.length > 20 && (
-              <InputAnalysisDisplay analysis={analysis} />
+            {error && (
+              <div className="flex items-center gap-2 text-red-500 mt-2 text-sm">
+                <AlertTriangle className="h-4 w-4" />
+                <span>{error}</span>
+              </div>
             )}
-            
-            <div className="flex justify-end">
-              <Button 
-                onClick={handleSubmit} 
-                disabled={isLoading}
-                className="bg-health-purple hover:bg-health-purple-dark flex items-center gap-2"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin w-4 h-4 border-2 border-white border-opacity-50 border-t-transparent rounded-full" />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4" />
-                    Create My Plan
-                  </>
-                )}
-              </Button>
-            </div>
           </div>
           
-          <div className="md:w-1/3">
-            <InputTips tipItems={tipItems} />
+          <div className="flex justify-between items-center mt-4">
+            <Button 
+              type="button"
+              variant="ghost" 
+              size="sm"
+              onClick={() => setShowTips(!showTips)}
+              className="text-gray-500 flex items-center gap-1"
+            >
+              <HelpCircle className="h-4 w-4" />
+              <span>{showTips ? 'Hide tips' : 'Show tips'}</span>
+            </Button>
             
-            <ExamplePrompts 
-              examples={promptExamples} 
-              onExampleClick={handleExampleClick}
-            />
+            <Button 
+              type="submit" 
+              className="bg-health-purple hover:bg-health-purple-dark"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>Processing...</>
+              ) : (
+                <>
+                  <span>Generate Health Plans</span>
+                  <Send className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </Button>
           </div>
+        </form>
+        
+        {showTips && <InputTips />}
+        
+        <div className="mt-6">
+          <ExamplePrompts onSelect={handleUseExample} />
         </div>
-      </div>
-    </motion.div>
+        
+        {input.length > 20 && !isLoading && (
+          <InputAnalysisDisplay input={input} />
+        )}
+      </Card>
+    </div>
   );
 };
 

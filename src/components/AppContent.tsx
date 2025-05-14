@@ -1,25 +1,29 @@
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import EnhancedCategorySelection from "@/components/EnhancedCategorySelection";
-import CategoryQuestionnaire from "@/components/CategoryQuestionnaire";
-import PractitionerList from "@/components/PractitionerList";
+import { AnimatePresence } from "framer-motion";
 import HomeHero from "@/components/homepage/HomeHero";
 import NavigationControls from "@/components/homepage/NavigationControls";
+import EnhancedCategorySelection from "@/components/EnhancedCategorySelection";
 import { AppStage } from "@/types/app";
 import { AIHealthPlan } from "@/types";
 import { useAppNavigation } from "@/hooks/use-app-navigation";
 import { usePractitionerService } from "@/services/practitioner-service";
 import { useAIPlansService } from "@/services/ai-plans-service";
-import PlanComparisonView from "@/components/plan-comparison/PlanComparisonView";
-import PlanCustomizer from "@/components/plan-customizer/PlanCustomizer";
-import ProgressTrackingView from "@/components/progress-tracking/ProgressTrackingView";
 
-// Import our new component stages
+// Import our component stages
 import AIInputStage from "./app-stages/AIInputStage";
 import AIPlanStage from "./app-stages/AIPlanStage";
 import PlanDetailsStage from "./app-stages/PlanDetailsStage";
+
+// Import new refactored components
+import {
+  ErrorDisplay,
+  ComparisonView,
+  CustomizerView,
+  ProgressView,
+  QuestionnaireView,
+  PractitionerView
+} from "./app-content";
 
 /**
  * Main content component for the application
@@ -85,22 +89,7 @@ const AppContent: React.FC = () => {
   return (
     <main className="container max-w-6xl mx-auto px-4 py-8">
       <AnimatePresence mode="wait">
-        {error && (
-          <motion.div
-            key="error"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="bg-red-50 border-l-4 border-red-400 p-4 mb-6"
-          >
-            <div className="flex">
-              <div>
-                <h3 className="text-red-800 font-medium">Error</h3>
-                <p className="text-red-700">{error}</p>
-              </div>
-            </div>
-          </motion.div>
-        )}
+        <ErrorDisplay error={error || ""} />
         
         {stage === 'home' && (
           <HomeHero 
@@ -118,37 +107,21 @@ const AppContent: React.FC = () => {
         )}
         
         {stage === 'category-questionnaire' && selectedCategories.length > 0 && (
-          <motion.div
-            key="questionnaire"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="py-8"
-          >
-            <CategoryQuestionnaire 
-              categories={selectedCategories}
-              onSubmit={handleQuestionnaireSubmit}
-              onBack={() => setStage('category-selector')}
-            />
-          </motion.div>
+          <QuestionnaireView
+            categories={selectedCategories}
+            onSubmit={handleQuestionnaireSubmit}
+            onBack={() => setStage('category-selector')}
+          />
         )}
         
         {stage === 'practitioner-list' && (
-          <motion.div
-            key="practitioner-list"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="py-8"
-          >
-            <PractitionerList 
-              practitioners={getMatchingPractitioners(userCriteria)}
-              criteria={userCriteria}
-              onSelectPractitioner={handleSelectPractitioner}
-              onBack={() => setStage('category-questionnaire')}
-              onAIAssistant={() => setStage('ai-input')}
-            />
-          </motion.div>
+          <PractitionerView
+            practitioners={getMatchingPractitioners(userCriteria)}
+            criteria={userCriteria}
+            onSelectPractitioner={handleSelectPractitioner}
+            onBack={() => setStage('category-questionnaire')}
+            onAIAssistant={() => setStage('ai-input')}
+          />
         )}
         
         {stage === 'ai-input' && (
@@ -171,19 +144,11 @@ const AppContent: React.FC = () => {
         )}
         
         {stage === 'ai-plans' && showComparison && (
-          <motion.div
-            key="plan-comparison"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="py-8"
-          >
-            <PlanComparisonView 
-              plans={aiPlans}
-              onSelectPlan={handleSelectPlan}
-              onBack={() => setShowComparison(false)}
-            />
-          </motion.div>
+          <ComparisonView
+            plans={aiPlans}
+            onSelectPlan={handleSelectPlan}
+            onBack={() => setShowComparison(false)}
+          />
         )}
 
         {stage === 'plan-details' && selectedPlan && !showCustomizer && !showProgress && (
@@ -197,35 +162,18 @@ const AppContent: React.FC = () => {
         )}
         
         {stage === 'plan-details' && selectedPlan && showCustomizer && (
-          <motion.div
-            key="plan-customizer"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="py-8"
-          >
-            <PlanCustomizer 
-              plan={selectedPlan}
-              onUpdatePlan={(plan) => {}}
-              onSave={handleSaveCustomizedPlan}
-              onCancel={() => setShowCustomizer(false)}
-            />
-          </motion.div>
+          <CustomizerView
+            plan={selectedPlan}
+            onSave={handleSaveCustomizedPlan}
+            onCancel={() => setShowCustomizer(false)}
+          />
         )}
         
         {stage === 'plan-details' && selectedPlan && showProgress && (
-          <motion.div
-            key="progress-tracking"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="py-8"
-          >
-            <ProgressTrackingView 
-              plan={selectedPlan}
-              onBack={() => setShowProgress(false)}
-            />
-          </motion.div>
+          <ProgressView
+            plan={selectedPlan}
+            onBack={() => setShowProgress(false)}
+          />
         )}
       </AnimatePresence>
       
