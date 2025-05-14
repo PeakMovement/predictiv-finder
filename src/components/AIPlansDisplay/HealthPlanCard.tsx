@@ -8,26 +8,26 @@ import { AIHealthPlan } from '@/types';
 export interface HealthPlanCardProps {
   plan: AIHealthPlan;
   userQuery: string;
-  onSelectPlan: () => void;
+  onSelect: () => void;
 }
 
 const HealthPlanCard: React.FC<HealthPlanCardProps> = ({ 
   plan,
   userQuery,
-  onSelectPlan
+  onSelect
 }) => {
   return (
     <Card className="h-full flex flex-col transition-all hover:shadow-lg">
       <CardContent className="p-5 flex-grow">
-        <h3 className="text-xl font-bold mb-2">{plan.title}</h3>
+        <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
         
-        <div className="mb-4 flex gap-2 flex-wrap">
-          {plan.tags && plan.tags.slice(0, 3).map((tag, i) => (
-            <Badge key={i} variant="secondary" className="bg-health-blue-light text-health-blue">
-              {tag}
+        {plan.planType && (
+          <div className="mb-4 flex gap-2 flex-wrap">
+            <Badge variant="secondary" className="bg-health-blue-light text-health-blue">
+              {plan.planType}
             </Badge>
-          ))}
-        </div>
+          </div>
+        )}
         
         <div className="space-y-3">
           <div>
@@ -37,7 +37,7 @@ const HealthPlanCard: React.FC<HealthPlanCardProps> = ({
           
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">Timeline:</p>
-            <p className="font-medium">{plan.timeframe}</p>
+            <p className="font-medium">{plan.timeFrame}</p>
           </div>
           
           <div>
@@ -49,7 +49,7 @@ const HealthPlanCard: React.FC<HealthPlanCardProps> = ({
       
       <CardFooter className="border-t pt-4 pb-5 px-5">
         <Button 
-          onClick={onSelectPlan} 
+          onClick={onSelect} 
           className="w-full bg-health-purple hover:bg-health-purple-dark"
         >
           View Plan Details
