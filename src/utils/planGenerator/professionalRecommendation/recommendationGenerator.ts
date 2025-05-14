@@ -202,12 +202,12 @@ const cachedMatchPractitioners = enhancedMemoize(
       hasBudgetConstraint
     );
     
-    // Convert to proper CategoryRecommendation objects
+    // Fixed: Convert to proper CategoryRecommendation objects
     return matches.map(match => ({
       category: match.category,
       score: match.score, // Keep for internal use
       importance: match.score, // Map score to importance for type compatibility
-      reasoning: match.matchReasons[0] || `Match for your health needs`,
+      reasoning: match.matchReasons ? match.matchReasons[0] : `Match for your health needs`,
       primaryCondition: match.primaryCondition // Keep for internal use
     }));
   },
