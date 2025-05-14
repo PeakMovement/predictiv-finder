@@ -202,7 +202,7 @@ const cachedMatchPractitioners = enhancedMemoize(
       hasBudgetConstraint
     );
     
-    // Fixed: Convert to proper CategoryRecommendation objects
+    // Convert matches to CategoryRecommendation objects
     return matches.map(match => ({
       category: match.category,
       score: match.score || 0, // Keep for internal use

@@ -7,6 +7,7 @@ import HowItWorks from './pages/HowItWorks';
 import Services from './pages/Services';
 import Professionals from './pages/Professionals';
 import { EnhancedErrorBoundary } from './components/enhanced-error-handling';
+import { PlanGenerationErrorFallback } from './components/enhanced-error-handling';
 
 function App() {
   const [errorKey, setErrorKey] = useState('initial');
@@ -15,7 +16,11 @@ function App() {
 
   return (
     <div className="app min-h-screen bg-gray-50 dark:bg-gray-900">
-      <EnhancedErrorBoundary key={errorKey} resetKeys={[resetKeys]}>
+      <EnhancedErrorBoundary 
+        key={errorKey} 
+        resetKeys={[resetKeys]} 
+        fallback={PlanGenerationErrorFallback}
+      >
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
