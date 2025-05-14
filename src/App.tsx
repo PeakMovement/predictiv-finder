@@ -7,7 +7,7 @@ import HowItWorks from './pages/HowItWorks';
 import Services from './pages/Services';
 import Professionals from './pages/Professionals';
 import { EnhancedErrorBoundary } from './components/enhanced-error-handling';
-import { PlanGenerationErrorFallback } from './components/enhanced-error-handling';
+import { PlanGenerationErrorFallbackAdapter } from './components/enhanced-error-handling';
 
 function App() {
   const [errorKey, setErrorKey] = useState('initial');
@@ -19,7 +19,7 @@ function App() {
       <EnhancedErrorBoundary 
         key={errorKey} 
         resetKeys={[resetKeys]} 
-        fallback={PlanGenerationErrorFallback}
+        fallback={PlanGenerationErrorFallbackAdapter}
       >
         <Routes>
           <Route path="/" element={<Index />} />

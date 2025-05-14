@@ -2,6 +2,7 @@
 import React from 'react';
 import { AlertTriangle, ArrowLeft } from 'lucide-react';
 import { PlanGenerationErrorType } from '@/utils/planGenerator/errorHandling';
+import { FallbackProps } from './EnhancedErrorBoundary';
 
 interface PlanGenerationErrorFallbackProps {
   error: Error;
@@ -83,6 +84,22 @@ export const PlanGenerationErrorFallback: React.FC<PlanGenerationErrorFallbackPr
         </div>
       </div>
     </div>
+  );
+};
+
+/**
+ * Adapter component to make PlanGenerationErrorFallback compatible with EnhancedErrorBoundary
+ */
+export const PlanGenerationErrorFallbackAdapter = ({ error, resetErrorBoundary }: FallbackProps) => {
+  return (
+    <PlanGenerationErrorFallback
+      error={error}
+      onBack={resetErrorBoundary}
+      onRetry={resetErrorBoundary}
+      errorType={error.hasOwnProperty('type') ? (error as any).type : undefined}
+      userMessage={error.hasOwnProperty('userMessage') ? (error as any).userMessage : undefined}
+      suggestions={error.hasOwnProperty('suggestions') ? (error as any).suggestions : []}
+    />
   );
 };
 

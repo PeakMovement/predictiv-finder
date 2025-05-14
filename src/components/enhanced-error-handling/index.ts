@@ -1,17 +1,11 @@
 
-// Export all error handling components for easier imports
-export * from './EnhancedErrorBoundary';
-export * from './PlanGenerationErrorHandler';
-
-// Re-export for compatibility with existing imports
 import EnhancedErrorBoundary from './EnhancedErrorBoundary';
-import PlanGenerationErrorHandler from './PlanGenerationErrorHandler';
-import PlanGenerationErrorFallback from './PlanGenerationErrorFallback';
-
-export {
-  EnhancedErrorBoundary,
-  PlanGenerationErrorHandler,
-  PlanGenerationErrorFallback
+import { PlanGenerationErrorFallback, PlanGenerationErrorFallbackAdapter } from './PlanGenerationErrorFallback';
+export { 
+  EnhancedErrorBoundary, 
+  PlanGenerationErrorFallback,
+  PlanGenerationErrorFallbackAdapter
 };
 
-export default EnhancedErrorBoundary;
+// Re-export the FallbackProps type
+export type { FallbackProps } from './EnhancedErrorBoundary';
