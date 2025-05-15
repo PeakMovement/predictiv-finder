@@ -16,6 +16,7 @@ import { analyzeUserHealth } from "./analysis";
 import { calculateBudget, calculateIdealSessions } from "./budget";
 import { determineIdealTiming, generateRecommendationNotes, generatePreferredTraits } from "./utils";
 import { enhancedMemoize, logger } from "@/utils/cache";
+import { processHealthScenario } from "./scenarioHandler";
 
 /**
  * Generates comprehensive professional recommendations based on user input
@@ -38,12 +39,15 @@ export function generateProfessionalRecommendations(
     // Analyze user input to get health information
     const analysis = analyzeUserHealth(userInput);
     
+    // Check if this matches a specific health scenario
+    const scenarioResult = processHealthScenario(userInput);
+    
     // Handle specific health scenario if detected
-    if (analysis.isSpecificScenario && analysis.scenarioResult) {
+    if (scenarioResult && scenarioResult.confidence > 0.7) {
       logger.debug("Processing specific health scenario");
       
-      // Convert the scenario recommendation to our standard format
-      const { recommendations, mainIssue } = analysis.scenarioResult;
+      // Access the scenario recommendations
+      const { recommendations, mainIssue } = scenarioResult;
       
       // Build the response structure
       const result: ProfessionalRecommendationResult = {
@@ -184,4 +188,3 @@ export function generateProfessionalRecommendations(
 // Now we'll move the cachedMatchPractitioners code to a separate module
 // Just importing it here for now
 import { cachedMatchPractitioners } from "./matcher";
-

@@ -18,6 +18,11 @@ export interface AnalyzedInput {
   contraindicated?: ServiceCategory[]; // Services that should not be recommended
   userType?: 'student' | 'working' | 'premium'; // Type of user for pricing adjustments
   practitionerPreferences?: Record<string, string>; // Practitioner preferences (gender, experience, etc.)
+  hasEnoughInformation?: boolean; // Whether the input has enough information to generate recommendations
+  locationInfo?: {
+    location?: string;
+    isRemote: boolean;
+  };
 }
 
 export interface EnhancedServiceAllocation {

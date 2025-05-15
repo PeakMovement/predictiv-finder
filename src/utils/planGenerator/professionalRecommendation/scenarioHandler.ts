@@ -12,6 +12,14 @@ export interface ScenarioResult {
   confidence: number;
   recommendedServices: ServiceCategory[];
   description: string;
+  // Add these properties to fix the type errors
+  recommendations: {
+    primaryProfessional: ServiceCategory;
+    secondaryProfessional?: ServiceCategory;
+    supportingProfessionals: ServiceCategory[];
+    rationale: string;
+  };
+  mainIssue: string;
 }
 
 /**
@@ -94,7 +102,15 @@ export function processHealthScenario(userInput: string): ScenarioResult | null 
           scenario: scenario.name,
           confidence: 0.85,
           recommendedServices: scenario.services,
-          description: scenario.description
+          description: scenario.description,
+          // Add these properties to make it compatible with the updated interface
+          recommendations: {
+            primaryProfessional: scenario.services[0],
+            secondaryProfessional: scenario.services.length > 1 ? scenario.services[1] : undefined,
+            supportingProfessionals: scenario.services.slice(2),
+            rationale: `${scenario.name} typically requires ${scenario.services.join(", ")}`
+          },
+          mainIssue: scenario.name
         };
       }
     }
@@ -112,7 +128,15 @@ export function processHealthScenario(userInput: string): ScenarioResult | null 
           scenario: scenario.name,
           confidence: 0.7,
           recommendedServices: scenario.services,
-          description: scenario.description
+          description: scenario.description,
+          // Add these properties to make it compatible with the updated interface
+          recommendations: {
+            primaryProfessional: scenario.services[0],
+            secondaryProfessional: scenario.services.length > 1 ? scenario.services[1] : undefined,
+            supportingProfessionals: scenario.services.slice(2),
+            rationale: `${scenario.name} typically requires ${scenario.services.join(", ")}`
+          },
+          mainIssue: scenario.name
         };
       }
     }

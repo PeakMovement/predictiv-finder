@@ -73,6 +73,7 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   );
   
   // Calculate budget tiers based on user input and context
+  // Use default empty objects or arrays if properties don't exist
   const preferences = analysis.preferences || {};
   const userType = analysis.userType || 'general';
   const contextualFactors = Array.isArray(analysis.contextualFactors) 
