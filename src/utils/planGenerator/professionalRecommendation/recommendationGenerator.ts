@@ -207,7 +207,7 @@ const cachedMatchPractitioners = enhancedMemoize(
       category: match.category,
       score: match.score || 0, // Keep for internal use
       importance: match.score || 0.5, // Map score to importance for type compatibility
-      reasoning: match.reason || `Match for your health needs`,
+      reasoning: match.reasoning || `Match for your health needs`, // Fix: Changed from match.reason to match.reasoning
       primaryCondition: match.primaryCondition // Keep for internal use
     }));
   },
@@ -217,3 +217,4 @@ const cachedMatchPractitioners = enhancedMemoize(
   // Cache options
   { maxSize: 50, ttl: 10 * 60 * 1000 } // 10 minutes TTL, max 50 items
 );
+
