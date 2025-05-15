@@ -1,8 +1,9 @@
-
 // Re-export everything from the new modular structure
 export * from './planGenerator/aiPlanGenerator';
 export * from './planGenerator/planStructure';
 export * from './planGenerator/professionalScoring';
-export * from './planGenerator/categoryMatcher'; // Explicitly export from categoryMatcher
-export * from './planGenerator/professionalRecommendation'; // Export the refactored recommendation system
-export * from './planGenerator/inputAnalyzer'; // Make sure input analyzer is properly exported
+export * from './planGenerator/categoryMatcher';
+export * from './planGenerator/professionalRecommendation';
+export * from './planGenerator/inputAnalyzer';
+
+// Keep this file for backward compatibility

@@ -77,7 +77,77 @@ export const EXPANDED_PRACTITIONERS: Practitioner[] = [
     rating: 4.7,
     specialtyNotes: "Holistic approach combining physical and mental health care."
   },
-  
+  // New GP additions
+  {
+    id: "gp_sipho_mokoena",
+    name: "Dr. Sipho Mokoena",
+    serviceType: "family-medicine",
+    pricePerSession: 1015,
+    serviceTags: ["General Practice", "Men's Health", "Chronic Disease Management"],
+    location: "Johannesburg",
+    isOnline: true,
+    availability: "Monday to Friday, 8:00 - 16:00",
+    imageUrl: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop",
+    bio: "Dr. Sipho Mokoena has 29 years of experience in general practitioner services with an MBChB from UCT. He specializes in chronic disease management and preventative care for men.",
+    rating: 4.8,
+    specialtyNotes: "Expert in chronic disease management with focus on preventative care."
+  },
+  {
+    id: "gp_nokuthula_smith",
+    name: "Dr. Nokuthula Smith",
+    serviceType: "family-medicine",
+    pricePerSession: 438,
+    serviceTags: ["Family Medicine", "Pediatrics", "Women's Health"],
+    location: "Durban",
+    isOnline: true,
+    availability: "Tuesday to Saturday, 8:30 - 17:30",
+    imageUrl: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=400&h=400&fit=crop",
+    bio: "Dr. Nokuthula Smith brings 17 years of experience with an MBBS degree. She specializes in family medicine with a focus on pediatrics and women's health issues.",
+    rating: 4.6,
+    specialtyNotes: "Family-centered care with expertise in women's and children's health."
+  },
+  {
+    id: "gp_james_zulu",
+    name: "Dr. James Zulu",
+    serviceType: "family-medicine",
+    pricePerSession: 913,
+    serviceTags: ["General Practice", "Sports Medicine", "Preventative Care"],
+    location: "Cape Town",
+    isOnline: false,
+    availability: "Monday, Wednesday, Friday, 7:00 - 19:00",
+    imageUrl: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&h=400&fit=crop",
+    bio: "Dr. James Zulu has 20 years of experience with an MBChB from UCT. He specializes in sports medicine and preventative healthcare approaches.",
+    rating: 4.8,
+    specialtyNotes: "Expert in sports-related injuries and preventative medicine."
+  },
+  {
+    id: "gp_paddy_smith",
+    name: "Dr. Paddy Smith",
+    serviceType: "family-medicine",
+    pricePerSession: 676,
+    serviceTags: ["General Practice", "Geriatrics", "Chronic Disease Management"],
+    location: "Pretoria",
+    isOnline: true,
+    availability: "Monday to Friday, 8:00 - 16:00",
+    imageUrl: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop",
+    bio: "Dr. Paddy Smith has 21 years of experience with an MD in General Medicine. He focuses on geriatric care and managing chronic health conditions.",
+    rating: 4.7,
+    specialtyNotes: "Specialized in geriatric care and chronic condition management."
+  },
+  {
+    id: "gp_peter_khumalo",
+    name: "Dr. Peter Khumalo",
+    serviceType: "family-medicine",
+    pricePerSession: 913,
+    serviceTags: ["Family Medicine", "Primary Care", "Men's Health"],
+    location: "Johannesburg",
+    isOnline: false,
+    availability: "Tuesday to Saturday, 9:00 - 17:00",
+    imageUrl: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&h=400&fit=crop",
+    bio: "Dr. Peter Khumalo has 13 years of experience with an MBChB from UCT. He provides comprehensive primary care with a focus on men's health issues.",
+    rating: 4.8,
+    specialtyNotes: "Comprehensive approach to family medicine with men's health focus."
+  },
   // Only adding a sample of each category type for brevity - we can add more in batches as needed
   
   // Physiotherapists
@@ -109,6 +179,49 @@ export const EXPANDED_PRACTITIONERS: Practitioner[] = [
     rating: 4.9,
     specialtyNotes: "Specializes in neurological conditions and pediatric care."
   },
+  // New physiotherapist additions
+  {
+    id: "physio_peter_smith",
+    name: "Peter Smith",
+    serviceType: "physiotherapist",
+    pricePerSession: 781,
+    serviceTags: ["Orthopedic Rehabilitation", "Sports Injuries", "Manual Therapy"],
+    location: "Cape Town",
+    isOnline: false,
+    availability: "Monday to Friday, 8:00 - 17:00",
+    imageUrl: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&h=400&fit=crop",
+    bio: "Peter Smith is a physiotherapist with 6 years of experience and a BSc in Physiotherapy from UCT. He specializes in orthopedic rehabilitation and sports injury recovery.",
+    rating: 4.7,
+    specialtyNotes: "Expert in manual therapy techniques and orthopedic rehabilitation."
+  },
+  {
+    id: "physio_marius_vandermerwe",
+    name: "Marius van der Merwe",
+    serviceType: "physiotherapist",
+    pricePerSession: 991,
+    serviceTags: ["Vestibular Rehabilitation", "Post-Concussion Therapy", "Balance Disorders"],
+    location: "Pretoria",
+    isOnline: true,
+    availability: "Tuesday to Saturday, 7:30 - 18:00",
+    imageUrl: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&h=400&fit=crop",
+    bio: "Marius van der Merwe has 9 years of experience with an MSc in Physiotherapy. He specializes in vestibular rehabilitation and treatment of balance disorders.",
+    rating: 4.9,
+    specialtyNotes: "Leading specialist in vestibular rehabilitation and balance disorders."
+  },
+  {
+    id: "physio_lindiwe_mokoena",
+    name: "Lindiwe Mokoena",
+    serviceType: "physiotherapist",
+    pricePerSession: 652,
+    serviceTags: ["Women's Health", "Pelvic Floor Rehabilitation", "Pregnancy-related Care"],
+    location: "Johannesburg",
+    isOnline: true,
+    availability: "Monday to Friday, 8:00 - 16:00",
+    imageUrl: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=400&h=400&fit=crop",
+    bio: "Lindiwe Mokoena brings 30 years of experience with a BPhysT from University of Pretoria. She specializes in women's health physiotherapy and pelvic floor rehabilitation.",
+    rating: 4.8,
+    specialtyNotes: "Specialized in women's health physiotherapy and pelvic floor function."
+  },
   
   // Biokineticists
   {
@@ -138,6 +251,35 @@ export const EXPANDED_PRACTITIONERS: Practitioner[] = [
     bio: "Ayanda Naidoo has 24 years of experience as a biokineticist with a BSc in Biokinetics. She specializes in sports performance enhancement and biomechanical analysis.",
     rating: 4.9,
     specialtyNotes: "Expert in sports performance optimization and biomechanics."
+  },
+  // New biokineticist additions
+  {
+    id: "biokin_james_muller",
+    name: "James Muller",
+    serviceType: "biokineticist",
+    pricePerSession: 585,
+    serviceTags: ["Cardiac Rehabilitation", "Exercise Prescription", "Chronic Disease Management"],
+    location: "Pretoria",
+    isOnline: true,
+    availability: "Monday to Friday, 7:00 - 17:00",
+    imageUrl: "https://images.unsplash.com/photo-1552196563-55cd4e45efb3?w=400&h=400&fit=crop",
+    bio: "James Muller has 7 years of experience as a biokineticist with a BA in Human Movement Science. He specializes in cardiac rehabilitation and chronic disease management.",
+    rating: 4.6,
+    specialtyNotes: "Expert in cardiac rehabilitation and exercise prescription for chronic conditions."
+  },
+  {
+    id: "biokin_lindiwe_ngcobo",
+    name: "Lindiwe Ngcobo",
+    serviceType: "biokineticist",
+    pricePerSession: 676,
+    serviceTags: ["Orthopedic Rehabilitation", "Posture Correction", "Ergonomic Assessment"],
+    location: "Durban",
+    isOnline: false,
+    availability: "Tuesday to Saturday, 8:00 - 18:00",
+    imageUrl: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop",
+    bio: "Lindiwe Ngcobo has 30 years of experience with a BA in Human Movement Science. She specializes in orthopedic rehabilitation and posture correction strategies.",
+    rating: 4.8,
+    specialtyNotes: "Expert in posture correction and ergonomic workplace assessment."
   },
   
   // Dieticians
@@ -169,6 +311,35 @@ export const EXPANDED_PRACTITIONERS: Practitioner[] = [
     rating: 4.8,
     specialtyNotes: "Expert in sports nutrition and performance optimization through diet."
   },
+  // New dietician additions
+  {
+    id: "diet_johan_daniels",
+    name: "Johan Daniels",
+    serviceType: "dietician",
+    pricePerSession: 602,
+    serviceTags: ["Plant-Based Nutrition", "Allergies & Intolerances", "Gut Health"],
+    location: "Cape Town",
+    isOnline: true,
+    availability: "Monday to Friday, 8:00 - 17:00",
+    imageUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop",
+    bio: "Johan Daniels has 4 years of experience with a BSc in Nutrition and Dietetics. He specializes in plant-based nutrition and managing food intolerances.",
+    rating: 4.6,
+    specialtyNotes: "Expert in plant-based nutrition and gut health optimization."
+  },
+  {
+    id: "diet_lindiwe_moyo",
+    name: "Lindiwe Moyo",
+    serviceType: "dietician",
+    pricePerSession: 870,
+    serviceTags: ["Pediatric Nutrition", "Childhood Obesity", "Allergies & Intolerances"],
+    location: "Johannesburg",
+    isOnline: true,
+    availability: "Tuesday to Saturday, 9:00 - 17:00",
+    imageUrl: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=400&h=400&fit=crop",
+    bio: "Lindiwe Moyo has 13 years of experience with an MSc in Dietetics. She specializes in pediatric nutrition and managing childhood obesity and food allergies.",
+    rating: 4.8,
+    specialtyNotes: "Pediatric nutrition specialist with expertise in childhood allergies."
+  },
   
   // Strength Coaches
   {
@@ -198,6 +369,35 @@ export const EXPANDED_PRACTITIONERS: Practitioner[] = [
     bio: "Michael Mthembu is an NCSF Certified strength coach with 31 years of experience. He specializes in Olympic lifting techniques and sport-specific strength development.",
     rating: 4.9,
     specialtyNotes: "Olympic lifting specialist with experience training professional athletes."
+  },
+  // New strength coach additions
+  {
+    id: "str_paddy_botha",
+    name: "Paddy Botha",
+    serviceType: "strength-coaches",
+    pricePerSession: 915,
+    serviceTags: ["Athletic Performance", "Strength & Conditioning", "Elite Training"],
+    location: "Pretoria",
+    isOnline: false,
+    availability: "Monday to Friday, 6:00 - 20:00",
+    imageUrl: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=400&h=400&fit=crop",
+    bio: "Paddy Botha brings 31 years of experience as a strength coach with a BSc in Exercise Science. He specializes in elite athletic performance and strength development.",
+    rating: 4.9,
+    specialtyNotes: "Elite athletic performance specialist who has trained Olympic athletes."
+  },
+  {
+    id: "str_lindiwe_vandermerwe",
+    name: "Lindiwe van der Merwe",
+    serviceType: "strength-coaches",
+    pricePerSession: 685,
+    serviceTags: ["Women's Strength", "Postpartum Fitness", "Body Transformation"],
+    location: "Cape Town",
+    isOnline: true,
+    availability: "Monday to Saturday, 7:00 - 19:00",
+    imageUrl: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop",
+    bio: "Lindiwe van der Merwe is an NCSF Certified strength coach with 22 years of experience. She specializes in women's strength training and postpartum fitness.",
+    rating: 4.8,
+    specialtyNotes: "Women's strength specialist with expertise in postpartum fitness."
   },
   
   // Run Coaches
@@ -229,6 +429,35 @@ export const EXPANDED_PRACTITIONERS: Practitioner[] = [
     rating: 4.8,
     specialtyNotes: "Track specialist who has coached several provincial champions."
   },
+  // New run coach additions
+  {
+    id: "run_ayanda_vandermerwe",
+    name: "Ayanda van der Merwe",
+    serviceType: "run-coaches",
+    pricePerSession: 769,
+    serviceTags: ["Trail Running", "Ultra Marathons", "Outdoor Training"],
+    location: "Cape Town",
+    isOnline: true,
+    availability: "Monday, Wednesday, Friday, 6:00 - 18:00",
+    imageUrl: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop",
+    bio: "Ayanda van der Merwe is an ASA Certified Running Coach with 11 years of experience. She specializes in trail running and ultra-marathon preparation.",
+    rating: 4.8,
+    specialtyNotes: "Trail running specialist with personal ultra-marathon experience."
+  },
+  {
+    id: "run_nomvula_smith",
+    name: "Nomvula Smith",
+    serviceType: "run-coaches",
+    pricePerSession: 721,
+    serviceTags: ["Beginners Running", "5K to 10K Programs", "Running for Weight Loss"],
+    location: "Pretoria",
+    isOnline: true,
+    availability: "Tuesday to Saturday, 5:30 - 19:00",
+    imageUrl: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=400&h=400&fit=crop",
+    bio: "Nomvula Smith is an ASA Certified Running Coach with 24 years of experience. She specializes in coaching beginners and helping clients use running for weight management.",
+    rating: 4.7,
+    specialtyNotes: "Expert in helping beginners become confident runners."
+  },
   
   // Nutrition Coaches
   {
@@ -258,5 +487,35 @@ export const EXPANDED_PRACTITIONERS: Practitioner[] = [
     bio: "Ayanda Botha is a Precision Nutrition L1 certified coach with 15 years of experience. She specializes in plant-based nutrition for athletes and performance optimization.",
     rating: 4.7,
     specialtyNotes: "Plant-based nutrition specialist for athletes and active individuals."
+  },
+  // New nutrition coach additions
+  {
+    id: "nutr_david_mokoena",
+    name: "David Mokoena",
+    serviceType: "nutrition-coaches",
+    pricePerSession: 817,
+    serviceTags: ["Corporate Wellness", "Executive Health", "Stress & Nutrition"],
+    location: "Johannesburg",
+    isOnline: true,
+    availability: "Monday to Friday, 7:00 - 19:00",
+    imageUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop",
+    bio: "David Mokoena has 13 years of experience with a BSc in Nutrition. He specializes in corporate wellness programs and executive health optimization through nutrition.",
+    rating: 4.9,
+    specialtyNotes: "Corporate wellness expert focusing on high-performance nutrition."
+  },
+  {
+    id: "nutr_paddy_muller",
+    name: "Paddy Muller",
+    serviceType: "nutrition-coaches",
+    pricePerSession: 391,
+    serviceTags: ["Weight Management", "Emotional Eating", "Habit Formation"],
+    location: "Cape Town",
+    isOnline: true,
+    availability: "Tuesday to Saturday, 8:00 - 18:00",
+    imageUrl: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&h=400&fit=crop",
+    bio: "Paddy Muller is a Precision Nutrition L1 certified coach with 23 years of experience. He specializes in weight management strategies and overcoming emotional eating patterns.",
+    rating: 4.7,
+    specialtyNotes: "Expert in addressing emotional eating and establishing healthy habits."
   }
 ];
+
