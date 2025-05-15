@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { generateCustomAIPlans } from '@/utils/aiPlanGenerator';
+import { generateAIPlan } from '@/utils/planGenerator/aiPlanGenerator';
 import { AIHealthPlan, ServiceCategory } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { PlanGenerationError, PlanGenerationErrorType } from '@/utils/planGenerator/errorHandling';
@@ -118,7 +118,7 @@ export async function generatePlan(userInput: string) {
     console.log("Processing user query:", userInput);
 
     // Call the AI plan generator with the user input
-    const result = await generateCustomAIPlans(userInput);
+    const result = await generateAIPlan(userInput);
 
     // Log the generated plans for debugging
     console.log("Generated AI plans:", result);

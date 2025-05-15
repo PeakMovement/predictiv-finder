@@ -28,7 +28,8 @@ export function analyzeUserQuery(query: string): Partial<UserCriteria> {
     const budgetAmount = parseInt(budgetMatch[1]);
     criteria.budget = {
       monthly: budgetAmount,
-      oneTime: budgetAmount * 3 // Assume 3 months worth for one-time budget
+      preferredSetup: "monthly",
+      flexibleBudget: true
     };
   }
   

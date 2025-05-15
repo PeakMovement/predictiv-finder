@@ -16,7 +16,7 @@ export function getProfessionalRecommendations(
   userInput: string,
   options: ProfessionalRecommendationOptions = {}
 ): ProfessionalRecommendationResult {
-  return generateProfessionalRecommendations(userInput, options);
+  return generateProfessionalRecommendations(userInput);
 }
 
 // Re-export types and other utilities for backward compatibility
