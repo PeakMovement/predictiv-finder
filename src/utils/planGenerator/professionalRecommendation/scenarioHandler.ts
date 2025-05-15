@@ -1,17 +1,15 @@
 
 /**
- * Health scenario handling module
- * Manages the processing of specific health scenarios
+ * Scenario handler for specific health patterns
+ * Detects common health scenarios and provides tailored recommendations
  */
 
 import { ServiceCategory } from "../types";
 import { logger } from "@/utils/cache";
-import { ProfessionalRecommendationResult } from "./types";
 
-/**
- * Scenario result type definition
- */
 export interface ScenarioResult {
+  scenario: string;
+  confidence: number;
   recommendations: {
     primaryProfessional: ServiceCategory;
     secondaryProfessional?: ServiceCategory;
@@ -22,264 +20,113 @@ export interface ScenarioResult {
 }
 
 /**
- * Process common health scenarios with specialized logic
- * @param symptoms Array of detected symptoms
- * @param goals User's health goals
- * @param userInput Original user input text
- * @returns Scenario result or null if no specific scenario matches
+ * Process user input to detect specific health scenarios
+ * 
+ * @param userInput User input text describing health needs
+ * @returns Scenario result if detected, or null if no specific scenario matched
  */
-export function processSpecificScenario(
-  symptoms: string[],
-  goals: string[],
-  userInput: string
-): ScenarioResult | null {
-  const input = userInput.toLowerCase();
+export function processHealthScenario(userInput: string): ScenarioResult | null {
+  const inputLower = userInput.toLowerCase();
   
-  // Check for post-surgery recovery
-  if (input.includes("surgery") && (input.includes("recovery") || input.includes("recovering"))) {
-    return handlePostSurgeryScenario(input, symptoms);
+  // Common health scenarios with specific recommendations
+  const scenarios: Array<{
+    pattern: RegExp | string[];
+    scenario: string;
+    confidence: number;
+    recommendations: ScenarioResult["recommendations"];
+    mainIssue: string;
+  }> = [
+    {
+      pattern: [/knee pain.+running/i, /running.+knee pain/i],
+      scenario: "runner_knee_pain",
+      confidence: 0.85,
+      recommendations: {
+        primaryProfessional: "physiotherapist",
+        secondaryProfessional: "personal-trainer",
+        supportingProfessionals: ["coaching"],
+        rationale: "Knee pain in runners typically benefits from physiotherapy assessment and treatment, supported by corrective exercise from a personal trainer and running form coaching."
+      },
+      mainIssue: "Runner's knee pain"
+    },
+    {
+      pattern: [/weight loss.+diabetes/i, /diabetes.+weight/i],
+      scenario: "diabetes_weight_management",
+      confidence: 0.9,
+      recommendations: {
+        primaryProfessional: "dietician",
+        secondaryProfessional: "endocrinology",
+        supportingProfessionals: ["personal-trainer"],
+        rationale: "Managing diabetes through weight loss requires dietary intervention first, medical supervision, and structured exercise for optimal results."
+      },
+      mainIssue: "Diabetes weight management"
+    },
+    {
+      pattern: [/back pain.+(desk|sitting|work)/i, /(desk|sitting|work).+back pain/i],
+      scenario: "desk_worker_back_pain",
+      confidence: 0.85,
+      recommendations: {
+        primaryProfessional: "physiotherapist",
+        secondaryProfessional: "biokineticist",
+        supportingProfessionals: ["personal-trainer"],
+        rationale: "Desk-related back pain typically requires physiotherapy assessment, ergonomic adjustments, and a specialized exercise program."
+      },
+      mainIssue: "Desk-related back pain"
+    },
+    {
+      pattern: [/stress.+(anxiety|depression)/i, /(anxiety|depression).+stress/i],
+      scenario: "stress_mental_health",
+      confidence: 0.85,
+      recommendations: {
+        primaryProfessional: "psychiatry",
+        secondaryProfessional: "coaching",
+        supportingProfessionals: ["personal-trainer"],
+        rationale: "Stress combined with anxiety or depression often benefits from professional mental health support, complemented by coaching and physical activity."
+      },
+      mainIssue: "Stress and mental health"
+    },
+    {
+      pattern: [/marathon.+training/i, /training.+marathon/i, /half marathon/i],
+      scenario: "marathon_training",
+      confidence: 0.9,
+      recommendations: {
+        primaryProfessional: "coaching",
+        secondaryProfessional: "personal-trainer",
+        supportingProfessionals: ["dietician", "physiotherapist"],
+        rationale: "Marathon training requires specialized running coaching, strength training support, nutritional guidance, and injury prevention."
+      },
+      mainIssue: "Marathon training preparation"
+    }
+  ];
+
+  // Check for specific health scenarios
+  for (const scenario of scenarios) {
+    let matched = false;
+    
+    if (Array.isArray(scenario.pattern)) {
+      // Check multiple patterns
+      matched = scenario.pattern.some(pattern => {
+        if (pattern instanceof RegExp) {
+          return pattern.test(inputLower);
+        } else {
+          return inputLower.includes(pattern);
+        }
+      });
+    } else {
+      // Single pattern
+      matched = scenario.pattern.test(inputLower);
+    }
+    
+    if (matched) {
+      logger.debug(`Matched health scenario: ${scenario.scenario}`);
+      return {
+        scenario: scenario.scenario,
+        confidence: scenario.confidence,
+        recommendations: scenario.recommendations,
+        mainIssue: scenario.mainIssue
+      };
+    }
   }
   
-  // Check for sports injury
-  if ((input.includes("sport") || input.includes("running") || input.includes("athlete")) && 
-      (input.includes("injury") || input.includes("pain"))) {
-    return handleSportsInjuryScenario(input, symptoms);
-  }
-  
-  // Check for chronic condition management
-  if (input.includes("chronic") || input.includes("long-term") || input.includes("ongoing")) {
-    return handleChronicConditionScenario(input, symptoms);
-  }
-  
-  // Check for mental health focus
-  const mentalHealthTerms = ["anxiety", "depression", "stress", "mental health", "burnout"];
-  if (mentalHealthTerms.some(term => input.includes(term))) {
-    return handleMentalHealthScenario(input);
-  }
-  
-  // No specific scenario detected
+  // No specific scenario matched
   return null;
-}
-
-/**
- * Handle post-surgery recovery scenario
- */
-function handlePostSurgeryScenario(input: string, symptoms: string[]): ScenarioResult {
-  // Determine surgery type
-  let surgeryType = "general";
-  if (input.includes("knee")) surgeryType = "knee";
-  if (input.includes("hip")) surgeryType = "hip";
-  if (input.includes("back") || input.includes("spine")) surgeryType = "spinal";
-  if (input.includes("heart")) surgeryType = "cardiac";
-  
-  // Set primary recommendation based on surgery type
-  let primaryProfessional: ServiceCategory = "physiotherapist";
-  let secondaryProfessional: ServiceCategory | undefined = undefined;
-  let supportingProfessionals: ServiceCategory[] = [];
-  let rationale = `Recovery plan for ${surgeryType} surgery`;
-  
-  switch (surgeryType) {
-    case "knee":
-    case "hip":
-      primaryProfessional = "physiotherapist";
-      secondaryProfessional = "orthopedics";
-      supportingProfessionals = ["biokineticist"];
-      break;
-    case "spinal":
-      primaryProfessional = "physiotherapist";
-      secondaryProfessional = "pain-management";
-      supportingProfessionals = ["biokineticist"];
-      break;
-    case "cardiac":
-      primaryProfessional = "cardiology";
-      secondaryProfessional = "physiotherapist";
-      supportingProfessionals = ["dietician"];
-      rationale = "Cardiac rehabilitation program";
-      break;
-    default:
-      primaryProfessional = "physiotherapist";
-      supportingProfessionals = ["family-medicine"];
-      rationale = "Post-surgery recovery and rehabilitation program";
-  }
-  
-  return {
-    recommendations: {
-      primaryProfessional,
-      secondaryProfessional,
-      supportingProfessionals,
-      rationale
-    },
-    mainIssue: `${surgeryType} surgery recovery`
-  };
-}
-
-/**
- * Handle sports injury scenario
- */
-function handleSportsInjuryScenario(input: string, symptoms: string[]): ScenarioResult {
-  let injuryType = "general";
-  let mainIssue = "sports injury";
-  
-  // Determine injury type
-  if (input.includes("knee")) {
-    injuryType = "knee";
-    mainIssue = "knee injury";
-  } else if (input.includes("ankle") || input.includes("sprain")) {
-    injuryType = "ankle";
-    mainIssue = "ankle injury";
-  } else if (input.includes("shoulder")) {
-    injuryType = "shoulder";
-    mainIssue = "shoulder injury";
-  } else if (input.includes("back")) {
-    injuryType = "back";
-    mainIssue = "back injury";
-  }
-  
-  // Common treatment approach for sports injuries
-  const primaryProfessional: ServiceCategory = "physiotherapist";
-  let secondaryProfessional: ServiceCategory | undefined = "biokineticist";
-  let supportingProfessionals: ServiceCategory[] = ["personal-trainer"];
-  
-  if (injuryType === "back") {
-    secondaryProfessional = "orthopedics";
-  }
-  
-  return {
-    recommendations: {
-      primaryProfessional,
-      secondaryProfessional,
-      supportingProfessionals,
-      rationale: `Specialized treatment plan for ${mainIssue} rehabilitation and return to sports`
-    },
-    mainIssue
-  };
-}
-
-/**
- * Handle chronic condition scenario
- */
-function handleChronicConditionScenario(input: string, symptoms: string[]): ScenarioResult {
-  let condition = "chronic condition";
-  let primaryProfessional: ServiceCategory = "family-medicine";
-  let secondaryProfessional: ServiceCategory | undefined;
-  let supportingProfessionals: ServiceCategory[] = [];
-  
-  // Detect specific chronic conditions
-  if (input.includes("diabetes")) {
-    condition = "diabetes";
-    primaryProfessional = "endocrinology";
-    secondaryProfessional = "dietician";
-    supportingProfessionals = ["coaching", "family-medicine"];
-  } else if (input.includes("arthritis")) {
-    condition = "arthritis";
-    primaryProfessional = "rheumatology";
-    secondaryProfessional = "physiotherapist";
-    supportingProfessionals = ["pain-management"];
-  } else if (input.includes("asthma")) {
-    condition = "asthma";
-    primaryProfessional = "pulmonology";
-    supportingProfessionals = ["family-medicine"];
-  } else if (input.includes("migraine") || input.includes("headache")) {
-    condition = "migraines";
-    primaryProfessional = "neurology";
-    secondaryProfessional = "pain-management";
-  } else if (input.includes("ibs") || input.includes("bowel") || input.includes("digestive")) {
-    condition = "digestive condition";
-    primaryProfessional = "gastroenterology";
-    secondaryProfessional = "dietician";
-  } else {
-    // General chronic condition
-    primaryProfessional = "family-medicine";
-    supportingProfessionals = ["coaching"];
-  }
-  
-  return {
-    recommendations: {
-      primaryProfessional,
-      secondaryProfessional,
-      supportingProfessionals,
-      rationale: `Comprehensive management plan for ${condition}`
-    },
-    mainIssue: condition
-  };
-}
-
-/**
- * Handle mental health scenario
- */
-function handleMentalHealthScenario(input: string): ScenarioResult {
-  let condition = "mental health concerns";
-  let primaryProfessional: ServiceCategory = "psychiatry";
-  let secondaryProfessional: ServiceCategory | undefined = "coaching";
-  let supportingProfessionals: ServiceCategory[] = [];
-  
-  // Detect specific mental health conditions
-  if (input.includes("anxiety")) {
-    condition = "anxiety";
-    supportingProfessionals = ["family-medicine"];
-  } else if (input.includes("depression")) {
-    condition = "depression";
-    secondaryProfessional = "psychiatry";
-    primaryProfessional = "family-medicine";
-    supportingProfessionals = ["coaching"];
-  } else if (input.includes("stress")) {
-    condition = "stress management";
-    primaryProfessional = "coaching";
-    secondaryProfessional = "psychiatry";
-    supportingProfessionals = ["personal-trainer"];
-  } else if (input.includes("burnout")) {
-    condition = "burnout";
-    primaryProfessional = "psychiatry";
-    secondaryProfessional = "coaching";
-    supportingProfessionals = ["dietician"];
-  }
-  
-  return {
-    recommendations: {
-      primaryProfessional,
-      secondaryProfessional,
-      supportingProfessionals,
-      rationale: `Supportive care plan for ${condition}`
-    },
-    mainIssue: condition
-  };
-}
-
-/**
- * Convert a scenario result to a professional recommendation result
- */
-export function convertScenarioToRecommendation(scenario: ScenarioResult): ProfessionalRecommendationResult {
-  const { recommendations, mainIssue } = scenario;
-  
-  // Build the response structure
-  const result: ProfessionalRecommendationResult = {
-    primaryRecommendations: [{
-      category: recommendations.primaryProfessional,
-      sessions: 4,
-      priority: 'high',
-      reasoning: recommendations.rationale
-    }],
-    notes: [recommendations.rationale]
-  };
-  
-  // Add secondary professional if present
-  if (recommendations.secondaryProfessional) {
-    result.primaryRecommendations.push({
-      category: recommendations.secondaryProfessional,
-      sessions: 3,
-      priority: 'medium',
-      reasoning: recommendations.rationale
-    });
-  }
-  
-  // Add complementary recommendations
-  if (recommendations.supportingProfessionals.length > 0) {
-    result.complementaryRecommendations = recommendations.supportingProfessionals.map(category => ({
-      category,
-      sessions: 2,
-      reasoning: "Supporting professional for your condition"
-    }));
-  }
-  
-  return result;
 }
