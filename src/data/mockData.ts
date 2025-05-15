@@ -1,4 +1,3 @@
-
 import { DIETICIANS } from './practitioners/dieticians';
 import { PHYSIOTHERAPISTS } from './practitioners/physiotherapists';
 import { BIOKINETICISTS } from './practitioners/biokineticists';
@@ -7,8 +6,10 @@ import { DOCTORS } from './practitioners/doctors';
 import { RUN_COACHES } from './practitioners/run-coaches';
 import { STRENGTH_COACHES } from './practitioners/strength-coaches';
 import { NUTRITION_COACHES } from './practitioners/nutrition-coaches';
+import { EXPANDED_PRACTITIONERS } from './practitioners/expanded-practitioners';
 import { AIHealthPlan } from '@/types';
 
+// Combine all practitioners from all sources
 export const PRACTITIONERS = [
   ...DOCTORS,
   ...DIETICIANS,
@@ -17,7 +18,8 @@ export const PRACTITIONERS = [
   ...COACHES,
   ...RUN_COACHES,
   ...STRENGTH_COACHES,
-  ...NUTRITION_COACHES
+  ...NUTRITION_COACHES,
+  ...EXPANDED_PRACTITIONERS
 ];
 
 export const GOALS_BY_CATEGORY = {
