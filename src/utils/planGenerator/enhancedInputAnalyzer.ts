@@ -1,91 +1,90 @@
 
 import { ServiceCategory } from "./types";
-import { detectProfessionalMentions } from "./inputAnalyzer/professionalMentions";
-import { findAllServicesByKeyword } from "./professionalKeywords";
+import { CONDITION_TO_SERVICES } from "./serviceMappings";
+import { analyzeUserInput } from "./inputAnalyzer";
 import { CO_MORBIDITY_MAPPINGS } from "./serviceMappings";
+import { detectProfessionalPhrases } from "./professionalPhraseData";
+import { extractGoals } from "./professionalRecommendation/goalExtractor";
 
 /**
- * Enhanced user input analyzer with advanced keyword detection
- * @param userInput User text describing their health needs
- * @returns Detailed analysis of user input
+ * Enhanced version of user input analyzer with more comprehensive analysis
  */
-export function enhancedAnalyzeUserInput(userInput: string) {
-  const inputLower = userInput.toLowerCase();
+export function enhancedAnalyzeUserInput(input: string) {
+  const baseAnalysis = analyzeUserInput(input);
   
-  // Detect professional mentions with our enhanced detection system
-  const professionalMentions = detectProfessionalMentions(inputLower);
+  // Override base analysis with more specific information
+  const inputLower = input.toLowerCase();
   
-  // Build suggested categories from professional mentions
-  const suggestedCategories = professionalMentions.map(mention => mention.serviceCategory);
+  // Use the new detailed phrase detection
+  const detectedProfessionals = detectProfessionalPhrases(inputLower);
   
-  // Extract potential medical conditions from the text
-  const medicalConditions = extractMedicalConditions(inputLower);
+  // Add professionals detected from comprehensive phrase analysis
+  detectedProfessionals.forEach(detection => {
+    if (!baseAnalysis.suggestedCategories.includes(detection.category)) {
+      baseAnalysis.suggestedCategories.push(detection.category);
+      console.log(`Added professional category from phrase detection: ${detection.category}`);
+    }
+  });
   
-  // Determine primary issue
-  const primaryIssue = determinePrimaryIssue(inputLower, medicalConditions, professionalMentions);
+  // Extract more specific health goals
+  const specificGoals = extractGoals(input);
   
-  // Extract budget information
-  const budget = extractBudget(inputLower);
+  // Determine primary issue (most important condition/goal)
+  let primaryIssue = determinePrimaryIssue(baseAnalysis.medicalConditions, specificGoals, input);
   
-  // Extract specific goals
-  const specificGoals = extractSpecificGoals(inputLower);
-  
-  // Extract location preferences
-  const locationInfo = extractLocationInfo(inputLower);
-  
-  // Determine service priorities based on detection confidence
+  // Calculate service priorities based on detected conditions and phrases
   const servicePriorities: Record<string, number> = {};
-  professionalMentions.forEach(mention => {
-    servicePriorities[mention.serviceCategory] = mention.confidence;
+  
+  // Set priorities based on professional phrase matches
+  detectedProfessionals.forEach(detection => {
+    servicePriorities[detection.category] = Math.min(0.5 + (detection.count * 0.1), 1.0);
   });
   
-  // Determine if we have enough information for recommendations
-  const hasEnoughInformation = 
-    (medicalConditions.length > 0 || suggestedCategories.length > 0 || specificGoals.length > 0);
+  // Analyze if we have enough information for a proper plan
+  const hasEnoughInformation = baseAnalysis.suggestedCategories.length > 0 || 
+                              baseAnalysis.medicalConditions.length > 0;
   
-  console.log("Enhanced analysis results:", {
-    suggestedCategories,
-    medicalConditions,
-    primaryIssue,
-    budget,
-    specificGoals,
-    hasEnoughInformation
-  });
+  // Extract location information properly
+  const locationInfo = {
+    location: baseAnalysis.location,
+    isRemote: baseAnalysis.preferOnline || false
+  };
   
+  // Return enhanced analysis
   return {
-    suggestedCategories,
-    medicalConditions,
+    ...baseAnalysis,
     primaryIssue,
-    budget,
     hasEnoughInformation,
     locationInfo,
     specificGoals,
-    servicePriorities
+    servicePriorities,
+    // Add optional empty arrays for properties that might not exist
+    contraindicated: [] // Add empty array for contraindicated services
   };
 }
 
 /**
- * Check for co-morbidities (multiple conditions that interact)
- * @param conditions Array of detected medical conditions
- * @returns Array of additional services needed for co-morbidities
+ * Check for co-morbidities (multiple conditions that together require special care)
  */
-export function checkCoMorbidities(conditions: string[]): ServiceCategory[] {
-  if (conditions.length < 2) return [];
+export function checkCoMorbidities(conditions: string[]): string[] {
+  if (!conditions || conditions.length < 2) return [];
   
-  const additionalServices: ServiceCategory[] = [];
+  const additionalServices: string[] = [];
   
-  // Check each co-morbidity mapping
+  // Check each co-morbidity group
   Object.values(CO_MORBIDITY_MAPPINGS).forEach(mapping => {
-    // Check if all required conditions are present
-    const hasAllConditions = mapping.conditions.every(condition =>
-      conditions.some(c => c.toLowerCase().includes(condition.toLowerCase()))
+    // Check if all conditions in this group are present
+    const hasAllConditions = mapping.conditions.every(condition => 
+      conditions.some(userCondition => 
+        userCondition.toLowerCase().includes(condition.toLowerCase())
+      )
     );
     
     if (hasAllConditions) {
-      // Add the recommended additional services
       mapping.additionalServices.forEach(service => {
         if (!additionalServices.includes(service)) {
           additionalServices.push(service);
+          console.log(`Added ${service} due to co-morbidity: ${mapping.conditions.join(', ')}`);
         }
       });
     }
@@ -95,186 +94,82 @@ export function checkCoMorbidities(conditions: string[]): ServiceCategory[] {
 }
 
 /**
- * Extract medical conditions from user input
- */
-function extractMedicalConditions(inputLower: string): string[] {
-  const conditions = new Set<string>();
-  
-  // Common medical condition keywords
-  const conditionKeywords = [
-    "pain", "injury", "strain", "sprain", "diabetes", "hypertension",
-    "back pain", "knee pain", "shoulder pain", "anxiety", "depression",
-    "stress", "insomnia", "overweight", "arthritis", "asthma", "fatigue"
-  ];
-  
-  // Check for condition keywords
-  conditionKeywords.forEach(keyword => {
-    if (inputLower.includes(keyword.toLowerCase())) {
-      conditions.add(keyword);
-    }
-  });
-  
-  // Check for specific body part + pain combinations
-  const bodyParts = ["back", "knee", "shoulder", "neck", "hip", "ankle", "wrist", "elbow"];
-  bodyParts.forEach(part => {
-    if (inputLower.includes(`${part} pain`) || 
-        inputLower.includes(`${part} injury`) || 
-        inputLower.includes(`${part} problem`)) {
-      conditions.add(`${part} pain`);
-    }
-  });
-  
-  return Array.from(conditions);
-}
-
-/**
- * Determine the primary health issue from the input
+ * Determine the primary health issue from conditions and goals
  */
 function determinePrimaryIssue(
-  inputLower: string, 
   conditions: string[], 
-  professionalMentions: Array<{serviceCategory: ServiceCategory, confidence: number}>
+  goals: string[], 
+  input: string
 ): string {
-  // If we have conditions, use the most prominently mentioned one
-  if (conditions.length > 0) {
-    // Simple algorithm: condition mentioned first or most often is likely primary
-    const conditionCounts = conditions.map(condition => ({
-      condition,
-      firstIndex: inputLower.indexOf(condition.toLowerCase()),
-      count: (inputLower.match(new RegExp(condition.toLowerCase(), 'g')) || []).length
-    }));
-    
-    // Sort by first appearance, then by count
-    conditionCounts.sort((a, b) => {
-      if (a.firstIndex !== b.firstIndex) {
-        return a.firstIndex - b.firstIndex; // Earlier mention comes first
-      }
-      return b.count - a.count; // More mentions come first
-    });
-    
-    if (conditionCounts.length > 0) {
-      return conditionCounts[0].condition;
-    }
-  }
-  
-  // If no conditions but we have professional mentions, infer from highest confidence
-  if (professionalMentions.length > 0) {
-    const highestConfidenceMention = professionalMentions.sort((a, b) => 
-      b.confidence - a.confidence
-    )[0];
-    
-    // Map professional to general issue
-    const professionalToIssue: Partial<Record<ServiceCategory, string>> = {
-      "physiotherapist": "Pain or mobility issue",
-      "biokineticist": "Movement or rehabilitation need",
-      "coaching": "Performance or fitness goals",
-      "dietician": "Nutrition or diet concerns",
-      "personal-trainer": "Fitness or strength goals",
-      "family-medicine": "General health concern",
-      "psychiatry": "Mental health concern"
-    };
-    
-    return professionalToIssue[highestConfidenceMention.serviceCategory] || "Health optimization";
-  }
-  
-  // Default
-  return "General health concerns";
-}
-
-/**
- * Extract budget information from user input
- */
-function extractBudget(inputLower: string): number | undefined {
-  const budgetMatches = inputLower.match(/r\s*(\d+)/i) || 
-                         inputLower.match(/pay\s*r?\s*(\d+)/i) || 
-                         inputLower.match(/budget.*?(\d+)/i) ||
-                         inputLower.match(/afford.*?(\d+)/i) ||
-                         inputLower.match(/spend.*?(\d+)/i);
-  
-  if (budgetMatches && budgetMatches[1]) {
-    const amount = parseInt(budgetMatches[1], 10);
-    return amount;
-  }
-  
-  // Check for budget constraints even with no specific amount
-  const budgetTerms = [
-    'low budget', 'tight budget', 'limited budget', 'cheap', 'affordable', 
-    'low cost', "can't afford", 'budget constraint'
+  // Check for explicitly mentioned priorities
+  const priorityPhrases = [
+    { regex: /main(ly| concern| issue| problem)? is/i, bonus: 5 },
+    { regex: /primarily|mostly|especially|particularly/i, bonus: 3 },
+    { regex: /focus(ed)? on/i, bonus: 4 },
+    { regex: /most important/i, bonus: 5 }
   ];
   
-  if (budgetTerms.some(term => inputLower.includes(term))) {
-    // Return a modest default budget
-    return 1000;
-  }
+  // Score each condition and goal
+  const issueScores: Record<string, number> = {};
   
-  return undefined;
-}
-
-/**
- * Extract specific goals from user input
- */
-function extractSpecificGoals(inputLower: string): string[] {
-  const goals = new Set<string>();
-  
-  // Check for weight loss goals
-  const weightLossMatch = inputLower.match(/lose\s+(\d+)\s*(kg|kgs|pounds|lbs)/i);
-  if (weightLossMatch) {
-    goals.add(`Lose ${weightLossMatch[1]} ${weightLossMatch[2]}`);
-  } else if (inputLower.includes("lose weight") || inputLower.includes("weight loss")) {
-    goals.add("Weight loss");
-  }
-  
-  // Check for fitness goals
-  if (inputLower.includes("get fit") || inputLower.includes("fitness")) {
-    goals.add("Improve fitness");
-  }
-  
-  // Check for strength goals
-  if (inputLower.includes("stronger") || inputLower.includes("build muscle") || 
-      inputLower.includes("strength")) {
-    goals.add("Build strength");
-  }
-  
-  // Check for pain management goals
-  if (inputLower.includes("pain") && (
-      inputLower.includes("manage") || inputLower.includes("relief") || 
-      inputLower.includes("reduce") || inputLower.includes("help with")
-  )) {
-    goals.add("Pain management");
-  }
-  
-  // Check for running/race goals
-  const raceMatch = inputLower.match(/(5k|10k|half marathon|marathon|race)/i);
-  if (raceMatch) {
-    goals.add(`${raceMatch[1]} preparation`);
-  }
-  
-  return Array.from(goals);
-}
-
-/**
- * Extract location information from user input
- */
-function extractLocationInfo(inputLower: string): { location?: string; isRemote: boolean } {
-  // Check for remote preferences
-  const remoteTerms = ['online', 'virtual', 'remote', 'zoom', 'video'];
-  const isRemote = remoteTerms.some(term => inputLower.includes(term));
-  
-  // Try to extract location
-  let location: string | undefined = undefined;
-  
-  const locationMatches = inputLower.match(/\bin\s+([a-z\s]+?)(?:\s+and|\s+or|\s+but|\.|\,|\s+with|\s+for|\s+to|\s+from|\s+$)/i);
-  if (locationMatches && locationMatches[1]) {
-    const possibleLocation = locationMatches[1].trim();
-    // Filter out common non-location phrases
-    const nonLocationPhrases = ['general', 'particular', 'specific', 'the area', 'mind', 'my experience'];
-    if (!nonLocationPhrases.some(phrase => possibleLocation.includes(phrase))) {
-      location = possibleLocation;
+  // Score conditions
+  conditions.forEach(condition => {
+    let score = 1;
+    
+    // Check for condition specific mentions
+    if (input.toLowerCase().includes(condition.toLowerCase())) {
+      score += 2;
+      
+      // Check for priority phrases near this condition
+      priorityPhrases.forEach(phrase => {
+        const phrasePos = input.toLowerCase().search(phrase.regex);
+        if (phrasePos >= 0) {
+          // Check if this phrase is close to the condition mention
+          const conditionPos = input.toLowerCase().indexOf(condition.toLowerCase());
+          if (Math.abs(phrasePos - conditionPos) < 50) {
+            score += phrase.bonus;
+          }
+        }
+      });
     }
-  }
+    
+    issueScores[condition] = score;
+  });
   
-  return {
-    location,
-    isRemote
-  };
+  // Score goals
+  goals.forEach(goal => {
+    let score = 0.5; // Goals start with lower base score than conditions
+    
+    // Check for goal specific mentions
+    if (input.toLowerCase().includes(goal.toLowerCase())) {
+      score += 1;
+      
+      // Check for priority phrases near this goal
+      priorityPhrases.forEach(phrase => {
+        const phrasePos = input.toLowerCase().search(phrase.regex);
+        if (phrasePos >= 0) {
+          // Check if this phrase is close to the goal mention
+          const goalPos = input.toLowerCase().indexOf(goal.toLowerCase());
+          if (Math.abs(phrasePos - goalPos) < 50) {
+            score += phrase.bonus;
+          }
+        }
+      });
+    }
+    
+    issueScores[goal] = score;
+  });
+  
+  // Find highest scoring issue
+  let highestScore = 0;
+  let primaryIssue = conditions[0] || goals[0] || "general health";
+  
+  Object.entries(issueScores).forEach(([issue, score]) => {
+    if (score > highestScore) {
+      highestScore = score;
+      primaryIssue = issue;
+    }
+  });
+  
+  return primaryIssue;
 }

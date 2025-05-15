@@ -1,5 +1,7 @@
+
 import { ServiceCategory } from "../types";
 import { PROFESSIONAL_KEYWORDS, findAllServicesByKeyword } from "../professionalKeywords";
+import { detectProfessionalPhrases } from "../professionalPhraseData";
 
 // Define the interface for professional service mention results
 export interface ProfessionalServiceMention {
@@ -17,10 +19,21 @@ export interface ProfessionalServiceMention {
 export function detectProfessionalMentions(input: string): ProfessionalServiceMention[] {
   const inputLower = input.toLowerCase();
   
-  // First, check for direct mentions of professional types
-  const directMentions = checkDirectProfessionalMentions(inputLower);
+  // First, check using the comprehensive phrase data
+  const phraseMentions = detectProfessionalPhrases(inputLower)
+    .map(mention => ({
+      serviceCategory: mention.category,
+      confidence: Math.min(0.7 + (mention.count * 0.05), 0.95) // Scale confidence based on mention count
+    }));
   
-  // Then check for condition and treatment mentions
+  // If we found matches using phrases, prioritize those
+  if (phraseMentions.length > 0) {
+    console.log(`Found professional mentions using phrase detection: ${phraseMentions.length}`);
+    return phraseMentions;
+  }
+  
+  // Fallback to previous detection methods
+  const directMentions = checkDirectProfessionalMentions(inputLower);
   const conditionMentions = checkConditionAndTreatmentMentions(inputLower);
   
   // Combine and deduplicate results

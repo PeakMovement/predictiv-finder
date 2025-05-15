@@ -10,123 +10,113 @@ import { logger } from "@/utils/cache";
 export interface ScenarioResult {
   scenario: string;
   confidence: number;
-  recommendations: {
-    primaryProfessional: ServiceCategory;
-    secondaryProfessional?: ServiceCategory;
-    supportingProfessionals: ServiceCategory[];
-    rationale: string;
-  };
-  mainIssue: string;
+  recommendedServices: ServiceCategory[];
+  description: string;
 }
 
 /**
  * Process user input to detect specific health scenarios
- * 
- * @param userInput User input text describing health needs
- * @returns Scenario result if detected, or null if no specific scenario matched
+ * @param userInput User's description of their health needs
+ * @returns Scenario result if a match is found, otherwise null
  */
 export function processHealthScenario(userInput: string): ScenarioResult | null {
   const inputLower = userInput.toLowerCase();
   
-  // Common health scenarios with specific recommendations
-  const scenarios: Array<{
-    pattern: RegExp | string[];
-    scenario: string;
-    confidence: number;
-    recommendations: ScenarioResult["recommendations"];
-    mainIssue: string;
-  }> = [
+  // Define common health scenarios with their patterns and recommended services
+  const scenarios = [
     {
-      pattern: [/knee pain.+running/i, /running.+knee pain/i],
-      scenario: "runner_knee_pain",
-      confidence: 0.85,
-      recommendations: {
-        primaryProfessional: "physiotherapist",
-        secondaryProfessional: "personal-trainer",
-        supportingProfessionals: ["coaching"],
-        rationale: "Knee pain in runners typically benefits from physiotherapy assessment and treatment, supported by corrective exercise from a personal trainer and running form coaching."
-      },
-      mainIssue: "Runner's knee pain"
+      name: "Running Injury",
+      patterns: [
+        "running injury",
+        "injured while running",
+        "hurt myself running",
+        "pain when running"
+      ],
+      services: ["physiotherapist", "coaching"] as ServiceCategory[],
+      description: "Recovery and rehabilitation plan for running-related injuries"
     },
     {
-      pattern: [/weight loss.+diabetes/i, /diabetes.+weight/i],
-      scenario: "diabetes_weight_management",
-      confidence: 0.9,
-      recommendations: {
-        primaryProfessional: "dietician",
-        secondaryProfessional: "endocrinology",
-        supportingProfessionals: ["personal-trainer"],
-        rationale: "Managing diabetes through weight loss requires dietary intervention first, medical supervision, and structured exercise for optimal results."
-      },
-      mainIssue: "Diabetes weight management"
+      name: "Weight Management",
+      patterns: [
+        "lose weight",
+        "weight loss journey",
+        "need to shed kilos",
+        "diet plan to lose weight",
+        "weight management"
+      ],
+      services: ["dietician", "personal-trainer"] as ServiceCategory[],
+      description: "Personalized weight management program combining nutrition and exercise"
     },
     {
-      pattern: [/back pain.+(desk|sitting|work)/i, /(desk|sitting|work).+back pain/i],
-      scenario: "desk_worker_back_pain",
-      confidence: 0.85,
-      recommendations: {
-        primaryProfessional: "physiotherapist",
-        secondaryProfessional: "biokineticist",
-        supportingProfessionals: ["personal-trainer"],
-        rationale: "Desk-related back pain typically requires physiotherapy assessment, ergonomic adjustments, and a specialized exercise program."
-      },
-      mainIssue: "Desk-related back pain"
+      name: "Back Pain Recovery",
+      patterns: [
+        "back pain",
+        "lower back issues",
+        "back problems",
+        "spine pain",
+        "back hurts"
+      ],
+      services: ["physiotherapist", "biokineticist"] as ServiceCategory[],
+      description: "Comprehensive back pain management and rehabilitation program"
     },
     {
-      pattern: [/stress.+(anxiety|depression)/i, /(anxiety|depression).+stress/i],
-      scenario: "stress_mental_health",
-      confidence: 0.85,
-      recommendations: {
-        primaryProfessional: "psychiatry",
-        secondaryProfessional: "coaching",
-        supportingProfessionals: ["personal-trainer"],
-        rationale: "Stress combined with anxiety or depression often benefits from professional mental health support, complemented by coaching and physical activity."
-      },
-      mainIssue: "Stress and mental health"
+      name: "Marathon Preparation",
+      patterns: [
+        "train for marathon",
+        "marathon preparation",
+        "marathon training",
+        "preparing for a marathon",
+        "marathon help"
+      ],
+      services: ["coaching", "personal-trainer", "dietician"] as ServiceCategory[],
+      description: "Complete marathon training support including nutrition and conditioning"
     },
     {
-      pattern: [/marathon.+training/i, /training.+marathon/i, /half marathon/i],
-      scenario: "marathon_training",
-      confidence: 0.9,
-      recommendations: {
-        primaryProfessional: "coaching",
-        secondaryProfessional: "personal-trainer",
-        supportingProfessionals: ["dietician", "physiotherapist"],
-        rationale: "Marathon training requires specialized running coaching, strength training support, nutritional guidance, and injury prevention."
-      },
-      mainIssue: "Marathon training preparation"
+      name: "Digestive Health",
+      patterns: [
+        "stomach problems",
+        "digestive issues",
+        "gut health",
+        "ibs symptoms",
+        "food sensitivities"
+      ],
+      services: ["gastroenterology", "dietician"] as ServiceCategory[],
+      description: "Comprehensive digestive health management and dietary support"
     }
   ];
-
-  // Check for specific health scenarios
+  
+  // Check for matching scenarios
   for (const scenario of scenarios) {
-    let matched = false;
-    
-    if (Array.isArray(scenario.pattern)) {
-      // Check multiple patterns
-      matched = scenario.pattern.some(pattern => {
-        if (pattern instanceof RegExp) {
-          return pattern.test(inputLower);
-        } else {
-          return inputLower.includes(pattern);
-        }
-      });
-    } else {
-      // Single pattern
-      matched = scenario.pattern.test(inputLower);
-    }
-    
-    if (matched) {
-      logger.debug(`Matched health scenario: ${scenario.scenario}`);
-      return {
-        scenario: scenario.scenario,
-        confidence: scenario.confidence,
-        recommendations: scenario.recommendations,
-        mainIssue: scenario.mainIssue
-      };
+    for (const pattern of scenario.patterns) {
+      if (inputLower.includes(pattern)) {
+        logger.debug(`Matched health scenario: ${scenario.name}`);
+        return {
+          scenario: scenario.name,
+          confidence: 0.85,
+          recommendedServices: scenario.services,
+          description: scenario.description
+        };
+      }
     }
   }
   
-  // No specific scenario matched
+  // If no precise match, check for partial matches
+  for (const scenario of scenarios) {
+    for (const pattern of scenario.patterns) {
+      const words = pattern.split(' ');
+      const matchCount = words.filter(word => inputLower.includes(word)).length;
+      
+      if (matchCount >= 2 && words.length >= 2) {
+        logger.debug(`Partial match for health scenario: ${scenario.name}`);
+        return {
+          scenario: scenario.name,
+          confidence: 0.7,
+          recommendedServices: scenario.services,
+          description: scenario.description
+        };
+      }
+    }
+  }
+  
   return null;
 }

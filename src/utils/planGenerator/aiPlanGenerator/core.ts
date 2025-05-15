@@ -3,7 +3,6 @@ import { AIHealthPlan, ServiceCategory } from '@/types';
 import { findAlternativeCategories } from '../categoryMatcher';
 import { calculateBudgetTiers } from '../planStructure';
 import { generatePlan } from '../planGenerator';
-// Import analyzeUserInput from the correct module
 import { analyzeUserInput } from '../inputAnalyzer';
 import { handleSpecialCases } from './complexity';
 import { analyzeUserForPlanning } from './userAnalysis';
@@ -50,15 +49,16 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
   
   // Add specialized services for co-morbidities
   coMorbidityServices.forEach(service => {
-    if (!categories.includes(service as ServiceCategory) && 
-        analysis.contraindicated && !analysis.contraindicated.includes(service as ServiceCategory)) {
+    // Safe check for contraindicated property
+    const contraindicated = analysis.contraindicated || [];
+    if (!categories.includes(service as ServiceCategory) && !contraindicated.includes(service as ServiceCategory)) {
       categories.push(service as ServiceCategory);
       console.log(`Added ${service} due to co-morbidity detection`);
     }
   });
   
-  // Remove contraindicated services
-  if (analysis.contraindicated) {
+  // Remove contraindicated services if they exist
+  if (analysis.contraindicated && Array.isArray(analysis.contraindicated)) {
     categories = categories.filter(cat => !analysis.contraindicated!.includes(cat));
   }
   console.log("Final service categories after filtering:", categories);
@@ -68,17 +68,23 @@ export const generateCustomAIPlans = (userQuery: string): AIHealthPlan[] => {
     categories,
     analysis.medicalConditions,
     userQuery, 
-    analysis.servicePriorities ? analysis.servicePriorities : {},
+    analysis.servicePriorities || {},
     analysis.primaryIssue
   );
   
   // Calculate budget tiers based on user input and context
+  const preferences = analysis.preferences || {};
+  const userType = analysis.userType || 'general';
+  const contextualFactors = Array.isArray(analysis.contextualFactors) 
+    ? analysis.contextualFactors 
+    : (analysis.contextualFactors ? [analysis.contextualFactors] : []);
+  
   const budgetTiers = calculateBudgetTiers(
     analysis.budget, 
     userQuery, 
-    analysis.preferences ? analysis.preferences : {}, 
-    analysis.userType, 
-    analysis.contextualFactors ? (Array.isArray(analysis.contextualFactors) ? analysis.contextualFactors : []) : []
+    preferences, 
+    userType, 
+    contextualFactors
   ) as BudgetTier[];
   
   console.log("Generated budget tiers:", budgetTiers);
