@@ -8,7 +8,8 @@ import { ServiceCategory } from "../types";
 import { 
   ProfessionalRecommendation, 
   CategoryRecommendation,
-  ProfessionalRecommendationResult 
+  ProfessionalRecommendationResult,
+  ScenarioResult // Import the appropriate type
 } from "./types";
 import { matchPractitionersToNeeds } from "../categoryMatcher";
 import { validateUserInput } from "./validators";
@@ -46,40 +47,43 @@ export function generateProfessionalRecommendations(
     if (scenarioResult && scenarioResult.confidence > 0.7) {
       logger.debug("Processing specific health scenario");
       
-      // Access the scenario recommendations
-      const { recommendations, mainIssue } = scenarioResult;
-      
-      // Build the response structure
-      const result: ProfessionalRecommendationResult = {
-        primaryRecommendations: [{
-          category: recommendations.primaryProfessional,
-          sessions: 4,
-          priority: 'high',
-          reasoning: recommendations.rationale
-        }],
-        notes: [recommendations.rationale]
-      };
-      
-      // Add secondary professional if present
-      if (recommendations.secondaryProfessional) {
-        result.primaryRecommendations.push({
-          category: recommendations.secondaryProfessional,
-          sessions: 3,
-          priority: 'medium',
-          reasoning: recommendations.rationale
-        });
+      // Make sure we're accessing properties that exist on ScenarioResult
+      if (scenarioResult.recommendations && scenarioResult.mainIssue) {
+        // Access the scenario recommendations
+        const { recommendations, mainIssue } = scenarioResult;
+        
+        // Build the response structure
+        const result: ProfessionalRecommendationResult = {
+          primaryRecommendations: [{
+            category: recommendations.primaryProfessional,
+            sessions: 4,
+            priority: 'high',
+            reasoning: recommendations.rationale
+          }],
+          notes: [recommendations.rationale]
+        };
+        
+        // Add secondary professional if present
+        if (recommendations.secondaryProfessional) {
+          result.primaryRecommendations.push({
+            category: recommendations.secondaryProfessional,
+            sessions: 3,
+            priority: 'medium',
+            reasoning: recommendations.rationale
+          });
+        }
+        
+        // Add complementary recommendations
+        if (recommendations.supportingProfessionals && recommendations.supportingProfessionals.length > 0) {
+          result.complementaryRecommendations = recommendations.supportingProfessionals.map(category => ({
+            category,
+            sessions: 2,
+            reasoning: "Supporting professional for your condition"
+          }));
+        }
+        
+        return result;
       }
-      
-      // Add complementary recommendations
-      if (recommendations.supportingProfessionals.length > 0) {
-        result.complementaryRecommendations = recommendations.supportingProfessionals.map(category => ({
-          category,
-          sessions: 2,
-          reasoning: "Supporting professional for your condition"
-        }));
-      }
-      
-      return result;
     }
     
     // If no specific scenario, process with standard flow
@@ -185,6 +189,5 @@ export function generateProfessionalRecommendations(
   }
 }
 
-// Now we'll move the cachedMatchPractitioners code to a separate module
-// Just importing it here for now
+// Import the cachedMatchPractitioners function
 import { cachedMatchPractitioners } from "./matcher";

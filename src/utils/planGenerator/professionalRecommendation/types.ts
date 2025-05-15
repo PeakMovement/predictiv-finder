@@ -4,54 +4,97 @@ import { ServiceCategory } from "../types";
 /**
  * Professional recommendation priority levels
  */
-export type RecommendationPriority = 'high' | 'medium' | 'low';
+export type PriorityLevel = 'high' | 'medium' | 'low';
 
 /**
- * Basic recommendation for a professional category with importance score
- */
-export interface CategoryRecommendation {
-  category: string;
-  score: number;
-  importance: number;
-  reasoning?: string;
-  primaryCondition?: string;
-}
-
-/**
- * Detailed professional recommendation with session count and priority
- */
-export interface ProfessionalRecommendation {
-  category: string;
-  sessions: number;
-  priority?: RecommendationPriority;
-  reasoning?: string;
-}
-
-/**
- * Budget allocation for professional recommendations
- */
-export interface BudgetAllocation {
-  total: number;
-  breakdown: Record<string, number>;
-}
-
-/**
- * Complete recommendation result returned by the API
+ * Represents a complete professional recommendation result
  */
 export interface ProfessionalRecommendationResult {
+  /** Primary recommended professionals */
   primaryRecommendations: ProfessionalRecommendation[];
+  /** Complementary recommended professionals */
   complementaryRecommendations?: ProfessionalRecommendation[];
-  budgetAllocation?: BudgetAllocation;
+  /** Budget allocation if relevant */
+  budgetAllocation?: {
+    total: number;
+    breakdown: Record<ServiceCategory, number>;
+  };
+  /** Recommendation notes */
   notes?: string[];
 }
 
 /**
- * Options for customizing recommendation generation
+ * Individual professional recommendation
  */
-export interface ProfessionalRecommendationOptions {
-  includeBudget?: boolean;
-  includeSupporting?: boolean;
-  maxRecommendations?: number;
-  prioritizeRemote?: boolean;
-  location?: string;
+export interface ProfessionalRecommendation {
+  /** Professional category */
+  category: ServiceCategory;
+  /** Recommended number of sessions */
+  sessions: number;
+  /** Recommendation priority level */
+  priority?: PriorityLevel;
+  /** Reasoning for recommendation */
+  reasoning?: string;
+}
+
+/**
+ * Category recommendation with computed scores
+ */
+export interface CategoryRecommendation {
+  /** Professional category */
+  category: ServiceCategory;
+  /** Match score (0-1) */
+  score: number;
+  /** Importance value (0-1) */
+  importance: number;
+  /** Recommendation reasoning */
+  reasoning?: string;
+  /** Primary condition this addresses */
+  primaryCondition?: string;
+  /** Complementary categories */
+  complementaryCategories?: ServiceCategory[];
+}
+
+/**
+ * Results from health scenario detection
+ */
+export interface ScenarioResult {
+  /** Scenario identification confidence */
+  confidence: number;
+  /** Main health issue identified */
+  mainIssue: string;
+  /** Specific recommendations for this scenario */
+  recommendations: {
+    /** Primary professional to consult */
+    primaryProfessional: ServiceCategory;
+    /** Secondary professional to consult (if needed) */
+    secondaryProfessional?: ServiceCategory;
+    /** Supporting professionals to complement treatment */
+    supportingProfessionals: ServiceCategory[];
+    /** Rationale for these recommendations */
+    rationale: string;
+  };
+}
+
+/**
+ * Health issue analysis
+ */
+export interface HealthIssueAnalysis {
+  /** Identified symptoms */
+  symptoms: string[];
+  /** Contraindicated services */
+  contraindications: ServiceCategory[];
+  /** User goals */
+  goals: string[];
+  /** Severity scores for symptoms */
+  severityScores: Record<string, number>;
+  /** Location information */
+  locationInfo: {
+    location: string;
+    isRemote: boolean;
+  };
+  /** Whether user has budget constraint */
+  hasBudgetConstraint: boolean;
+  /** User's budget amount (if specified) */
+  budget?: number;
 }
