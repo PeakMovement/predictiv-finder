@@ -7,6 +7,17 @@ import { ServiceCategory } from "../types";
 export type PriorityLevel = 'high' | 'medium' | 'low';
 
 /**
+ * Options for customizing professional recommendations
+ */
+export interface ProfessionalRecommendationOptions {
+  includeBudgetAllocation?: boolean;
+  preferOnline?: boolean;
+  maxRecommendations?: number;
+  includeNotes?: boolean;
+  considerUserHistory?: boolean;
+}
+
+/**
  * Represents a complete professional recommendation result
  */
 export interface ProfessionalRecommendationResult {

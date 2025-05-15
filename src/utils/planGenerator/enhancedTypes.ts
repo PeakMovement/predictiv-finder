@@ -11,12 +11,12 @@ export interface AnalyzedInput {
   preferences: Record<string, string>; // User-specific preferences
   timeAvailability: number; // Hours per week available for services
   timeFrame?: string; // Desired timeframe (e.g., "3 months")
-  specificGoals?: Record<string, any>; // Specific goals like weight loss amount
+  specificGoals?: Record<string, any> | string[]; // Specific goals like weight loss amount
   primaryIssue?: string; // The main issue identified
   contextualFactors?: string[] | string; // Additional contextual factors
   servicePriorities?: Record<ServiceCategory, number>; // Priority scores for services
   contraindicated?: ServiceCategory[]; // Services that should not be recommended
-  userType?: 'student' | 'working' | 'premium'; // Type of user for pricing adjustments
+  userType?: 'student' | 'working' | 'premium' | 'general'; // Type of user for pricing adjustments
   practitionerPreferences?: Record<string, string>; // Practitioner preferences (gender, experience, etc.)
   hasEnoughInformation?: boolean; // Whether the input has enough information to generate recommendations
   locationInfo?: {
