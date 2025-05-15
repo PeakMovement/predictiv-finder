@@ -7,3 +7,6 @@ export * from './validators';
 export * from './analysis';
 export * from './budget';
 export * from './utils';
+export * from './matcher';
+export * from './scenarioHandler';
+

@@ -181,40 +181,7 @@ export function generateProfessionalRecommendations(
   }
 }
 
-// Replace the simple memoization cache with enhanced caching
-// Configure with a 10 minute TTL and max 50 items cache size
-const cachedMatchPractitioners = enhancedMemoize(
-  (
-    symptoms: string[],
-    severityScores: Record<string, number>,
-    goals: any[],
-    location?: string,
-    isRemote?: boolean,
-    hasBudgetConstraint?: boolean
-  ): CategoryRecommendation[] => {
-    logger.debug("Cache miss - computing practitioner matches");
-    const matches = matchPractitionersToNeeds(
-      symptoms,
-      severityScores,
-      goals,
-      location,
-      isRemote,
-      hasBudgetConstraint
-    );
-    
-    // Convert matches to CategoryRecommendation objects
-    return matches.map(match => ({
-      category: match.category,
-      score: match.score || 0, // Keep for internal use
-      importance: match.score || 0.5, // Map score to importance for type compatibility
-      reasoning: match.reasoning || `Match for your health needs`, // Fix: Changed from match.reason to match.reasoning
-      primaryCondition: match.primaryCondition // Keep for internal use
-    }));
-  },
-  // Custom key generator
-  (symptoms, severityScores, goals, location, isRemote, hasBudgetConstraint) => 
-    JSON.stringify({ symptoms, severityScores, goals, location, isRemote, hasBudgetConstraint }),
-  // Cache options
-  { maxSize: 50, ttl: 10 * 60 * 1000 } // 10 minutes TTL, max 50 items
-);
+// Now we'll move the cachedMatchPractitioners code to a separate module
+// Just importing it here for now
+import { cachedMatchPractitioners } from "./matcher";
 

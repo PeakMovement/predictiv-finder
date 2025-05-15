@@ -1,5 +1,5 @@
 import { ServiceCategory } from "./types";
-import { memoize } from "../performance/memoize";
+import { enhancedMemoize } from "@/utils/cache";
 
 /**
  * Finds alternative service categories based on the user's selected categories
@@ -82,8 +82,6 @@ export const findAlternativeCategories = (
 
 /**
  * Maps user health conditions to appropriate service categories
- * @param conditions Array of health conditions
- * @returns Recommended service categories
  */
 export const mapConditionsToCategories = (
   conditions: string[]
@@ -121,12 +119,6 @@ export const mapConditionsToCategories = (
 
 /**
  * Score professionals based on their compatibility with user needs
- * @param professionalType The category of the professional
- * @param condition The user's condition or concern
- * @param severity The severity of the condition (0-1)
- * @param goalType The user's goal type (if available)
- * @param budgetConstraint Whether budget is a major constraint
- * @returns A score between 0-1 representing compatibility
  */
 export const scoreProfessionalMatch = (
   professionalType: ServiceCategory,
@@ -212,7 +204,6 @@ export const scoreProfessionalMatch = (
   };
   
   // Severity adjustments - for higher severity, favor medical professionals
-  // Changed to Partial<Record> to fix the TypeScript error
   const severityAdjustments: Partial<Record<ServiceCategory, number>> = {
     'family-medicine': 0.3,
     'orthopedics': 0.3,
@@ -259,9 +250,9 @@ export const scoreProfessionalMatch = (
 
 /**
  * Matches health practitioners to user needs based on symptoms, goals, and other factors
- * Function is now optimized with error handling and memoization
+ * Function is now optimized with error handling and enhanced caching
  */
-export const matchPractitionersToNeeds = memoize(
+export const matchPractitionersToNeeds = enhancedMemoize(
   (
     symptoms: string[],
     severityScores: Record<string, number>,
@@ -281,11 +272,12 @@ export const matchPractitionersToNeeds = memoize(
       });
       
       // Compute scores for each professional category
-      const categoryScores: Array<{category: ServiceCategory, score: number, primaryCondition?: string}> = [];
+      const categoryScores: Array<{category: ServiceCategory, score: number, primaryCondition?: string, reasoning?: string}> = [];
       
       Array.from(baseCategorySet).forEach(category => {
         let maxScore = 0;
         let primaryCondition: string | undefined = undefined;
+        let reasoning: string | undefined = undefined;
         
         // Find the highest matching score across all conditions
         symptoms.forEach(condition => {
@@ -298,6 +290,7 @@ export const matchPractitionersToNeeds = memoize(
             if (score > maxScore) {
               maxScore = score;
               primaryCondition = condition;
+              reasoning = `Recommended for ${condition}${goal ? ` with focus on ${goal}` : ''}`;
             }
           });
           
@@ -307,6 +300,7 @@ export const matchPractitionersToNeeds = memoize(
             if (score > maxScore) {
               maxScore = score;
               primaryCondition = condition;
+              reasoning = `Recommended for ${condition}`;
             }
           }
         });
@@ -320,6 +314,7 @@ export const matchPractitionersToNeeds = memoize(
           
           if (onlineFriendlyProfessionals.includes(category)) {
             maxScore += 0.05;
+            reasoning = reasoning ? `${reasoning} (available remotely)` : 'Good remote availability';
           } else {
             // Physical services get a penalty if online is preferred
             const physicalServices: ServiceCategory[] = [
@@ -335,7 +330,8 @@ export const matchPractitionersToNeeds = memoize(
         categoryScores.push({ 
           category, 
           score: maxScore,
-          primaryCondition 
+          primaryCondition,
+          reasoning 
         });
       });
       
@@ -362,5 +358,5 @@ export const matchPractitionersToNeeds = memoize(
     });
   },
   // Cache up to 50 results
-  50
+  { maxSize: 50, ttl: 10 * 60 * 1000 } // 10 minutes TTL, max 50 items
 );

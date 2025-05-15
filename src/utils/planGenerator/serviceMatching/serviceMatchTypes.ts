@@ -25,4 +25,3 @@ export interface ServiceMatchOptions {
   budgetSensitive?: boolean;
   maxResults?: number;
 }
-
