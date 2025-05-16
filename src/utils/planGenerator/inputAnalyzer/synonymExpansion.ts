@@ -1,221 +1,182 @@
 
-export const MENTAL_HEALTH_SYNONYMS = {
-  'anxiety': ['worried', 'anxious', 'stress', 'panic', 'nervousness', 'fear', 'tension', 'apprehension', 
-    'uneasy', 'jittery', 'on edge', 'restless', 'troubled', 'distressed', 'concerned', 'fretful'],
-  'depression': ['sad', 'hopeless', 'depressed', 'melancholy', 'down', 'blue', 'unhappy', 'gloomy', 'despondent',
-    'miserable', 'low', 'melancholic', 'dejected', 'dispirited', 'disheartened', 'downcast', 'somber'],
-  'sleep': ['insomnia', 'sleepless', 'rest', 'tired', 'exhaustion', 'fatigue', 'drowsy', 'lethargy',
-    'restless', 'disturbed sleep', 'sleep apnea', 'narcolepsy', 'sleep cycle', 'deep sleep', 'wake up'],
-  'focus': ['concentration', 'attention', 'distracted', 'adhd', 'forgetful', 'memory',
-    'mindfulness', 'distractible', 'absent-minded', 'scattered', 'disorganized', 'foggy'],
-  'stress': ['tension', 'pressure', 'strain', 'burden', 'overwhelmed', 'burnout', 'overworked',
-    'stressful', 'stressed out', 'frazzled', 'taxed', 'hassled', 'worn out', 'stretched thin']
-};
+import { ServiceCategory } from '../types';
 
-export const DIGESTIVE_SYNONYMS = {
-  'stomach': ['digestive', 'gut', 'abdomen', 'belly', 'intestines', 'digestive system', 'gastro', 
-    'gastrointestinal', 'tummy', 'digestive tract', 'abdominal', 'alimentary', 'visceral'],
-  'nausea': ['sick', 'queasy', 'vomit', 'throw up', 'upset stomach', 
-    'nauseated', 'sick to stomach', 'heave', 'retch', 'gag', 'motion sickness'],
-  'constipation': ['blocked', 'irregular', 'bowel issues', 'can\'t go', 'hard stool',
-    'difficult bowel movement', 'impacted', 'backed up', 'infrequent bowel movement'],
-  'diarrhea': ['loose stool', 'frequent bowel', 'watery stool', 'upset stomach',
-    'runs', 'frequent bathroom', 'loose bowels', 'liquid stool'],
-  'bloating': ['gas', 'distended', 'swollen', 'full', 'gassy', 'inflated',
-    'puffy', 'swelling', 'abdominal distension', 'tightness', 'uncomfortable fullness', 'balloon']
-};
-
-export const FITNESS_SYNONYMS = {
-  'weight loss': ['lose weight', 'slim down', 'get thinner', 'drop kilos', 'shed pounds', 'reduce weight',
-    'slimming', 'fat loss', 'weight reduction', 'get leaner', 'burn fat', 'trim down', 'lose kilos'],
-  'muscle gain': ['build muscle', 'get stronger', 'bulk up', 'increase strength', 'tone up', 'definition',
-    'hypertrophy', 'bodybuilding', 'muscle building', 'strength gains', 'put on muscle', 'muscular'],
-  'cardio': ['aerobic', 'endurance', 'stamina', 'heart rate', 'running', 'cycling',
-    'cardiovascular', 'aerobics', 'cardio fitness', 'heart health', 'conditioning', 'endurance training'],
-  'strength': ['resistance', 'weights', 'lifting', 'strong', 'power', 'muscle', 'toning',
-    'weightlifting', 'resistance training', 'powerlifting', 'strength training', 'muscular power'],
-  'recovery': ['healing', 'rest', 'rehabilitation', 'restore', 'recuperate', 'bounce back', 
-    'repair', 'mending', 'comeback', 'convalescence', 'getting better', 'rejuvenation']
-};
-
-export const GOAL_SYNONYMS = {
-  'weight': ['lose weight', 'slimmer', 'thinner', 'fat loss', 'leaner', 'tone up', 'trim down',
-    'slender', 'weight reduction', 'lose kilos', 'diet', 'slim', 'weight management'],
-  'fitness': ['fit', 'active', 'exercise', 'workout', 'training', 'conditioning', 'strength',
-    'in shape', 'athletic', 'physically fit', 'working out', 'fitness routine', 'fitness level'],
-  'race': ['run', 'marathon', 'half-marathon', '5k', '10k', 'competition', 'event', 'triathlon',
-    'race day', 'finish line', 'track meet', 'running event', 'cross country', 'fun run', 'ultra'],
-  'performance': ['improve', 'better', 'faster', 'stronger', 'enhance', 'excel', 'progress',
-    'personal best', 'PR', 'achievement', 'advancement', 'improvement', 'gains', 'optimization'],
-  'health': ['wellness', 'wellbeing', 'healthier', 'lifestyle', 'vitality', 'condition', 'vigor',
-    'medical', 'health status', 'physical health', 'general health', 'preventive', 'health maintenance']
-};
-
-export const PAIN_SYNONYMS = {
-  'back pain': ['lower back', 'spine pain', 'backache', 'back problems', 'lumbar pain', 'back issues', 
-    'spinal pain', 'back injury', 'back discomfort', 'dorsalgia', 'sciatica', 'herniated disc'],
-  'joint pain': ['arthritis', 'arthritic', 'joint ache', 'joint stiffness', 'inflammation', 'rheumatic',
-    'joint discomfort', 'sore joints', 'painful joints', 'osteoarthritis', 'rheumatism'],
-  'headache': ['migraine', 'head pain', 'tension headache', 'cluster headache', 'sinus headache',
-    'throbbing', 'head pressure', 'pounding head', 'chronic headache', 'head discomfort'],
-  'knee pain': ['knee injury', 'runner\'s knee', 'knee ache', 'knee problems', 'patella pain',
-    'knee issues', 'knee discomfort', 'sore knee', 'patellofemoral', 'knee arthritis', 'ACL']
-};
-
-export const URGENCY_SENTIMENT_TERMS = {
-  'high_urgency': ['immediately', 'urgent', 'emergency', 'critical', 'asap', 'right away', 'severe',
-    'terrible', 'unbearable', 'excruciating', 'desperate', 'extremely', 'very urgent', 'now', 'serious'],
-  'moderate_urgency': ['soon', 'important', 'concerning', 'notable', 'significant', 'moderate', 'fairly',
-    'quite', 'bothering', 'uncomfortable', 'disruptive', 'need help', 'problematic'],
-  'low_urgency': ['sometime', 'eventually', 'when possible', 'gradually', 'slowly', 'mild', 'slight',
-    'minor', 'hardly', 'occasionally', 'infrequent', 'rare', 'manageable']
-};
-
-// Combined map for easier access
-export const ALL_SYNONYMS = {
-  ...MENTAL_HEALTH_SYNONYMS,
-  ...DIGESTIVE_SYNONYMS,
-  ...FITNESS_SYNONYMS,
-  ...GOAL_SYNONYMS,
-  ...PAIN_SYNONYMS
+// Expanded health terminology synonym database
+const HEALTH_SYNONYMS: Record<string, string[]> = {
+  // Pain-related terms
+  'pain': ['discomfort', 'ache', 'soreness', 'hurt', 'agony', 'distress'],
+  'chronic': ['persistent', 'ongoing', 'long-term', 'constant', 'recurring'],
+  'acute': ['sudden', 'severe', 'intense', 'sharp'],
+  
+  // Body parts and conditions
+  'back': ['spine', 'spinal', 'lumbar', 'thoracic', 'vertebrae'],
+  'joint': ['articulation', 'hinge', 'cartilage', 'connection'],
+  'muscle': ['muscular', 'tendon', 'soft tissue', 'strain'],
+  'heart': ['cardiac', 'cardiovascular', 'chest', 'coronary'],
+  'digestive': ['gut', 'stomach', 'intestinal', 'gastrointestinal', 'bowel'],
+  'mental': ['psychological', 'emotional', 'cognitive', 'psychiatric', 'mood'],
+  
+  // Goals and outcomes
+  'lose weight': ['weight loss', 'slimming', 'shed pounds', 'reduce body fat', 'get leaner'],
+  'get fit': ['improve fitness', 'get in shape', 'increase stamina', 'build endurance'],
+  'recovery': ['rehabilitation', 'recuperation', 'healing', 'bounce back'],
+  'strength': ['stronger', 'muscle gain', 'build muscle', 'toning', 'resistance'],
+  'mobility': ['flexibility', 'range of motion', 'movement', 'agility', 'dexterity'],
+  
+  // Lifestyle factors
+  'stress': ['tension', 'anxiety', 'pressure', 'overwhelmed', 'burnout'],
+  'sleep': ['insomnia', 'rest', 'fatigue', 'tired', 'exhaustion', 'energy levels'],
+  'nutrition': ['diet', 'eating', 'food', 'meal plan', 'nourishment'],
+  'exercise': ['workout', 'training', 'physical activity', 'fitness regime'],
+  
+  // Service types
+  'doctor': ['physician', 'medical professional', 'GP', 'general practitioner', 'MD'],
+  'physiotherapy': ['physical therapy', 'rehabilitation', 'movement therapy', 'PT'],
+  'nutrition': ['dietetics', 'dietary', 'food planning', 'meal guidance'],
+  'personal training': ['fitness coaching', 'exercise instruction', 'workout guidance'],
+  'counseling': ['therapy', 'psychological support', 'mental health service']
 };
 
 /**
- * Expands user input with relevant synonyms to improve detection accuracy
+ * Expand input text by recognizing synonyms of health-related terms
  * @param input Original user input text
- * @returns Expanded text with relevant synonym terms added
+ * @returns Expanded text with additional recognized synonyms
  */
-export const expandSynonyms = (input: string): string => {
-  // If input is empty or not a string, return as is
-  if (!input || typeof input !== 'string') {
-    return input;
-  }
-  
+export function expandSynonyms(input: string): string {
   const inputLower = input.toLowerCase();
-  let expandedInput = input;
+  let expandedTerms: string[] = [];
   
-  // Track already added terms to avoid duplicates
-  const addedTerms = new Set<string>();
-  
-  // Go through all synonym categories
-  Object.entries(ALL_SYNONYMS).forEach(([keyword, synonyms]) => {
-    // Check if the input contains this keyword or any of its synonyms
-    const hasMatch = synonyms.some(synonym => inputLower.includes(synonym.toLowerCase()));
+  // Check for each term and its synonyms in the input
+  Object.entries(HEALTH_SYNONYMS).forEach(([term, synonyms]) => {
+    // If the main term is present, no need to add synonyms
+    if (inputLower.includes(term.toLowerCase())) {
+      return;
+    }
     
-    if (hasMatch) {
-      // Add all synonyms to the expanded input that aren't already in the input
-      synonyms.forEach(synonym => {
-        if (!inputLower.includes(synonym.toLowerCase()) && !addedTerms.has(synonym.toLowerCase())) {
-          // Add the term with a space to ensure it's a separate word
-          expandedInput += ` ${synonym}`;
-          addedTerms.add(synonym.toLowerCase());
-        }
-      });
+    // Check if any synonym is present
+    const foundSynonym = synonyms.find(synonym => 
+      inputLower.includes(synonym.toLowerCase())
+    );
+    
+    if (foundSynonym) {
+      expandedTerms.push(term);
     }
   });
   
-  return expandedInput;
-};
+  // If we found terms to expand, append them to the input
+  if (expandedTerms.length > 0) {
+    return `${input} (Also considering: ${expandedTerms.join(', ')})`;
+  }
+  
+  return input;
+}
 
 /**
- * Analyzes the sentiment and urgency of user input
- * @param input User's input text
- * @returns Analysis with urgency level and sentiment scores
+ * Detect sentiment and urgency level in user input
+ * @param input User input text
+ * @returns Sentiment analysis results
  */
-export const analyzeSentiment = (input: string): {
-  urgencyLevel: 'high' | 'moderate' | 'low';
-  urgencyScore: number;
-  sentimentScores: {
-    pain: number;
-    distress: number;
-    frustration: number;
-  }
-} => {
+export function analyzeSentiment(input: string): {
+  urgencyLevel: 'low' | 'medium' | 'high';
+  concernLevel: 'low' | 'medium' | 'high';
+  painLevel?: 'mild' | 'moderate' | 'severe';
+  emotionalState?: string[];
+  confidenceLevel?: number;
+} {
   const inputLower = input.toLowerCase();
-  let urgencyScore = 0;
-  let painScore = 0;
-  let distressScore = 0;
-  let frustrationScore = 0;
+  const result = {
+    urgencyLevel: 'medium' as 'low' | 'medium' | 'high',
+    concernLevel: 'medium' as 'low' | 'medium' | 'high',
+    emotionalState: [] as string[],
+    confidenceLevel: 0.7
+  };
   
-  // Check for urgency terms
-  URGENCY_SENTIMENT_TERMS.high_urgency.forEach(term => {
-    if (inputLower.includes(term)) {
-      urgencyScore += 0.2;
-    }
-  });
+  // Check for urgency indicators
+  const urgencyPhrases = {
+    high: ['urgent', 'emergency', 'immediate', 'asap', 'quickly', 'hurry', 'critical', 'serious', 'severe', 'right away'],
+    low: ['sometime', 'when possible', 'no rush', 'not urgent', 'eventually', 'in the future']
+  };
   
-  URGENCY_SENTIMENT_TERMS.moderate_urgency.forEach(term => {
-    if (inputLower.includes(term)) {
-      urgencyScore += 0.1;
-    }
-  });
+  // Check for concern level indicators
+  const concernPhrases = {
+    high: ['very worried', 'extremely', 'severely', 'significantly', 'greatly', 'really', 'terribly', 'deeply'],
+    low: ['slightly', 'minor', 'a bit', 'somewhat', 'a little', 'not too', 'not very']
+  };
   
-  URGENCY_SENTIMENT_TERMS.low_urgency.forEach(term => {
-    if (inputLower.includes(term)) {
-      urgencyScore -= 0.1;
-    }
-  });
+  // Detect pain level
+  const painPhrases = {
+    severe: ['severe pain', 'extreme pain', 'unbearable', 'excruciating', 'worst pain', 'agonizing'],
+    moderate: ['moderate pain', 'uncomfortable', 'significant pain', 'constant pain'],
+    mild: ['mild pain', 'slight discomfort', 'occasional pain', 'minor ache']
+  };
   
-  // Cap the urgency score between 0 and 1
-  urgencyScore = Math.max(0, Math.min(1, urgencyScore));
+  // Detect emotional state
+  const emotionPhrases = {
+    frustrated: ['frustrated', 'annoyed', 'irritated'],
+    anxious: ['anxious', 'nervous', 'worried', 'scared', 'afraid'],
+    hopeful: ['hopeful', 'optimistic', 'looking forward'],
+    discouraged: ['discouraged', 'disappointed', 'giving up', 'tried everything']
+  };
   
-  // Calculate pain score based on pain-related terms
-  Object.values(PAIN_SYNONYMS).flat().forEach(term => {
-    if (inputLower.includes(term.toLowerCase())) {
-      painScore += 0.1;
-    }
-  });
-  
-  // Check for intensity modifiers near pain terms
-  const intensityModifiers = ['severe', 'extreme', 'intense', 'bad', 'worst', 'terrible', 'unbearable'];
-  intensityModifiers.forEach(modifier => {
-    Object.keys(PAIN_SYNONYMS).forEach(painType => {
-      const pattern = new RegExp(`${modifier}\\s+(?:\\w+\\s+){0,2}${painType}`, 'i');
-      if (pattern.test(inputLower)) {
-        painScore += 0.2;
-        urgencyScore += 0.1;
-      }
-    });
-  });
-  
-  // Check for emotional distress terms
-  const distressTerms = ['worried', 'anxiety', 'depressed', 'scared', 'afraid', 'nervous', 'upset', 'distressed'];
-  distressTerms.forEach(term => {
-    if (inputLower.includes(term)) {
-      distressScore += 0.1;
-    }
-  });
-  
-  // Check for frustration terms
-  const frustrationTerms = ['frustrated', 'annoyed', 'tried everything', 'nothing works', 'fed up', 'at wit\'s end'];
-  frustrationTerms.forEach(term => {
-    if (inputLower.includes(term)) {
-      frustrationScore += 0.15;
-    }
-  });
-  
-  // Cap scores between 0 and 1
-  painScore = Math.min(1, painScore);
-  distressScore = Math.min(1, distressScore);
-  frustrationScore = Math.min(1, frustrationScore);
-  
-  // Determine urgency level based on score
-  let urgencyLevel: 'high' | 'moderate' | 'low';
-  if (urgencyScore >= 0.6) {
-    urgencyLevel = 'high';
-  } else if (urgencyScore >= 0.3) {
-    urgencyLevel = 'moderate';
-  } else {
-    urgencyLevel = 'low';
+  // Check urgency level
+  if (urgencyPhrases.high.some(phrase => inputLower.includes(phrase))) {
+    result.urgencyLevel = 'high';
+    result.confidenceLevel += 0.1;
+  } else if (urgencyPhrases.low.some(phrase => inputLower.includes(phrase))) {
+    result.urgencyLevel = 'low';
+    result.confidenceLevel += 0.1;
   }
   
-  return {
-    urgencyLevel,
-    urgencyScore,
-    sentimentScores: {
-      pain: painScore,
-      distress: distressScore,
-      frustration: frustrationScore
+  // Check concern level
+  if (concernPhrases.high.some(phrase => inputLower.includes(phrase))) {
+    result.concernLevel = 'high';
+    result.confidenceLevel += 0.1;
+  } else if (concernPhrases.low.some(phrase => inputLower.includes(phrase))) {
+    result.concernLevel = 'low';
+    result.confidenceLevel += 0.1;
+  }
+  
+  // Check pain level
+  if (painPhrases.severe.some(phrase => inputLower.includes(phrase))) {
+    result.painLevel = 'severe';
+    result.confidenceLevel += 0.1;
+  } else if (painPhrases.moderate.some(phrase => inputLower.includes(phrase))) {
+    result.painLevel = 'moderate';
+    result.confidenceLevel += 0.1;
+  } else if (painPhrases.mild.some(phrase => inputLower.includes(phrase))) {
+    result.painLevel = 'mild';
+    result.confidenceLevel += 0.1;
+  }
+  
+  // Check emotional state
+  Object.entries(emotionPhrases).forEach(([emotion, phrases]) => {
+    if (phrases.some(phrase => inputLower.includes(phrase))) {
+      result.emotionalState.push(emotion);
+      result.confidenceLevel += 0.05;
     }
+  });
+  
+  return result;
+}
+
+/**
+ * Convert emotional state to health plan recommendations
+ * @param emotions Array of detected emotional states
+ * @returns Recommended service categories
+ */
+export function emotionToServiceMapping(emotions: string[]): ServiceCategory[] {
+  const mapping: Record<string, ServiceCategory[]> = {
+    anxious: ['psychology', 'psychiatry', 'coaching'],
+    frustrated: ['coaching', 'psychology'],
+    discouraged: ['psychology', 'coaching'],
+    hopeful: ['personal-trainer', 'coaching']
   };
-};
+  
+  const recommendations = new Set<ServiceCategory>();
+  emotions.forEach(emotion => {
+    const services = mapping[emotion] || [];
+    services.forEach(service => recommendations.add(service));
+  });
+  
+  return Array.from(recommendations);
+}

@@ -1,210 +1,230 @@
 
 import { ServiceCategory } from "../types";
-import { analyzeSentiment } from "../inputAnalyzer/synonymExpansion";
 
 export interface HealthScenario {
   scenarioName: string;
-  confidence: number;
-  recommendedServices: ServiceCategory[];
   description: string;
-  timeframe?: {
-    type: 'immediate' | 'short_term' | 'long_term';
-    durationDays?: number;
-  };
-  specialConsiderations?: string[];
+  keywords: string[];
+  recommendedServices: ServiceCategory[];
+  typicalTimeframe: string;
+  expectedOutcomes: string[];
+  priority: 'low' | 'medium' | 'high';
 }
 
+export interface DetectedScenario {
+  scenarioName: string;
+  confidence: number;
+  recommendedServices: ServiceCategory[];
+  timeframe: string;
+  expectedOutcomes: string[];
+  scenario: HealthScenario;
+}
+
+// Define common health scenarios
+const HEALTH_SCENARIOS: HealthScenario[] = [
+  {
+    scenarioName: "Sports Injury Recovery",
+    description: "Rehabilitation from sports-related injuries",
+    keywords: ["sports injury", "sprain", "strain", "tear", "pulled muscle", "game", "match", "competition", "athlete"],
+    recommendedServices: ["physiotherapist", "personal-trainer", "biokineticist", "sports-medicine"],
+    typicalTimeframe: "4-12 weeks",
+    expectedOutcomes: ["Pain reduction", "Return to sport", "Restored mobility", "Prevention of re-injury"],
+    priority: "medium"
+  },
+  {
+    scenarioName: "Weight Loss Program",
+    description: "Comprehensive weight loss and management",
+    keywords: ["weight loss", "lose weight", "overweight", "fat", "diet", "slim", "obesity", "kg", "pounds", "BMI"],
+    recommendedServices: ["dietician", "personal-trainer", "coaching", "endocrinology"],
+    typicalTimeframe: "3-6 months",
+    expectedOutcomes: ["Reduced body weight", "Better eating habits", "Improved energy levels", "Sustainable lifestyle changes"],
+    priority: "medium"
+  },
+  {
+    scenarioName: "Chronic Pain Management",
+    description: "Management of persistent pain conditions",
+    keywords: ["chronic pain", "persistent pain", "long-term pain", "pain management", "always hurts", "constant pain"],
+    recommendedServices: ["pain-management", "physiotherapist", "psychology", "family-medicine"],
+    typicalTimeframe: "Ongoing",
+    expectedOutcomes: ["Reduced pain levels", "Improved functionality", "Better coping strategies", "Enhanced quality of life"],
+    priority: "high"
+  },
+  {
+    scenarioName: "Stress and Anxiety Relief",
+    description: "Management of stress, anxiety and related conditions",
+    keywords: ["stress", "anxiety", "panic", "overwhelmed", "burnout", "mental health", "worry", "tension"],
+    recommendedServices: ["psychology", "psychiatry", "coaching"],
+    typicalTimeframe: "2-6 months",
+    expectedOutcomes: ["Reduced anxiety symptoms", "Better stress management", "Improved sleep", "Enhanced well-being"],
+    priority: "high"
+  },
+  {
+    scenarioName: "Post-Surgery Rehabilitation",
+    description: "Recovery after surgical procedures",
+    keywords: ["surgery", "post-op", "operation", "recovery", "surgical", "procedure", "after surgery"],
+    recommendedServices: ["physiotherapist", "occupational-therapy", "pain-management"],
+    typicalTimeframe: "1-3 months",
+    expectedOutcomes: ["Restored function", "Pain management", "Return to daily activities", "Proper healing"],
+    priority: "high"
+  },
+  {
+    scenarioName: "Athletic Performance Enhancement",
+    description: "Improving sports and athletic performance",
+    keywords: ["performance", "athlete", "competition", "marathon", "race", "improve", "sport", "strength", "endurance"],
+    recommendedServices: ["personal-trainer", "sports-medicine", "dietician", "biokineticist"],
+    typicalTimeframe: "3-6 months",
+    expectedOutcomes: ["Improved performance", "Enhanced technique", "Increased strength/endurance", "Better recovery"],
+    priority: "medium"
+  },
+  {
+    scenarioName: "Pregnancy and Postpartum Care",
+    description: "Health support during and after pregnancy",
+    keywords: ["pregnancy", "pregnant", "postpartum", "baby", "birth", "maternity", "prenatal", "after giving birth"],
+    recommendedServices: ["physiotherapist", "dietician", "psychology", "obstetrics-gynecology"],
+    typicalTimeframe: "During pregnancy and 6-12 months postpartum",
+    expectedOutcomes: ["Reduced discomfort", "Safe exercise program", "Nutritional support", "Mental wellbeing"],
+    priority: "medium"
+  },
+  {
+    scenarioName: "Digestive Health Improvement",
+    description: "Management of digestive and gastrointestinal conditions",
+    keywords: ["digestive", "stomach", "gut", "IBS", "bloating", "indigestion", "bowel", "constipation", "diarrhea"],
+    recommendedServices: ["gastroenterology", "dietician", "family-medicine"],
+    typicalTimeframe: "1-6 months",
+    expectedOutcomes: ["Reduced symptoms", "Dietary management", "Improved comfort", "Better quality of life"],
+    priority: "medium"
+  },
+  {
+    scenarioName: "Diabetes Management",
+    description: "Managing diabetes and blood sugar control",
+    keywords: ["diabetes", "blood sugar", "glucose", "insulin", "diabetic", "type 1", "type 2", "sugar levels"],
+    recommendedServices: ["endocrinology", "dietician", "personal-trainer", "family-medicine"],
+    typicalTimeframe: "Ongoing",
+    expectedOutcomes: ["Stable blood sugar", "Weight management", "Reduced complications", "Healthy lifestyle"],
+    priority: "high"
+  },
+  {
+    scenarioName: "Senior Mobility Program",
+    description: "Maintaining and improving mobility for older adults",
+    keywords: ["elderly", "senior", "aging", "older adult", "retirement", "fall prevention", "mobility issues", "geriatric"],
+    recommendedServices: ["physiotherapist", "occupational-therapy", "geriatric-medicine"],
+    typicalTimeframe: "Ongoing",
+    expectedOutcomes: ["Improved mobility", "Fall prevention", "Maintained independence", "Better quality of life"],
+    priority: "medium"
+  }
+];
+
 /**
- * Detects common health scenarios from user input
- * @param input User's description of their health needs
- * @returns Detected health scenarios with confidence scores
+ * Detect health scenarios from user input
+ * @param userInput User's description of their health needs
+ * @returns Array of detected scenarios with confidence scores
  */
-export function detectHealthScenarios(input: string): HealthScenario[] {
-  const inputLower = input.toLowerCase();
-  const detectedScenarios: HealthScenario[] = [];
-  const sentimentAnalysis = analyzeSentiment(input);
+export function detectHealthScenarios(userInput: string): DetectedScenario[] {
+  const inputLower = userInput.toLowerCase();
+  const detectedScenarios: DetectedScenario[] = [];
   
-  // Athletic Performance Improvement Scenario
-  if (checkForScenario(inputLower, ['performance', 'improve', 'better', 'faster', 'stronger', 'athletic'],
-      ['race', 'run', 'marathon', 'competition', 'sport', 'athlete', 'training'])) {
+  // Process each scenario
+  HEALTH_SCENARIOS.forEach(scenario => {
+    // Calculate confidence based on keyword matches
+    let matchCount = 0;
+    let weightedScore = 0;
     
-    const isRace = /race|marathon|5k|10k|half[-\s]marathon|competition/.test(inputLower);
-    const isUrgent = /soon|coming|next month|weeks|approaching/.test(inputLower);
-    
-    detectedScenarios.push({
-      scenarioName: isRace ? 'Race Preparation' : 'Athletic Performance Improvement',
-      confidence: calculateConfidence(inputLower, 
-        ['race', 'marathon', 'performance', 'improve', 'training', 'athletic'], 0.7),
-      recommendedServices: isRace ? ['coaching', 'dietician', 'physiotherapist'] : 
-                                    ['personal-trainer', 'dietician', 'physiotherapist'],
-      description: isRace ? 'Comprehensive race preparation program including race-specific training' :
-                            'Athletic performance enhancement focusing on strength, endurance, and recovery',
-      timeframe: {
-        type: isUrgent ? 'short_term' : 'long_term',
-        durationDays: extractTimeframeInDays(inputLower) || (isUrgent ? 60 : 90)
-      },
-      specialConsiderations: isRace ? ['Periodization toward race day', 'Peak performance timing'] : 
-                                      ['Progressive overload', 'Recovery optimization']
+    scenario.keywords.forEach(keyword => {
+      if (inputLower.includes(keyword.toLowerCase())) {
+        matchCount++;
+        // Weight matches based on keyword specificity
+        const keywordLength = keyword.split(' ').length;
+        weightedScore += 0.1 * keywordLength; // More specific keywords add more confidence
+      }
     });
-  }
+    
+    // Calculate confidence score
+    const baseConfidence = matchCount / scenario.keywords.length;
+    let confidenceScore = baseConfidence;
+    
+    // Add weighted score
+    confidenceScore += weightedScore;
+    
+    // Add priority boost for high priority scenarios
+    if (scenario.priority === 'high' && confidenceScore > 0) {
+      confidenceScore += 0.1;
+    }
+    
+    // Only include scenarios with some confidence
+    if (confidenceScore > 0.2) {
+      detectedScenarios.push({
+        scenarioName: scenario.scenarioName,
+        confidence: Math.min(confidenceScore, 0.95), // Cap at 0.95
+        recommendedServices: scenario.recommendedServices,
+        timeframe: scenario.typicalTimeframe,
+        expectedOutcomes: scenario.expectedOutcomes,
+        scenario
+      });
+    }
+  });
   
-  // Weight Management Scenario
-  if (checkForScenario(inputLower, ['weight', 'lose', 'diet', 'slim', 'tone'], 
-      ['kg', 'pounds', 'lbs', 'weight loss', 'fat', 'overweight'])) {
-    
-    const isWedding = /wedding|ceremony|big day|special occasion/.test(inputLower);
-    const hasTimeConstraint = /by|before|within|weeks|months|days/.test(inputLower);
-    
-    detectedScenarios.push({
-      scenarioName: isWedding ? 'Wedding Preparation' : 'Weight Management',
-      confidence: calculateConfidence(inputLower, 
-        ['weight', 'lose', 'diet', 'slim', 'kilos', 'pounds'], 0.65),
-      recommendedServices: ['dietician', 'personal-trainer', 'coaching'],
-      description: isWedding ? 
-        'Customized weight management and body toning for an upcoming special event' :
-        'Sustainable weight management program combining nutrition and exercise',
-      timeframe: {
-        type: (isWedding || hasTimeConstraint) ? 'short_term' : 'long_term',
-        durationDays: extractTimeframeInDays(inputLower) || (isWedding ? 90 : 120)
-      },
-      specialConsiderations: [
-        'Metabolic adaptation considerations',
-        'Sustainable lifestyle changes',
-        hasTimeConstraint ? 'Time-bound progress milestones' : 'Long-term habit formation'
-      ]
-    });
-  }
-  
-  // Pain Management Scenario
-  if (checkForScenario(inputLower, ['pain', 'ache', 'hurt', 'sore', 'discomfort'], 
-      ['back', 'knee', 'joint', 'shoulder', 'neck', 'chronic'])) {
-    
-    const isBackPain = /back|spine|lumbar|sciatica/.test(inputLower);
-    const isKneePain = /knee|patella|meniscus|acl/.test(inputLower);
-    const isChronic = /chronic|long[-\s]term|years|ongoing|constant|always/.test(inputLower);
-    const painLocation = isBackPain ? 'back' : isKneePain ? 'knee' : 'general';
-    
-    detectedScenarios.push({
-      scenarioName: `${painLocation.charAt(0).toUpperCase() + painLocation.slice(1)} Pain Management`,
-      confidence: calculateConfidence(inputLower, 
-        ['pain', 'hurt', 'sore', 'ache', 'chronic'], isChronic ? 0.8 : 0.7),
-      recommendedServices: isChronic ? 
-        ['physiotherapist', 'biokineticist', 'pain-management'] : 
-        ['physiotherapist', 'biokineticist', 'family-medicine'],
-      description: `Comprehensive ${isChronic ? 'chronic' : 'acute'} ${painLocation} pain management program`,
-      timeframe: {
-        type: isChronic ? 'long_term' : sentimentAnalysis.urgencyLevel === 'high' ? 'immediate' : 'short_term',
-        durationDays: isChronic ? 180 : 60
-      },
-      specialConsiderations: [
-        isChronic ? 'Long-term pain management strategies' : 'Rapid intervention for pain relief',
-        'Functional movement restoration',
-        isBackPain ? 'Spinal alignment and core stability focus' : 
-        isKneePain ? 'Knee stability and mobility protocols' : 'Joint protection strategies'
-      ]
-    });
-  }
-  
-  // Stress & Mental Wellbeing Scenario
-  if (checkForScenario(inputLower, ['stress', 'anxiety', 'overwhelmed', 'burnout', 'mental health'], 
-      ['work', 'pressure', 'worried', 'nervous', 'tension'])) {
-    
-    const hasPhysicalSymptoms = /headache|sleep|insomnia|tired|fatigue|exhausted/.test(inputLower);
-    const isWork = /work|job|career|office|workplace/.test(inputLower);
-    
-    detectedScenarios.push({
-      scenarioName: isWork ? 'Work Stress Management' : 'Mental Wellbeing Support',
-      confidence: calculateConfidence(inputLower, 
-        ['stress', 'anxiety', 'mental', 'overwhelmed'], 0.75),
-      recommendedServices: hasPhysicalSymptoms ? 
-        ['psychiatry', 'coaching', 'family-medicine'] : 
-        ['psychiatry', 'coaching'],
-      description: `Holistic ${isWork ? 'work-related' : ''} stress management and mental wellbeing program`,
-      timeframe: {
-        type: sentimentAnalysis.urgencyScore > 0.7 ? 'immediate' : 'short_term',
-        durationDays: 90
-      },
-      specialConsiderations: [
-        'Stress reduction techniques',
-        'Mind-body connection',
-        hasPhysicalSymptoms ? 'Physical symptom management' : 'Preventive mental health strategies',
-        isWork ? 'Work-life balance optimization' : 'Daily mental wellness practices'
-      ]
-    });
-  }
-  
-  // Digestive Health Scenario
-  if (checkForScenario(inputLower, ['stomach', 'digestive', 'gut', 'bowel', 'intestinal'], 
-      ['issues', 'problems', 'pain', 'discomfort', 'bloating', 'gas', 'constipation', 'diarrhea'])) {
-    
-    const isIBS = /ibs|irritable|syndrome/.test(inputLower);
-    const isFood = /food|eat|diet|meal|nutrition/.test(inputLower);
-    
-    detectedScenarios.push({
-      scenarioName: isIBS ? 'IBS Management' : 'Digestive Health Optimization',
-      confidence: calculateConfidence(inputLower, 
-        ['stomach', 'gut', 'digestive', 'bowel'], 0.7),
-      recommendedServices: isIBS ? 
-        ['gastroenterology', 'dietician', 'family-medicine'] : 
-        ['dietician', 'gastroenterology'],
-      description: `Comprehensive ${isIBS ? 'IBS' : 'digestive health'} management program`,
-      timeframe: {
-        type: sentimentAnalysis.urgencyLevel === 'high' ? 'immediate' : 'short_term',
-        durationDays: 60
-      },
-      specialConsiderations: [
-        isFood ? 'Food sensitivity identification' : 'Digestive system support',
-        'Gut health optimization',
-        isIBS ? 'IBS-specific dietary protocols' : 'General digestive wellness strategies',
-        'Stress-digestion connection'
-      ]
-    });
-  }
-  
+  // Sort by confidence score
   return detectedScenarios.sort((a, b) => b.confidence - a.confidence);
 }
 
 /**
- * Helper function to check if a scenario matches based on primary and secondary keywords
+ * Generate expected timeline based on detected scenario
  */
-function checkForScenario(input: string, primaryKeywords: string[], secondaryKeywords: string[]): boolean {
-  const primaryMatches = primaryKeywords.filter(word => input.includes(word)).length;
-  const secondaryMatches = secondaryKeywords.filter(word => input.includes(word)).length;
+export function generateTimelineFromScenario(scenario: DetectedScenario): {
+  week: number;
+  milestone: string;
+  focus: string;
+}[] {
+  // Process timeframe to estimate duration in weeks
+  let totalWeeks = 12; // Default to 12 weeks
   
-  return (primaryMatches >= 2) || (primaryMatches >= 1 && secondaryMatches >= 1);
-}
-
-/**
- * Calculate confidence score based on keyword matches
- */
-function calculateConfidence(input: string, keyTerms: string[], baseConfidence: number): number {
-  const matchCount = keyTerms.filter(term => input.includes(term)).length;
-  const maxMatches = Math.min(keyTerms.length, 5); // Cap at 5 to avoid overconfidence
-  const matchRatio = matchCount / maxMatches;
-  
-  return Math.min(0.95, baseConfidence + (matchRatio * 0.2));
-}
-
-/**
- * Extract timeframe in days from user input
- * Looks for patterns like "in 2 weeks", "within 3 months", etc.
- */
-function extractTimeframeInDays(input: string): number | null {
-  const weekPattern = /(\d+)\s*weeks?/i;
-  const monthPattern = /(\d+)\s*months?/i;
-  const dayPattern = /(\d+)\s*days?/i;
-  
-  const weekMatch = input.match(weekPattern);
-  const monthMatch = input.match(monthPattern);
-  const dayMatch = input.match(dayPattern);
-  
-  if (weekMatch && weekMatch[1]) {
-    return parseInt(weekMatch[1]) * 7;
-  } else if (monthMatch && monthMatch[1]) {
-    return parseInt(monthMatch[1]) * 30;
-  } else if (dayMatch && dayMatch[1]) {
-    return parseInt(dayMatch[1]);
+  if (scenario.timeframe.includes("month")) {
+    const months = parseInt(scenario.timeframe.match(/\d+/)?.[0] || "3");
+    totalWeeks = months * 4;
+  } else if (scenario.timeframe.includes("week")) {
+    totalWeeks = parseInt(scenario.timeframe.match(/\d+/)?.[0] || "12");
   }
   
-  return null;
+  // Generate milestones based on the scenario and duration
+  const timeline = [];
+  
+  // Initial assessment phase
+  timeline.push({
+    week: 1,
+    milestone: "Initial Assessment",
+    focus: `Begin ${scenario.scenarioName.toLowerCase()} with professional evaluation`
+  });
+  
+  // Early progress (about 25% through)
+  const earlyWeek = Math.max(2, Math.floor(totalWeeks * 0.25));
+  timeline.push({
+    week: earlyWeek,
+    milestone: "Early Progress",
+    focus: scenario.expectedOutcomes[0] || "First measurable improvements"
+  });
+  
+  // Mid-point assessment (50% through)
+  const midWeek = Math.floor(totalWeeks * 0.5);
+  timeline.push({
+    week: midWeek,
+    milestone: "Mid-Program Assessment",
+    focus: scenario.expectedOutcomes[1] || "Progress evaluation and program adjustment"
+  });
+  
+  // Advanced progress (75% through)
+  const lateWeek = Math.floor(totalWeeks * 0.75);
+  timeline.push({
+    week: lateWeek,
+    milestone: "Advanced Progress",
+    focus: scenario.expectedOutcomes[2] || "Significant improvement and skill development"
+  });
+  
+  // Final assessment
+  timeline.push({
+    week: totalWeeks,
+    milestone: "Program Completion",
+    focus: "Final assessment and maintenance plan development"
+  });
+  
+  return timeline;
 }

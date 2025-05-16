@@ -253,13 +253,13 @@ export interface PlanContext {
   medicalConditions?: string[];
   goal?: string;
   budget?: number;
-  budgetTier?: { name: string }; // Updated to object with name property
+  budgetTier?: { name: string }; 
   location?: string;
   isUrgent?: boolean;
   timeAvailability?: number;
-  preferOnline?: boolean; // Added missing property
+  preferOnline?: boolean;
   
-  // Add missing properties that are being accessed
+  // Add missing properties that were causing errors
   name?: string;
   description?: string;
   primaryFocus?: string;

@@ -9,4 +9,4 @@ export * from './scenarioHandler';
 export * from './budget';
 
 // Re-export ScenarioResult explicitly to resolve ambiguity
-export { ScenarioResult } from './types';
+export type { ScenarioResult } from './types';
