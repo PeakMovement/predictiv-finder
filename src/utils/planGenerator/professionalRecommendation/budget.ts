@@ -7,7 +7,7 @@ import { ServiceCategory } from "../types";
 import { logger } from "@/utils/cache";
 
 // Base costs for different service categories
-export const baseCosts: Record<string, number> = {
+export const baseCosts: Record<ServiceCategory, number> = {
   'physiotherapist': 850,
   'biokineticist': 700,
   'dietician': 650,
@@ -23,7 +23,34 @@ export const baseCosts: Record<string, number> = {
   'family-medicine': 750,
   'gastroenterology': 1400,
   'massage-therapy': 500,
-  'nutrition-coach': 550
+  'nutrition-coaching': 550,
+  'strength-coaching': 550,
+  'run-coaches': 550,
+  'occupational-therapy': 700,
+  'physical-therapy': 800,
+  'chiropractor': 650,
+  'nurse-practitioner': 600,
+  'cardiology': 1400,
+  'dermatology': 1000,
+  'neurology': 1300,
+  'endocrinology': 1200,
+  'urology': 1100,
+  'oncology': 1600,
+  'rheumatology': 1000,
+  'pediatrics': 900,
+  'geriatrics': 950,
+  'sports-medicine': 1100,
+  'internal-medicine': 1000,
+  'orthopedics': 1400,
+  'neurosurgery': 2200,
+  'infectious-disease': 1300,
+  'plastic-surgery': 2100,
+  'obstetrics-gynecology': 1100,
+  'emergency-medicine': 1500,
+  'anesthesiology': 1700,
+  'radiology': 1200,
+  'geriatric-medicine': 900,
+  'all': 0
 };
 
 /**
@@ -69,7 +96,7 @@ export function calculateIdealSessions(
   conditionSeverity: number
 ): number {
   // Base sessions by service type
-  const baseSessionsByType: Record<string, number> = {
+  const baseSessionsByType: Record<ServiceCategory, number> = {
     'physiotherapist': 6,
     'biokineticist': 8,
     'dietician': 4,
@@ -81,7 +108,7 @@ export function calculateIdealSessions(
     'podiatrist': 3,
     'general-practitioner': 2,
     'massage-therapy': 6
-  };
+  } as Record<ServiceCategory, number>;
   
   // Get base sessions for this service, default to 4 if not found
   const baseSessions = baseSessionsByType[serviceType] || 4;

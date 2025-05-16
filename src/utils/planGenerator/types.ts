@@ -98,6 +98,7 @@ export interface AIHealthPlan {
   primaryFocus?: string;
   complexity?: number;
   intensity?: string;
+  expectedDuration?: string;
 }
 
 // Define shared types that are used across multiple modules
@@ -143,6 +144,7 @@ export const BASELINE_COSTS: Record<ServiceCategory, number> = {
   'neurosurgery': 2200,
   'infectious-disease': 1300,
   'plastic-surgery': 2100,
+  'obs-gynecology': 1100,
   'obstetrics-gynecology': 1100,
   'emergency-medicine': 1500,
   'anesthesiology': 1700,

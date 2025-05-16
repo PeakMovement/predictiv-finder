@@ -1,4 +1,3 @@
-
 import { Practitioner, ServiceCategory } from '@/types';
 
 /**
@@ -345,7 +344,7 @@ export const EXPANDED_PRACTITIONERS: Practitioner[] = [
   {
     id: "str_thandiwe_sibanda",
     name: "Thandiwe Sibanda",
-    serviceType: "strength-coaches",
+    serviceType: "strength-coaching",
     pricePerSession: 421,
     serviceTags: ["Strength Training", "Powerlifting", "Functional Fitness"],
     location: "Cape Town",
@@ -359,7 +358,7 @@ export const EXPANDED_PRACTITIONERS: Practitioner[] = [
   {
     id: "str_michael_mthembu",
     name: "Michael Mthembu",
-    serviceType: "strength-coaches",
+    serviceType: "strength-coaching",
     pricePerSession: 547,
     serviceTags: ["Athletic Performance", "Olympic Lifting", "Sport-Specific Training"],
     location: "Johannesburg",
@@ -374,7 +373,7 @@ export const EXPANDED_PRACTITIONERS: Practitioner[] = [
   {
     id: "str_paddy_botha",
     name: "Paddy Botha",
-    serviceType: "strength-coaches",
+    serviceType: "strength-coaching",
     pricePerSession: 915,
     serviceTags: ["Athletic Performance", "Strength & Conditioning", "Elite Training"],
     location: "Pretoria",
@@ -388,7 +387,7 @@ export const EXPANDED_PRACTITIONERS: Practitioner[] = [
   {
     id: "str_lindiwe_vandermerwe",
     name: "Lindiwe van der Merwe",
-    serviceType: "strength-coaches",
+    serviceType: "strength-coaching",
     pricePerSession: 685,
     serviceTags: ["Women's Strength", "Postpartum Fitness", "Body Transformation"],
     location: "Cape Town",
@@ -463,7 +462,7 @@ export const EXPANDED_PRACTITIONERS: Practitioner[] = [
   {
     id: "nutr_marius_ngcobo",
     name: "Marius Ngcobo",
-    serviceType: "nutrition-coaches",
+    serviceType: "nutrition-coaching",
     pricePerSession: 547,
     serviceTags: ["Weight Loss", "Meal Planning", "Nutritional Education"],
     location: "Cape Town",
@@ -477,7 +476,7 @@ export const EXPANDED_PRACTITIONERS: Practitioner[] = [
   {
     id: "nutr_ayanda_botha",
     name: "Ayanda Botha",
-    serviceType: "nutrition-coaches",
+    serviceType: "nutrition-coaching",
     pricePerSession: 321,
     serviceTags: ["Sports Nutrition", "Plant-Based Diets", "Performance Optimization"],
     location: "Pretoria",
@@ -492,7 +491,7 @@ export const EXPANDED_PRACTITIONERS: Practitioner[] = [
   {
     id: "nutr_david_mokoena",
     name: "David Mokoena",
-    serviceType: "nutrition-coaches",
+    serviceType: "nutrition-coaching",
     pricePerSession: 817,
     serviceTags: ["Corporate Wellness", "Executive Health", "Stress & Nutrition"],
     location: "Johannesburg",
@@ -506,7 +505,7 @@ export const EXPANDED_PRACTITIONERS: Practitioner[] = [
   {
     id: "nutr_paddy_muller",
     name: "Paddy Muller",
-    serviceType: "nutrition-coaches",
+    serviceType: "nutrition-coaching",
     pricePerSession: 391,
     serviceTags: ["Weight Management", "Emotional Eating", "Habit Formation"],
     location: "Cape Town",
@@ -518,4 +517,3 @@ export const EXPANDED_PRACTITIONERS: Practitioner[] = [
     specialtyNotes: "Expert in addressing emotional eating and establishing healthy habits."
   }
 ];
-

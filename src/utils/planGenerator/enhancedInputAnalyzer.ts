@@ -1,175 +1,268 @@
 
 import { ServiceCategory } from "./types";
-import { CONDITION_TO_SERVICES } from "./serviceMappings";
 import { analyzeUserInput } from "./inputAnalyzer";
-import { CO_MORBIDITY_MAPPINGS } from "./serviceMappings";
-import { detectProfessionalPhrases } from "./professionalPhraseData";
-import { extractGoals } from "./professionalRecommendation/goalExtractor";
+import { detectBudgetConstraints, isBudgetMajorConcern, applyBudgetAwareSelection } from "./detectors/budgetDetector";
+import { detectUserProblems } from "./detectors/userProblemDetector";
+import { analyzeGoalComprehensively } from "./professionalRecommendation/enhancedGoalAnalyzer";
+import { detectSpecialCase } from "./detectors/specialCaseDetector";
 
-/**
- * Enhanced version of user input analyzer with more comprehensive analysis
- */
-export function enhancedAnalyzeUserInput(input: string) {
-  const baseAnalysis = analyzeUserInput(input);
-  
-  // Override base analysis with more specific information
-  const inputLower = input.toLowerCase();
-  
-  // Use the new detailed phrase detection
-  const detectedProfessionals = detectProfessionalPhrases(inputLower);
-  
-  // Add professionals detected from comprehensive phrase analysis
-  detectedProfessionals.forEach(detection => {
-    if (!baseAnalysis.suggestedCategories.includes(detection.category)) {
-      baseAnalysis.suggestedCategories.push(detection.category);
-      console.log(`Added professional category from phrase detection: ${detection.category}`);
-    }
-  });
-  
-  // Extract more specific health goals
-  const specificGoals = extractGoals(input);
-  
-  // Determine primary issue (most important condition/goal)
-  let primaryIssue = determinePrimaryIssue(baseAnalysis.medicalConditions, specificGoals, input);
-  
-  // Calculate service priorities based on detected conditions and phrases
-  const servicePriorities: Record<string, number> = {};
-  
-  // Set priorities based on professional phrase matches
-  detectedProfessionals.forEach(detection => {
-    servicePriorities[detection.category] = Math.min(0.5 + (detection.count * 0.1), 1.0);
-  });
-  
-  // Analyze if we have enough information for a proper plan
-  const hasEnoughInformation = baseAnalysis.suggestedCategories.length > 0 || 
-                              baseAnalysis.medicalConditions.length > 0;
-  
-  // Extract location information properly
-  const locationInfo = {
-    location: baseAnalysis.location,
-    isRemote: baseAnalysis.preferOnline || false
-  };
-  
-  // Return enhanced analysis
-  return {
-    ...baseAnalysis,
-    primaryIssue,
-    hasEnoughInformation,
-    locationInfo,
-    specificGoals,
-    servicePriorities,
-    // Add optional empty arrays for properties that might not exist
-    contraindicated: [] // Add empty array for contraindicated services
-  };
+export interface EnhancedAnalysisResult {
+  medicalConditions: string[];
+  primaryIssue?: string;
+  secondaryIssues?: string[];
+  suggestedCategories: string[];
+  budget?: number;
+  isBudgetConstrained: boolean;
+  location?: string;
+  preferOnline?: boolean;
+  urgency: 'low' | 'medium' | 'high';
+  complexity: number;
+  requiredSpecialists: ServiceCategory[];
+  contraindications: ServiceCategory[];
+  recommendedApproaches: string[];
+  detectedProblems: {
+    problem: string;
+    confidence: number;
+    severity: 'mild' | 'moderate' | 'severe';
+  }[];
 }
 
 /**
- * Check for co-morbidities (multiple conditions that together require special care)
+ * Enhanced user input analysis that combines multiple detection strategies
+ * for more accurate and comprehensive health plan generation
+ * 
+ * @param userInput Raw text input from the user
+ * @returns Detailed analysis of user needs and constraints
  */
-export function checkCoMorbidities(conditions: string[]): string[] {
-  if (!conditions || conditions.length < 2) return [];
+export function enhancedAnalyzeUserInput(userInput: string): EnhancedAnalysisResult {
+  console.log("Running enhanced input analyzer on:", userInput);
+  const inputLower = userInput.toLowerCase();
   
-  const additionalServices: string[] = [];
+  // Initialize result structure
+  const result: EnhancedAnalysisResult = {
+    medicalConditions: [],
+    suggestedCategories: [],
+    isBudgetConstrained: false,
+    urgency: 'low',
+    complexity: 0.5,
+    requiredSpecialists: [],
+    contraindications: [],
+    recommendedApproaches: [],
+    detectedProblems: []
+  };
   
-  // Check each co-morbidity group
-  Object.values(CO_MORBIDITY_MAPPINGS).forEach(mapping => {
-    // Check if all conditions in this group are present
-    const hasAllConditions = mapping.conditions.every(condition => 
-      conditions.some(userCondition => 
-        userCondition.toLowerCase().includes(condition.toLowerCase())
-      )
+  // Run the base analyzer for backward compatibility
+  const baseAnalysis = analyzeUserInput(userInput);
+  
+  // Get the deep goal analysis
+  const goalAnalysis = analyzeGoalComprehensively(userInput);
+  
+  // Detect user problems with the specialized detector
+  const detectedProblems = detectUserProblems(userInput);
+  
+  // Check for special cases (emergency, chronic, etc.)
+  const specialCase = detectSpecialCase(userInput);
+  
+  // Detect budget constraints
+  const detectedBudget = detectBudgetConstraints(inputLower, result.contraindications);
+  const isBudgetConcern = isBudgetMajorConcern(inputLower);
+  
+  // Process the base analysis
+  if (baseAnalysis.medicalConditions && baseAnalysis.medicalConditions.length > 0) {
+    result.medicalConditions = baseAnalysis.medicalConditions;
+  }
+  
+  if (baseAnalysis.budget) {
+    result.budget = baseAnalysis.budget;
+    result.isBudgetConstrained = true;
+  } else if (detectedBudget) {
+    result.budget = detectedBudget;
+    result.isBudgetConstrained = true;
+  } else if (isBudgetConcern) {
+    // Default conservative budget when it's a concern but no specific amount
+    result.budget = 1500;
+    result.isBudgetConstrained = true;
+  }
+  
+  // Process location and preference info
+  result.location = baseAnalysis.location;
+  result.preferOnline = baseAnalysis.preferOnline;
+  
+  // Process goal analysis
+  if (goalAnalysis.primaryGoal) {
+    result.primaryIssue = goalAnalysis.primaryGoal;
+  }
+  
+  if (goalAnalysis.secondaryGoals && goalAnalysis.secondaryGoals.length > 0) {
+    result.secondaryIssues = goalAnalysis.secondaryGoals;
+  }
+  
+  result.urgency = goalAnalysis.urgency;
+  
+  // Process detected problems
+  if (detectedProblems.length > 0) {
+    // Add problems to the result
+    result.detectedProblems = detectedProblems.map(p => ({
+      problem: p.problem,
+      confidence: p.confidence,
+      severity: p.severity
+    }));
+    
+    // If we don't have a primary issue yet, use the highest confidence problem
+    if (!result.primaryIssue && detectedProblems[0]) {
+      result.primaryIssue = detectedProblems[0].problem;
+    }
+    
+    // Add all detected medical conditions
+    detectedProblems.forEach(p => {
+      // Extract the base problem without the category prefix
+      const problemParts = p.problem.split(': ');
+      const baseProblem = problemParts.length > 1 ? problemParts[1] : problemParts[0];
+      
+      if (!result.medicalConditions.includes(baseProblem)) {
+        result.medicalConditions.push(baseProblem);
+      }
+    });
+    
+    // Collect suggested approaches
+    detectedProblems.forEach(p => {
+      if (p.suggestedApproach && !result.recommendedApproaches.includes(p.suggestedApproach)) {
+        result.recommendedApproaches.push(p.suggestedApproach);
+      }
+    });
+    
+    // Calculate complexity based on number and severity of problems
+    const severityMap = { 'mild': 0.3, 'moderate': 0.6, 'severe': 0.9 };
+    const complexityScore = detectedProblems.reduce((sum, p) => 
+      sum + p.confidence * (severityMap[p.severity] || 0.5), 0);
+    
+    result.complexity = Math.min(1, complexityScore / 2);
+  }
+  
+  // Process special case detection
+  if (specialCase) {
+    // Add any special case services
+    specialCase.requiredServices.forEach(service => {
+      if (!result.requiredSpecialists.includes(service)) {
+        result.requiredSpecialists.push(service);
+      }
+    });
+    
+    // Update urgency if the special case is urgent
+    if (specialCase.urgencyLevel > 0.7) {
+      result.urgency = 'high';
+    } else if (specialCase.urgencyLevel > 0.4) {
+      result.urgency = 'medium';
+    }
+    
+    // Use the special case budget if available
+    if (specialCase.budget && !result.budget) {
+      result.budget = specialCase.budget.recommended;
+      result.isBudgetConstrained = true;
+    }
+  }
+  
+  // Collect service categories from all sources
+  const serviceSet = new Set<ServiceCategory>();
+  
+  // Add services from base analysis
+  if (baseAnalysis.suggestedCategories) {
+    baseAnalysis.suggestedCategories.forEach(service => 
+      serviceSet.add(service as ServiceCategory));
+  }
+  
+  // Add services from detected problems
+  detectedProblems.forEach(problem => {
+    problem.relatedCategories.forEach(service => serviceSet.add(service));
+  });
+  
+  // Add required specialists
+  result.requiredSpecialists.forEach(service => serviceSet.add(service));
+  
+  // Apply budget-aware selection if budget is constrained
+  if (result.budget && result.isBudgetConstrained) {
+    const { prioritizedServices } = applyBudgetAwareSelection(
+      result.budget,
+      Array.from(serviceSet)
     );
     
-    if (hasAllConditions) {
-      mapping.additionalServices.forEach(service => {
-        if (!additionalServices.includes(service)) {
-          additionalServices.push(service);
-          console.log(`Added ${service} due to co-morbidity: ${mapping.conditions.join(', ')}`);
-        }
-      });
-    }
-  });
+    // Use the budget-optimized services
+    result.suggestedCategories = prioritizedServices;
+  } else {
+    // Use all collected services
+    result.suggestedCategories = Array.from(serviceSet);
+  }
   
-  return additionalServices;
+  // Filter out contraindicated services
+  result.suggestedCategories = result.suggestedCategories.filter(
+    service => !result.contraindications.includes(service as ServiceCategory)
+  );
+  
+  console.log("Enhanced analysis result:", result);
+  return result;
 }
 
 /**
- * Determine the primary health issue from conditions and goals
+ * Detect co-morbid conditions that require coordinated care
+ * @param conditions Array of detected health conditions 
+ * @returns Additional service categories needed
  */
-function determinePrimaryIssue(
-  conditions: string[], 
-  goals: string[], 
-  input: string
-): string {
-  // Check for explicitly mentioned priorities
-  const priorityPhrases = [
-    { regex: /main(ly| concern| issue| problem)? is/i, bonus: 5 },
-    { regex: /primarily|mostly|especially|particularly/i, bonus: 3 },
-    { regex: /focus(ed)? on/i, bonus: 4 },
-    { regex: /most important/i, bonus: 5 }
+export function checkCoMorbidities(conditions: string[]): ServiceCategory[] {
+  if (conditions.length <= 1) return [];
+  
+  const additionalServices: Set<ServiceCategory> = new Set();
+  
+  // Define co-morbidity groups that require special handling
+  const comorbidityGroups = [
+    {
+      conditions: ['diabetes', 'heart', 'blood pressure', 'cholesterol'],
+      services: ['cardiology', 'endocrinology', 'dietician']
+    },
+    {
+      conditions: ['anxiety', 'depression', 'sleep', 'stress'],
+      services: ['psychiatry', 'psychology']
+    },
+    {
+      conditions: ['back pain', 'neck pain', 'joint pain', 'arthritis'],
+      services: ['physiotherapist', 'pain-management', 'orthopedics']
+    },
+    {
+      conditions: ['ibs', 'stomach', 'digestive', 'reflux', 'gut'],
+      services: ['gastroenterology', 'dietician']
+    },
+    {
+      conditions: ['weight', 'fitness', 'nutrition', 'diet'],
+      services: ['dietician', 'personal-trainer']
+    }
   ];
   
-  // Score each condition and goal
-  const issueScores: Record<string, number> = {};
-  
-  // Score conditions
-  conditions.forEach(condition => {
-    let score = 1;
+  // Check each group for matches
+  comorbidityGroups.forEach(group => {
+    // Count how many conditions in this group match
+    const matchCount = conditions.filter(condition => 
+      group.conditions.some(gc => condition.toLowerCase().includes(gc.toLowerCase()))
+    ).length;
     
-    // Check for condition specific mentions
-    if (input.toLowerCase().includes(condition.toLowerCase())) {
-      score += 2;
-      
-      // Check for priority phrases near this condition
-      priorityPhrases.forEach(phrase => {
-        const phrasePos = input.toLowerCase().search(phrase.regex);
-        if (phrasePos >= 0) {
-          // Check if this phrase is close to the condition mention
-          const conditionPos = input.toLowerCase().indexOf(condition.toLowerCase());
-          if (Math.abs(phrasePos - conditionPos) < 50) {
-            score += phrase.bonus;
-          }
-        }
-      });
-    }
-    
-    issueScores[condition] = score;
-  });
-  
-  // Score goals
-  goals.forEach(goal => {
-    let score = 0.5; // Goals start with lower base score than conditions
-    
-    // Check for goal specific mentions
-    if (input.toLowerCase().includes(goal.toLowerCase())) {
-      score += 1;
-      
-      // Check for priority phrases near this goal
-      priorityPhrases.forEach(phrase => {
-        const phrasePos = input.toLowerCase().search(phrase.regex);
-        if (phrasePos >= 0) {
-          // Check if this phrase is close to the goal mention
-          const goalPos = input.toLowerCase().indexOf(goal.toLowerCase());
-          if (Math.abs(phrasePos - goalPos) < 50) {
-            score += phrase.bonus;
-          }
-        }
-      });
-    }
-    
-    issueScores[goal] = score;
-  });
-  
-  // Find highest scoring issue
-  let highestScore = 0;
-  let primaryIssue = conditions[0] || goals[0] || "general health";
-  
-  Object.entries(issueScores).forEach(([issue, score]) => {
-    if (score > highestScore) {
-      highestScore = score;
-      primaryIssue = issue;
+    // If multiple matches from a group, add all related services
+    if (matchCount >= 2) {
+      console.log(`Detected co-morbid condition group with ${matchCount} matches`);
+      group.services.forEach(service => additionalServices.add(service as ServiceCategory));
     }
   });
   
-  return primaryIssue;
+  // Special handling for certain combinations
+  if (conditions.some(c => c.includes('pain')) && 
+      conditions.some(c => c.includes('anxiety') || c.includes('depression'))) {
+    console.log("Detected pain with psychological factors");
+    additionalServices.add('psychology');
+    additionalServices.add('pain-management');
+  }
+  
+  if (conditions.some(c => c.includes('weight')) && 
+      conditions.some(c => c.includes('diabetes') || c.includes('thyroid'))) {
+    console.log("Detected weight issues with metabolic factors");
+    additionalServices.add('endocrinology');
+  }
+  
+  return Array.from(additionalServices);
 }

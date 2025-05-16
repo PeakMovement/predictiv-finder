@@ -2,6 +2,11 @@
 // Re-export types from the main index.d.ts file
 export * from './index.d';
 
+// Import ServiceCategory from planGenerator/types to use the same definition
+// This ensures we use a single consistent definition across the app
+import { ServiceCategory } from "../utils/planGenerator/types";
+export type { ServiceCategory };
+
 // Export common project-specific types
 export interface AIHealthPlan {
   id: string;
@@ -55,38 +60,6 @@ export interface AIHealthPlan {
   intensity?: string;
   expectedDuration?: string;
 }
-
-export type ServiceCategory = 
-  | 'family-medicine'
-  | 'physiotherapist'
-  | 'dietician'
-  | 'personal-trainer'
-  | 'biokineticist'
-  | 'psychiatry'
-  | 'orthopedics'
-  | 'gastroenterology'
-  | 'neurology'
-  | 'cardiology'
-  | 'dermatology'
-  | 'rheumatology'
-  | 'coaching'
-  | 'nutrition-coaching'
-  | 'strength-coaching'
-  | 'run-coaches'
-  | 'pain-management'
-  | 'psychology'
-  | 'chiropractor'
-  | 'endocrinology'
-  | 'internal-medicine'
-  | 'neurosurgery'
-  | 'infectious-disease'
-  | 'plastic-surgery'
-  | 'obstetrics-gynecology'
-  | 'emergency-medicine'
-  | 'anesthesiology'
-  | 'radiology'
-  | 'geriatric-medicine'
-  | 'all'; // Allow 'all' for filtering purposes
 
 export interface UserCriteria {
   conditions?: string[];

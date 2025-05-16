@@ -40,7 +40,7 @@ export interface ProfessionalRecommendationResult {
   notes?: string[];
   budgetAllocation?: {
     total: number;
-    breakdown: Record<string, number>;
+    breakdown: Record<ServiceCategory, number>;
   };
 }
 
