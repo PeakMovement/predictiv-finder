@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -44,7 +43,7 @@ const PlanCustomizer: React.FC<PlanCustomizerProps> = ({
   const minBudget = Math.round(plan.totalCost * 0.6);
   
   // Handle session count changes
-  const handleSessionChange = (serviceType: ServiceCategory, change: number) => {
+  const handleSessionChange = (serviceType: string, change: number) => {
     const updatedServices = customizedPlan.services.map(service => {
       if (service.type === serviceType) {
         const newCount = Math.max(1, service.sessions + change);

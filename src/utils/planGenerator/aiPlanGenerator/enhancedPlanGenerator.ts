@@ -1,5 +1,5 @@
 
-import { AIHealthPlan, UserCriteria } from '@/types';
+import { AIHealthPlan, UserCriteria, ServiceCategory } from '@/types';
 import { analyzeUserQuery } from './userAnalysis';
 import { enhancedAnalyzeUserInput } from '../enhancedInputAnalyzer';
 import { generateAIHealthPlans } from './planBuilder';
@@ -52,7 +52,7 @@ export async function generateEnhancedAIPlan(
       ...(enhancedAnalysis ? {
         conditions: enhancedAnalysis.medicalConditions,
         goal: enhancedAnalysis.primaryIssue || standardAnalysis.goal,
-        categories: enhancedAnalysis.suggestedCategories,
+        categories: enhancedAnalysis.suggestedCategories as ServiceCategory[],
         location: enhancedAnalysis.location,
         preferOnline: enhancedAnalysis.preferOnline
       } : {})
@@ -68,7 +68,7 @@ export async function generateEnhancedAIPlan(
         console.log("Detected co-morbidities, adding services:", additionalServices);
         combinedCriteria.categories = [
           ...(combinedCriteria.categories || []),
-          ...additionalServices
+          ...additionalServices as ServiceCategory[]
         ];
       }
     }
@@ -96,18 +96,20 @@ export async function generateEnhancedAIPlan(
         console.log("Applying primary scenario:", primaryScenario.scenarioName);
         
         // Add recommended services from the scenario
-        if (primaryScenario.recommendedServices.length > 0) {
+        if (primaryScenario.recommendedServices && primaryScenario.recommendedServices.length > 0) {
           combinedCriteria.categories = [
             ...(combinedCriteria.categories || []),
-            ...primaryScenario.recommendedServices
+            ...primaryScenario.recommendedServices as ServiceCategory[]
           ];
           
           // Remove duplicates
-          combinedCriteria.categories = [...new Set(combinedCriteria.categories)];
+          if (combinedCriteria.categories) {
+            combinedCriteria.categories = [...new Set(combinedCriteria.categories)];
+          }
         }
         
         // Set goal from scenario if no goal is set
-        if (!combinedCriteria.goal) {
+        if (!combinedCriteria.goal && primaryScenario.scenarioName) {
           combinedCriteria.goal = primaryScenario.scenarioName;
         }
       }
@@ -120,6 +122,13 @@ export async function generateEnhancedAIPlan(
     if (isUrgent && adaptToUserContext) {
       console.log("Detected urgency in user request");
       combinedCriteria.isUrgent = true;
+    }
+    
+    // Ensure categories is always of type ServiceCategory[]
+    if (combinedCriteria.categories && combinedCriteria.categories.length > 0) {
+      combinedCriteria.categories = combinedCriteria.categories.map(
+        category => category as ServiceCategory
+      );
     }
     
     // Estimate the complexity level of the user's needs

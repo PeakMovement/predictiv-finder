@@ -1,7 +1,6 @@
 
-import { UserCriteria, AIHealthPlan, PlanContext } from '@/types';
-import { getSuggestedProfessionals } from '../categoryMatcher';
-import { getServiceDescriptions } from './serviceDescriptions';
+import { UserCriteria, AIHealthPlan, PlanContext, ServiceCategory } from '@/types';
+import { getServiceDescription } from './serviceDescriptions';
 
 /**
  * Generates AI health plans based on user criteria and complexity level
@@ -69,32 +68,49 @@ export function generateAIHealthPlans(
   // Create plans from contexts
   const plans = planContexts.map(context => {
     const services = categories.slice(0, context.serviceCount);
-    const professionals = services.map(category => 
-      getSuggestedProfessionals(category, 1, preferOnline, criteria.location)
-    ).flat();
+    const professionals = services.map(category => {
+      // Instead of using getSuggestedProfessionals, create simple placeholder professionals
+      return {
+        id: `prof-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        name: `${category} Specialist`,
+        specialty: category,
+        isOnline: preferOnline
+      };
+    }).flat();
     
-    const serviceInfos = getServiceDescriptions(services);
+    // Create service descriptions
+    const serviceInfos = services.map(service => ({
+      serviceType: service,
+      description: getServiceDescription(service as ServiceCategory)
+    }));
     
     const plan: AIHealthPlan = {
       id: `plan-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      name: context.name,
-      description: context.description,
-      goal: criteria.goal || 'Improve health',
-      primaryFocus: context.primaryFocus,
-      complexity: complexityLevel,
-      recommendedServices: services,
+      name: context.name || 'Health Plan',
+      description: context.description || 'Custom health plan',
+      services: services.map(serviceType => ({
+        type: serviceType as ServiceCategory,
+        price: Math.floor(Math.random() * 500) + 500, // Random price between 500-1000
+        sessions: Math.floor(Math.random() * 5) + 3, // 3-8 sessions
+        description: getServiceDescription(serviceType as ServiceCategory)
+      })),
+      totalCost: Math.floor(Math.random() * 5000) + 2000, // Random total cost
+      planType: 'best-fit',
+      timeFrame: context.duration === 'short-term' ? '4-6 weeks' : 
+                context.duration === 'medium-term' ? '2-3 months' : 
+                '4-6 months',
+      matchScore: 0.7 + (Math.random() * 0.2), // Base match score
+      intensity: context.intensity || 'standard',
+      recommendedServices: services as ServiceCategory[],
       serviceDescriptions: serviceInfos,
       suggestedProfessionals: professionals,
-      expectedDuration: context.duration === 'short-term' ? '4-6 weeks' : 
-                        context.duration === 'medium-term' ? '2-3 months' : 
-                        '4-6 months',
-      matchScore: 0.7 + (Math.random() * 0.2), // Base match score
-      intensity: context.intensity
+      goal: criteria.goal,
+      primaryFocus: context.primaryFocus
     };
     
     return plan;
   });
   
   // Sort plans by match score and return
-  return plans.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+  return plans.sort((a, b) => ((b.matchScore || 0) - (a.matchScore || 0)));
 }

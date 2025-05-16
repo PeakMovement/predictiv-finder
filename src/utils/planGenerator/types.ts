@@ -1,4 +1,3 @@
-
 // Define ServiceCategory as a string enum equivalent for better type safety
 export type ServiceCategory =
   | 'physiotherapist'
@@ -16,7 +15,9 @@ export type ServiceCategory =
   | 'family-medicine'
   | 'gastroenterology'
   | 'massage-therapy'
-  | 'nutrition-coach'
+  | 'nutrition-coaching'
+  | 'strength-coaching'
+  | 'run-coaches'
   | 'occupational-therapy'
   | 'physical-therapy'
   | 'chiropractor'
@@ -87,6 +88,16 @@ export interface AIHealthPlan {
     alternatives: ServiceCategory[];
     reason: string;
   }>;
+
+  // Add additional properties that are being accessed elsewhere
+  recommendedServices?: ServiceCategory[];
+  serviceDescriptions?: any[];
+  suggestedProfessionals?: any[];
+  matchScore?: number;
+  goal?: string;
+  primaryFocus?: string;
+  complexity?: number;
+  intensity?: string;
 }
 
 // Define shared types that are used across multiple modules
@@ -110,7 +121,9 @@ export const BASELINE_COSTS: Record<ServiceCategory, number> = {
   'family-medicine': 750,
   'gastroenterology': 1400,
   'massage-therapy': 500,
-  'nutrition-coach': 550,
+  'nutrition-coaching': 550,
+  'strength-coaching': 550,
+  'run-coaches': 550,
   'occupational-therapy': 700,
   'physical-therapy': 800,
   'chiropractor': 650,
@@ -245,6 +258,15 @@ export interface PlanContext {
   isUrgent?: boolean;
   timeAvailability?: number;
   preferOnline?: boolean; // Added missing property
+  
+  // Add missing properties that are being accessed
+  name?: string;
+  description?: string;
+  primaryFocus?: string;
+  serviceCount?: number;
+  intensity?: string;
+  duration?: string;
+  isRemote?: boolean;
 }
 
 export interface SessionAllocation {

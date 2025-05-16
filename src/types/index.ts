@@ -1,3 +1,4 @@
+
 // Re-export types from the main index.d.ts file
 export * from './index.d';
 
@@ -7,7 +8,7 @@ export interface AIHealthPlan {
   name: string;
   description: string;
   services: Array<{
-    type: string;
+    type: ServiceCategory;
     price: number;
     sessions: number;
     description: string;
@@ -42,6 +43,17 @@ export interface AIHealthPlan {
     alternatives: string[];
     reason: string;
   }>;
+  
+  // Add missing fields that are being accessed elsewhere
+  recommendedServices?: ServiceCategory[];
+  serviceDescriptions?: any[];
+  suggestedProfessionals?: any[];
+  matchScore?: number;
+  goal?: string;
+  primaryFocus?: string;
+  complexity?: number;
+  intensity?: string;
+  expectedDuration?: string;
 }
 
 export type ServiceCategory = 
@@ -61,7 +73,20 @@ export type ServiceCategory =
   | 'nutrition-coaching'
   | 'strength-coaching'
   | 'run-coaches'
-  | 'pain-management';
+  | 'pain-management'
+  | 'psychology'
+  | 'chiropractor'
+  | 'endocrinology'
+  | 'internal-medicine'
+  | 'neurosurgery'
+  | 'infectious-disease'
+  | 'plastic-surgery'
+  | 'obstetrics-gynecology'
+  | 'emergency-medicine'
+  | 'anesthesiology'
+  | 'radiology'
+  | 'geriatric-medicine'
+  | 'all'; // Allow 'all' for filtering purposes
 
 export interface UserCriteria {
   conditions?: string[];
@@ -69,7 +94,7 @@ export interface UserCriteria {
   secondaryGoals?: string[];
   budget?: {
     monthly: number;
-    preferredSetup: 'monthly' | 'pay-as-you-go' | 'package';
+    preferredSetup: 'monthly' | 'pay-as-you-go' | 'package' | 'not-sure' | 'once-off';
     flexibleBudget: boolean;
   };
   categories?: ServiceCategory[];
@@ -79,4 +104,8 @@ export interface UserCriteria {
   isUrgent?: boolean;
   priorities?: Record<string, number>;
   availabilityConstraints?: string[];
+  
+  // Add the missing properties being accessed
+  locationRadius?: 'exact' | 'nearby' | 'anywhere';
+  mode?: string[];
 }
