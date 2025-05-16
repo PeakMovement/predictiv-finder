@@ -21,7 +21,7 @@ export interface AIHealthPlan {
     frequency?: string;
   }>;
   totalCost: number;
-  planType: string;
+  planType: 'best-fit' | 'high-impact' | 'progressive';
   timeFrame: string;
   
   // Optional enhanced properties

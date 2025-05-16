@@ -1,4 +1,3 @@
-
 // Define ServiceCategory as a string enum equivalent for better type safety
 export type ServiceCategory =
   | 'physiotherapist'
@@ -144,7 +143,6 @@ export const BASELINE_COSTS: Record<ServiceCategory, number> = {
   'neurosurgery': 2200,
   'infectious-disease': 1300,
   'plastic-surgery': 2100,
-  'obs-gynecology': 1100,
   'obstetrics-gynecology': 1100,
   'emergency-medicine': 1500,
   'anesthesiology': 1700,

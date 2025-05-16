@@ -131,57 +131,9 @@ const getServiceDescription = (type: ServiceCategory, sessions: number): string 
       return `${sessions} gastroenterology consultation${plural}`;
     case 'massage-therapy':
       return `${sessions} massage therapy session${plural}`;
-    case 'nutrition-coach':
+    case 'nutrition-coaching':
       return `${sessions} nutrition coaching session${plural}`;
-    case 'occupational-therapy':
-      return `${sessions} occupational therapy session${plural}`;
-    case 'physical-therapy':
-      return `${sessions} physical therapy session${plural}`;
-    case 'chiropractor':
-      return `${sessions} chiropractic adjustment${plural}`;
-    case 'nurse-practitioner':
-      return `${sessions} nurse practitioner consultation${plural}`;
     default:
-      return `${sessions} ${type.replace('-', ' ')} session${plural}`;
+      return `${sessions} consultation${plural} with ${type.replace(/-/g, ' ')}`;
   }
-};
-
-/**
- * Calculate session allocations based on budget and services
- */
-export const calculateServiceAllocations = (
-  budget: number,
-  services: ServiceCategory[]
-): Record<ServiceCategory, SessionAllocation> => {
-  const result: Partial<Record<ServiceCategory, SessionAllocation>> = {};
-  
-  // Simple allocation: divide budget equally
-  const serviceCount = services.length;
-  const budgetPerService = budget / serviceCount;
-  
-  services.forEach(service => {
-    const baseCost = BASELINE_COSTS[service];
-    const affordableSessions = Math.max(1, Math.floor(budgetPerService / baseCost));
-    
-    result[service] = {
-      sessions: affordableSessions,
-      costPerSession: baseCost,
-      totalCost: baseCost * affordableSessions
-    };
-  });
-  
-  // Initialize all remaining services with 0 sessions
-  // This is needed to satisfy TypeScript's Record type requirement
-  const allServices = Object.keys(BASELINE_COSTS) as ServiceCategory[];
-  allServices.forEach(service => {
-    if (!result[service]) {
-      result[service] = {
-        sessions: 0,
-        costPerSession: BASELINE_COSTS[service],
-        totalCost: 0
-      };
-    }
-  });
-  
-  return result as Record<ServiceCategory, SessionAllocation>;
 };

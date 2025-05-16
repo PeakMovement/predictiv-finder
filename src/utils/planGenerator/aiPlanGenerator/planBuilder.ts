@@ -26,7 +26,7 @@ export function generateAIHealthPlans(
   
   // Basic plan (always included)
   planContexts.push({
-    // Properties for internal use, not actual PlanContext fields
+    // Properties for internal use
     goal: criteria.goal,
     medicalConditions: criteria.conditions,
     location: criteria.location,
@@ -44,7 +44,7 @@ export function generateAIHealthPlans(
   if (complexityLevel > 0.6) {
     // Intensive plan for complex cases
     planContexts.push({
-      // Properties for internal use, not actual PlanContext fields
+      // Properties for internal use
       goal: criteria.goal,
       medicalConditions: criteria.conditions,
       location: criteria.location,
@@ -62,7 +62,7 @@ export function generateAIHealthPlans(
   if (complexityLevel < 0.4) {
     // Minimal plan for simpler cases
     planContexts.push({
-      // Properties for internal use, not actual PlanContext fields
+      // Properties for internal use
       goal: criteria.goal,
       medicalConditions: criteria.conditions,
       location: criteria.location,

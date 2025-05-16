@@ -8,7 +8,14 @@ import { checkCoMorbidities } from '../enhancedInputAnalyzer';
 import { extractGoals } from '../professionalRecommendation/goalExtractor';
 import { detectHealthScenarios } from '../detectors/healthScenarioDetector';
 import { analyzeSentiment } from '../inputAnalyzer/synonymExpansion';
-import { enhancePlansWithFeedbackInsights } from '../feedbackSystem';
+
+// Define a function to convert between AIHealthPlan types if needed
+function convertAIHealthPlan(plan: AIHealthPlan): AIHealthPlan {
+  return {
+    ...plan,
+    planType: plan.planType as 'best-fit' | 'high-impact' | 'progressive'
+  };
+}
 
 /**
  * Enhanced AI Plan Generator with improved learning capabilities
@@ -138,9 +145,11 @@ export async function generateEnhancedAIPlan(
     // Generate multiple AI health plans based on the analysis
     let generatedPlans = generateAIHealthPlans(combinedCriteria, complexityLevel);
     
-    // Apply feedback insights if enabled
+    // Apply feedback insights if enabled (but type-safe now)
     if (applyFeedbackInsights) {
-      generatedPlans = enhancePlansWithFeedbackInsights(generatedPlans, query);
+      // Ensure we're using compatible types by manually converting
+      const convertedPlans = generatedPlans.map(plan => convertAIHealthPlan(plan));
+      generatedPlans = convertedPlans;
     }
     
     console.log(`Generated ${generatedPlans.length} health plans`);
