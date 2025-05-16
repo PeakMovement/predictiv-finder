@@ -1,209 +1,113 @@
 
 import { ServiceCategory } from "../types";
-import { SYMPTOM_MAPPINGS } from "../symptomMappingsData";
 import { 
-  MENTAL_HEALTH_SYNONYMS, 
-  FITNESS_SYNONYMS, 
+  MENTAL_HEALTH_SYNONYMS,
+  FITNESS_SYNONYMS,
   DIGESTIVE_SYNONYMS,
-  GOAL_SYNONYMS 
-} from "../inputAnalyzer/synonymExpansion";
+  GOAL_SYNONYMS
+} from "../symptomMappings/synonymGroups";
 
 /**
- * Detects and handles special combinations of symptoms or conditions
- * that require tailored treatment approaches
+ * Detects special health cases that require specific handling
+ * @param userInput User's query text
+ * @returns Special case metadata if detected, null otherwise
  */
-export const detectSpecialCases = (
-  inputLower: string,
-  symptoms: string[],
-  priorities: Record<string, number>,
-  contraindications: ServiceCategory[]
-): void => {
-  // Enhanced detection using our synonym maps for broader coverage
-  const mentalHealthKeywords = MENTAL_HEALTH_SYNONYMS['anxiety'] || [];
-  const nutritionKeywords = ['nutrition', 'eat', 'eating', 'diet', 'food', 'appetite', 'meal', 'hungry'].concat(
-    DIGESTIVE_SYNONYMS['stomach'] || []
-  );
-  const raceKeywords = (GOAL_SYNONYMS['race'] || []).concat(['run', 'running', 'marathon', 'half marathon', '5k', '10k', 'weeks until']);
+export function detectSpecialCase(userInput: string): {
+  type: 'emergency' | 'urgent' | 'chronic' | 'preventive' | 'complex';
+  description: string;
+  requiredServices: ServiceCategory[];
+  urgencyLevel: number;
+  budget?: { min: number; recommended: number };
+} | null {
+  const inputLower = userInput.toLowerCase();
   
-  // Check for mental health + nutrition combination
-  let hasAnxiety = false;
-  let hasNutrition = false;
-  let hasRace = false;
-  let hasPain = false;
-  let hasKneePain = false;
-  let hasChronicPain = false;
-  let hasSleepIssue = false;
+  // Emergency case detection
+  const emergencyPhrases = [
+    'emergency', 'urgent', 'severe pain', 'accident', 
+    'injured now', 'can\'t move', 'extreme pain'
+  ];
   
-  // Check for anxiety using expanded synonyms
-  for (const keyword of mentalHealthKeywords) {
-    if (inputLower.includes(keyword)) {
-      hasAnxiety = true;
-      if (!symptoms.includes("anxiety")) {
-        symptoms.push("anxiety");
-        priorities["anxiety"] = SYMPTOM_MAPPINGS["anxiety"]?.priority || 0.8;
-        console.log(`Found mental health symptom: anxiety from keyword "${keyword}"`);
-      }
-      break;
-    }
+  if (emergencyPhrases.some(phrase => inputLower.includes(phrase))) {
+    return {
+      type: 'emergency',
+      description: 'Urgent medical attention required',
+      requiredServices: ['emergency-medicine', 'family-medicine'],
+      urgencyLevel: 0.9,
+      budget: { min: 1500, recommended: 3000 }
+    };
   }
   
-  // Check for nutrition using expanded keywords
-  for (const keyword of nutritionKeywords) {
-    if (inputLower.includes(keyword)) {
-      hasNutrition = true;
-      if (!symptoms.includes("nutrition")) {
-        symptoms.push("nutrition");
-        priorities["nutrition"] = SYMPTOM_MAPPINGS["nutrition"]?.priority || 0.7;
-        console.log(`Found nutrition concern from keyword "${keyword}"`);
-      }
-      break;
+  // Chronic condition detection
+  const chronicPhrases = [
+    'chronic', 'ongoing', 'years', 'long-term', 'persistent',
+    'always have', 'since childhood', 'lifelong'
+  ];
+  
+  if (chronicPhrases.some(phrase => inputLower.includes(phrase))) {
+    const services: ServiceCategory[] = ['family-medicine'];
+    
+    // Add relevant specialists based on phrases
+    if (inputLower.includes('pain') || inputLower.includes('ache')) {
+      services.push('pain-management');
     }
+    
+    return {
+      type: 'chronic',
+      description: 'Long-term health management needed',
+      requiredServices: services,
+      urgencyLevel: 0.5,
+      budget: { min: 2500, recommended: 4500 }
+    };
   }
   
-  // Check for race preparation using expanded keywords
-  for (const keyword of raceKeywords) {
-    if (inputLower.includes(keyword)) {
-      hasRace = true;
-      if (!symptoms.includes("race preparation")) {
-        symptoms.push("race preparation");
-        // Give race preparation higher priority when explicitly mentioned
-        priorities["race preparation"] = (SYMPTOM_MAPPINGS["race preparation"]?.priority || 0.7) * 1.2;
-        console.log(`Found race preparation need from keyword "${keyword}"`);
-      }
-      break;
-    }
+  // Preventive care detection
+  const preventivePhrases = [
+    'checkup', 'prevention', 'screening', 'wellness',
+    'healthy', 'maintain', 'routine', 'yearly exam'
+  ];
+  
+  if (preventivePhrases.some(phrase => inputLower.includes(phrase))) {
+    return {
+      type: 'preventive',
+      description: 'Preventive health maintenance',
+      requiredServices: ['family-medicine', 'dietician'],
+      urgencyLevel: 0.2,
+      budget: { min: 1000, recommended: 2500 }
+    };
   }
   
-  // Check for pain-related keywords
-  const painKeywords = ['pain', 'ache', 'hurt', 'sore', 'discomfort', 'injury', 'strain'];
-  const kneeKeywords = ['knee', 'patella', 'kneecap', 'runner\'s knee', 'jumper\'s knee', 'knee joint'];
-  const chronicKeywords = ['chronic', 'persistent', 'ongoing', 'constant', 'recurring'];
-  const sleepKeywords = ['sleep', 'insomnia', 'rest', 'tired', 'fatigue', 'exhausted', 'can\'t sleep'];
+  // Complex case detection (multiple conditions)
+  const conditionPhrases = [
+    'multiple conditions', 'several issues', 'complication',
+    'as well as', 'also have', 'combined with', 'along with'
+  ];
   
-  // Detect general pain
-  hasPain = painKeywords.some(keyword => inputLower.includes(keyword));
-  
-  // Detect knee pain specifically
-  hasKneePain = kneeKeywords.some(keyword => inputLower.includes(keyword)) && hasPain;
-  
-  // Detect chronic pain
-  hasChronicPain = chronicKeywords.some(keyword => inputLower.includes(keyword)) && hasPain;
-  
-  // Detect sleep issues
-  hasSleepIssue = sleepKeywords.some(keyword => inputLower.includes(keyword));
-  
-  // SPECIAL CASE COMBINATIONS:
-  
-  // Special case 1: anxiety + eating issues + race preparation
-  if (hasAnxiety && hasNutrition && hasRace) {
-    // Boost priority for dietician and coaching
-    priorities["nutrition"] = (priorities["nutrition"] || 0) * 1.3;
-    priorities["anxiety"] = (priorities["anxiety"] || 0) * 1.2;
-    priorities["race preparation"] = (priorities["race preparation"] || 0) * 1.2;
-    
-    // Add contraindications for physiotherapy if no physical pain is mentioned
-    if (!hasPain && !contraindications.includes("physiotherapist")) {
-      contraindications.push("physiotherapist");
-      contraindications.push("biokineticist");
-    }
-    
-    // Ensure coaching and dietician are prioritized
-    if (!symptoms.includes("coaching needs")) {
-      symptoms.push("coaching needs");
-      priorities["coaching needs"] = 0.85;
-    }
-    
-    console.log("Found special case: anxiety + nutrition + race preparation");
+  if (conditionPhrases.some(phrase => inputLower.includes(phrase))) {
+    return {
+      type: 'complex',
+      description: 'Multiple health concerns requiring coordinated care',
+      requiredServices: ['family-medicine', 'internal-medicine'],
+      urgencyLevel: 0.6,
+      budget: { min: 3000, recommended: 5500 }
+    };
   }
   
-  // Special case 2: knee pain + race preparation
-  if (hasKneePain && hasRace) {
-    // This is a critical combination that needs special attention
-    if (!symptoms.includes("knee pain")) {
-      symptoms.push("knee pain");
-      priorities["knee pain"] = 0.9;
-    }
-    
-    // Add specialized symptoms
-    if (!symptoms.includes("sports injury")) {
-      symptoms.push("sports injury");
-      priorities["sports injury"] = 0.85;
-    }
-    
-    // Ensure physiotherapy is prioritized
-    priorities["physiotherapist"] = Math.max(priorities["physiotherapist"] || 0, 0.9);
-    priorities["coaching"] = Math.max(priorities["coaching"] || 0, 0.8);
-    
-    // If it's an upcoming race (time sensitivity)
-    if (inputLower.includes("week") || inputLower.includes("soon") || inputLower.includes("upcoming")) {
-      priorities["physiotherapist"] = 0.95; // Critical priority
-      console.log("Detected time-sensitive knee pain + race preparation");
-      
-      if (!symptoms.includes("urgent care")) {
-        symptoms.push("urgent care");
-        priorities["urgent care"] = 0.9;
-      }
-    }
-    
-    console.log("Found special case: knee pain + race preparation");
-  }
+  // No special case detected
+  return null;
+}
+
+/**
+ * Detect whether elderly-specific care is needed
+ * @param userInput User's query text
+ * @returns Whether elderly care is indicated
+ */
+export function isElderlyCase(userInput: string): boolean {
+  const inputLower = userInput.toLowerCase();
   
-  // Special case 3: chronic pain with sleep issues
-  if (hasChronicPain && hasSleepIssue) {
-    // This combination requires multidisciplinary approach
-    if (!symptoms.includes("chronic pain")) {
-      symptoms.push("chronic pain");
-      priorities["chronic pain"] = 0.85;
-    }
-    
-    if (!symptoms.includes("sleep issues")) {
-      symptoms.push("sleep issues");
-      priorities["sleep issues"] = 0.8;
-    }
-    
-    // Ensure pain management is included
-    priorities["pain-management"] = Math.max(priorities["pain-management"] || 0, 0.9);
-    
-    // Often needs mental health support
-    if (!contraindications.includes("psychiatry")) {
-      priorities["psychiatry"] = Math.max(priorities["psychiatry"] || 0, 0.7);
-    }
-    
-    console.log("Found special case: chronic pain + sleep issues");
-  }
+  const elderlyPhrases = [
+    'elderly', 'senior', 'old age', 'retirement', 'geriatric',
+    'nursing home', 'over 65', 'over 70', 'aging parent'
+  ];
   
-  // Special case 4: anxiety with physical symptoms
-  if (hasAnxiety && hasPain && !hasKneePain) {
-    // Psychosomatic symptoms need integrated care
-    priorities["psychiatry"] = Math.max(priorities["psychiatry"] || 0, 0.85);
-    priorities["family-medicine"] = Math.max(priorities["family-medicine"] || 0, 0.8);
-    
-    if (!symptoms.includes("integrated care")) {
-      symptoms.push("integrated care");
-      priorities["integrated care"] = 0.8;
-    }
-    
-    console.log("Found special case: anxiety + physical pain (possible psychosomatic symptoms)");
-  }
-  
-  // Enhanced special case detection - pain with urgency indicators
-  const urgencyKeywords = ['urgent', 'immediately', 'right away', 'asap', 'emergency'];
-  
-  const hasUrgency = urgencyKeywords.some(word => inputLower.includes(word));
-  
-  if (hasPain && hasUrgency) {
-    // This is an urgent pain situation - prioritize medical intervention
-    if (!symptoms.includes("acute pain")) {
-      symptoms.push("acute pain");
-      priorities["acute pain"] = 0.95; // Very high priority
-      console.log("Found urgent pain situation - adding acute pain with high priority");
-    }
-    
-    // Ensure family medicine is not contraindicated
-    const familyMedicineIndex = contraindications.indexOf("family-medicine");
-    if (familyMedicineIndex !== -1) {
-      contraindications.splice(familyMedicineIndex, 1);
-      console.log("Removed family-medicine from contraindications due to urgent pain");
-    }
-  }
-};
+  return elderlyPhrases.some(phrase => inputLower.includes(phrase));
+}

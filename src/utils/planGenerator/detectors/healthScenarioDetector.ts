@@ -1,230 +1,180 @@
 
 import { ServiceCategory } from "../types";
 
-export interface HealthScenario {
+interface HealthScenario {
   scenarioName: string;
-  description: string;
-  keywords: string[];
-  recommendedServices: ServiceCategory[];
-  typicalTimeframe: string;
-  expectedOutcomes: string[];
-  priority: 'low' | 'medium' | 'high';
-}
-
-export interface DetectedScenario {
-  scenarioName: string;
+  patterns: string[];
   confidence: number;
   recommendedServices: ServiceCategory[];
-  timeframe: string;
-  expectedOutcomes: string[];
-  scenario: HealthScenario;
+  description: string;
+  timeframe?: string;
 }
 
-// Define common health scenarios
-const HEALTH_SCENARIOS: HealthScenario[] = [
-  {
-    scenarioName: "Sports Injury Recovery",
-    description: "Rehabilitation from sports-related injuries",
-    keywords: ["sports injury", "sprain", "strain", "tear", "pulled muscle", "game", "match", "competition", "athlete"],
-    recommendedServices: ["physiotherapist", "personal-trainer", "biokineticist", "sports-medicine"],
-    typicalTimeframe: "4-12 weeks",
-    expectedOutcomes: ["Pain reduction", "Return to sport", "Restored mobility", "Prevention of re-injury"],
-    priority: "medium"
-  },
-  {
-    scenarioName: "Weight Loss Program",
-    description: "Comprehensive weight loss and management",
-    keywords: ["weight loss", "lose weight", "overweight", "fat", "diet", "slim", "obesity", "kg", "pounds", "BMI"],
-    recommendedServices: ["dietician", "personal-trainer", "coaching", "endocrinology"],
-    typicalTimeframe: "3-6 months",
-    expectedOutcomes: ["Reduced body weight", "Better eating habits", "Improved energy levels", "Sustainable lifestyle changes"],
-    priority: "medium"
-  },
-  {
-    scenarioName: "Chronic Pain Management",
-    description: "Management of persistent pain conditions",
-    keywords: ["chronic pain", "persistent pain", "long-term pain", "pain management", "always hurts", "constant pain"],
-    recommendedServices: ["pain-management", "physiotherapist", "psychology", "family-medicine"],
-    typicalTimeframe: "Ongoing",
-    expectedOutcomes: ["Reduced pain levels", "Improved functionality", "Better coping strategies", "Enhanced quality of life"],
-    priority: "high"
-  },
-  {
-    scenarioName: "Stress and Anxiety Relief",
-    description: "Management of stress, anxiety and related conditions",
-    keywords: ["stress", "anxiety", "panic", "overwhelmed", "burnout", "mental health", "worry", "tension"],
-    recommendedServices: ["psychology", "psychiatry", "coaching"],
-    typicalTimeframe: "2-6 months",
-    expectedOutcomes: ["Reduced anxiety symptoms", "Better stress management", "Improved sleep", "Enhanced well-being"],
-    priority: "high"
-  },
-  {
-    scenarioName: "Post-Surgery Rehabilitation",
-    description: "Recovery after surgical procedures",
-    keywords: ["surgery", "post-op", "operation", "recovery", "surgical", "procedure", "after surgery"],
-    recommendedServices: ["physiotherapist", "occupational-therapy", "pain-management"],
-    typicalTimeframe: "1-3 months",
-    expectedOutcomes: ["Restored function", "Pain management", "Return to daily activities", "Proper healing"],
-    priority: "high"
-  },
-  {
-    scenarioName: "Athletic Performance Enhancement",
-    description: "Improving sports and athletic performance",
-    keywords: ["performance", "athlete", "competition", "marathon", "race", "improve", "sport", "strength", "endurance"],
-    recommendedServices: ["personal-trainer", "sports-medicine", "dietician", "biokineticist"],
-    typicalTimeframe: "3-6 months",
-    expectedOutcomes: ["Improved performance", "Enhanced technique", "Increased strength/endurance", "Better recovery"],
-    priority: "medium"
-  },
-  {
-    scenarioName: "Pregnancy and Postpartum Care",
-    description: "Health support during and after pregnancy",
-    keywords: ["pregnancy", "pregnant", "postpartum", "baby", "birth", "maternity", "prenatal", "after giving birth"],
-    recommendedServices: ["physiotherapist", "dietician", "psychology", "obstetrics-gynecology"],
-    typicalTimeframe: "During pregnancy and 6-12 months postpartum",
-    expectedOutcomes: ["Reduced discomfort", "Safe exercise program", "Nutritional support", "Mental wellbeing"],
-    priority: "medium"
-  },
-  {
-    scenarioName: "Digestive Health Improvement",
-    description: "Management of digestive and gastrointestinal conditions",
-    keywords: ["digestive", "stomach", "gut", "IBS", "bloating", "indigestion", "bowel", "constipation", "diarrhea"],
-    recommendedServices: ["gastroenterology", "dietician", "family-medicine"],
-    typicalTimeframe: "1-6 months",
-    expectedOutcomes: ["Reduced symptoms", "Dietary management", "Improved comfort", "Better quality of life"],
-    priority: "medium"
-  },
-  {
-    scenarioName: "Diabetes Management",
-    description: "Managing diabetes and blood sugar control",
-    keywords: ["diabetes", "blood sugar", "glucose", "insulin", "diabetic", "type 1", "type 2", "sugar levels"],
-    recommendedServices: ["endocrinology", "dietician", "personal-trainer", "family-medicine"],
-    typicalTimeframe: "Ongoing",
-    expectedOutcomes: ["Stable blood sugar", "Weight management", "Reduced complications", "Healthy lifestyle"],
-    priority: "high"
-  },
-  {
-    scenarioName: "Senior Mobility Program",
-    description: "Maintaining and improving mobility for older adults",
-    keywords: ["elderly", "senior", "aging", "older adult", "retirement", "fall prevention", "mobility issues", "geriatric"],
-    recommendedServices: ["physiotherapist", "occupational-therapy", "geriatric-medicine"],
-    typicalTimeframe: "Ongoing",
-    expectedOutcomes: ["Improved mobility", "Fall prevention", "Maintained independence", "Better quality of life"],
-    priority: "medium"
-  }
-];
-
 /**
- * Detect health scenarios from user input
+ * Detects common health scenarios from user input
+ * This helps the system understand complex health situations and provide better recommendations
+ * 
  * @param userInput User's description of their health needs
  * @returns Array of detected scenarios with confidence scores
  */
-export function detectHealthScenarios(userInput: string): DetectedScenario[] {
+export function detectHealthScenarios(userInput: string): HealthScenario[] {
   const inputLower = userInput.toLowerCase();
-  const detectedScenarios: DetectedScenario[] = [];
+  const detectedScenarios: HealthScenario[] = [];
   
-  // Process each scenario
-  HEALTH_SCENARIOS.forEach(scenario => {
-    // Calculate confidence based on keyword matches
-    let matchCount = 0;
-    let weightedScore = 0;
+  // Define common health scenarios
+  const scenarios: HealthScenario[] = [
+    {
+      scenarioName: "Weight Management",
+      patterns: [
+        "lose weight", "overweight", "obesity", "weight loss",
+        "diet plan", "body fat", "get leaner", "slim down"
+      ],
+      confidence: 0.8,
+      recommendedServices: ["dietician", "personal-trainer", "coaching"],
+      description: "Comprehensive weight management plan focusing on nutrition and exercise",
+      timeframe: "3-6 months"
+    },
+    {
+      scenarioName: "Sports Injury Recovery",
+      patterns: [
+        "sports injury", "torn", "sprain", "strain", "pulled muscle",
+        "sports accident", "during practice", "during game", "while playing"
+      ],
+      confidence: 0.85,
+      recommendedServices: ["physiotherapist", "sports-medicine", "orthopedics"],
+      description: "Specialized recovery plan for sports-related injuries"
+    },
+    {
+      scenarioName: "Chronic Pain Management",
+      patterns: [
+        "chronic pain", "persistent pain", "long-term pain",
+        "pain management", "constant ache", "pain for years"
+      ],
+      confidence: 0.9,
+      recommendedServices: ["pain-management", "physiotherapist", "psychology"],
+      description: "Multi-disciplinary approach to managing chronic pain"
+    },
+    {
+      scenarioName: "Stress and Anxiety",
+      patterns: [
+        "anxiety", "stress", "overwhelmed", "panic", "worry",
+        "can't cope", "burnout", "mental health"
+      ],
+      confidence: 0.8,
+      recommendedServices: ["psychology", "psychiatry", "coaching"],
+      description: "Mental health support plan focusing on stress reduction and anxiety management"
+    },
+    {
+      scenarioName: "Post-Surgery Rehabilitation",
+      patterns: [
+        "after surgery", "post-operation", "post-op", "surgical recovery",
+        "rehabilitation", "recent operation"
+      ],
+      confidence: 0.9,
+      recommendedServices: ["physiotherapist", "occupational-therapy", "orthopedics"],
+      description: "Structured rehabilitation program for post-surgical recovery"
+    },
+    {
+      scenarioName: "Pregnancy and Postnatal Support",
+      patterns: [
+        "pregnant", "pregnancy", "expecting", "postnatal", "after birth",
+        "postpartum", "new mom", "baby"
+      ],
+      confidence: 0.85,
+      recommendedServices: ["physiotherapist", "dietician", "psychology"],
+      description: "Supportive care plan for pregnancy and postnatal period"
+    },
+    {
+      scenarioName: "Diabetes Management",
+      patterns: [
+        "diabetes", "blood sugar", "diabetic", "glucose", "insulin",
+        "type 1", "type 2", "pre-diabetic"
+      ],
+      confidence: 0.9,
+      recommendedServices: ["endocrinology", "dietician", "family-medicine"],
+      description: "Comprehensive diabetes management plan"
+    },
+    {
+      scenarioName: "Athletic Performance Enhancement",
+      patterns: [
+        "improve performance", "athletic", "competition", "race", "marathon",
+        "triathlon", "better athlete", "performance gains"
+      ],
+      confidence: 0.8,
+      recommendedServices: ["personal-trainer", "sports-medicine", "dietician"],
+      description: "Advanced athletic performance optimization program"
+    },
+    {
+      scenarioName: "Back Pain",
+      patterns: [
+        "back pain", "backache", "spine", "lower back", "slipped disc",
+        "herniated disc", "sciatica", "back injury"
+      ],
+      confidence: 0.85,
+      recommendedServices: ["physiotherapist", "orthopedics", "chiropractor"],
+      description: "Specialized back pain treatment and management plan"
+    },
+    {
+      scenarioName: "Digestive Health",
+      patterns: [
+        "digestive issues", "stomach problems", "ibs", "acid reflux",
+        "food intolerance", "gut health", "bowel", "digestion"
+      ],
+      confidence: 0.8,
+      recommendedServices: ["gastroenterology", "dietician", "family-medicine"],
+      description: "Comprehensive digestive health management"
+    }
+  ];
+  
+  // Process each scenario against the user input
+  for (const scenario of scenarios) {
+    // Count matching patterns
+    let matchingPatterns = 0;
+    let totalPatterns = scenario.patterns.length;
     
-    scenario.keywords.forEach(keyword => {
-      if (inputLower.includes(keyword.toLowerCase())) {
-        matchCount++;
-        // Weight matches based on keyword specificity
-        const keywordLength = keyword.split(' ').length;
-        weightedScore += 0.1 * keywordLength; // More specific keywords add more confidence
+    for (const pattern of scenario.patterns) {
+      if (inputLower.includes(pattern)) {
+        matchingPatterns++;
       }
-    });
-    
-    // Calculate confidence score
-    const baseConfidence = matchCount / scenario.keywords.length;
-    let confidenceScore = baseConfidence;
-    
-    // Add weighted score
-    confidenceScore += weightedScore;
-    
-    // Add priority boost for high priority scenarios
-    if (scenario.priority === 'high' && confidenceScore > 0) {
-      confidenceScore += 0.1;
     }
     
-    // Only include scenarios with some confidence
-    if (confidenceScore > 0.2) {
+    // Calculate match percentage
+    const matchPercentage = matchingPatterns / totalPatterns;
+    
+    // Determine if this scenario is relevant (at least 15% pattern match)
+    if (matchingPatterns > 0 && matchPercentage >= 0.15) {
+      // Adjust confidence based on match percentage
+      const adjustedConfidence = scenario.confidence * Math.min(1, matchPercentage + 0.3);
+      
       detectedScenarios.push({
-        scenarioName: scenario.scenarioName,
-        confidence: Math.min(confidenceScore, 0.95), // Cap at 0.95
-        recommendedServices: scenario.recommendedServices,
-        timeframe: scenario.typicalTimeframe,
-        expectedOutcomes: scenario.expectedOutcomes,
-        scenario
+        ...scenario,
+        confidence: adjustedConfidence
       });
     }
-  });
+  }
   
-  // Sort by confidence score
+  // Sort by confidence (highest first)
   return detectedScenarios.sort((a, b) => b.confidence - a.confidence);
 }
 
 /**
- * Generate expected timeline based on detected scenario
+ * Get recommended timeframe based on detected scenario
+ * @param scenarioName The name of the detected health scenario
+ * @returns Suggested timeframe for the health plan
  */
-export function generateTimelineFromScenario(scenario: DetectedScenario): {
-  week: number;
-  milestone: string;
-  focus: string;
-}[] {
-  // Process timeframe to estimate duration in weeks
-  let totalWeeks = 12; // Default to 12 weeks
+export function getScenarioTimeframe(scenarioName: string): string {
+  const timeframes: Record<string, string> = {
+    "Weight Management": "3-6 months",
+    "Sports Injury Recovery": "4-12 weeks",
+    "Chronic Pain Management": "3-6 months ongoing",
+    "Stress and Anxiety": "3-4 months initially",
+    "Post-Surgery Rehabilitation": "6-12 weeks",
+    "Pregnancy and Postnatal Support": "Throughout pregnancy and 3-6 months postpartum",
+    "Diabetes Management": "Ongoing with quarterly assessments",
+    "Athletic Performance Enhancement": "8-12 weeks per cycle",
+    "Back Pain": "6-12 weeks initially",
+    "Digestive Health": "2-3 months initially"
+  };
   
-  if (scenario.timeframe.includes("month")) {
-    const months = parseInt(scenario.timeframe.match(/\d+/)?.[0] || "3");
-    totalWeeks = months * 4;
-  } else if (scenario.timeframe.includes("week")) {
-    totalWeeks = parseInt(scenario.timeframe.match(/\d+/)?.[0] || "12");
-  }
-  
-  // Generate milestones based on the scenario and duration
-  const timeline = [];
-  
-  // Initial assessment phase
-  timeline.push({
-    week: 1,
-    milestone: "Initial Assessment",
-    focus: `Begin ${scenario.scenarioName.toLowerCase()} with professional evaluation`
-  });
-  
-  // Early progress (about 25% through)
-  const earlyWeek = Math.max(2, Math.floor(totalWeeks * 0.25));
-  timeline.push({
-    week: earlyWeek,
-    milestone: "Early Progress",
-    focus: scenario.expectedOutcomes[0] || "First measurable improvements"
-  });
-  
-  // Mid-point assessment (50% through)
-  const midWeek = Math.floor(totalWeeks * 0.5);
-  timeline.push({
-    week: midWeek,
-    milestone: "Mid-Program Assessment",
-    focus: scenario.expectedOutcomes[1] || "Progress evaluation and program adjustment"
-  });
-  
-  // Advanced progress (75% through)
-  const lateWeek = Math.floor(totalWeeks * 0.75);
-  timeline.push({
-    week: lateWeek,
-    milestone: "Advanced Progress",
-    focus: scenario.expectedOutcomes[2] || "Significant improvement and skill development"
-  });
-  
-  // Final assessment
-  timeline.push({
-    week: totalWeeks,
-    milestone: "Program Completion",
-    focus: "Final assessment and maintenance plan development"
-  });
-  
-  return timeline;
+  return timeframes[scenarioName] || "3-4 months";
 }

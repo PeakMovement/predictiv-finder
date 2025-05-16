@@ -1,3 +1,4 @@
+
 // Define ServiceCategory as a string enum equivalent for better type safety
 export type ServiceCategory =
   | 'physiotherapist'
@@ -44,7 +45,6 @@ export type ServiceCategory =
   | 'anesthesiology'
   | 'radiology'
   | 'geriatric-medicine'
-  | string // Allow string type to be compatible with AIHealthPlan
   | 'all'; // Special case for filtering/selection
 
 // Re-export AIHealthPlan interface
@@ -248,6 +248,7 @@ export interface ServiceConfigurationByBudget {
   };
 }
 
+// Enhanced PlanContext interface with additional fields needed for plan generation
 export interface PlanContext {
   ageGroup?: 'child' | 'teen' | 'adult' | 'senior';
   medicalConditions?: string[];

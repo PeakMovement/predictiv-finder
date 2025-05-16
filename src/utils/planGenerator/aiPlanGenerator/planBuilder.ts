@@ -26,13 +26,17 @@ export function generateAIHealthPlans(
   
   // Basic plan (always included)
   planContexts.push({
-    name: 'Standard Care Plan',
-    description: `Focused on ${criteria.goal || 'your health needs'}.`,
-    primaryFocus: criteria.goal || 'General Health',
+    // Properties for internal use, not actual PlanContext fields
+    goal: criteria.goal,
+    medicalConditions: criteria.conditions,
+    location: criteria.location,
+    preferOnline: preferOnline,
+    isRemote: preferOnline,
+    budget: criteria.budget?.monthly,
+    
+    // Fields needed for generation logic
     serviceCount: Math.min(3, categories.length),
     intensity: 'standard',
-    location: criteria.location || 'Your area',
-    isRemote: preferOnline,
     duration: 'medium-term'
   });
   
@@ -40,13 +44,17 @@ export function generateAIHealthPlans(
   if (complexityLevel > 0.6) {
     // Intensive plan for complex cases
     planContexts.push({
-      name: 'Intensive Care Plan',
-      description: `Comprehensive approach for ${criteria.goal || 'your health needs'}.`,
-      primaryFocus: criteria.goal || 'Comprehensive Care',
+      // Properties for internal use, not actual PlanContext fields
+      goal: criteria.goal,
+      medicalConditions: criteria.conditions,
+      location: criteria.location,
+      preferOnline: preferOnline,
+      isRemote: preferOnline,
+      budget: criteria.budget?.monthly,
+      
+      // Fields needed for generation logic
       serviceCount: Math.min(5, categories.length + 1),
       intensity: 'intensive',
-      location: criteria.location || 'Your area',
-      isRemote: preferOnline,
       duration: 'long-term'
     });
   }
@@ -54,22 +62,26 @@ export function generateAIHealthPlans(
   if (complexityLevel < 0.4) {
     // Minimal plan for simpler cases
     planContexts.push({
-      name: 'Essential Care Plan',
-      description: `Focused on core needs for ${criteria.goal || 'your health'}.`,
-      primaryFocus: criteria.goal || 'Essential Care',
+      // Properties for internal use, not actual PlanContext fields
+      goal: criteria.goal,
+      medicalConditions: criteria.conditions,
+      location: criteria.location,
+      preferOnline: preferOnline,
+      isRemote: preferOnline,
+      budget: criteria.budget?.monthly,
+      
+      // Fields needed for generation logic
       serviceCount: Math.min(2, categories.length),
       intensity: 'light',
-      location: criteria.location || 'Your area',
-      isRemote: preferOnline,
       duration: 'short-term'
     });
   }
   
   // Create plans from contexts
   const plans = planContexts.map(context => {
-    const services = categories.slice(0, context.serviceCount);
+    const services = categories.slice(0, context.serviceCount || 3);
     const professionals = services.map(category => {
-      // Instead of using getSuggestedProfessionals, create simple placeholder professionals
+      // Create simple placeholder professionals
       return {
         id: `prof-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
         name: `${category} Specialist`,
@@ -84,10 +96,23 @@ export function generateAIHealthPlans(
       description: getServiceDescription(service as ServiceCategory)
     }));
     
+    const planName = `${context.intensity === 'intensive' ? 'Intensive' : 
+                      (context.intensity === 'light' ? 'Essential' : 'Standard')} Care Plan`;
+    
+    const planDescription = `${context.intensity === 'intensive' ? 'Comprehensive' :
+                              (context.intensity === 'light' ? 'Focused' : 'Balanced')} 
+                              approach for ${criteria.goal || 'your health needs'}.`;
+                              
+    const timeFrame = context.duration === 'short-term' ? '4-6 weeks' : 
+                     context.duration === 'medium-term' ? '2-3 months' : 
+                     '4-6 months';
+                     
+    const primaryFocus = criteria.goal || 'General Health';
+    
     const plan: AIHealthPlan = {
       id: `plan-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      name: context.name || 'Health Plan',
-      description: context.description || 'Custom health plan',
+      name: planName,
+      description: planDescription,
       services: services.map(serviceType => ({
         type: serviceType as ServiceCategory,
         price: Math.floor(Math.random() * 500) + 500, // Random price between 500-1000
@@ -96,16 +121,14 @@ export function generateAIHealthPlans(
       })),
       totalCost: Math.floor(Math.random() * 5000) + 2000, // Random total cost
       planType: 'best-fit',
-      timeFrame: context.duration === 'short-term' ? '4-6 weeks' : 
-                context.duration === 'medium-term' ? '2-3 months' : 
-                '4-6 months',
+      timeFrame: timeFrame,
       matchScore: 0.7 + (Math.random() * 0.2), // Base match score
       intensity: context.intensity || 'standard',
       recommendedServices: services as ServiceCategory[],
       serviceDescriptions: serviceInfos,
       suggestedProfessionals: professionals,
       goal: criteria.goal,
-      primaryFocus: context.primaryFocus
+      primaryFocus: primaryFocus
     };
     
     return plan;

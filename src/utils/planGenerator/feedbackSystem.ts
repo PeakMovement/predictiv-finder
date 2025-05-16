@@ -1,246 +1,212 @@
+import { AIHealthPlan, ServiceCategory } from "./types";
 
-import { AIHealthPlan, ServiceCategory } from '@/types';
-
-// Track user feedback patterns for continuous improvement
-interface FeedbackPattern {
-  userQueryPattern: string;
-  positiveAdjustments: {
-    serviceTypes: ServiceCategory[];
-    sessionCounts: number;
-    description: string;
-  };
-  negativeAdjustments: {
-    serviceTypes: ServiceCategory[];
-    sessionCounts: number;
-    description: string;
-  };
-  usageCount: number;
+// Track user selections for learning
+interface UserSelection {
+  userInput: string;
+  selectedPlan: string;
+  rejectedPlans: string[];
+  timestamp: number;
 }
 
-// Simple in-memory storage of feedback patterns (would be database in production)
-const feedbackPatterns: FeedbackPattern[] = [
-  {
-    userQueryPattern: "weight loss",
-    positiveAdjustments: {
-      serviceTypes: ["dietician", "personal-trainer"],
-      sessionCounts: 1,
-      description: "Users prefer more dietician and personal training sessions for weight loss"
-    },
-    negativeAdjustments: {
-      serviceTypes: ["psychology"],
-      sessionCounts: -1,
-      description: "Users found psychology sessions less necessary for initial weight loss plans"
-    },
-    usageCount: 12
-  },
-  {
-    userQueryPattern: "back pain",
-    positiveAdjustments: {
-      serviceTypes: ["physiotherapist", "pain-management"],
-      sessionCounts: 2,
-      description: "Users with back pain benefit from more physiotherapy sessions"
-    },
-    negativeAdjustments: {
-      serviceTypes: ["personal-trainer"],
-      sessionCounts: -1,
-      description: "Users with back pain prefer fewer training sessions initially"
-    },
-    usageCount: 8
-  },
-  {
-    userQueryPattern: "stress",
-    positiveAdjustments: {
-      serviceTypes: ["psychology", "coaching"],
-      sessionCounts: 1,
-      description: "Stress management improved with additional psychology sessions"
-    },
-    negativeAdjustments: {
-      serviceTypes: [],
-      sessionCounts: 0,
-      description: ""
-    },
-    usageCount: 15
-  }
-];
+// In-memory storage for feedback data (would be DB in production)
+const userSelections: UserSelection[] = [];
+const servicePreferenceScores: Record<ServiceCategory, number> = {} as Record<ServiceCategory, number>;
+const keywordCorrelations: Record<string, Record<ServiceCategory, number>> = {};
 
 /**
- * Enhances AI health plans based on feedback insights from past user interactions
- * @param plans Generated AI health plans
- * @param userQuery Original user query text
- * @returns Enhanced plans with feedback-driven adjustments
+ * Record user selection for feedback learning
+ * @param userInput Original query from user
+ * @param selectedPlan ID of the plan the user selected
+ * @param allPlans All plans that were generated
+ */
+export function recordUserSelection(
+  userInput: string, 
+  selectedPlan: string,
+  allPlans: AIHealthPlan[]
+): void {
+  const selectedPlanObj = allPlans.find(plan => plan.id === selectedPlan);
+  if (!selectedPlanObj) return;
+  
+  // Record this selection
+  const rejectedPlans = allPlans
+    .filter(plan => plan.id !== selectedPlan)
+    .map(plan => plan.id);
+  
+  userSelections.push({
+    userInput,
+    selectedPlan,
+    rejectedPlans,
+    timestamp: Date.now()
+  });
+  
+  // Update service preference scores based on this selection
+  const selectedServices = selectedPlanObj.services.map(service => service.type);
+  
+  selectedServices.forEach(service => {
+    if (!servicePreferenceScores[service]) {
+      servicePreferenceScores[service] = 0;
+    }
+    servicePreferenceScores[service] += 1;
+  });
+  
+  // Update keyword correlations
+  const words = userInput.toLowerCase().split(/\W+/).filter(word => word.length > 3);
+  
+  words.forEach(word => {
+    if (!keywordCorrelations[word]) {
+      keywordCorrelations[word] = {} as Record<ServiceCategory, number>;
+    }
+    
+    selectedServices.forEach(service => {
+      if (!keywordCorrelations[word][service]) {
+        keywordCorrelations[word][service] = 0;
+      }
+      keywordCorrelations[word][service] += 1;
+    });
+  });
+  
+  console.log("User selection recorded for learning algorithm");
+}
+
+/**
+ * Apply learned insights to enhance generated plans
+ * @param plans Original generated plans
+ * @param userInput Current user query
+ * @returns Enhanced plans with feedback insights applied
  */
 export function enhancePlansWithFeedbackInsights(
-  plans: AIHealthPlan[], 
-  userQuery: string
+  plans: AIHealthPlan[],
+  userInput: string
 ): AIHealthPlan[] {
-  console.log('Enhancing plans with feedback insights');
+  if (plans.length === 0 || !userInput) {
+    return plans;
+  }
   
-  return plans.map(plan => {
-    const enhancedPlan = { ...plan };
+  try {
+    // Analyze input for keywords
+    const words = userInput.toLowerCase().split(/\W+/).filter(word => word.length > 3);
     
-    // Find relevant feedback patterns based on the user query
-    const relevantPatterns = feedbackPatterns.filter(pattern => 
-      userQuery.toLowerCase().includes(pattern.userQueryPattern.toLowerCase())
-    );
+    // Get service correlations for these keywords
+    const serviceCorrelations: Record<ServiceCategory, number> = {};
     
-    if (relevantPatterns.length > 0) {
-      console.log(`Found ${relevantPatterns.length} relevant feedback patterns`);
+    words.forEach(word => {
+      if (keywordCorrelations[word]) {
+        Object.entries(keywordCorrelations[word]).forEach(([service, score]) => {
+          const serviceKey = service as ServiceCategory;
+          if (!serviceCorrelations[serviceKey]) {
+            serviceCorrelations[serviceKey] = 0;
+          }
+          serviceCorrelations[serviceKey] += score;
+        });
+      }
+    });
+    
+    // Apply insights to enhance plans
+    return plans.map(plan => {
+      // Deep clone to avoid mutations
+      const enhancedPlan = JSON.parse(JSON.stringify(plan)) as AIHealthPlan;
       
-      // Apply feedback adjustments to the plan
-      relevantPatterns.forEach(pattern => {
-        // Apply positive adjustments (increase sessions for certain services)
-        pattern.positiveAdjustments.serviceTypes.forEach(serviceType => {
-          const serviceIndex = enhancedPlan.services.findIndex(s => 
-            s.type.toLowerCase() === serviceType.toLowerCase()
-          );
-          
-          if (serviceIndex >= 0) {
-            console.log(`Increasing sessions for ${serviceType} based on feedback`);
-            enhancedPlan.services[serviceIndex].sessions += pattern.positiveAdjustments.sessionCounts;
-          }
-        });
-        
-        // Apply negative adjustments (decrease sessions for certain services)
-        pattern.negativeAdjustments.serviceTypes.forEach(serviceType => {
-          const serviceIndex = enhancedPlan.services.findIndex(s => 
-            s.type.toLowerCase() === serviceType.toLowerCase()
-          );
-          
-          if (serviceIndex >= 0) {
-            console.log(`Decreasing sessions for ${serviceType} based on feedback`);
-            // Ensure we don't go below 1 session
-            enhancedPlan.services[serviceIndex].sessions = Math.max(
-              1, 
-              enhancedPlan.services[serviceIndex].sessions + pattern.negativeAdjustments.sessionCounts
-            );
-          }
-        });
+      // Calculate how well this plan matches our learned preferences
+      let matchScore = 0;
+      const planServices = plan.services.map(s => s.type);
+      
+      // Score based on service correlations with the input
+      planServices.forEach(service => {
+        if (serviceCorrelations[service]) {
+          matchScore += serviceCorrelations[service];
+        }
       });
       
-      // Recalculate total cost after adjustments
-      enhancedPlan.totalCost = enhancedPlan.services.reduce(
-        (total, service) => total + (service.price * service.sessions), 0
-      );
-    }
-    
-    // Check for keywords in the user query to adjust the plan
-    if (userQuery.toLowerCase().includes('affordable') || 
-        userQuery.toLowerCase().includes('cheap') || 
-        userQuery.toLowerCase().includes('budget')) {
-      console.log('User mentioned budget concerns, optimizing plan costs');
+      // Score based on global service preference
+      planServices.forEach(service => {
+        if (servicePreferenceScores[service]) {
+          matchScore += servicePreferenceScores[service] * 0.5;
+        }
+      });
       
-      // Adjust session counts to make the plan more affordable
-      enhancedPlan.services = enhancedPlan.services.map(service => ({
-        ...service,
-        sessions: Math.max(1, service.sessions - 1) // Reduce sessions but ensure minimum of 1
-      }));
+      // Normalize score
+      if (planServices.length > 0) {
+        matchScore = matchScore / planServices.length;
+      }
       
-      // Recalculate total cost
-      enhancedPlan.totalCost = enhancedPlan.services.reduce(
-        (total, service) => total + (service.price * service.sessions), 0
-      );
-    }
-    
-    if (userQuery.toLowerCase().includes('urgent') || 
-        userQuery.toLowerCase().includes('emergency') ||
-        userQuery.toLowerCase().includes('immediate')) {
-      console.log('User indicated urgency, prioritizing immediate interventions');
+      // Set match score (capped at 0.95 to avoid overconfidence)
+      if (enhancedPlan.matchScore !== undefined) {
+        enhancedPlan.matchScore = Math.min(0.95, (enhancedPlan.matchScore + matchScore) / 2);
+      } else {
+        enhancedPlan.matchScore = Math.min(0.8, 0.5 + matchScore);
+      }
       
-      // Adjust the plan description to emphasize urgency
-      enhancedPlan.description = `Urgent care plan: ${enhancedPlan.description}`;
-    }
-    
-    // Add evidence-based rationales if not present
-    if (!enhancedPlan.rationales) {
-      enhancedPlan.rationales = enhancedPlan.services.map(service => ({
-        service: service.type,
-        rationale: `Based on user feedback, ${service.type} has shown positive outcomes for similar health profiles.`,
-        evidenceLevel: "medium" as "high" | "medium" | "low"
-      }));
-    }
-    
-    // Safe handling for services and scores with type casting
-    if (enhancedPlan.recommendedServices) {
-      enhancedPlan.recommendedServices = [...enhancedPlan.recommendedServices] as ServiceCategory[];
-    }
-    
-    if (enhancedPlan.matchScore !== undefined) {
-      // Slightly adjust match scores based on user feedback
-      enhancedPlan.matchScore = Math.min(0.95, enhancedPlan.matchScore + 0.05);
-    } else {
-      enhancedPlan.matchScore = 0.8; // Default match score if none exists
-    }
-    
-    return enhancedPlan;
-  });
+      return enhancedPlan;
+    }).sort((a, b) => ((b.matchScore || 0) - (a.matchScore || 0)));
+  } catch (error) {
+    console.error("Error applying feedback insights:", error);
+    return plans;
+  }
 }
 
 /**
- * Record user feedback on plan to improve future recommendations
- * @param plan The plan that received feedback
- * @param userQuery The original user query
- * @param feedback The user's feedback data
+ * Get recommendations for services based on similar past queries
+ * @param userInput Current user query
+ * @returns Recommended service categories
  */
-export function recordPlanFeedback(
-  plan: AIHealthPlan,
-  userQuery: string,
-  feedback: {
-    rating: number; // 1-5 scale
-    selectedServices: ServiceCategory[];
-    rejectedServices: ServiceCategory[];
-    comments?: string;
+export function getRecommendationsFromSimilarQueries(userInput: string): ServiceCategory[] {
+  if (!userInput || userSelections.length === 0) {
+    return [];
   }
-): void {
-  console.log('Recording plan feedback to improve future recommendations');
   
-  // Extract key terms from the user query
-  const queryTerms = userQuery.toLowerCase().split(/\s+/);
-  const significantTerms = queryTerms.filter(term => term.length > 3);
-  
-  // Find or create patterns for this query type
-  significantTerms.forEach(term => {
-    const existingPattern = feedbackPatterns.find(p => p.userQueryPattern === term);
-    
-    if (existingPattern) {
-      // Update existing pattern
-      existingPattern.usageCount++;
-      
-      // If high rating, add selected services as positives
-      if (feedback.rating >= 4) {
-        feedback.selectedServices.forEach(service => {
-          if (!existingPattern.positiveAdjustments.serviceTypes.includes(service)) {
-            existingPattern.positiveAdjustments.serviceTypes.push(service);
-          }
-        });
-      } 
-      // If low rating, add rejected services as negatives
-      else if (feedback.rating <= 2) {
-        feedback.rejectedServices.forEach(service => {
-          if (!existingPattern.negativeAdjustments.serviceTypes.includes(service)) {
-            existingPattern.negativeAdjustments.serviceTypes.push(service);
-          }
-        });
-      }
-    } else {
-      // Create new pattern if this seems significant
-      if (feedback.rating !== 3) { // Skip neutral ratings
-        feedbackPatterns.push({
-          userQueryPattern: term,
-          positiveAdjustments: {
-            serviceTypes: feedback.rating >= 4 ? [...feedback.selectedServices] : [],
-            sessionCounts: feedback.rating >= 4 ? 1 : 0,
-            description: `User feedback indicates ${feedback.rating >= 4 ? 'preference for' : 'no strong preference for'} these services`
-          },
-          negativeAdjustments: {
-            serviceTypes: feedback.rating <= 2 ? [...feedback.rejectedServices] : [],
-            sessionCounts: feedback.rating <= 2 ? -1 : 0,
-            description: feedback.rating <= 2 ? `User feedback indicates these services may be less helpful` : ""
-          },
-          usageCount: 1
-        });
-      }
-    }
+  // Find similar past queries using simple text similarity
+  const similarSelections = userSelections.filter(selection => {
+    const similarity = calculateTextSimilarity(selection.userInput, userInput);
+    return similarity > 0.5; // Threshold for considering similar
   });
   
-  console.log(`Updated feedback patterns, now have ${feedbackPatterns.length} patterns`);
+  if (similarSelections.length === 0) {
+    return [];
+  }
+  
+  // Get service counts from similar selections
+  const serviceCounts: Record<ServiceCategory, number> = {} as Record<ServiceCategory, number>;
+  
+  similarSelections.forEach(selection => {
+    const selectedPlanData = userSelections.find(s => s.selectedPlan === selection.selectedPlan);
+    if (!selectedPlanData) return;
+    
+    // In a real system, we'd look up the plan details from a database
+    // For this prototype, we'll use keyword correlation as a proxy
+    const words = userInput.toLowerCase().split(/\W+/).filter(word => word.length > 3);
+    words.forEach(word => {
+      if (keywordCorrelations[word]) {
+        Object.entries(keywordCorrelations[word]).forEach(([service, count]) => {
+          const serviceKey = service as ServiceCategory;
+          if (!serviceCounts[serviceKey]) {
+            serviceCounts[serviceKey] = 0;
+          }
+          serviceCounts[serviceKey] += count;
+        });
+      }
+    });
+  });
+  
+  // Convert to array, sort by count, and take top results
+  return Object.entries(serviceCounts)
+    .sort(([, countA], [, countB]) => countB - countA)
+    .slice(0, 3)
+    .map(([service]) => service as ServiceCategory);
+}
+
+/**
+ * Calculate simple text similarity between two strings
+ * @param text1 First text
+ * @param text2 Second text
+ * @returns Similarity score (0-1)
+ */
+function calculateTextSimilarity(text1: string, text2: string): number {
+  // Simple Jaccard similarity for demonstration
+  const words1 = new Set(text1.toLowerCase().split(/\W+/).filter(w => w.length > 3));
+  const words2 = new Set(text2.toLowerCase().split(/\W+/).filter(w => w.length > 3));
+  
+  const intersection = new Set([...words1].filter(word => words2.has(word)));
+  const union = new Set([...words1, ...words2]);
+  
+  return intersection.size / union.size;
 }

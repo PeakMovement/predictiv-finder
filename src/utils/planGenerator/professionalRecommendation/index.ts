@@ -7,6 +7,3 @@ export * from './analysis';
 export * from './utils';
 export * from './scenarioHandler';
 export * from './budget';
-
-// Re-export ScenarioResult explicitly to resolve ambiguity
-export type { ScenarioResult } from './types';
