@@ -1,4 +1,3 @@
-
 /**
  * Main recommendation generator module
  * Refactored from the original large file
@@ -78,6 +77,7 @@ export function generateProfessionalRecommendations(
           result.complementaryRecommendations = recommendations.supportingProfessionals.map(category => ({
             category,
             sessions: 2,
+            priority: 'low', // Add the missing priority field
             reasoning: "Supporting professional for your condition"
           }));
         }

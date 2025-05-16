@@ -1,4 +1,3 @@
-
 // Re-export types from the main index.d.ts file
 export * from './index.d';
 
@@ -43,4 +42,41 @@ export interface AIHealthPlan {
     alternatives: string[];
     reason: string;
   }>;
+}
+
+export type ServiceCategory = 
+  | 'family-medicine'
+  | 'physiotherapist'
+  | 'dietician'
+  | 'personal-trainer'
+  | 'biokineticist'
+  | 'psychiatry'
+  | 'orthopedics'
+  | 'gastroenterology'
+  | 'neurology'
+  | 'cardiology'
+  | 'dermatology'
+  | 'rheumatology'
+  | 'coaching'
+  | 'nutrition-coaching'
+  | 'strength-coaching'
+  | 'run-coaches'
+  | 'pain-management';
+
+export interface UserCriteria {
+  conditions?: string[];
+  goal?: string;
+  secondaryGoals?: string[];
+  budget?: {
+    monthly: number;
+    preferredSetup: 'monthly' | 'pay-as-you-go' | 'package';
+    flexibleBudget: boolean;
+  };
+  categories?: ServiceCategory[];
+  location?: string;
+  preferOnline?: boolean;
+  preferredGender?: 'male' | 'female' | 'no-preference';
+  isUrgent?: boolean;
+  priorities?: Record<string, number>;
+  availabilityConstraints?: string[];
 }

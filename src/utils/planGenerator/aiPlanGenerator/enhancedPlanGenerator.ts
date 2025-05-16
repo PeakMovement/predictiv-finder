@@ -6,6 +6,9 @@ import { generateAIHealthPlans } from './planBuilder';
 import { estimateComplexityLevel } from './complexity';
 import { checkCoMorbidities } from '../enhancedInputAnalyzer';
 import { extractGoals } from '../professionalRecommendation/goalExtractor';
+import { detectHealthScenarios } from '../detectors/healthScenarioDetector';
+import { analyzeSentiment } from '../inputAnalyzer/synonymExpansion';
+import { enhancePlansWithFeedbackInsights } from '../feedbackSystem';
 
 /**
  * Enhanced AI Plan Generator with improved learning capabilities
@@ -21,6 +24,7 @@ export async function generateEnhancedAIPlan(
     useMachineLearning?: boolean; 
     preferComprehensiveAnalysis?: boolean;
     adaptToUserContext?: boolean;
+    applyFeedbackInsights?: boolean;
   } = {}
 ): Promise<AIHealthPlan[]> {
   console.log(`Generating enhanced AI plan for query: "${query}"`);
@@ -29,7 +33,8 @@ export async function generateEnhancedAIPlan(
   const {
     useMachineLearning = true,
     preferComprehensiveAnalysis = true,
-    adaptToUserContext = true
+    adaptToUserContext = true,
+    applyFeedbackInsights = true
   } = options;
   
   try {
@@ -45,7 +50,7 @@ export async function generateEnhancedAIPlan(
     const combinedCriteria: Partial<UserCriteria> = {
       ...standardAnalysis,
       ...(enhancedAnalysis ? {
-        medicalConditions: enhancedAnalysis.medicalConditions,
+        conditions: enhancedAnalysis.medicalConditions,
         goal: enhancedAnalysis.primaryIssue || standardAnalysis.goal,
         categories: enhancedAnalysis.suggestedCategories,
         location: enhancedAnalysis.location,
@@ -56,8 +61,8 @@ export async function generateEnhancedAIPlan(
     console.log("Combined user criteria:", combinedCriteria);
     
     // Look for co-morbidities if there are multiple medical conditions
-    if (combinedCriteria.medicalConditions && combinedCriteria.medicalConditions.length > 1) {
-      const additionalServices = checkCoMorbidities(combinedCriteria.medicalConditions);
+    if (combinedCriteria.conditions && combinedCriteria.conditions.length > 1) {
+      const additionalServices = checkCoMorbidities(combinedCriteria.conditions);
       
       if (additionalServices.length > 0) {
         console.log("Detected co-morbidities, adding services:", additionalServices);
@@ -75,9 +80,41 @@ export async function generateEnhancedAIPlan(
       console.log("Setting primary goal from extracted goals:", combinedCriteria.goal);
     }
     
-    // Check for urgency indicators in the text
-    const urgencyTerms = ['urgent', 'immediately', 'asap', 'emergency', 'critical'];
-    const isUrgent = urgencyTerms.some(term => query.toLowerCase().includes(term));
+    // NEW: Run sentiment analysis
+    const sentimentResults = analyzeSentiment(query);
+    console.log("Sentiment analysis results:", sentimentResults);
+    
+    // NEW: Detect health scenarios
+    const healthScenarios = detectHealthScenarios(query);
+    if (healthScenarios.length > 0) {
+      console.log("Detected health scenarios:", 
+        healthScenarios.map(s => `${s.scenarioName} (${s.confidence.toFixed(2)})`));
+      
+      // Use the highest confidence scenario to augment our criteria
+      const primaryScenario = healthScenarios[0];
+      if (primaryScenario.confidence > 0.7) {
+        console.log("Applying primary scenario:", primaryScenario.scenarioName);
+        
+        // Add recommended services from the scenario
+        if (primaryScenario.recommendedServices.length > 0) {
+          combinedCriteria.categories = [
+            ...(combinedCriteria.categories || []),
+            ...primaryScenario.recommendedServices
+          ];
+          
+          // Remove duplicates
+          combinedCriteria.categories = [...new Set(combinedCriteria.categories)];
+        }
+        
+        // Set goal from scenario if no goal is set
+        if (!combinedCriteria.goal) {
+          combinedCriteria.goal = primaryScenario.scenarioName;
+        }
+      }
+    }
+    
+    // Set urgency based on sentiment analysis
+    const isUrgent = sentimentResults.urgencyLevel === 'high';
     
     // Adapt plan generation based on urgency
     if (isUrgent && adaptToUserContext) {
@@ -90,7 +127,12 @@ export async function generateEnhancedAIPlan(
     console.log(`Estimated complexity level: ${complexityLevel}`);
     
     // Generate multiple AI health plans based on the analysis
-    const generatedPlans = generateAIHealthPlans(combinedCriteria, complexityLevel);
+    let generatedPlans = generateAIHealthPlans(combinedCriteria, complexityLevel);
+    
+    // Apply feedback insights if enabled
+    if (applyFeedbackInsights) {
+      generatedPlans = enhancePlansWithFeedbackInsights(generatedPlans, query);
+    }
     
     console.log(`Generated ${generatedPlans.length} health plans`);
     return generatedPlans;
