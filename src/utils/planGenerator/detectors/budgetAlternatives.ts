@@ -1,3 +1,4 @@
+
 import { ServiceCategory, BASELINE_COSTS } from '../types';
 import { createServiceCategoryRecord } from '../helpers/serviceRecordInitializer';
 
@@ -11,7 +12,7 @@ export function findAffordableAlternatives(
 ): ServiceCategory[] {
   // Map of services that can substitute for more expensive ones
   const alternativeMap: Record<ServiceCategory, ServiceCategory[]> = {
-    'psychiatry': ['psychology', 'counseling'],
+    'psychiatry': ['psychology', 'coaching'],
     'orthopedic-surgeon': ['physiotherapist', 'orthopedics'],
     'neurosurgery': ['pain-management', 'neurology'],
     'cardiology': ['general-practitioner', 'internal-medicine'],

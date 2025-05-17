@@ -1,209 +1,197 @@
+
 import { ServiceCategory } from "../types";
+import { createServiceCategoryRecord } from "../helpers/serviceRecordInitializer";
 
 /**
- * Enhanced budget extraction with better pattern recognition and context analysis
- * 
- * @param userInput Full user input text
- * @returns Detailed budget information
+ * Enhanced budget information extraction from user input
+ * Detects budget constraints, payment preferences, and contextual clues
  */
-export function extractExtendedBudget(userInput: string): {
+export function extractBudgetInfo(
+  userInput: string
+): {
   amount: number | undefined;
   confidence: number;
-  constraintLevel: 'none' | 'low' | 'medium' | 'high';
-  preferredSetup?: 'monthly' | 'once-off' | 'package';
+  constraintLevel: "none" | "low" | "medium" | "high";
   contextClues: string[];
+  preferredSetup?: 'once-off' | 'monthly' | 'package' | 'pay-as-you-go' | 'not-sure';
 } {
   const inputLower = userInput.toLowerCase();
   const result = {
     amount: undefined as number | undefined,
     confidence: 0,
-    constraintLevel: 'none' as 'none' | 'low' | 'medium' | 'high',
-    preferredSetup: undefined as 'monthly' | 'once-off' | 'package' | undefined,
-    contextClues: [] as string[]
+    constraintLevel: "none" as "none" | "low" | "medium" | "high",
+    contextClues: [] as string[],
+    preferredSetup: 'not-sure' as 'once-off' | 'monthly' | 'package' | 'pay-as-you-go' | 'not-sure'
   };
   
-  // Check all possible patterns for budget mentions
-  const budgetPatterns = [
-    /r\s*(\d{1,6})/i,                         // R1000
-    /budget.*?(\d{1,6})/i,                    // budget of 1000
-    /afford.*?(\d{1,6})/i,                    // can afford 1000
-    /cost.*?(\d{1,6})/i,                      // cost of 1000
-    /spend.*?(\d{1,6})/i,                     // spend 1000
-    /pay.*?(\d{1,6})/i,                       // pay 1000
-    /(\d{1,6}).*?budget/i,                    // 1000 budget
-    /(\d{1,6}).*?rands?/i,                    // 1000 rand
-    /(\d{1,6}).*?per month/i,                 // 1000 per month
-    /(\d{1,6}).*?a month/i,                   // 1000 a month
-    /(\d{1,6}).*?monthly/i                    // 1000 monthly
-  ];
+  // Look for explicit budget mentions with numbers
+  const budgetMatches = inputLower.match(/budget(?:\s+is|\s+of)?\s+(\d[\d,\s]*)/);
+  const affordMatches = inputLower.match(/(?:can |could |able to )afford\s+(\d[\d,\s]*)/);
+  const spendMatches = inputLower.match(/(?:can |could |want to |willing to )spend\s+(\d[\d,\s]*)/);
+  const costMatches = inputLower.match(/cost(?:\s+up to|\s+around)?\s+(\d[\d,\s]*)/);
+  const limitMatches = inputLower.match(/limit(?:\s+is|\s+of)?\s+(\d[\d,\s]*)/);
   
-  // Try to find a match with any pattern
-  for (const pattern of budgetPatterns) {
-    const match = inputLower.match(pattern);
-    if (match && match[1]) {
-      result.amount = parseInt(match[1], 10);
-      result.confidence = 0.9;
-      result.contextClues.push(`Explicit budget amount: R${result.amount}`);
-      break;
-    }
+  // Extract amount from first matching pattern
+  const extractedAmount = 
+    (budgetMatches && budgetMatches[1]) || 
+    (affordMatches && affordMatches[1]) || 
+    (spendMatches && spendMatches[1]) || 
+    (costMatches && costMatches[1]) ||
+    (limitMatches && limitMatches[1]);
+  
+  if (extractedAmount) {
+    // Clean up and convert to number
+    const cleanNumber = extractedAmount.replace(/[^\d]/g, '');
+    result.amount = parseInt(cleanNumber, 10);
+    result.confidence = 0.9;
+    result.contextClues.push(`Explicit budget: ${result.amount}`);
   }
   
-  // Check for budget setup preferences
-  if (inputLower.includes('per month') || 
-      inputLower.includes('monthly') || 
-      inputLower.includes('a month')) {
-    result.preferredSetup = 'monthly';
-    result.contextClues.push('Monthly payment preference detected');
-  } else if (inputLower.includes('once off') || 
-            inputLower.includes('one-time') || 
-            inputLower.includes('single payment')) {
+  // Determine payment preference
+  if (inputLower.match(/\b(once-off|one-time|single)\b/)) {
     result.preferredSetup = 'once-off';
-    result.contextClues.push('One-time payment preference detected');
-  } else if (inputLower.includes('package') || 
-            inputLower.includes('bundle') || 
-            inputLower.includes('program')) {
+    result.contextClues.push("Prefers once-off payment");
+  } else if (inputLower.match(/\b(monthly|per month|each month)\b/)) {
+    result.preferredSetup = 'monthly';
+    result.contextClues.push("Prefers monthly payment");
+  } else if (inputLower.match(/\b(package|packages|bundle)\b/)) {
     result.preferredSetup = 'package';
-    result.contextClues.push('Package/bundle payment preference detected');
+    result.contextClues.push("Prefers package deals");
+  } else if (inputLower.match(/\b(pay as (I|you) go|session by session)\b/)) {
+    result.preferredSetup = 'pay-as-you-go';
+    result.contextClues.push("Prefers pay-as-you-go");
   }
   
-  // Check for budget constraint level terms
-  const highConstraintTerms = [
-    'tight budget', 'very limited', 'low budget', 'not much money',
-    'can\'t afford much', 'minimal budget', 'strict budget',
-    'financial constraints', 'cheap', 'cheapest'
+  // Detect budget constraint level
+  const tightBudgetPhrases = [
+    "tight budget", "limited budget", "low budget", "strict budget", 
+    "not expensive", "affordable", "cheap", "cost-effective", "budget friendly"
   ];
   
-  const mediumConstraintTerms = [
-    'budget conscious', 'reasonable price', 'affordable', 'not too expensive',
-    'value for money', 'cost effective', 'mid-range', 'moderate budget'
+  const flexibleBudgetPhrases = [
+    "flexible budget", "not concerned about cost", "price is not an issue",
+    "willing to pay", "worth the investment", "premium services"
   ];
   
-  const lowConstraintTerms = [
-    'flexible budget', 'not concerned about cost', 'price not a factor',
-    'whatever it costs', 'high quality', 'premium', 'best regardless of cost'
-  ];
+  // Check for tight budget indicators
+  const hasTightBudget = tightBudgetPhrases.some(phrase => inputLower.includes(phrase));
+  if (hasTightBudget) {
+    result.constraintLevel = "high";
+    result.contextClues.push("Indicates tight budget constraints");
+  }
   
-  // Determine constraint level based on terminology
-  if (highConstraintTerms.some(term => inputLower.includes(term))) {
-    result.constraintLevel = 'high';
-    result.contextClues.push('High budget constraint language detected');
-    
-    // If no explicit budget but high constraints, set a conservative default
-    if (result.amount === undefined) {
-      result.amount = 1000;
-      result.confidence = 0.6;
-      result.contextClues.push('Applied default budget for high constraints: R1000');
-    }
-  } else if (mediumConstraintTerms.some(term => inputLower.includes(term))) {
-    result.constraintLevel = 'medium';
-    result.contextClues.push('Medium budget constraint language detected');
-    
-    // Set a moderate default budget
-    if (result.amount === undefined) {
-      result.amount = 2000;
-      result.confidence = 0.5;
-      result.contextClues.push('Applied default budget for medium constraints: R2000');
-    }
-  } else if (lowConstraintTerms.some(term => inputLower.includes(term))) {
-    result.constraintLevel = 'low';
-    result.contextClues.push('Low budget constraint language detected');
-    
-    // Set a generous default budget
-    if (result.amount === undefined) {
-      result.amount = 4000;
-      result.confidence = 0.5;
-      result.contextClues.push('Applied default budget for low constraints: R4000');
-    }
-  } else if (result.amount === undefined) {
-    // No explicit budget or constraint language
-    result.constraintLevel = 'none';
-    result.confidence = 0;
+  // Check for flexible budget indicators
+  const hasFlexibleBudget = flexibleBudgetPhrases.some(phrase => inputLower.includes(phrase));
+  if (hasFlexibleBudget) {
+    result.constraintLevel = "low";
+    result.contextClues.push("Indicates flexible budget");
+  }
+  
+  // Default constraint level if we have an amount but no other indicators
+  if (result.amount && result.constraintLevel === "none") {
+    result.constraintLevel = "medium";
   }
   
   return result;
 }
 
 /**
- * Gets service affordability tiers based on budget amount
+ * Estimate service costs based on budget constraints
  */
-export function getServiceAffordabilityTiers(budget: number | undefined): {
-  affordable: ServiceCategory[];
-  moderate: ServiceCategory[];
-  expensive: ServiceCategory[];
-} {
-  // Default result with empty categories
-  const result = {
-    affordable: [] as ServiceCategory[],
-    moderate: [] as ServiceCategory[],
-    expensive: [] as ServiceCategory[]
-  };
-  
-  // If no budget, return empty result
+export function estimateServiceCosts(
+  services: ServiceCategory[],
+  budget: number | undefined,
+  preferredSetup: string = 'monthly'
+): Record<ServiceCategory, number> {
+  // If no budget specified, use default costs
   if (!budget) {
-    return result;
+    const defaultCosts = createServiceCategoryRecord(0);
+    services.forEach(service => {
+      // Use standard costs from a pricing database
+      defaultCosts[service] = 500; // Default cost per service
+    });
+    return defaultCosts;
   }
   
-  // Approximate costs per session
-  const serviceCosts: Record<ServiceCategory, number> = {
-    'family-medicine': 600,
-    'physiotherapist': 700,
-    'dietician': 550,
-    'personal-trainer': 450,
-    'coaching': 500,
-    'psychology': 900,
-    'nutrition-coaching': 450,
-    'biokineticist': 700,
-    'psychiatry': 1200,
-    'pain-management': 900,
-    'podiatrist': 750,
-    'general-practitioner': 600,
-    'sport-physician': 1200,
-    'orthopedic-surgeon': 2000,
-    'gastroenterology': 1400,
-    'massage-therapy': 500,
-    'occupational-therapy': 700,
-    'physical-therapy': 800,
-    'chiropractor': 650,
-    'nurse-practitioner': 600,
-    'cardiology': 1400,
-    'dermatology': 1000,
-    'neurology': 1300,
-    'endocrinology': 1200,
-    'urology': 1100,
-    'oncology': 1600,
-    'rheumatology': 1000,
-    'pediatrics': 900,
-    'geriatrics': 950,
-    'sports-medicine': 1100,
-    'internal-medicine': 1000,
-    'orthopedics': 1400,
-    'neurosurgery': 2200,
-    'infectious-disease': 1300,
-    'plastic-surgery': 2100,
-    'obstetrics-gynecology': 1100,
-    'emergency-medicine': 1500,
-    'anesthesiology': 1700,
-    'radiology': 1200,
-    'geriatric-medicine': 900,
-    'run-coaches': 450,
-    'all': 0
-  };
+  // Calculate cost distribution based on budget
+  const serviceCosts = createServiceCategoryRecord(0);
   
-  // Calculate how many sessions would be affordable
-  Object.entries(serviceCosts).forEach(([service, cost]) => {
-    const sessionsAffordable = Math.floor(budget / cost);
-    
-    if (sessionsAffordable >= 4) {
-      // Can afford multiple sessions
-      result.affordable.push(service as ServiceCategory);
-    } else if (sessionsAffordable >= 2) {
-      // Can afford a couple sessions
-      result.moderate.push(service as ServiceCategory);
-    } else {
-      // Can afford one or no sessions
-      result.expensive.push(service as ServiceCategory);
+  // Different allocation strategies based on payment preference
+  switch (preferredSetup) {
+    case 'once-off':
+      // Allocate the entire budget across services
+      services.forEach(service => {
+        serviceCosts[service] = Math.round(budget / services.length);
+      });
+      break;
+      
+    case 'monthly':
+      // Allocate monthly budget across services with multiple sessions
+      services.forEach(service => {
+        // Assume 4 sessions per month for certain services
+        const sessionsPerMonth = 
+          service === 'personal-trainer' || 
+          service === 'coaching' ? 4 : 2;
+        
+        serviceCosts[service] = Math.round(budget / (services.length * sessionsPerMonth));
+      });
+      break;
+      
+    case 'package':
+      // Package deals typically offer small discounts
+      services.forEach(service => {
+        const baseServiceCost = 500; // Default service cost
+        const discountFactor = 0.9; // 10% package discount
+        serviceCosts[service] = Math.round(baseServiceCost * discountFactor);
+      });
+      break;
+      
+    default:
+      // Default allocation - distribute budget evenly
+      services.forEach(service => {
+        serviceCosts[service] = Math.round(budget / services.length);
+      });
+  }
+  
+  return serviceCosts;
+}
+
+/**
+ * Determine optimal session distribution based on budget
+ */
+export function optimizeSessionDistribution(
+  budget: number,
+  services: ServiceCategory[]
+): Record<ServiceCategory, number> {
+  const sessionAllocations = createServiceCategoryRecord(0);
+  
+  // Basic algorithm: prioritize core services with at least one session
+  let remainingBudget = budget;
+  
+  // Ensure at least one session per service
+  services.forEach(service => {
+    const serviceCost = 500; // Default cost per session
+    if (remainingBudget >= serviceCost) {
+      sessionAllocations[service] = 1;
+      remainingBudget -= serviceCost;
     }
   });
   
-  return result;
+  // Distribute remaining budget starting with most important services
+  // Here we use a simplified approach of allocating from first to last
+  let index = 0;
+  while (remainingBudget > 0 && index < services.length) {
+    const service = services[index];
+    const serviceCost = 500; // Default cost per session
+    
+    if (remainingBudget >= serviceCost) {
+      sessionAllocations[service]++;
+      remainingBudget -= serviceCost;
+    } else {
+      // Move to next service if we can't afford more sessions of current
+      index++;
+    }
+  }
+  
+  return sessionAllocations;
 }

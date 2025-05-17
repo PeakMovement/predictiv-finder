@@ -1,13 +1,9 @@
 
 import { ServiceCategory } from "../types";
 
-export interface ProfessionalRecommendationOptions {
-  // Optional configuration options
-  maxRecommendations?: number;
-  includeAlternatives?: boolean;
-  locationLimit?: string;
-  detailedReasoning?: boolean;
-}
+/**
+ * Types for professional recommendations module
+ */
 
 export interface CategoryRecommendation {
   category: ServiceCategory;
@@ -23,29 +19,20 @@ export interface ProfessionalRecommendation {
   reasoning: string;
 }
 
-export interface BudgetAllocationItem {
-  category: ServiceCategory;
-  amount: number;
-  percentage?: number;
+export interface BudgetAllocation {
+  total: number;
+  breakdown: Record<ServiceCategory, number>;
 }
 
 export interface ProfessionalRecommendationResult {
   primaryRecommendations: ProfessionalRecommendation[];
   complementaryRecommendations?: ProfessionalRecommendation[];
-  alternativeOptions?: {
-    category: ServiceCategory;
-    alternatives: ServiceCategory[];
-    reason: string;
-  }[];
+  budgetAllocation?: BudgetAllocation;
   notes?: string[];
-  budgetAllocation?: {
-    total: number;
-    breakdown: Record<ServiceCategory, number>;
-  };
 }
 
 export interface ScenarioResult {
-  scenario: string;
+  scenarioName: string;
   confidence: number;
   mainIssue?: string;
   recommendations: {
@@ -54,4 +41,29 @@ export interface ScenarioResult {
     supportingProfessionals?: ServiceCategory[];
     rationale: string;
   };
+}
+
+export interface ProfessionalMatch {
+  serviceType: ServiceCategory;
+  matchScore: number;
+  reasoning: string;
+}
+
+export enum EvidenceLevel {
+  HIGH = "high",
+  MEDIUM = "medium", 
+  LOW = "low"
+}
+
+export interface AnalysisResult {
+  symptoms: string[];
+  goals: string[];
+  severityScores: Record<string, number>;
+  contraindications: ServiceCategory[];
+  locationInfo: {
+    location?: string;
+    isRemote: boolean;
+  };
+  hasBudgetConstraint: boolean;
+  budget?: number;
 }

@@ -149,4 +149,3 @@ export interface ServiceAllocation {
   description: string;
   frequency?: string;
 }
-

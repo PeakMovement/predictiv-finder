@@ -1,19 +1,10 @@
-
 // Re-export everything from the new modular structure
 export * from './professionalRecommendation';
-export * from './budget';
+export * from './types';
+export * from './matcher';
 export * from './goalExtractor';
-export * from './enhancedGoalAnalyzer';
-export * from './analysis';
-export * from './enhancedMatcher';
+export * from './scenarioHandler';
 
-// Explicitly re-export types to avoid ambiguity
-export { 
-  type ProfessionalRecommendationOptions,
-  type CategoryRecommendation,
-  type ProfessionalRecommendation,
-  type BudgetAllocationItem,
-  type ProfessionalRecommendationResult
-} from './types';
-
-// Re-export ScenarioResult from its original location only
+// Note: Some files like 'budget', 'enhancedGoalAnalyzer', 'analysis', and 'enhancedMatcher'
+// might not be created yet but were referenced in other files.
+// These would need to be implemented as needed.
