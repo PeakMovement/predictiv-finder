@@ -1,130 +1,178 @@
-
-/**
- * Functions for analyzing user input and generating recommendations
- */
-
-import { ServiceCategory } from "../types";
-import { 
-  ProfessionalRecommendation, 
-  CategoryRecommendation 
-} from "./types";
-import { identifySymptoms } from "../symptomDetector";
+import { AnalysisResult } from "./types";
 import { extractGoals } from "./goalExtractor";
-import { calculateSeverityScores, extractLocationDetails } from "../inputAnalyzer/weightingSystem";
-import { extractBudget } from "../inputAnalyzer/budgetExtractor";
-import { processHealthScenario } from "./scenarioHandler";
-import { logger } from "@/utils/cache";
+import { ServiceCategory } from "../types";
 
-export interface SymptomAnalysisResult {
-  symptoms: string[];
-  priorities: Record<string, number>;
-  contraindications: ServiceCategory[];
-}
-
-// Fix the TypeScript error by making location optional in the interface
-export interface LocationAnalysis {
-  location?: string;
-  isRemote: boolean;
-}
-
-export interface BudgetAnalysis {
-  budget: number | undefined;
-  hasBudgetConstraint: boolean;
+/**
+ * Analyzes user health input to extract relevant information
+ * In a production system, this would use more advanced NLP or a language model
+ */
+export function analyzeUserHealth(userInput: string): AnalysisResult {
+  const lowerInput = userInput.toLowerCase();
+  
+  // Extract symptoms using simple keyword matching
+  const symptoms: string[] = extractSymptoms(lowerInput);
+  
+  // Extract goals using our dedicated goal extractor
+  const goals: string[] = extractGoals(userInput);
+  
+  // Calculate severity scores for symptoms
+  const severityScores: Record<string, number> = {};
+  symptoms.forEach(symptom => {
+    // Check for severity indicators
+    if (lowerInput.includes(`severe ${symptom}`) || lowerInput.includes(`bad ${symptom}`)) {
+      severityScores[symptom] = 0.8;
+    } else if (lowerInput.includes(`mild ${symptom}`) || lowerInput.includes(`slight ${symptom}`)) {
+      severityScores[symptom] = 0.3;
+    } else {
+      severityScores[symptom] = 0.5; // Default moderate severity
+    }
+  });
+  
+  // Detect contraindications
+  const contraindications: ServiceCategory[] = detectContraindications(lowerInput);
+  
+  // Extract location information
+  const locationInfo = extractLocationInfo(lowerInput);
+  
+  // Extract budget information
+  const { hasBudgetConstraint, budget } = extractBudgetInfo(lowerInput);
+  
+  return {
+    symptoms,
+    goals,
+    severityScores,
+    contraindications,
+    locationInfo,
+    hasBudgetConstraint,
+    budget
+  };
 }
 
 /**
- * Analyzes user input to extract key health information
+ * Extract symptoms from user input text
  */
-export function analyzeUserHealth(userInput: string) {
-  logger.debug("Analyzing user health information from input:", userInput);
+function extractSymptoms(inputText: string): string[] {
+  const symptoms: Set<string> = new Set();
   
-  try {
-    // Check for specific health scenarios first
-    const scenarioResult = processHealthScenario(userInput);
-    if (scenarioResult && scenarioResult.confidence > 0.8) {
-      logger.debug("Detected specific health scenario:", scenarioResult.scenario);
-      return { scenarioResult, isSpecificScenario: true };
+  // Common physical symptoms
+  const physicalSymptoms = [
+    'back pain', 'knee pain', 'shoulder pain', 'neck pain', 
+    'joint pain', 'headache', 'migraine', 'fatigue', 'tiredness',
+    'weakness', 'stiffness', 'swelling', 'inflammation',
+    'nausea', 'dizziness', 'balance issues', 'coordination problems',
+    'muscle pain', 'cramps', 'spasms', 'numbness', 'tingling'
+  ];
+  
+  // Mental/emotional symptoms
+  const mentalSymptoms = [
+    'anxiety', 'stress', 'depression', 'insomnia', 'sleep issues',
+    'trouble sleeping', 'mood swings', 'irritability', 'lack of focus',
+    'concentration problems', 'memory issues', 'mental fog'
+  ];
+  
+  // Digestive symptoms  
+  const digestiveSymptoms = [
+    'bloating', 'constipation', 'diarrhea', 'indigestion',
+    'stomach pain', 'acid reflux', 'heartburn', 'ibs', 
+    'gas', 'digestive issues'
+  ];
+  
+  // Check for each symptom in the input text
+  [...physicalSymptoms, ...mentalSymptoms, ...digestiveSymptoms].forEach(symptom => {
+    if (inputText.includes(symptom)) {
+      symptoms.add(symptom);
     }
-    
-    // If no specific scenario matched, continue with standard analysis
-    logger.debug("No specific health scenario detected, proceeding with standard analysis.");
-    
-    // Extract conditions and symptoms with error handling
-    let symptomAnalysisResult: SymptomAnalysisResult;
-    try {
-      symptomAnalysisResult = identifySymptoms(userInput);
-    } catch (error) {
-      logger.error("Error identifying symptoms:", error);
-      throw new Error("Failed to analyze health symptoms. Please try different wording.");
-    }
-    
-    const { symptoms, priorities, contraindications } = symptomAnalysisResult;
-    logger.debug("Identified symptoms:", symptoms);
-    logger.debug("Contraindicated services:", contraindications);
-    
-    if (symptoms.length === 0) {
-      logger.warn("No symptoms identified from input");
-    }
-    
-    // Extract goals with error handling
-    let goals;
-    try {
-      goals = extractGoals(userInput);
-    } catch (error) {
-      logger.error("Error extracting goals:", error);
-      goals = [];
-    }
-    logger.debug("Extracted goals:", goals);
-    
-    // Calculate severity scores for each condition with error handling
-    let severityScores;
-    try {
-      severityScores = calculateSeverityScores(symptoms, userInput);
-    } catch (error) {
-      logger.error("Error calculating severity scores:", error);
-      severityScores = symptoms.reduce((acc, symptom) => {
-        acc[symptom] = 0.5; // Default medium severity
-        return acc;
-      }, {} as Record<string, number>);
-    }
-    logger.debug("Severity scores:", severityScores);
-    
-    // Extract location and online preference with error handling
-    let locationInfo: LocationAnalysis;
-    try {
-      locationInfo = extractLocationDetails(userInput);
-    } catch (error) {
-      logger.error("Error extracting location details:", error);
-      locationInfo = { location: undefined, isRemote: false };
-    }
-    logger.debug("Location info:", locationInfo);
-    
-    // Extract budget information with error handling
-    let budget;
-    let hasBudgetConstraint;
-    try {
-      budget = extractBudget(userInput);
-      hasBudgetConstraint = budget !== undefined;
-    } catch (error) {
-      logger.error("Error extracting budget information:", error);
-      budget = undefined;
-      hasBudgetConstraint = false;
-    }
-    logger.debug("Budget info:", { budget, hasBudgetConstraint });
-    
-    return {
-      symptoms,
-      priorities,
-      contraindications,
-      goals,
-      severityScores,
-      locationInfo,
-      budget,
-      hasBudgetConstraint,
-      isSpecificScenario: false
-    };
-  } catch (error) {
-    logger.error("Error in analyzeUserHealth:", error);
-    throw error;
+  });
+  
+  // Look for phrases like "I have X" or "suffering from X"
+  const symptomPhrases = inputText.match(/(?:i have|suffering from|experiencing|dealing with|struggle with|problem with|issues with|trouble with)\s+([a-z\s]+)(?:,|\.|$)/gi);
+  if (symptomPhrases) {
+    symptomPhrases.forEach(phrase => {
+      const cleanedPhrase = phrase.replace(/i have|suffering from|experiencing|dealing with|struggle with|problem with|issues with|trouble with/gi, '').trim();
+      if (cleanedPhrase && cleanedPhrase.length > 3) { // Avoid very short matches
+        symptoms.add(cleanedPhrase);
+      }
+    });
   }
+  
+  return Array.from(symptoms);
+}
+
+/**
+ * Detect contraindications - services that should be avoided
+ */
+function detectContraindications(inputText: string): ServiceCategory[] {
+  const contraindications: ServiceCategory[] = [];
+  
+  // Check for direct contraindications
+  if (inputText.includes('no surgery') || inputText.includes('avoid surgery') || 
+      inputText.includes('don\'t want surgery') || inputText.includes('against surgery')) {
+    contraindications.push('orthopedic-surgeon');
+    contraindications.push('neurosurgery');
+    contraindications.push('plastic-surgery');
+  }
+  
+  if (inputText.includes('no medication') || inputText.includes('avoid medication') ||
+      inputText.includes('don\'t want medication') || inputText.includes('against medication')) {
+    contraindications.push('psychiatry');
+    // Others that primarily prescribe medication could be added here
+  }
+  
+  return contraindications;
+}
+
+/**
+ * Extract location information
+ */
+function extractLocationInfo(inputText: string): { location?: string; isRemote: boolean } {
+  // Check for location phrases like "in Cape Town" or "located in Johannesburg"
+  const locationMatches = inputText.match(/(?:in|at|near|located in)\s+([a-z\s]+?)(?:,|\.|$)/i);
+  
+  // Check for remote preference
+  const isRemote = inputText.includes('remote') || 
+                 inputText.includes('online') || 
+                 inputText.includes('virtual') ||
+                 inputText.includes('telehealth') ||
+                 inputText.includes('from home');
+                 
+  return {
+    location: locationMatches ? locationMatches[1].trim() : undefined,
+    isRemote
+  };
+}
+
+/**
+ * Extract budget information
+ */
+function extractBudgetInfo(inputText: string): { hasBudgetConstraint: boolean; budget?: number } {
+  // Look for budget information with various patterns
+  const budgetMatches = inputText.match(/budget.*?(\d+)/i) || 
+                      inputText.match(/afford.*?(\d+)/i) ||
+                      inputText.match(/spend.*?(\d+)/i) ||
+                      inputText.match(/limit.*?(\d+)/i) ||
+                      inputText.match(/maximum.*?(\d+)/i) ||
+                      inputText.match(/up to (\d+)/i) ||
+                      inputText.match(/(\d+) rands?/i) ||
+                      inputText.match(/r\s*(\d+)/i); // R1000 pattern
+  
+  if (budgetMatches && budgetMatches[1]) {
+    const budget = parseInt(budgetMatches[1]);
+    return {
+      hasBudgetConstraint: true,
+      budget: budget > 0 ? budget : undefined
+    };
+  }
+  
+  // Check for budget constraint mentions without specific amounts
+  const hasBudgetConstraint = inputText.includes('budget') || 
+                            inputText.includes('afford') ||
+                            inputText.includes('expensive') ||
+                            inputText.includes('cost') ||
+                            inputText.includes('cheap') ||
+                            inputText.includes('money');
+  
+  return {
+    hasBudgetConstraint,
+    budget: undefined
+  };
 }

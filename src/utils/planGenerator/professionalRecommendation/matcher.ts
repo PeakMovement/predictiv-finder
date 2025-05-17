@@ -1,7 +1,3 @@
-/**
- * Professional category matching module
- * Handles the logic for matching health professionals to user needs
- */
 
 import { ServiceCategory } from "../types";
 import { CategoryRecommendation } from "./types";
@@ -9,301 +5,278 @@ import { createServiceCategoryRecord } from "../helpers/serviceRecordInitializer
 import { enhancedMemoize } from "@/utils/cache";
 
 /**
- * Match practitioners to user needs based on symptoms and goals
- * Enhanced with memoization for better performance
- * 
- * @param symptoms User's symptoms
- * @param severityScores Severity scores for conditions
+ * Match practitioners to user needs with enhanced caching
+ * @param symptoms Array of symptoms from user input
+ * @param severityScores Severity scores for symptoms
  * @param goals User's health goals
- * @param location User's location
- * @param isRemote Whether user prefers remote services
- * @param hasBudgetConstraint Whether user has budget constraints
- * @returns Ranked list of practitioner categories
+ * @param location User's location (optional)
+ * @param isRemote Whether remote services are preferred
+ * @param hasBudgetConstraint Whether there's a budget constraint
+ * @returns Array of category recommendations sorted by match score
  */
 export function matchPractitionersToNeeds(
   symptoms: string[],
   severityScores: Record<string, number>,
   goals: string[],
   location?: string,
-  isRemote?: boolean,
-  hasBudgetConstraint?: boolean
+  isRemote: boolean = false,
+  hasBudgetConstraint: boolean = false
 ): CategoryRecommendation[] {
-  // Create a basic set of recommendations
-  const recommendations: CategoryRecommendation[] = [];
-  
-  // Match based on symptoms
-  if (symptoms.length > 0) {
-    const matchedBySymptoms = matchSymptomsToPractitioners(symptoms, severityScores);
-    recommendations.push(...matchedBySymptoms);
-  }
-  
-  // Match based on goals
-  if (goals.length > 0) {
-    const matchedByGoals = matchGoalsToPractitioners(goals);
-    recommendations.push(...matchedByGoals);
-  }
-  
-  // Deduplicate and consolidate scores
-  const consolidatedRecommendations = consolidateRecommendations(recommendations);
-  
-  // Sort by score (highest first)
-  return consolidatedRecommendations.sort((a, b) => b.score - a.score);
-}
+  // Initialize all service categories with zero scores
+  const categoryScores = createServiceCategoryRecord<number>(0);
+  const categoryReasons = createServiceCategoryRecord<string[]>([]);
+  const primaryConditions = createServiceCategoryRecord<string | undefined>(undefined);
 
-/**
- * Match symptoms to appropriate practitioners
- */
-function matchSymptomsToPractitioners(
-  symptoms: string[],
-  severityScores: Record<string, number>
-): CategoryRecommendation[] {
-  const recommendations: CategoryRecommendation[] = [];
-  
+  // Process symptoms to find matching professionals
   symptoms.forEach(symptom => {
-    const severity = severityScores[symptom] || 0.5;
     const lowerSymptom = symptom.toLowerCase();
     
-    // Match pain-related symptoms
-    if (lowerSymptom.includes('pain')) {
-      if (lowerSymptom.includes('back') || lowerSymptom.includes('neck') || lowerSymptom.includes('joint')) {
-        recommendations.push({
-          category: 'physiotherapist',
-          score: 0.8 * severity,
-          reasoning: `Recommended for ${symptom}`,
-          primaryCondition: symptom
-        });
-        
-        if (severity > 0.7) {
-          recommendations.push({
-            category: 'pain-management',
-            score: 0.7 * severity,
-            reasoning: `Recommended for severe ${symptom}`,
-            primaryCondition: symptom
-          });
-        }
-      }
+    // Match common symptoms to professional categories
+    // Back pain
+    if (lowerSymptom.includes('back pain') || lowerSymptom.includes('backache')) {
+      addScore('physiotherapist', 0.9, categoryScores);
+      addReason('physiotherapist', `Addresses ${symptom}`, categoryReasons);
+      setPrimaryCondition('physiotherapist', symptom, primaryConditions);
       
-      if (lowerSymptom.includes('chronic') || severity > 0.8) {
-        recommendations.push({
-          category: 'pain-management',
-          score: 0.9 * severity,
-          reasoning: `Recommended for chronic ${symptom}`,
-          primaryCondition: symptom
-        });
-      }
+      addScore('biokineticist', 0.7, categoryScores);
+      addReason('biokineticist', `Can help with ${symptom}`, categoryReasons);
+      
+      addScore('pain-management', 0.8, categoryScores);
+      addReason('pain-management', `Specializes in treating ${symptom}`, categoryReasons);
     }
     
-    // Match mental health symptoms
-    if (lowerSymptom.includes('anxiety') || lowerSymptom.includes('stress') || 
-        lowerSymptom.includes('depression') || lowerSymptom.includes('mental')) {
-      recommendations.push({
-        category: 'psychology',
-        score: 0.85 * severity,
-        reasoning: `Recommended for ${symptom}`,
-        primaryCondition: symptom
-      });
+    // Joint pain
+    if (lowerSymptom.includes('joint') || lowerSymptom.includes('knee') || 
+        lowerSymptom.includes('shoulder') || lowerSymptom.includes('hip')) {
+      addScore('physiotherapist', 0.9, categoryScores);
+      addReason('physiotherapist', `Treats ${symptom}`, categoryReasons);
+      setPrimaryCondition('physiotherapist', symptom, primaryConditions);
       
-      if (severity > 0.7 || lowerSymptom.includes('severe')) {
-        recommendations.push({
-          category: 'psychiatry',
-          score: 0.75 * severity,
-          reasoning: `Recommended for severe ${symptom}`,
-          primaryCondition: symptom
-        });
-      }
+      addScore('biokineticist', 0.8, categoryScores);
+      addReason('biokineticist', `Effective for ${symptom}`, categoryReasons);
+      
+      addScore('orthopedics', 0.8, categoryScores);
+      addReason('orthopedics', `Medical specialist for ${symptom}`, categoryReasons);
     }
     
-    // Match dietary/nutrition symptoms
+    // Nutrition-related
     if (lowerSymptom.includes('diet') || lowerSymptom.includes('weight') || 
         lowerSymptom.includes('nutrition') || lowerSymptom.includes('eating')) {
-      recommendations.push({
-        category: 'dietician',
-        score: 0.9 * severity,
-        reasoning: `Recommended for ${symptom}`,
-        primaryCondition: symptom
-      });
+      addScore('dietician', 0.9, categoryScores);
+      addReason('dietician', `Expert for ${symptom}`, categoryReasons);
+      setPrimaryCondition('dietician', symptom, primaryConditions);
       
-      recommendations.push({
-        category: 'nutrition-coaching',
-        score: 0.7 * severity,
-        reasoning: `Recommended for ${symptom}`,
-        primaryCondition: symptom
-      });
+      addScore('nutrition-coaching', 0.8, categoryScores);
+      addReason('nutrition-coaching', `Provides guidance for ${symptom}`, categoryReasons);
     }
     
-    // Always consider general practitioner for medical symptoms
-    if (!lowerSymptom.includes('fitness') && !lowerSymptom.includes('training')) {
-      recommendations.push({
-        category: 'general-practitioner',
-        score: 0.6 * severity,
-        reasoning: `Recommended for general medical assessment of ${symptom}`,
-        primaryCondition: symptom
-      });
+    // Mental health
+    if (lowerSymptom.includes('anxiety') || lowerSymptom.includes('stress') || 
+        lowerSymptom.includes('depression') || lowerSymptom.includes('mental')) {
+      addScore('psychology', 0.9, categoryScores);
+      addReason('psychology', `Addresses ${symptom}`, categoryReasons);
+      setPrimaryCondition('psychology', symptom, primaryConditions);
+      
+      addScore('psychiatry', 0.8, categoryScores);
+      addReason('psychiatry', `Medical treatment for ${symptom}`, categoryReasons);
+      
+      addScore('coaching', 0.6, categoryScores);
+      addReason('coaching', `Support for managing ${symptom}`, categoryReasons);
+    }
+    
+    // Fitness-related
+    if (lowerSymptom.includes('strength') || lowerSymptom.includes('fitness') || 
+        lowerSymptom.includes('exercise') || lowerSymptom.includes('muscle')) {
+      addScore('personal-trainer', 0.9, categoryScores);
+      addReason('personal-trainer', `Specializes in ${symptom}`, categoryReasons);
+      setPrimaryCondition('personal-trainer', symptom, primaryConditions);
+      
+      addScore('biokineticist', 0.8, categoryScores);
+      addReason('biokineticist', `Scientific approach to ${symptom}`, categoryReasons);
+      
+      addScore('coaching', 0.7, categoryScores);
+      addReason('coaching', `Guidance and motivation for ${symptom}`, categoryReasons);
+    }
+    
+    // Running-specific
+    if (lowerSymptom.includes('run') || lowerSymptom.includes('marathon') || 
+        lowerSymptom.includes('jog') || lowerSymptom.includes('sprint')) {
+      addScore('coaching', 0.9, categoryScores);
+      addReason('coaching', `Specialized training for ${symptom}`, categoryReasons);
+      setPrimaryCondition('coaching', symptom, primaryConditions);
+      
+      addScore('personal-trainer', 0.7, categoryScores);
+      addReason('personal-trainer', `Structured program for ${symptom}`, categoryReasons);
+    }
+    
+    // Let severity influence score
+    const severity = severityScores[lowerSymptom] || 0.5;
+    if (severity > 0.7) {
+      // For high severity, boost medical professionals
+      addScore('family-medicine', 0.7, categoryScores);
+      addReason('family-medicine', `Assessment of severe ${symptom}`, categoryReasons);
+      
+      // Specific specialists based on high severity symptoms
+      if (lowerSymptom.includes('heart') || lowerSymptom.includes('chest') || lowerSymptom.includes('breath')) {
+        addScore('cardiology', 0.8, categoryScores);
+        addReason('cardiology', `Medical evaluation of severe ${symptom}`, categoryReasons);
+      }
+      
+      if (lowerSymptom.includes('skin') || lowerSymptom.includes('rash')) {
+        addScore('dermatology', 0.8, categoryScores);
+        addReason('dermatology', `Medical treatment of severe ${symptom}`, categoryReasons);
+      }
+      
+      if (lowerSymptom.includes('digest') || lowerSymptom.includes('stomach') || lowerSymptom.includes('bowel')) {
+        addScore('gastroenterology', 0.8, categoryScores);
+        addReason('gastroenterology', `Medical evaluation of severe ${symptom}`, categoryReasons);
+      }
     }
   });
-  
-  return recommendations;
-}
 
-/**
- * Match goals to appropriate practitioners
- */
-function matchGoalsToPractitioners(goals: string[]): CategoryRecommendation[] {
-  const recommendations: CategoryRecommendation[] = [];
-  
+  // Process goals to better match practitioners
   goals.forEach(goal => {
     const lowerGoal = goal.toLowerCase();
     
-    // Match fitness/strength goals
-    if (lowerGoal.includes('strength') || lowerGoal.includes('fitness') || 
-        lowerGoal.includes('muscle') || lowerGoal.includes('exercise')) {
-      recommendations.push({
-        category: 'personal-trainer',
-        score: 0.9,
-        reasoning: `Recommended for ${goal}`
-      });
+    // Weight management goals
+    if (lowerGoal.includes('weight') || lowerGoal.includes('lose') || lowerGoal.includes('slim')) {
+      addScore('dietician', 0.9, categoryScores);
+      addReason('dietician', `Helps achieve ${goal}`, categoryReasons);
       
-      recommendations.push({
-        category: 'biokineticist',
-        score: 0.7,
-        reasoning: `Recommended for ${goal}`
-      });
+      addScore('personal-trainer', 0.8, categoryScores);
+      addReason('personal-trainer', `Exercise program for ${goal}`, categoryReasons);
+      
+      addScore('nutrition-coaching', 0.7, categoryScores);
+      addReason('nutrition-coaching', `Nutritional guidance for ${goal}`, categoryReasons);
     }
     
-    // Match running/endurance goals
-    if (lowerGoal.includes('run') || lowerGoal.includes('marathon') || 
-        lowerGoal.includes('endurance') || lowerGoal.includes('cardio')) {
-      recommendations.push({
-        category: 'coaching',
-        score: 0.85,
-        reasoning: `Recommended for ${goal}`
-      });
+    // Fitness goals
+    if (lowerGoal.includes('fit') || lowerGoal.includes('strong') || lowerGoal.includes('muscle')) {
+      addScore('personal-trainer', 0.9, categoryScores);
+      addReason('personal-trainer', `Expertise in ${goal}`, categoryReasons);
       
-      recommendations.push({
-        category: 'personal-trainer',
-        score: 0.7,
-        reasoning: `Recommended for ${goal}`
-      });
+      addScore('biokineticist', 0.8, categoryScores);
+      addReason('biokineticist', `Scientific approach to ${goal}`, categoryReasons);
     }
     
-    // Match nutrition/weight goals
-    if (lowerGoal.includes('weight') || lowerGoal.includes('diet') || 
-        lowerGoal.includes('nutrition') || lowerGoal.includes('eat')) {
-      recommendations.push({
-        category: 'dietician',
-        score: 0.9,
-        reasoning: `Recommended for ${goal}`
-      });
+    // Running goals
+    if (lowerGoal.includes('run') || lowerGoal.includes('marathon') || lowerGoal.includes('race')) {
+      addScore('coaching', 0.9, categoryScores);
+      addReason('coaching', `Specialized training for ${goal}`, categoryReasons);
       
-      recommendations.push({
-        category: 'nutrition-coaching',
-        score: 0.8,
-        reasoning: `Recommended for ${goal}`
-      });
+      addScore('personal-trainer', 0.7, categoryScores);
+      addReason('personal-trainer', `Conditioning for ${goal}`, categoryReasons);
     }
     
-    // Match performance goals
-    if (lowerGoal.includes('performance') || lowerGoal.includes('sport') || 
-        lowerGoal.includes('compete') || lowerGoal.includes('athlete')) {
-      recommendations.push({
-        category: 'sport-physician',
-        score: 0.8,
-        reasoning: `Recommended for ${goal}`
-      });
+    // Rehabilitation goals
+    if (lowerGoal.includes('recover') || lowerGoal.includes('rehab') || lowerGoal.includes('heal')) {
+      addScore('physiotherapist', 0.9, categoryScores);
+      addReason('physiotherapist', `Rehabilitation for ${goal}`, categoryReasons);
       
-      recommendations.push({
-        category: 'biokineticist',
-        score: 0.85,
-        reasoning: `Recommended for ${goal}`
-      });
+      addScore('biokineticist', 0.8, categoryScores);
+      addReason('biokineticist', `Recovery assistance for ${goal}`, categoryReasons);
     }
     
-    // Match recovery goals
-    if (lowerGoal.includes('recovery') || lowerGoal.includes('injury') || 
-        lowerGoal.includes('rehab') || lowerGoal.includes('heal')) {
-      recommendations.push({
-        category: 'physiotherapist',
-        score: 0.95,
-        reasoning: `Recommended for ${goal}`
-      });
+    // Mental wellbeing goals
+    if (lowerGoal.includes('stress') || lowerGoal.includes('mental') || lowerGoal.includes('relax')) {
+      addScore('psychology', 0.9, categoryScores);
+      addReason('psychology', `Mental health support for ${goal}`, categoryReasons);
       
-      recommendations.push({
-        category: 'biokineticist',
-        score: 0.85,
-        reasoning: `Recommended for ${goal}`
-      });
+      addScore('coaching', 0.8, categoryScores);
+      addReason('coaching', `Guidance for ${goal}`, categoryReasons);
+      
+      addScore('psychiatry', 0.7, categoryScores);
+      addReason('psychiatry', `Medical support for ${goal}`, categoryReasons);
     }
   });
   
+  // Adjust for location and remote preferences
+  if (isRemote) {
+    // Boost professionals that are commonly available remotely
+    addScore('psychology', 0.1, categoryScores);
+    addReason('psychology', 'Well-suited for remote sessions', categoryReasons);
+    
+    addScore('dietician', 0.1, categoryScores);
+    addReason('dietician', 'Effective in remote format', categoryReasons);
+    
+    addScore('coaching', 0.2, categoryScores);
+    addReason('coaching', 'Ideal for remote coaching', categoryReasons);
+    
+    // Reduce scores for hands-on services
+    reduceScore('physiotherapist', 0.1, categoryScores);
+    addReason('physiotherapist', 'Limited by remote format', categoryReasons);
+    
+    reduceScore('massage-therapy', 0.2, categoryScores);
+    addReason('massage-therapy', 'Not suitable for remote sessions', categoryReasons);
+  }
+  
+  // Adjust for budget constraints
+  if (hasBudgetConstraint) {
+    // Reduce scores for typically expensive services
+    reduceScore('psychiatry', 0.2, categoryScores);
+    addReason('psychiatry', 'May be constrained by budget', categoryReasons);
+    
+    reduceScore('orthopedic-surgeon', 0.3, categoryScores);
+    addReason('orthopedic-surgeon', 'High cost service', categoryReasons);
+    
+    // Boost scores for cost-effective options
+    addScore('dietician', 0.1, categoryScores);
+    addReason('dietician', 'Cost-effective option', categoryReasons);
+    
+    addScore('coaching', 0.1, categoryScores);
+    addReason('coaching', 'Flexible pricing options', categoryReasons);
+  }
+
+  // Convert to the CategoryRecommendation format and sort by score
+  const recommendations: CategoryRecommendation[] = Object.entries(categoryScores)
+    .map(([category, score]) => {
+      const serviceCategory = category as ServiceCategory;
+      return {
+        category: serviceCategory,
+        score,
+        reasoning: categoryReasons[serviceCategory].join('; '),
+        primaryCondition: primaryConditions[serviceCategory]
+      };
+    })
+    .filter(rec => rec.score > 0)
+    .sort((a, b) => b.score - a.score);
+
   return recommendations;
 }
 
-/**
- * Consolidate duplicate recommendations and sum their scores
- */
-function consolidateRecommendations(
-  recommendations: CategoryRecommendation[]
-): CategoryRecommendation[] {
-  const consolidatedMap: Record<ServiceCategory, CategoryRecommendation> = {};
-  
-  recommendations.forEach(rec => {
-    if (!consolidatedMap[rec.category]) {
-      consolidatedMap[rec.category] = { ...rec };
-    } else {
-      // Sum scores (capped at 1.0)
-      consolidatedMap[rec.category].score = Math.min(1.0, 
-        consolidatedMap[rec.category].score + rec.score * 0.5);
-      
-      // Keep the primary condition from the recommendation with the highest score
-      if (rec.score > consolidatedMap[rec.category].score && rec.primaryCondition) {
-        consolidatedMap[rec.category].primaryCondition = rec.primaryCondition;
-      }
-      
-      // Append reasoning
-      if (rec.reasoning && !consolidatedMap[rec.category].reasoning.includes(rec.reasoning)) {
-        consolidatedMap[rec.category].reasoning += `, ${rec.reasoning}`;
-      }
-    }
-  });
-  
-  return Object.values(consolidatedMap);
+// Helper functions for score management
+function addScore(category: ServiceCategory, value: number, scores: Record<ServiceCategory, number>): void {
+  scores[category] = (scores[category] || 0) + value;
 }
 
-/**
- * Memoized version of matchPractitionersToNeeds for better performance
- * This prevents unnecessary recalculations for the same inputs
- */
-export const cachedMatchPractitioners = enhancedMemoize(matchPractitionersToNeeds);
-
-/**
- * Get recommended practitioners for specific health conditions
- * @param condition The health condition to match
- * @returns Array of recommended professional categories
- */
-export function getRecommendedPractitionersForCondition(condition: string): ServiceCategory[] {
-  const conditionMap: Record<string, ServiceCategory[]> = {
-    'back pain': ['physiotherapist', 'orthopedics', 'pain-management'],
-    'knee pain': ['physiotherapist', 'orthopedics'],
-    'weight loss': ['dietician', 'personal-trainer'],
-    'anxiety': ['psychiatry', 'coaching'],
-    'depression': ['psychiatry', 'coaching'],
-    'digestive issues': ['gastroenterology', 'dietician'],
-    'sleep problems': ['psychiatry', 'family-medicine']
-  };
-  
-  return conditionMap[condition.toLowerCase()] || ['family-medicine'];
+function reduceScore(category: ServiceCategory, value: number, scores: Record<ServiceCategory, number>): void {
+  scores[category] = Math.max(0, (scores[category] || 0) - value);
 }
 
-/**
- * Determines if the user's needs are complex and require specialists
- * @param symptoms User's symptoms
- * @param severity Severity of symptoms
- * @returns Whether specialist care is recommended
- */
-export function needsSpecialistCare(symptoms: string[], severity: number): boolean {
-  const highRiskSymptoms = ['chest pain', 'shortness of breath', 'severe pain'];
-  const hasHighRiskSymptom = symptoms.some(s => 
-    highRiskSymptoms.some(risk => s.toLowerCase().includes(risk)));
+function addReason(category: ServiceCategory, reason: string, reasons: Record<ServiceCategory, string[]>): void {
+  if (!reasons[category]) {
+    reasons[category] = [];
+  }
   
-  return hasHighRiskSymptom || severity > 0.8;
+  // Avoid duplicates
+  if (!reasons[category].includes(reason)) {
+    reasons[category].push(reason);
+  }
 }
+
+function setPrimaryCondition(
+  category: ServiceCategory, 
+  condition: string, 
+  conditions: Record<ServiceCategory, string | undefined>
+): void {
+  // Only set if not already set
+  if (!conditions[category]) {
+    conditions[category] = condition;
+  }
+}
+
+// Create a cached version of the matching function for performance
+export const cachedMatchPractitioners = enhancedMemoize(
+  matchPractitionersToNeeds,
+  (args) => JSON.stringify(args)
+);

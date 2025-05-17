@@ -12,7 +12,7 @@ const Professionals: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   
-  // Mock professionals data - in a real app this would come from an API
+  // Enhanced professionals data with more diverse specialists
   const professionals = [
     {
       id: 1,
@@ -67,7 +67,62 @@ const Professionals: React.FC = () => {
       location: "Johannesburg",
       specialties: ["Life Balance", "Corporate Wellness", "Holistic Health"],
       image: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?ixlib=rb-1.2.1&auto=format&fit=crop&w=900&q=60"
-    }
+    },
+    // New professionals
+    {
+      id: 7,
+      name: "Dr. Lisa Nkosi",
+      title: "Sports Medicine Specialist",
+      category: "sports-medicine",
+      location: "Cape Town",
+      specialties: ["Athletic Injuries", "Performance Optimization", "Sports Recovery"],
+      image: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?ixlib=rb-1.2.1&auto=format&fit=crop&w=900&q=60"
+    },
+    {
+      id: 8,
+      name: "Nomvula Zuma",
+      title: "Running Coach",
+      category: "coaching",
+      location: "Durban",
+      specialties: ["Marathon Training", "Running Form", "Endurance Building"],
+      image: "https://images.unsplash.com/photo-1552196563-55cd4e45efb3?ixlib=rb-1.2.1&auto=format&fit=crop&w=900&q=60"
+    },
+    {
+      id: 9,
+      name: "Dr. Ahmed Khan",
+      title: "Gastroenterologist",
+      category: "medical",
+      location: "Johannesburg",
+      specialties: ["Digestive Health", "IBS Management", "Gut Health"],
+      image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-1.2.1&auto=format&fit=crop&w=900&q=60"
+    },
+    {
+      id: 10,
+      name: "Lindiwe Mthembu",
+      title: "Nutrition Coach",
+      category: "nutrition",
+      location: "Pretoria",
+      specialties: ["Plant-Based Diets", "Sports Nutrition", "Weight Management"],
+      image: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?ixlib=rb-1.2.1&auto=format&fit=crop&w=900&q=60"
+    },
+    {
+      id: 11,
+      name: "Dr. William Brown",
+      title: "Pain Management Specialist",
+      category: "pain-management",
+      location: "Cape Town",
+      specialties: ["Chronic Pain", "Non-surgical Interventions", "Holistic Pain Care"],
+      image: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?ixlib=rb-1.2.1&auto=format&fit=crop&w=900&q=60"
+    },
+    {
+      id: 12,
+      name: "Sipho Radebe",
+      title: "Elite Strength Coach",
+      category: "fitness",
+      location: "Johannesburg",
+      specialties: ["Olympic Lifting", "Power Development", "Athletic Performance"],
+      image: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?ixlib=rb-1.2.1&auto=format&fit=crop&w=900&q=60"
+    },
   ];
   
   // Filter professionals based on search query and selected category
@@ -130,6 +185,9 @@ const Professionals: React.FC = () => {
                     <SelectItem value="mental-health">Mental Health</SelectItem>
                     <SelectItem value="rehabilitation">Rehabilitation</SelectItem>
                     <SelectItem value="coaching">Coaching</SelectItem>
+                    <SelectItem value="sports-medicine">Sports Medicine</SelectItem>
+                    <SelectItem value="pain-management">Pain Management</SelectItem>
+                    <SelectItem value="medical">Medical Specialists</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -176,7 +234,7 @@ const Professionals: React.FC = () => {
           
           <div className="bg-health-blue/10 dark:bg-gray-800/50 p-8 rounded-xl">
             <h2 className="text-2xl font-bold mb-4">Not sure which professional is right for you?</h2>
-            <p className="mb-6">Let our AI match you with the ideal health professionals based on your specific needs.</p>
+            <p className="mb-6">Let our AI match you with the ideal health professionals based on your specific needs and budget.</p>
             <Link to="/">
               <Button className="bg-health-purple hover:bg-health-purple-dark">
                 Get Matched with Professionals

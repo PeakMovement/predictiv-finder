@@ -1,209 +1,240 @@
 
+/**
+ * Professional recommendation main module
+ */
+
 import { ServiceCategory } from "../types";
 import { 
   ProfessionalRecommendation, 
   CategoryRecommendation,
-  ProfessionalRecommendationResult
+  ProfessionalRecommendationResult,
+  ScenarioResult
 } from "./types";
-import { createServiceCategoryRecord } from "../helpers/serviceRecordInitializer";
+import { matchPractitionersToNeeds } from "./matcher";
+import { analyzeUserHealth } from "./analysis";
+import { calculateBudget, calculateIdealSessions, optimizePlanForBudget } from "./budget";
+import { enhancedMemoize, logger } from "@/utils/cache";
+import { processHealthScenario } from "./scenarioHandler";
 
 /**
- * Generate professional recommendations based on user input
- * @param userQuery The user's query about their health needs
- * @param options Additional options to customize recommendation generation
- * @returns Professional recommendation result with primary and complementary recommendations
+ * Generates comprehensive professional recommendations based on user input
+ * @param userInput Text input from the user describing their needs
+ * @returns Array of professional recommendations with scores and details
+ * @throws Error if processing fails
  */
 export function generateProfessionalRecommendations(
-  userQuery: string,
-  options: {
-    budget?: number;
-    preferOnline?: boolean;
-    location?: string;
-    preferredGender?: string;
-  } = {}
+  userInput: string
 ): ProfessionalRecommendationResult {
   try {
-    // Extract key health issues from the query
-    const { 
-      symptoms, 
+    logger.debug("Generating professional recommendations for input:", userInput);
+    
+    // Analyze user input to get health information
+    const analysis = analyzeUserHealth(userInput);
+    
+    // Check if this matches a specific health scenario
+    const scenarioResult = processHealthScenario(userInput);
+    
+    // Handle specific health scenario if detected
+    if (scenarioResult && scenarioResult.confidence > 0.7) {
+      logger.debug("Processing specific health scenario");
+      
+      // Make sure we're accessing properties that exist on ScenarioResult
+      if (scenarioResult.recommendations && scenarioResult.mainIssue) {
+        // Access the scenario recommendations
+        const { recommendations, mainIssue } = scenarioResult;
+        
+        // Build the response structure
+        const result: ProfessionalRecommendationResult = {
+          primaryRecommendations: [{
+            category: recommendations.primaryProfessional,
+            sessions: 4,
+            priority: 'high',
+            reasoning: recommendations.rationale
+          }],
+          notes: [recommendations.rationale]
+        };
+        
+        // Add secondary professional if present
+        if (recommendations.secondaryProfessional) {
+          result.primaryRecommendations.push({
+            category: recommendations.secondaryProfessional,
+            sessions: 3,
+            priority: 'medium',
+            reasoning: recommendations.rationale
+          });
+        }
+        
+        // Add complementary recommendations
+        if (recommendations.supportingProfessionals && recommendations.supportingProfessionals.length > 0) {
+          result.complementaryRecommendations = recommendations.supportingProfessionals.map(category => ({
+            category,
+            sessions: 2,
+            priority: 'low',
+            reasoning: "Supporting professional for your condition"
+          }));
+        }
+        
+        return result;
+      }
+    }
+    
+    // If no specific scenario, process with standard flow
+    const {
+      symptoms,
+      contraindications,
       goals,
-      containsMedicalCondition,
-      severity
-    } = extractHealthIssues(userQuery);
+      severityScores,
+      locationInfo,
+      hasBudgetConstraint,
+      budget
+    } = analysis;
     
-    // Calculate severity for each condition
-    const severityScores = createServiceCategoryRecord(0);
-    
-    symptoms.forEach(symptom => {
-      // Apply a default severity if none detected
-      severityScores[symptom as ServiceCategory] = severity || 0.5;
-    });
-    
-    // Create primary recommendations
-    const primaryRecommendations: ProfessionalRecommendation[] = [];
-    
-    // Always recommend general practitioner for medical conditions
-    if (containsMedicalCondition) {
-      primaryRecommendations.push({
-        category: 'general-practitioner',
-        sessions: 1,
-        priority: 'high',
-        reasoning: 'Recommended for initial medical assessment'
-      });
+    // Match practitioners to needs with enhanced caching
+    let rankedCategories: CategoryRecommendation[];
+    try {
+      rankedCategories = matchPractitionersToNeeds(
+        symptoms,
+        severityScores,
+        goals,
+        locationInfo.location,
+        locationInfo.isRemote,
+        hasBudgetConstraint
+      );
+    } catch (error) {
+      logger.error("Error matching practitioners to needs:", error);
+      throw new Error("Failed to match health professionals to your needs. Please try different wording.");
     }
     
-    // Add appropriate specialists based on detected symptoms
-    if (symptoms.includes('pain') || symptoms.includes('injury')) {
-      primaryRecommendations.push({
-        category: 'physiotherapist',
-        sessions: 4,
-        priority: 'high',
-        reasoning: 'Recommended for pain or injury treatment'
-      });
+    logger.debug("Ranked professional categories:", rankedCategories);
+    
+    if (rankedCategories.length === 0) {
+      logger.warn("No professional categories matched to user needs");
+      return {
+        primaryRecommendations: []
+      };
     }
     
-    if (symptoms.includes('stress') || symptoms.includes('anxiety')) {
-      primaryRecommendations.push({
-        category: 'psychology',
-        sessions: 3,
-        priority: 'medium',
-        reasoning: 'Recommended for mental health support'
-      });
-    }
-    
-    if (symptoms.includes('nutrition') || symptoms.includes('diet') || symptoms.includes('weight')) {
-      primaryRecommendations.push({
-        category: 'dietician',
-        sessions: 2,
-        priority: 'medium',
-        reasoning: 'Recommended for nutrition guidance'
-      });
-    }
-    
-    // Add recommendations based on goals
-    if (goals.includes('fitness') || goals.includes('strength')) {
-      primaryRecommendations.push({
-        category: 'personal-trainer',
-        sessions: 8,
-        priority: 'medium',
-        reasoning: 'Recommended for fitness and strength training'
-      });
-    }
-    
-    if (goals.includes('running') || goals.includes('endurance')) {
-      primaryRecommendations.push({
-        category: 'coaching',
-        sessions: 4,
-        priority: 'medium',
-        reasoning: 'Recommended for running and endurance coaching'
-      });
-    }
-    
-    // Ensure we have at least one recommendation
-    if (primaryRecommendations.length === 0) {
-      primaryRecommendations.push({
-        category: 'general-practitioner',
-        sessions: 1,
-        priority: 'high',
-        reasoning: 'Recommended for general health assessment'
-      });
-    }
-    
-    // Build result
+    // Format the result for the API contract
     const result: ProfessionalRecommendationResult = {
-      primaryRecommendations
+      primaryRecommendations: []
     };
     
-    // Add budget allocation if budget is provided
-    if (options.budget) {
+    // Convert to detailed recommendations
+    const unoptimizedRecommendations = rankedCategories
+      .filter(rc => !contraindications.includes(rc.category as ServiceCategory))
+      .slice(0, 5) // Take top 5 initially, we'll optimize later
+      .map((rankedCategory, index) => {
+        const { category, score, primaryCondition } = rankedCategory;
+        
+        // Calculate severity and session count
+        const conditionSeverity = primaryCondition && severityScores[primaryCondition] !== undefined ? 
+          severityScores[primaryCondition] : 0.5;
+        
+        const idealSessions = calculateIdealSessions(category, conditionSeverity);
+        
+        // Create recommendation
+        return {
+          category,
+          sessions: idealSessions,
+          priority: index === 0 ? 'high' : (index === 1 ? 'medium' : 'low') as 'high' | 'medium' | 'low',
+          reasoning: rankedCategory.reasoning || `Recommended for ${primaryCondition || 'your condition'}`
+        };
+      });
+    
+    // If we have a budget, apply budget optimization
+    if (budget) {
+      const optimized = optimizePlanForBudget(unoptimizedRecommendations, budget);
+      
+      result.primaryRecommendations = optimized.optimizedRecommendations
+        .filter((_, index) => index < 2); // Top 2 are primary
+      
+      result.complementaryRecommendations = optimized.optimizedRecommendations
+        .filter((_, index) => index >= 2); // Rest are complementary
+      
       result.budgetAllocation = {
-        total: options.budget,
-        breakdown: createServiceCategoryRecord(0)
+        total: optimized.totalCost,
+        breakdown: optimized.budgetAllocation
       };
       
-      // Simple budget allocation based on priority
-      let remainingBudget = options.budget;
-      primaryRecommendations
-        .sort((a, b) => (a.priority === 'high' ? -1 : 1))
-        .forEach(rec => {
-          // Allocate budget based on priority
-          const allocationPercent = rec.priority === 'high' ? 0.5 : 
-                                   rec.priority === 'medium' ? 0.3 : 0.2;
-          
-          const allocation = Math.min(options.budget! * allocationPercent, remainingBudget);
-          result.budgetAllocation!.breakdown[rec.category] = allocation;
-          remainingBudget -= allocation;
-        });
+      result.notes = optimized.notes;
+    } else {
+      // Without budget constraints, use the top 2 as primary and others as complementary
+      result.primaryRecommendations = unoptimizedRecommendations
+        .filter((_, index) => index < 2); // Top 2 are primary
+      
+      result.complementaryRecommendations = unoptimizedRecommendations
+        .filter((_, index) => index >= 2); // Rest are complementary
     }
     
     return result;
   } catch (error) {
-    console.error("Error generating professional recommendations:", error);
-    
-    // Return a basic recommendation if an error occurs
-    return {
-      primaryRecommendations: [
-        {
-          category: 'general-practitioner',
-          sessions: 1,
-          priority: 'high',
-          reasoning: 'Recommended for general health assessment'
-        }
-      ]
-    };
+    logger.error("Error in generateProfessionalRecommendations:", error);
+    throw error;
   }
 }
 
 /**
- * Extract health issues from user query
+ * Analyze user health from input text
+ * This is a placeholder - in a real implementation, this would use NLP or LLM to analyze user text
  */
-function extractHealthIssues(query: string): {
-  symptoms: string[];
-  goals: string[];
-  containsMedicalCondition: boolean;
-  severity?: number;
-} {
-  const lowerQuery = query.toLowerCase();
+function analyzeUserHealth(userInput: string) {
+  // This would normally be more sophisticated - placeholder implementation
+  const lowerInput = userInput.toLowerCase();
   
-  // Extract symptoms
-  const symptoms: string[] = [];
-  const symptomKeywords = ['pain', 'injury', 'stress', 'anxiety', 'nutrition', 'diet', 'weight'];
+  // Extract symptoms (simple keyword matching)
+  const symptoms = [];
+  if (lowerInput.includes('pain')) symptoms.push('pain');
+  if (lowerInput.includes('stress')) symptoms.push('stress');
+  if (lowerInput.includes('anxiety')) symptoms.push('anxiety');
+  if (lowerInput.includes('weight')) symptoms.push('weight concerns');
   
-  symptomKeywords.forEach(keyword => {
-    if (lowerQuery.includes(keyword)) {
-      symptoms.push(keyword);
+  // Extract goals (simple keyword matching)
+  const goals = [];
+  if (lowerInput.includes('lose weight')) goals.push('weight loss');
+  if (lowerInput.includes('run') || lowerInput.includes('marathon')) goals.push('running');
+  if (lowerInput.includes('strength') || lowerInput.includes('stronger')) goals.push('strength');
+  
+  // Simple severity scores
+  const severityScores: Record<string, number> = {};
+  symptoms.forEach(symptom => {
+    if (lowerInput.includes('severe ' + symptom)) {
+      severityScores[symptom] = 0.9;
+    } else if (lowerInput.includes('mild ' + symptom)) {
+      severityScores[symptom] = 0.3;
+    } else {
+      severityScores[symptom] = 0.6; // Default moderate
     }
   });
   
-  // Extract goals
-  const goals: string[] = [];
-  const goalKeywords = ['fitness', 'strength', 'running', 'endurance', 'weight loss'];
+  // Extract budget information
+  let budget: number | undefined = undefined;
+  let hasBudgetConstraint = false;
   
-  goalKeywords.forEach(keyword => {
-    if (lowerQuery.includes(keyword)) {
-      goals.push(keyword);
-    }
-  });
+  const budgetMatches = lowerInput.match(/budget.*?(\d+)/i) || 
+                        lowerInput.match(/afford.*?(\d+)/i) ||
+                        lowerInput.match(/spend.*?(\d+)/i);
   
-  // Check for medical conditions
-  const medicalKeywords = ['medical', 'doctor', 'condition', 'disease', 'chronic', 'diagnosed'];
-  const containsMedicalCondition = medicalKeywords.some(keyword => lowerQuery.includes(keyword));
-  
-  // Detect severity
-  let severity: number | undefined;
-  
-  if (lowerQuery.includes('severe') || lowerQuery.includes('extreme')) {
-    severity = 0.9;
-  } else if (lowerQuery.includes('moderate')) {
-    severity = 0.6;
-  } else if (lowerQuery.includes('mild') || lowerQuery.includes('slight')) {
-    severity = 0.3;
+  if (budgetMatches && budgetMatches[1]) {
+    budget = parseInt(budgetMatches[1]);
+    hasBudgetConstraint = true;
   }
+  
+  // Extract location information
+  const locationMatches = lowerInput.match(/in\s+([a-z\s]+)(?:,|\.|$)/i);
+  const isRemote = lowerInput.includes('remote') || 
+                  lowerInput.includes('online') || 
+                  lowerInput.includes('virtual');
   
   return {
     symptoms,
+    contraindications: [] as ServiceCategory[], // Not implemented in this simple version
     goals,
-    containsMedicalCondition,
-    severity
+    severityScores,
+    locationInfo: {
+      location: locationMatches ? locationMatches[1].trim() : undefined,
+      isRemote
+    },
+    hasBudgetConstraint,
+    budget
   };
 }

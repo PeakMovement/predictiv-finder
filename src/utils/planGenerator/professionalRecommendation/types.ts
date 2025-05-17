@@ -67,3 +67,35 @@ export interface AnalysisResult {
   hasBudgetConstraint: boolean;
   budget?: number;
 }
+
+export interface SessionAllocation {
+  sessions: number;
+  costPerSession: number;
+  totalCost: number;
+  count: number; // Required for compatibility
+  priorityLevel: 'high' | 'medium' | 'low'; // Required for compatibility
+}
+
+export interface ServicePricing {
+  category: ServiceCategory;
+  basePrice: number;
+  priceRange: {
+    min: number;
+    max: number;
+  };
+}
+
+// Budget-related types
+export interface BudgetConstraint {
+  total: number;
+  monthly?: number;
+  perSession?: number;
+  maxSessions?: number;
+}
+
+// Enhanced types to store budget alternatives
+export interface BudgetAlternative {
+  originalService: ServiceCategory;
+  alternatives: ServiceCategory[];
+  costReduction: number;
+}
