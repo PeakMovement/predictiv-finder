@@ -1,4 +1,6 @@
+
 import { ServiceCategory } from "../types";
+import { createServiceCategoryRecord } from "../helpers/serviceRecordInitializer";
 
 /**
  * Enhanced budget detection with improved context sensitivity
@@ -187,9 +189,10 @@ export const applyBudgetAwareSelection = (
   prioritizedServices: ServiceCategory[];
   alternatives: Record<ServiceCategory, ServiceCategory[]>;
 } => {
+  // Initialize result with empty alternatives record
   const result = {
     prioritizedServices: [...serviceCategories],
-    alternatives: {} as Record<ServiceCategory, ServiceCategory[]>
+    alternatives: createServiceCategoryRecord([] as ServiceCategory[])
   };
   
   // If no budget detected, return original services
@@ -197,17 +200,23 @@ export const applyBudgetAwareSelection = (
     return result;
   }
   
-  // Budget-friendly alternatives for expensive services
-  const budgetAlternatives: Record<ServiceCategory, ServiceCategory[]> = {
-    'psychiatry': ['psychology', 'coaching'],
-    'orthopedic-surgeon': ['orthopedics', 'physiotherapist'],
-    'neurosurgery': ['neurology', 'pain-management'],
-    'cardiology': ['family-medicine', 'internal-medicine'],
-    'gastroenterology': ['family-medicine', 'dietician'],
-    'dermatology': ['family-medicine'],
-    'rheumatology': ['family-medicine', 'pain-management'],
-    'endocrinology': ['family-medicine', 'dietician']
-  };
+  // Budget-friendly alternatives for expensive services - define for those that have alternatives
+  // This now uses a map variable instead of a full Record declaration
+  const budgetAlternativesMappings: Array<[ServiceCategory, ServiceCategory[]]> = [
+    ['psychiatry', ['psychology', 'coaching']],
+    ['orthopedic-surgeon', ['orthopedics', 'physiotherapist']],
+    ['neurosurgery', ['neurology', 'pain-management']],
+    ['cardiology', ['family-medicine', 'internal-medicine']],
+    ['gastroenterology', ['family-medicine', 'dietician']],
+    ['dermatology', ['family-medicine']],
+    ['rheumatology', ['family-medicine', 'pain-management']],
+    ['endocrinology', ['family-medicine', 'dietician']]
+  ];
+  
+  // Apply mappings to our result.alternatives
+  budgetAlternativesMappings.forEach(([category, alternatives]) => {
+    result.alternatives[category] = alternatives;
+  });
   
   // Service costs (approximate per session)
   const serviceCosts: Record<ServiceCategory, number> = {
@@ -228,11 +237,9 @@ export const applyBudgetAwareSelection = (
     'dermatology': 1000,
     'rheumatology': 1000,
     'endocrinology': 1200,
-    'nutrition-coaching': 450,
-    'strength-coaching': 450,
+    'nutrition-coaching': 450, // Fixed: nutrition-coach -> nutrition-coaching
     'biokineticist': 700,
     'sports-medicine': 1100,
-    'run-coaches': 450,
     'internal-medicine': 1000,
     'physical-therapy': 750,
     'chiropractor': 600,

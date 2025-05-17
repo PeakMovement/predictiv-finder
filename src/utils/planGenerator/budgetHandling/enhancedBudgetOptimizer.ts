@@ -1,5 +1,5 @@
-
 import { ServiceCategory, BudgetTier } from '../types';
+import { createServiceCategoryRecord } from '../helpers/serviceRecordInitializer';
 
 export interface OptimizedBudgetAllocation {
   services: Record<ServiceCategory, {
@@ -30,57 +30,12 @@ export function optimizeBudgetAllocation(
     preferredDistribution: 'balanced'
   }
 ): OptimizedBudgetAllocation {
-  // Initialize with basic default services allocation
-  const defaultAllocation: Record<ServiceCategory, {
-    sessions: number;
-    costPerSession: number;
-    totalCost: number;
-  }> = {
-    'physiotherapist': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'biokineticist': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'dietician': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'personal-trainer': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'pain-management': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'coaching': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'psychology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'psychiatry': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'podiatrist': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'general-practitioner': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'sport-physician': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'orthopedic-surgeon': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'family-medicine': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'gastroenterology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'massage-therapy': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'nutrition-coach': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'occupational-therapy': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'physical-therapy': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'chiropractor': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'nurse-practitioner': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'cardiology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'dermatology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'neurology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'endocrinology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'urology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'oncology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'rheumatology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'pediatrics': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'geriatrics': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'sports-medicine': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'internal-medicine': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'orthopedics': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'neurosurgery': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'infectious-disease': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'plastic-surgery': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'obstetrics-gynecology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'emergency-medicine': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'anesthesiology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'radiology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'geriatric-medicine': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'all': { sessions: 0, costPerSession: 0, totalCost: 0 }
-  };
-
-  // Default empty allocation
-  const allocation = { ...defaultAllocation };
+  // Initialize with proper default services allocation using our helper
+  const allocation = createServiceCategoryRecord({
+    sessions: 0,
+    costPerSession: 0,
+    totalCost: 0
+  });
 
   // If no budget or no services, return empty allocation
   if (!budget || budget <= 0 || Object.keys(servicePriorities).length === 0) {
@@ -252,10 +207,10 @@ export function optimizeBudgetAllocation(
  * Get base costs for different service types
  */
 function getServiceBaseCosts(): Record<ServiceCategory, number> {
-  // Initialize with empty object that we'll populate
-  const baseCosts: Record<ServiceCategory, number> = {} as Record<ServiceCategory, number>;
+  // Use our helper to create a record with all service categories
+  const baseCosts = createServiceCategoryRecord(500); // Default value of 500
   
-  // Define base costs for each service type
+  // Define specific base costs for each service type
   baseCosts['physiotherapist'] = 600;
   baseCosts['biokineticist'] = 550;
   baseCosts['dietician'] = 500;
@@ -271,7 +226,7 @@ function getServiceBaseCosts(): Record<ServiceCategory, number> {
   baseCosts['family-medicine'] = 550;
   baseCosts['gastroenterology'] = 900;
   baseCosts['massage-therapy'] = 350;
-  baseCosts['nutrition-coach'] = 400;
+  baseCosts['nutrition-coaching'] = 400; // Fixed: nutrition-coach -> nutrition-coaching
   baseCosts['occupational-therapy'] = 500;
   baseCosts['physical-therapy'] = 550;
   baseCosts['chiropractor'] = 450;
@@ -296,7 +251,6 @@ function getServiceBaseCosts(): Record<ServiceCategory, number> {
   baseCosts['anesthesiology'] = 1100;
   baseCosts['radiology'] = 800;
   baseCosts['geriatric-medicine'] = 650;
-  baseCosts['all'] = 500; // Default value
   
   return baseCosts;
 }

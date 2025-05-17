@@ -1,22 +1,17 @@
 
-/**
- * Main professional recommendation implementation
- * This file contains core functionality for generating professional recommendations
- */
-
 import { ServiceCategory } from "../types";
 import { 
   ProfessionalRecommendationResult,
   ProfessionalRecommendation,
   CategoryRecommendation
 } from "./types";
-
 import { analyzeUserHealth } from "./analysis";
 import { validateUserInput } from "./validators";
 import { processHealthScenario } from "./scenarioHandler";
 import { cachedMatchPractitioners } from "./matcher";
 import { calculateIdealSessions, calculateBudget } from "./budget";
 import { logger } from "@/utils/cache";
+import { createServiceCategoryRecord } from "../helpers/serviceRecordInitializer";
 
 /**
  * Generates comprehensive professional recommendations based on user input
@@ -145,7 +140,7 @@ export function generateProfessionalRecommendations(
     if (budget) {
       result.budgetAllocation = {
         total: budget,
-        breakdown: {}
+        breakdown: createServiceCategoryRecord(0) // Initialize with zero for all categories
       };
       
       result.primaryRecommendations.forEach(rec => {

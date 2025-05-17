@@ -1,4 +1,3 @@
-
 import { ServiceCategory } from "../types";
 
 /**
@@ -19,6 +18,7 @@ export function extractExtendedBudget(userInput: string): {
     amount: undefined as number | undefined,
     confidence: 0,
     constraintLevel: 'none' as 'none' | 'low' | 'medium' | 'high',
+    preferredSetup: undefined as 'monthly' | 'once-off' | 'package' | undefined,
     contextClues: [] as string[]
   };
   
@@ -152,7 +152,6 @@ export function getServiceAffordabilityTiers(budget: number | undefined): {
     'coaching': 500,
     'psychology': 900,
     'nutrition-coaching': 450,
-    'strength-coaching': 450,
     'biokineticist': 700,
     'psychiatry': 1200,
     'pain-management': 900,
