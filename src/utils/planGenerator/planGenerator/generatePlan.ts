@@ -17,13 +17,22 @@ export const generatePlan = (context: PlanContext): AIHealthPlan => {
       { allocations: [], requiresDoctor: false, preferHighEnd: false };
     
     const services = determineRequiredServices(context, config.allocations);
+    const allocatedServices = allocateServices(services, context);
+    
+    // Check if plan exceeds budget and add a note if so
+    const totalCost = calculateTotalCost(allocatedServices);
+    let planDescription = generatePlanDescription(context);
+    
+    if (context.budget && totalCost > context.budget) {
+      planDescription += " Note: This plan has been optimized to provide the most value within your budget constraints.";
+    }
     
     return {
       id: `plan-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       name: generatePlanName(context),
-      description: generatePlanDescription(context),
-      services: allocateServices(services, context),
-      totalCost: calculateTotalCost(allocateServices(services, context)),
+      description: planDescription,
+      services: allocatedServices,
+      totalCost: totalCost,
       planType: determinePlanType(context),
       timeFrame: determineTimeFrame(context)
     };

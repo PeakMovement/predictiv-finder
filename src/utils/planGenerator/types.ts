@@ -43,6 +43,51 @@ export type ServiceCategory =
   | 'geriatric-medicine'
   | 'all';  // Special type to refer to all services
 
+// Define baseline costs for service categories - useful for budget calculations
+export const BASELINE_COSTS: Record<ServiceCategory, number> = {
+  'physiotherapist': 600,
+  'biokineticist': 550,
+  'dietician': 500,
+  'personal-trainer': 450,
+  'coaching': 400,
+  'psychology': 800,
+  'psychiatry': 1000,
+  'family-medicine': 550,
+  'pain-management': 700,
+  'podiatrist': 550,
+  'general-practitioner': 600,
+  'sport-physician': 800,
+  'orthopedic-surgeon': 1200,
+  'gastroenterology': 900,
+  'massage-therapy': 350,
+  'nutrition-coaching': 400,
+  'occupational-therapy': 500,
+  'physical-therapy': 550,
+  'chiropractor': 450,
+  'nurse-practitioner': 400,
+  'cardiology': 900,
+  'dermatology': 700,
+  'neurology': 850,
+  'endocrinology': 800,
+  'urology': 750,
+  'oncology': 1100,
+  'rheumatology': 750,
+  'pediatrics': 600,
+  'geriatrics': 650,
+  'sports-medicine': 700,
+  'internal-medicine': 700,
+  'orthopedics': 900,
+  'neurosurgery': 1500,
+  'infectious-disease': 850,
+  'plastic-surgery': 1400,
+  'obstetrics-gynecology': 750,
+  'emergency-medicine': 1000,
+  'anesthesiology': 1100,
+  'radiology': 800,
+  'geriatric-medicine': 650,
+  'all': 0
+};
+
 // Additional types needed
 export interface BudgetTier {
   name: string;
@@ -112,8 +157,34 @@ export type TreatmentModality =
 
 export interface SessionAllocation {
   count: number;
+  sessions?: number; // For backward compatibility
   frequency?: string;
   costPerSession: number;
   totalCost: number;
   priorityLevel: 'high' | 'medium' | 'low';
+}
+
+// Additional context interfaces
+export interface PriceRange {
+  min: number;
+  max: number;
+}
+
+export interface PlanContext {
+  goal?: string;
+  medicalConditions?: string[];
+  location?: string;
+  preferOnline?: boolean;
+  isRemote?: boolean;
+  budget?: number;
+  budgetTier?: string;
+  serviceCount?: number;
+  intensity?: 'light' | 'standard' | 'intensive';
+  duration?: 'short-term' | 'medium-term' | 'long-term';
+}
+
+export interface ServiceAllocationItem {
+  type: ServiceCategory;
+  percentage: number;
+  priority: number;
 }

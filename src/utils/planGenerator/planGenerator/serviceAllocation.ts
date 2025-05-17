@@ -1,6 +1,5 @@
-
-import { PlanContext, ServiceAllocation, ServiceCategory, ServiceAllocationItem, SessionAllocation } from "@/utils/planGenerator/types";
-import { BASELINE_COSTS } from "@/utils/planGenerator/types";
+import { PlanContext, ServiceAllocation, ServiceCategory, ServiceAllocationItem, SessionAllocation, BASELINE_COSTS } from "@/utils/planGenerator/types";
+import { createServiceCategoryRecord } from "../helpers/serviceRecordInitializer";
 
 /**
  * Determine required services based on user context
@@ -65,7 +64,8 @@ export const determineRequiredServices = (
 };
 
 /**
- * Allocate services with proper sessions and costs
+ * Allocate services with proper sessions and costs, respecting budget constraints
+ * Enhanced to prioritize more affordable options when budget is limited
  */
 export const allocateServices = (
   services: ServiceCategory[],
@@ -73,23 +73,79 @@ export const allocateServices = (
 ): ServiceAllocation[] => {
   const allocatedServices: ServiceAllocation[] = [];
   
-  // Calculate base budget if available
+  // Calculate base budget if available, with a reasonable default
   const budget = context.budget || 5000;
-  const serviceCount = services.length;
-  const budgetPerService = budget / serviceCount;
   
-  // Create a service allocation record for each service
-  services.forEach(serviceType => {
-    const baseCost = BASELINE_COSTS[serviceType];
-    const affordableSessions = Math.max(1, Math.floor(budgetPerService / baseCost));
-    
-    allocatedServices.push({
-      type: serviceType,
-      price: baseCost,
-      sessions: affordableSessions,
-      description: getServiceDescription(serviceType, affordableSessions)
-    });
+  // Sort services by cost (cheapest first) to prioritize affordable options
+  const sortedServices = [...services].sort((a, b) => {
+    const costA = BASELINE_COSTS[a] || 500;
+    const costB = BASELINE_COSTS[b] || 500;
+    return costA - costB;  // Sort by ascending cost
   });
+  
+  // Calculate how many sessions we can afford for each service
+  let remainingBudget = budget;
+  const allocations: Record<ServiceCategory, number> = {};
+  
+  // First pass: Ensure at least one session for each service if possible
+  for (const service of sortedServices) {
+    const baseCost = BASELINE_COSTS[service] || 500;
+    if (baseCost <= remainingBudget) {
+      allocations[service] = 1;
+      remainingBudget -= baseCost;
+    } else {
+      // Can't afford even one session for this service
+      allocations[service] = 0;
+    }
+  }
+  
+  // Second pass: Distribute remaining budget, favoring more affordable services
+  // This helps get more total sessions within budget
+  if (remainingBudget > 0) {
+    // Continue adding sessions until budget is used up
+    let canAllocateMore = true;
+    while (canAllocateMore) {
+      canAllocateMore = false;
+      
+      for (const service of sortedServices) {
+        if (allocations[service] === undefined) continue;
+        
+        const baseCost = BASELINE_COSTS[service] || 500;
+        if (baseCost <= remainingBudget) {
+          allocations[service]++;
+          remainingBudget -= baseCost;
+          canAllocateMore = remainingBudget > Math.min(...sortedServices.map(s => BASELINE_COSTS[s] || 500));
+        }
+      }
+    }
+  }
+  
+  // Create final service allocations
+  for (const service of services) {
+    const sessionCount = allocations[service] || 0;
+    if (sessionCount > 0) {
+      const baseCost = BASELINE_COSTS[service] || 500;
+      
+      allocatedServices.push({
+        type: service,
+        price: baseCost,
+        sessions: sessionCount,
+        description: getServiceDescription(service, sessionCount)
+      });
+    }
+  }
+  
+  // If we couldn't allocate any services due to budget constraints, include the cheapest one
+  if (allocatedServices.length === 0 && services.length > 0) {
+    const cheapestService = sortedServices[0];
+    const baseCost = BASELINE_COSTS[cheapestService] || 500;
+    allocatedServices.push({
+      type: cheapestService,
+      price: baseCost,
+      sessions: 1,
+      description: getServiceDescription(cheapestService, 1) + " (limited by budget)"
+    });
+  }
   
   return allocatedServices;
 };
