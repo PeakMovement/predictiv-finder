@@ -132,6 +132,13 @@ export interface PlanContext {
   location?: string;
   isUrgent?: boolean;
   timeAvailability?: number;
+  
+  // Additional properties needed for planBuilder.ts
+  preferOnline?: boolean;
+  isRemote?: boolean;
+  serviceCount?: number;
+  intensity?: 'light' | 'standard' | 'intensive';
+  duration?: 'short-term' | 'medium-term' | 'long-term';
 }
 
 // Explicitly export ServiceAllocation interface needed by planGenerator modules
@@ -142,3 +149,4 @@ export interface ServiceAllocation {
   description: string;
   frequency?: string;
 }
+
