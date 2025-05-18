@@ -18,7 +18,7 @@ export const Header = () => {
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="py-4 px-6 flex justify-between items-center bg-white/80 backdrop-blur-sm dark:bg-gray-900/80 sticky top-0 z-50"
+      className="py-4 px-6 flex justify-between items-center bg-system-lightGray/80 backdrop-blur-sm dark:bg-system-darkGray/80 sticky top-0 z-50 shadow-sm"
     >
       <div className="flex items-center">
         <Link to="/" className="flex items-center">
@@ -28,20 +28,20 @@ export const Header = () => {
           >
             🧠
           </motion.div>
-          <h1 className="text-xl font-bold bg-gradient-to-r from-health-teal to-health-purple bg-clip-text text-transparent">
+          <h1 className="text-xl font-bold bg-gradient-to-r from-system-blue to-system-purple bg-clip-text text-transparent">
             Predictiv. Health
           </h1>
         </Link>
       </div>
       
       <nav className="hidden md:flex items-center space-x-6">
-        <Link to="/how-it-works" className="text-gray-600 hover:text-health-purple transition-colors">
+        <Link to="/how-it-works" className="text-gray-600 hover:text-system-blue transition-colors dark:text-gray-300 dark:hover:text-system-teal">
           How It Works
         </Link>
-        <Link to="/services" className="text-gray-600 hover:text-health-purple transition-colors">
+        <Link to="/services" className="text-gray-600 hover:text-system-blue transition-colors dark:text-gray-300 dark:hover:text-system-teal">
           Services
         </Link>
-        <Link to="/professionals" className="text-gray-600 hover:text-health-purple transition-colors">
+        <Link to="/professionals" className="text-gray-600 hover:text-system-blue transition-colors dark:text-gray-300 dark:hover:text-system-teal">
           Professionals
         </Link>
       </nav>

@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -62,27 +63,39 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Custom health app colors
+				// New system colors
+				system: {
+					blue: '#007AFF',
+					green: '#34C759',
+					red: '#FF3B30',
+					orange: '#FF9500',
+					teal: '#5AC8FA',
+					indigo: '#5856D6',
+					purple: '#AF52DE',
+					lightGray: '#F2F2F7',
+					darkGray: '#1C1C1E',
+				},
+				// Custom health app colors - updated with the new color scheme
 				health: {
 					teal: {
-						light: '#7DDFD8',
-						DEFAULT: '#4ECDC4',
-						dark: '#2EBDB5'
+						light: '#7ADEEA',
+						DEFAULT: '#5AC8FA',
+						dark: '#3ABEF1'
 					},
 					purple: {
-						light: '#8A83FF',
-						DEFAULT: '#6C63FF',
-						dark: '#5046FF'
+						light: '#BF7DE8',
+						DEFAULT: '#AF52DE',
+						dark: '#9E2ECF'
 					},
 					orange: {
-						light: '#FFAA8E',
-						DEFAULT: '#FF8A65',
-						dark: '#FF6C3E'
+						light: '#FFAA40',
+						DEFAULT: '#FF9500',
+						dark: '#E67E00'
 					},
 					blue: {
-						light: '#F7F9FC',
-						DEFAULT: '#E4E9F2',
-						dark: '#1A2A50'
+						light: '#F2F2F7',
+						DEFAULT: '#007AFF',
+						dark: '#1C1C1E'
 					}
 				}
 			},

@@ -1,5 +1,5 @@
 
-import { PlanContext, ServiceAllocationItem } from "@/utils/planGenerator/types";
+import { PlanContext, ServiceAllocation, ServiceAllocationItem } from "@/utils/planGenerator/types";
 import { AIHealthPlan } from "@/types";
 import { determineRequiredServices } from './serviceAllocation';
 import { allocateServices } from './serviceAllocation';
@@ -9,6 +9,16 @@ import { generatePlanDescription } from './planNaming';
 import { determinePlanType } from './planTypeDetection';
 import { determineTimeFrame } from './timeFrameDetection';
 
+// Import BASELINE_COSTS from types.ts to use in service price calculation
+import { BASELINE_COSTS } from "@/utils/planGenerator/types";
+
+// Extend ServiceAllocation interface for the generatePlan function
+interface EnhancedServiceAllocation extends ServiceAllocation {
+  sessions?: number;
+  description?: string;
+  frequency?: string;
+}
+
 // Export the generatePlan function
 export const generatePlan = (context: PlanContext): AIHealthPlan => {
   try {
@@ -17,7 +27,7 @@ export const generatePlan = (context: PlanContext): AIHealthPlan => {
       { allocations: [], requiresDoctor: false, preferHighEnd: false };
     
     const services = determineRequiredServices(context, config.allocations);
-    const allocatedServices = allocateServices(services, context);
+    const allocatedServices = allocateServices(services, context) as EnhancedServiceAllocation[];
     
     // Convert ServiceAllocation[] to the format expected by AIHealthPlan
     const formattedServices = allocatedServices.map(service => ({
@@ -29,7 +39,7 @@ export const generatePlan = (context: PlanContext): AIHealthPlan => {
     }));
     
     // Check if plan exceeds budget and add a note if so
-    const totalCost = calculateTotalCost(allocatedServices);
+    const totalCost = calculateTotalCost(allocatedServices as any);
     let planDescription = generatePlanDescription(context);
     
     if (context.budget && totalCost > context.budget) {
@@ -64,6 +74,3 @@ export const generatePlan = (context: PlanContext): AIHealthPlan => {
     };
   }
 };
-
-// Import BASELINE_COSTS from types.ts to use in service price calculation
-import { BASELINE_COSTS } from "@/utils/planGenerator/types";

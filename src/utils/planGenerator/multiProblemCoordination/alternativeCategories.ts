@@ -27,15 +27,28 @@ const ALTERNATIVE_CATEGORY_MAP: Record<ServiceCategory, ServiceCategory[]> = {
   'nurse-practitioner': ['general-practitioner', 'family-medicine'],
   'strength-coaching': ['personal-trainer', 'biokineticist'],
   'run-coaching': ['personal-trainer', 'sport-physician'],
+  'cardiology': ['internal-medicine', 'general-practitioner'],
+  'dermatology': ['general-practitioner', 'internal-medicine'],
+  'neurology': ['psychiatry', 'internal-medicine'],
+  'endocrinology': ['internal-medicine', 'dietician'],
+  'urology': ['internal-medicine', 'general-practitioner'],
+  'oncology': ['internal-medicine', 'psychology'],
+  'rheumatology': ['internal-medicine', 'orthopedics'],
+  'pediatrics': ['general-practitioner', 'family-medicine'],
+  'geriatrics': ['geriatric-medicine', 'family-medicine'],
+  'sports-medicine': ['sport-physician', 'physiotherapist'],
+  'internal-medicine': ['general-practitioner', 'family-medicine'],
+  'orthopedics': ['orthopedic-surgeon', 'physiotherapist'],
+  'neurosurgery': ['neurology', 'orthopedic-surgeon'],
+  'infectious-disease': ['internal-medicine', 'general-practitioner'],
+  'plastic-surgery': ['dermatology', 'orthopedic-surgeon'],
+  'obstetrics-gynecology': ['general-practitioner', 'internal-medicine'],
+  'emergency-medicine': ['general-practitioner', 'internal-medicine'],
+  'anesthesiology': ['pain-management', 'emergency-medicine'],
+  'radiology': ['internal-medicine', 'orthopedics'],
+  'geriatric-medicine': ['geriatrics', 'internal-medicine'],
   'all': ['general-practitioner', 'personal-trainer', 'dietician']
 };
-
-// Add remaining categories with some reasonable defaults
-Object.keys(require('../types').BASELINE_COSTS).forEach(category => {
-  if (!ALTERNATIVE_CATEGORY_MAP[category as ServiceCategory]) {
-    ALTERNATIVE_CATEGORY_MAP[category as ServiceCategory] = ['general-practitioner', 'family-medicine'];
-  }
-});
 
 /**
  * Finds alternative categories based on selected categories

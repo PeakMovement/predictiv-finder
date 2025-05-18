@@ -4,7 +4,6 @@
 import * as AIGenerator from './planGenerator/aiPlanGenerator';
 
 // Re-export everything except SessionAllocation which we'll handle explicitly
-export * from './planGenerator/aiPlanGenerator';
 export * from './planGenerator/planStructure';
 export * from './planGenerator/professionalScoring';
 
@@ -15,6 +14,15 @@ export { categoryMatchPractitionersToNeeds };
 export * from './planGenerator/professionalRecommendation';
 export * from './planGenerator/inputAnalyzer';
 
-// Explicitly re-export SessionAllocation from the appropriate module
+// Explicitly re-export the AIGenerator types and functions
+export {
+  generateAIHealthPlan,
+  analyzeUserInput,
+  processUserQuery,
+  buildPlan,
+  optimizePlan
+} from './planGenerator/aiPlanGenerator';
+
+// Export the AIGeneratorSessionAllocation type explicitly
 import type { SessionAllocation as AIGeneratorSessionAllocation } from './planGenerator/types';
 export type { AIGeneratorSessionAllocation };
