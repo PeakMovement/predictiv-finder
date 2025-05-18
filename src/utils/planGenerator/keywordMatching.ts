@@ -1,173 +1,72 @@
+
 import { ServiceCategory } from "./types";
-import { findServiceByKeyword, findAllServicesByKeyword, PROFESSIONAL_KEYWORDS } from "./professionalKeywords";
-import { detectProfessionalMentions } from "./inputAnalyzer/professionalMentions";
+import { createServiceCategoryRecord } from "./helpers/serviceRecordInitializer";
 
 /**
- * Process user input to find matching services and health needs
- * @param userInput Text from the user describing their health needs
- * @returns Analysis of health services and detected needs
+ * Scores a piece of text against various service categories based on keyword matching
+ * @param text The text to analyze
+ * @param keywords Mapping of keywords to service categories
+ * @returns Record of scores by service category
  */
-export function processKeywordMatching(userInput: string) {
-  const inputLower = userInput.toLowerCase();
+export function scoreTextByKeywords(
+  text: string,
+  keywords: Record<string, ServiceCategory[]>
+): Record<ServiceCategory, number> {
+  const textLower = text.toLowerCase();
   
-  // 1. Detect professional mentions
-  const professionalMentions = detectProfessionalMentions(inputLower);
+  // Initialize scores object with zeros for all service categories
+  const scores = createServiceCategoryRecord(0);
   
-  // 2. Extract phrases for more granular analysis
-  const phrases = extractPhrases(inputLower);
-  
-  // 3. Analyze each phrase for keyword matches
-  const phraseMatches = phrases.map(phrase => ({
-    phrase,
-    matches: findAllServicesByKeyword(phrase)
-  }));
-  
-  // 4. Compile results
-  const recommendedCategories = new Set<ServiceCategory>();
-  const categoryConfidence: Record<ServiceCategory, number> = {};
-  
-  // Add categories from professional mentions
-  professionalMentions.forEach(mention => {
-    recommendedCategories.add(mention.serviceCategory);
-    categoryConfidence[mention.serviceCategory] = mention.confidence;
-  });
-  
-  // Add categories from phrase analysis
-  phraseMatches.forEach(({ phrase, matches }) => {
-    matches.forEach(match => {
-      recommendedCategories.add(match.service);
+  // Check each keyword against the text
+  for (const keyword in keywords) {
+    const keywordLower = keyword.toLowerCase();
+    
+    // If keyword is found in text
+    if (textLower.includes(keywordLower)) {
+      // Get relevant service categories for this keyword
+      const services = keywords[keyword];
       
-      // Keep highest confidence score
-      if (!categoryConfidence[match.service] || 
-          categoryConfidence[match.service] < match.confidence) {
-        categoryConfidence[match.service] = match.confidence;
-      }
-    });
-  });
-  
-  // Sort categories by confidence
-  const rankedCategories = Array.from(recommendedCategories)
-    .map(category => ({
-      category,
-      confidence: categoryConfidence[category] || 0.5,
-      reason: generateReasoningForCategory(category, userInput)
-    }))
-    .sort((a, b) => b.confidence - a.confidence);
-  
-  return {
-    rankedCategories,
-    phraseAnalysis: phraseMatches,
-    categoryConfidence,
-    detectedKeywords: extractKeywordsFromInput(inputLower)
-  };
-}
-
-/**
- * Extract meaningful phrases from user input for more precise analysis
- */
-function extractPhrases(text: string): string[] {
-  // Split by common delimiters
-  return text
-    .split(/[,.;!?]|\band\b|\bor\b|\bbut\b|\bthen\b/)
-    .map(phrase => phrase.trim())
-    .filter(phrase => phrase.length > 3);
-}
-
-/**
- * Extract the specific keywords detected in the user's input
- */
-function extractKeywordsFromInput(inputLower: string): Record<string, string[]> {
-  const results: Record<string, string[]> = {};
-  
-  PROFESSIONAL_KEYWORDS.forEach(profMapping => {
-    const detectedKeywords: string[] = [];
-    
-    // Check synonyms
-    profMapping.synonyms.forEach(synonym => {
-      if (inputLower.includes(synonym.toLowerCase())) {
-        detectedKeywords.push(synonym);
-      }
-    });
-    
-    // Check strong indicators
-    profMapping.strongIndicators.forEach(indicator => {
-      if (inputLower.includes(indicator.toLowerCase())) {
-        detectedKeywords.push(indicator);
-      }
-    });
-    
-    // Check general keywords
-    profMapping.keywords.forEach(keyword => {
-      if (inputLower.includes(keyword.toLowerCase())) {
-        detectedKeywords.push(keyword);
-      }
-    });
-    
-    if (detectedKeywords.length > 0) {
-      results[profMapping.service] = detectedKeywords;
-    }
-  });
-  
-  return results;
-}
-
-/**
- * Generate human-readable reasoning for why a category was recommended
- */
-function generateReasoningForCategory(category: ServiceCategory, userInput: string): string {
-  const inputLower = userInput.toLowerCase();
-  
-  // Find the professional mapping for this category
-  const profMapping = PROFESSIONAL_KEYWORDS.find(mapping => mapping.service === category);
-  if (!profMapping) return "Matched based on your health needs";
-  
-  // Check for direct professional mentions
-  for (const synonym of profMapping.synonyms) {
-    if (inputLower.includes(synonym.toLowerCase())) {
-      return `You mentioned needing a ${synonym}`;
+      // Increment scores for each relevant service
+      services.forEach(service => {
+        scores[service] += 1;
+      });
     }
   }
   
-  // Check for condition matches
-  for (const condition of profMapping.conditions) {
-    if (inputLower.includes(condition.toLowerCase())) {
-      return `Recommended for ${condition}`;
-    }
-  }
-  
-  // Check for treatment matches
-  for (const treatment of profMapping.treatments) {
-    if (inputLower.includes(treatment.toLowerCase())) {
-      return `Can provide ${treatment} that may help your condition`;
-    }
-  }
-  
-  // Check for keyword matches
-  for (const keyword of profMapping.keywords) {
-    if (inputLower.includes(keyword.toLowerCase())) {
-      return `Matched based on your mention of ${keyword}`;
-    }
-  }
-  
-  return "Recommended based on your health needs";
+  return scores;
 }
 
 /**
- * Generate a summary of keyword analysis for display purposes
+ * Calculate weighted scores for service categories based on keyword matches
+ * @param text Text to analyze
+ * @param keywordGroups Groups of keywords with different weights
+ * @returns Weighted scores by service
  */
-export function generateKeywordMatchingSummary(userInput: string): {
-  matchedProfessionals: string[];
-  keywordMatches: Record<string, string[]>;
-  recommendationReasons: Record<string, string>;
-} {
-  const analysis = processKeywordMatching(userInput);
+export function calculateWeightedServiceScores(
+  text: string,
+  keywordGroups: {
+    highImportance: Record<string, ServiceCategory[]>;
+    mediumImportance: Record<string, ServiceCategory[]>;
+    lowImportance: Record<string, ServiceCategory[]>;
+  }
+): Record<ServiceCategory, number> {
+  // Score text against each keyword group
+  const highScores = scoreTextByKeywords(text, keywordGroups.highImportance);
+  const mediumScores = scoreTextByKeywords(text, keywordGroups.mediumImportance);
+  const lowScores = scoreTextByKeywords(text, keywordGroups.lowImportance);
   
-  return {
-    matchedProfessionals: analysis.rankedCategories.map(rc => rc.category),
-    keywordMatches: analysis.detectedKeywords,
-    recommendationReasons: analysis.rankedCategories.reduce((acc, rc) => {
-      acc[rc.category] = rc.reason;
-      return acc;
-    }, {} as Record<string, string>)
-  };
+  // Combine scores with appropriate weights
+  const finalScores = createServiceCategoryRecord(0);
+  
+  // Apply weights to each category
+  for (const category in finalScores) {
+    const serviceCategory = category as ServiceCategory;
+    finalScores[serviceCategory] = (
+      (highScores[serviceCategory] * 3) +
+      (mediumScores[serviceCategory] * 2) +
+      (lowScores[serviceCategory] * 1)
+    );
+  }
+  
+  return finalScores;
 }

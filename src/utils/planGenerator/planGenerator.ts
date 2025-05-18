@@ -1,796 +1,326 @@
-import { AIHealthPlan, Practitioner, ServiceCategory } from "@/types";
-import { PRACTITIONERS } from "@/data/mockData";
-import { COACHES } from "@/data/practitioners/coaches";
-import { PlanContext, ServiceAllocation, ServiceAllocationItem, SessionAllocation } from "./types";
-import { CONDITION_TO_SERVICES, SERVICE_CONFIGS_BY_BUDGET } from "./serviceMappings";
-import { filterByLocation } from "./locationFilter";
-import { distributeSessionsByBudget } from "./sessionCalculator";
+import { ServiceCategory } from "./types";
+import { ServicePricing } from "./professionalRecommendation/types";
 
-// Create a combined practitioners array that includes coaches
-const ALL_PRACTITIONERS = [...PRACTITIONERS, ...COACHES];
+// Update the SessionAllocation interface
+export interface SessionAllocation {
+  sessions: number;
+  costPerSession: number;
+  totalCost: number;
+  count: number; // Required for compatibility
+  priorityLevel: 'high' | 'medium' | 'low'; // Required for compatibility
+}
 
-// Export the generatePlan function
-export const generatePlan = (context: PlanContext): AIHealthPlan => {
-  const config = context.budgetTier ? 
-    SERVICE_CONFIGS_BY_BUDGET[context.budgetTier.name] : 
-    { allocations: [], requiresDoctor: false, preferHighEnd: false };
+// Generate a health plan name
+export function generatePlanName(primaryCondition: string, primaryServiceType: string): string {
+  // Ensure primaryServiceType is a string and has the name property
+  const serviceTypeName = typeof primaryServiceType === 'string' ? 
+    primaryServiceType : 
+    (primaryServiceType && typeof primaryServiceType === 'object' && 'name' in primaryServiceType) ? 
+      primaryServiceType.name : 
+      'Therapy';
   
-  const services = determineRequiredServices(context, config.allocations);
-  
-  return {
-    id: `plan-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-    name: generatePlanName(context),
-    description: generatePlanDescription(context),
-    services: allocateServices(services, context),
-    totalCost: calculateTotalCost(allocateServices(services, context)),
-    planType: determinePlanType(context),
-    timeFrame: determineTimeFrame(context)
-  };
-};
+  return `${primaryCondition} Recovery with ${serviceTypeName}`;
+}
 
-// Export the rest of the functions used in the module
-const determineRequiredServices = (
-  context: PlanContext,
-  allocations: ServiceAllocationItem[]
-): ServiceAllocationItem[] => {
-  let services: ServiceAllocationItem[] = [];
-
-  // Special case handling for combined conditions
-  const hasKneePainWithRace = context.medicalConditions?.some(c => 
-    c.toLowerCase().includes('knee') && c.toLowerCase().includes('pain')
-  ) && (
-    context.goal?.toLowerCase().includes('race') || 
-    context.goal?.toLowerCase().includes('run') ||
-    context.medicalConditions?.some(c => c.toLowerCase().includes('race preparation'))
-  );
-  
-  if (hasKneePainWithRace) {
-    console.log("Detected special case: knee pain with race preparation");
-    
-    // We need both physiotherapy and coaching for this case
-    const physiotherapy = allocations.find(a => a.type === 'physiotherapist');
-    const coaching = allocations.find(a => a.type === 'coaching');
-    const training = allocations.find(a => a.type === 'personal-trainer');
-    
-    if (physiotherapy) {
-      services.push({...physiotherapy, priority: 0.9}); // Slightly reduce priority to allow other services
-    }
-    
-    if (coaching) {
-      services.push({...coaching, priority: 1.0}); // Give coaching high priority for race prep
-    }
-    
-    if (training) {
-      services.push({...training, priority: 0.95}); // High priority for personal training
-    }
-    
-    // We can return early since we've handled this special case
-    return services;
-  }
-  
-  // Special case for anxiety + nutrition + race preparation
-  const hasAnxietyNutritionRace = (
-    (context.goal?.toLowerCase().includes('anxiety') || context.medicalConditions?.some(c => c.toLowerCase().includes('anxiety'))) &&
-    (context.goal?.toLowerCase().includes('eat') || context.goal?.toLowerCase().includes('nutrition') || 
-     context.medicalConditions?.some(c => c.toLowerCase().includes('nutrition'))) &&
-    (context.goal?.toLowerCase().includes('race') || context.goal?.toLowerCase().includes('run') || 
-     context.medicalConditions?.some(c => c.toLowerCase().includes('race')))
-  );
-  
-  if (hasAnxietyNutritionRace) {
-    console.log("Detected special case: anxiety + nutrition + race preparation");
-    
-    // We need dietician, coaching, and personal trainer
-    const dietician = allocations.find(a => a.type === 'dietician');
-    const coaching = allocations.find(a => a.type === 'coaching');
-    const training = allocations.find(a => a.type === 'personal-trainer');
-    
-    if (dietician) {
-      services.push({...dietician, priority: 1.0}); // Highest priority for nutrition
-    }
-    
-    if (coaching) {
-      services.push({...coaching, priority: 0.95}); // High priority for anxiety support
-    }
-    
-    if (training) {
-      services.push({...training, priority: 0.9}); // Also important for race prep
-    }
-    
-    // We can return early since we've handled this special case
-    return services;
+// Main plan generation function with remaining code
+export function generateHealthPlan(
+  primaryCondition: string,
+  serviceTypes: ServiceCategory[],
+  budget: number,
+  timeframe: string = '3 months'
+) {
+  // Validate inputs
+  if (!primaryCondition || !serviceTypes || serviceTypes.length === 0) {
+    throw new Error('Missing required parameters for plan generation');
   }
 
-  if (context.goal) {
-    // Use the imported functions directly
-    // We need to handle this differently - removing the call that's causing issues
-    
-    // If we have medical conditions, use those to determine services
-    if (context.medicalConditions?.length > 0) {
-      context.medicalConditions.forEach(condition => {
-        const conditionServices = CONDITION_TO_SERVICES[condition];
-        if (conditionServices) {
-          conditionServices.forEach(serviceType => {
-            const allocation = allocations.find(a => a.type === serviceType);
-            if (allocation && !services.some(s => s.type === serviceType)) {
-              services.push(allocation);
-            }
-          });
-        }
-      });
-    }
-    
-    // If goal mentions specific keywords, add relevant services
-    if (context.goal.toLowerCase().includes('pain') || 
-        context.goal.toLowerCase().includes('injury')) {
-      const physiotherapy = allocations.find(a => a.type === 'physiotherapist');
-      if (physiotherapy && !services.some(s => s.type === 'physiotherapist')) {
-        services.push(physiotherapy);
-      }
-    }
-    
-    if (context.goal.toLowerCase().includes('diet') || 
-        context.goal.toLowerCase().includes('nutrition') || 
-        context.goal.toLowerCase().includes('eat')) {
-      const dietician = allocations.find(a => a.type === 'dietician');
-      if (dietician && !services.some(s => s.type === 'dietician')) {
-        services.push(dietician);
-      }
-    }
-    
-    if (context.goal.toLowerCase().includes('train') || 
-        context.goal.toLowerCase().includes('exercise') || 
-        context.goal.toLowerCase().includes('fitness')) {
-      const trainer = allocations.find(a => a.type === 'personal-trainer');
-      if (trainer && !services.some(s => s.type === 'personal-trainer')) {
-        services.push(trainer);
-      }
-    }
-    
-    if (context.goal.toLowerCase().includes('anxiety') || 
-        context.goal.toLowerCase().includes('stress') || 
-        context.goal.toLowerCase().includes('mental')) {
-      const coaching = allocations.find(a => a.type === 'coaching');
-      if (coaching && !services.some(s => s.type === 'coaching')) {
-        services.push(coaching);
-      }
-    }
-    
-    // If race or running is mentioned, ensure proper coaching
-    if (context.goal.toLowerCase().includes('race') || 
-        context.goal.toLowerCase().includes('marathon') ||
-        context.goal.toLowerCase().includes('run')) {
-      const coaching = allocations.find(a => a.type === 'coaching');
-      const trainer = allocations.find(a => a.type === 'personal-trainer');
-      
-      if (coaching && !services.some(s => s.type === 'coaching')) {
-        services.push({...coaching, priority: 0.95}); // Higher priority for race preparation
-      }
-      
-      if (trainer && !services.some(s => s.type === 'personal-trainer')) {
-        services.push({...trainer, priority: 0.9});
-      }
-    }
-  }
+  // Generate plan name
+  const planName = generatePlanName(primaryCondition, serviceTypes[0]);
 
-  if (services.length === 0 && context.medicalConditions?.length > 0) {
-    context.medicalConditions.forEach(condition => {
-      const conditionServices = CONDITION_TO_SERVICES[condition];
-      if (conditionServices) {
-        conditionServices.forEach(serviceType => {
-          const allocation = allocations.find(a => a.type === serviceType);
-          if (allocation && !services.some(s => s.type === serviceType)) {
-            services.push(allocation);
-          }
-        });
-      }
-    });
-  }
+  // Create service plan with allocations
+  const servicePlan = generateServicePlan(serviceTypes, budget);
 
-  // If no specific services were determined, use default allocations
-  if (services.length === 0) {
-    services = allocations;
-  }
-  
-  // Always include personal trainer for fitness/weight loss goals
-  if (context.goal?.toLowerCase().includes('weight') || 
-      context.goal?.toLowerCase().includes('tone') || 
-      context.goal?.toLowerCase().includes('fitness') ||
-      context.medicalConditions?.some(c => c.includes('weight loss')) ||
-      context.medicalConditions?.some(c => c.includes('fitness goals'))) {
-    
-    const hasPersonalTrainer = services.some(s => s.type === 'personal-trainer');
-    
-    if (!hasPersonalTrainer) {
-      const trainerAllocation = allocations.find(a => a.type === 'personal-trainer');
-      if (trainerAllocation) {
-        services.push(trainerAllocation);
-        console.log("Adding personal-trainer because of fitness/weight loss goals");
-      }
-    }
-  }
-
-  return services;
-};
-
-const allocateServices = (
-  services: ServiceAllocationItem[],
-  context: PlanContext
-): AIHealthPlan['services'] => {
-  const allocatedServices: AIHealthPlan['services'] = [];
-  
-  // Enhanced service distribution that ensures balanced allocation for multi-condition scenarios
-  let serviceDistribution: Record<ServiceCategory, SessionAllocation> = {} as Record<ServiceCategory, SessionAllocation>;
-  
-  // Initialize serviceDistribution with required structure
-  const serviceTypes = services.map(s => ({ type: s.type, priority: s.priority || 1 }));
-  serviceDistribution = distributeSessionsByBudget(context.budget, serviceTypes);
-
-  // Special cases - ensure coaching and physiotherapy get at least one session each
-  const hasKneePain = context.medicalConditions?.some(c => 
-    c.toLowerCase().includes('knee') && c.toLowerCase().includes('pain')
-  );
-  
-  const hasRacePrep = context.goal?.toLowerCase().includes('race') || 
-                      context.goal?.toLowerCase().includes('run') ||
-                      context.medicalConditions?.some(c => c.toLowerCase().includes('race preparation'));
-  
-  if (hasKneePain && hasRacePrep) {
-    // For very low budgets, make sure we have at least one session of each critical service
-    if (context.budget && context.budget < 1000) {
-      // Get the minimum allocations we need
-      const hasPhysiotherapy = serviceDistribution['physiotherapist'] && serviceDistribution['physiotherapist'].sessions > 0;
-      const hasCoaching = serviceDistribution['coaching'] && serviceDistribution['coaching'].sessions > 0;
-      
-      // If we're missing critical services, override the distribution
-      if (!hasPhysiotherapy || !hasCoaching) {
-        // Calculate an affordable cost per session based on budget
-        const affordableSessionCost = Math.floor(context.budget / 2) - 50; // Leave a small buffer
-        
-        // Custom distribution for knee pain + race prep case
-        const defaultDistribution = {
-          sessions: 0,
-          costPerSession: 0,
-          totalCost: 0
-        };
-        
-        // Start with a fresh default distribution
-        serviceDistribution = {
-          'physiotherapist': { ...defaultDistribution },
-          'biokineticist': { ...defaultDistribution },
-          'dietician': { ...defaultDistribution },
-          'personal-trainer': { ...defaultDistribution },
-          'pain-management': { ...defaultDistribution },
-          'coaching': { ...defaultDistribution },
-          'psychology': { ...defaultDistribution },
-          'psychiatry': { ...defaultDistribution },
-          'podiatrist': { ...defaultDistribution },
-          'general-practitioner': { ...defaultDistribution },
-          'sport-physician': { ...defaultDistribution },
-          'orthopedic-surgeon': { ...defaultDistribution },
-          'family-medicine': { ...defaultDistribution },
-          'gastroenterology': { ...defaultDistribution },
-          'massage-therapy': { ...defaultDistribution },
-          'nutrition-coach': { ...defaultDistribution },
-          'occupational-therapy': { ...defaultDistribution },
-          'physical-therapy': { ...defaultDistribution },
-          'chiropractor': { ...defaultDistribution },
-          'nurse-practitioner': { ...defaultDistribution },
-          'cardiology': { ...defaultDistribution },
-          'dermatology': { ...defaultDistribution },
-          'neurology': { ...defaultDistribution },
-          'endocrinology': { ...defaultDistribution },
-          'urology': { ...defaultDistribution },
-          'oncology': { ...defaultDistribution },
-          'rheumatology': { ...defaultDistribution },
-          'pediatrics': { ...defaultDistribution },
-          'geriatrics': { ...defaultDistribution },
-          'sports-medicine': { ...defaultDistribution },
-          'internal-medicine': { ...defaultDistribution },
-          'orthopedics': { ...defaultDistribution },
-          'neurosurgery': { ...defaultDistribution },
-          'infectious-disease': { ...defaultDistribution },
-          'plastic-surgery': { ...defaultDistribution },
-          'obstetrics-gynecology': { ...defaultDistribution },
-          'emergency-medicine': { ...defaultDistribution },
-          'anesthesiology': { ...defaultDistribution },
-          'radiology': { ...defaultDistribution },
-          'geriatric-medicine': { ...defaultDistribution },
-          'all': { ...defaultDistribution }
-        };
-        
-        // Set physiotherapy and coaching
-        serviceDistribution['physiotherapist'] = {
-          sessions: 1,
-          costPerSession: affordableSessionCost,
-          totalCost: affordableSessionCost
-        };
-        
-        serviceDistribution['coaching'] = {
-          sessions: 1,
-          costPerSession: affordableSessionCost,
-          totalCost: affordableSessionCost
-        };
-        
-        console.log("Applied special budget handling for knee pain + race preparation");
-      }
-    }
-  }
-  
-  services.forEach(service => {
-    const sessionAllocation = serviceDistribution[service.type];
-    if (!sessionAllocation || sessionAllocation.sessions === 0) return;
-
-    let availablePractitioners = ALL_PRACTITIONERS.filter(p => 
-      p.serviceType === service.type
-    );
-
-    if (context.location) {
-      availablePractitioners = filterByLocation(
-        availablePractitioners,
-        { 
-          location: context.location, 
-          radius: context.preferOnline ? 'anywhere' : 'nearby' 
-        }
-      );
-    }
-
-    // Add online preference filtering
-    if (context.preferOnline !== undefined) {
-      availablePractitioners = availablePractitioners.filter(p => 
-        p.isOnline === context.preferOnline
-      );
-    }
-
-    // Enhanced matching - consider both goals and medical conditions
-    availablePractitioners = availablePractitioners.sort((a, b) => {
-      let aRelevance = 0;
-      let bRelevance = 0;
-      
-      // Check if practitioners have tags relevant to goal
-      if (context.goal) {
-        const goalLower = context.goal.toLowerCase();
-        
-        aRelevance += a.serviceTags.some(tag => 
-          goalLower.includes(tag.toLowerCase()) || tag.toLowerCase().includes('weight') || 
-          tag.toLowerCase().includes('tone') || tag.toLowerCase().includes('fitness')
-        ) ? 2 : 0;
-        
-        bRelevance += b.serviceTags.some(tag => 
-          goalLower.includes(tag.toLowerCase()) || tag.toLowerCase().includes('weight') || 
-          tag.toLowerCase().includes('tone') || tag.toLowerCase().includes('fitness')
-        ) ? 2 : 0;
-      }
-      
-      // Special case for knee pain + race prep
-      if (hasKneePain && hasRacePrep) {
-        if (service.type === 'physiotherapist') {
-          // Prioritize physiotherapists with running or knee specialties
-          aRelevance += a.serviceTags.some(tag => 
-            tag.toLowerCase().includes('run') || tag.toLowerCase().includes('knee') ||
-            tag.toLowerCase().includes('sports')
-          ) ? 3 : 0;
-          
-          bRelevance += b.serviceTags.some(tag => 
-            tag.toLowerCase().includes('run') || tag.toLowerCase().includes('knee') ||
-            tag.toLowerCase().includes('sports')
-          ) ? 3 : 0;
-        }
-        else if (service.type === 'coaching') {
-          // Prioritize coaches who can handle injuries
-          aRelevance += a.serviceTags.some(tag => 
-            tag.toLowerCase().includes('injury') || tag.toLowerCase().includes('rehab') ||
-            tag.toLowerCase().includes('recovery')
-          ) ? 3 : 0;
-          
-          bRelevance += b.serviceTags.some(tag => 
-            tag.toLowerCase().includes('injury') || tag.toLowerCase().includes('rehab') ||
-            tag.toLowerCase().includes('recovery')
-          ) ? 3 : 0;
-        }
-      }
-      
-      // Check for medical condition relevance
-      if (context.medicalConditions?.length) {
-        for (const condition of context.medicalConditions) {
-          const condLower = condition.toLowerCase();
-          
-          aRelevance += a.serviceTags.some(tag => 
-            condLower.includes(tag.toLowerCase()) || tag.toLowerCase().includes(condLower)
-          ) ? 1 : 0;
-          
-          bRelevance += b.serviceTags.some(tag => 
-            condLower.includes(tag.toLowerCase()) || tag.toLowerCase().includes(condLower)
-          ) ? 1 : 0;
-        }
-      }
-      
-      if (aRelevance !== bRelevance) return bRelevance - aRelevance;
-      
-      // If relevance is the same, sort by rating
-      return b.rating - a.rating;
-    });
-
-    // If we found practitioners for this service
-    if (availablePractitioners.length > 0) {
-      // Take the best matches
-      const recommendedPractitioners = availablePractitioners.slice(0, 3);
-      
-      allocatedServices.push({
-        type: service.type,
-        price: sessionAllocation.costPerSession,
-        sessions: sessionAllocation.sessions,
-        description: generateServiceDescription(
-          service.type, 
-          context.budgetTier && context.budgetTier.name === 'high',
-          hasKneePain && hasRacePrep,
-          context.medicalConditions
-        ),
-        recommendedPractitioners: recommendedPractitioners
-      });
-    } else {
-      // Even if we don't find exact matches, include the service with general practitioners
-      // Get practitioners of this service type, regardless of other filters
-      const generalPractitioners = ALL_PRACTITIONERS.filter(p => p.serviceType === service.type).slice(0, 3);
-      
-      if (generalPractitioners.length > 0) {
-        allocatedServices.push({
-          type: service.type,
-          price: sessionAllocation.costPerSession,
-          sessions: sessionAllocation.sessions,
-          description: generateServiceDescription(
-            service.type, 
-            context.budgetTier && context.budgetTier.name === 'high',
-            hasKneePain && hasRacePrep,
-            context.medicalConditions
-          ),
-          recommendedPractitioners: generalPractitioners
-        });
-      }
-    }
+  // Calculate total sessions and cost
+  let totalSessions = 0;
+  let totalCost = 0;
+  Object.values(servicePlan).forEach(allocation => {
+    totalSessions += allocation.sessions;
+    totalCost += allocation.totalCost;
   });
 
-  return allocatedServices;
-};
+  // Generate plan description
+  const description = `This ${timeframe} plan focuses on treating ${primaryCondition} through a combination of ${serviceTypes.slice(0, 3).join(', ')} sessions. The plan includes ${totalSessions} total sessions with an estimated cost of $${totalCost}.`;
 
-const getSuitablePractitioners = (
-  serviceCategory: ServiceCategory,
-  goal?: string,
-  location?: string,
-  preferOnline?: boolean,
-  budget?: number
-): Practitioner[] => {
-  let practitioners = PRACTITIONERS.filter(p => p.serviceType === serviceCategory);
-  
-  if (location) {
-    practitioners = practitioners.filter(p =>
-      p.location.toLowerCase().includes(location.toLowerCase())
-    );
-  }
-  
-  if (preferOnline !== undefined) {
-    practitioners = practitioners.filter(p => p.isOnline === preferOnline);
-  }
-  
-  if (goal) {
-    practitioners = practitioners.sort((a, b) => {
-      const aRelevance = a.serviceTags.some(tag =>
-        goal.toLowerCase().includes(tag.toLowerCase()) ||
-        tag.toLowerCase().includes(goal.toLowerCase())
-      ) ? 1 : 0;
-      
-      const bRelevance = b.serviceTags.some(tag =>
-        goal.toLowerCase().includes(tag.toLowerCase()) ||
-        tag.toLowerCase().includes(goal.toLowerCase())
-      ) ? 1 : 0;
-      
-      return bRelevance - aRelevance;
-    });
-  }
-  
-  practitioners = practitioners.sort((a, b) => b.rating - a.rating);
-  
-  return practitioners.slice(0, 3);
-};
+  // Return the complete plan
+  return {
+    name: planName,
+    description,
+    primaryCondition,
+    timeframe,
+    servicePlan,
+    totalSessions,
+    totalCost,
+    budget
+  };
+}
 
-const generateServiceDescription = (
-  serviceType: string, 
-  isHighEnd: boolean,
-  isKneePainWithRace: boolean = false,
-  medicalConditions: string[] = []
-): string => {
-  // Special case descriptions for knee pain + race preparation
-  if (isKneePainWithRace) {
-    switch (serviceType) {
-      case 'physiotherapist':
-        return isHighEnd 
-          ? 'Specialized knee rehabilitation focused on running biomechanics and race-specific demands.' 
-          : 'Targeted knee therapy to support safe race preparation and running mechanics.';
-      case 'coaching':
-        return isHighEnd 
-          ? 'Personalized race training plan designed to accommodate knee limitations while optimizing performance.' 
-          : 'Modified race preparation coaching that respects knee recovery needs.';
-      case 'personal-trainer':
-        return isHighEnd 
-          ? 'Customized strength program focusing on knee stability, running economy, and race-specific preparation.' 
-          : 'Knee-friendly training sessions that support your race goals.';
-    }
-  }
-  
-  // Special case for any back pain condition
-  const hasBackPain = medicalConditions?.some(c => c.toLowerCase().includes('back') && c.toLowerCase().includes('pain'));
-  if (hasBackPain) {
-    switch (serviceType) {
-      case 'physiotherapist':
-        return isHighEnd 
-          ? 'Comprehensive back assessment with specialized manual therapy and movement correction.' 
-          : 'Back pain treatment with targeted exercises for relief and functional improvement.';
-      case 'personal-trainer':
-        return isHighEnd 
-          ? 'Personalized training program with core stability focus to support back health.' 
-          : 'Back-safe exercise sessions to build strength without aggravating pain.';
-    }
-  }
-  
-  // Special case for anxiety
-  const hasAnxiety = medicalConditions?.some(c => c.toLowerCase().includes('anxiety'));
-  if (hasAnxiety) {
-    switch (serviceType) {
-      case 'coaching':
-        return isHighEnd 
-          ? 'Holistic coaching focused on mental wellness techniques and anxiety management strategies.' 
-          : 'Supportive coaching sessions to develop coping skills for anxiety.';
-      case 'dietician':
-        return isHighEnd 
-          ? 'Specialized nutrition plan addressing the connection between diet, mood, and anxiety.' 
-          : 'Diet guidance to support mental wellbeing and reduce anxiety triggers.';
-    }
-  }
+// Example of a function that returns SessionAllocation
+export function createSessionAllocation(
+  sessions: number,
+  costPerSession: number,
+  priority: 'high' | 'medium' | 'low' = 'medium'
+): SessionAllocation {
+  return {
+    sessions,
+    costPerSession,
+    totalCost: sessions * costPerSession,
+    count: sessions, // Set count to match sessions for compatibility
+    priorityLevel: priority
+  };
+}
 
-  // Standard descriptions as fallback
-  const descriptions: Record<string, { affordable: string; highEnd: string }> = {
-    'dietician': {
-      affordable: 'Basic dietary advice and meal planning.',
-      highEnd: 'Comprehensive nutritional assessment and personalized meal plans.'
-    },
-    'personal-trainer': {
-      affordable: 'Group fitness sessions focusing on strength and endurance.',
-      highEnd: 'Personalized training sessions with tailored exercise programs.'
-    },
+// Example pricing function
+export function getServicePricing(service: ServiceCategory): ServicePricing {
+  // Default pricing map
+  const pricingMap: Record<ServiceCategory, ServicePricing> = {
     'physiotherapist': {
-      affordable: 'Standard physiotherapy sessions for rehabilitation.',
-      highEnd: 'Advanced physiotherapy with specialized manual therapy.'
-    },
-    'cardiology': {
-      affordable: 'Basic cardiac health check-up.',
-      highEnd: 'Comprehensive cardiac evaluation with advanced diagnostics.'
-    },
-    'endocrinology': {
-      affordable: 'Initial consultation for hormonal imbalances.',
-      highEnd: 'Detailed endocrine assessment and personalized treatment plans.'
-    },
-    'internal-medicine': {
-      affordable: 'General internal medicine consultation.',
-      highEnd: 'Specialized internal medicine consultation with comprehensive testing.'
-    },
-    'gastroenterology': {
-      affordable: 'Standard digestive health assessment.',
-      highEnd: 'Advanced gastroenterological consultation with specialized treatment plan.'
-    },
-    'coaching': {
-      affordable: 'Group coaching session with technique guidance and motivation',
-      highEnd: 'Private coaching with personalized training plan and performance analysis'
-    },
-    'family-medicine': {
-      affordable: "Clinical consultation with basic health assessment",
-      highEnd: "Comprehensive medical evaluation with detailed health recommendations"
+      category: 'physiotherapist',
+      basePrice: 150,
+      priceRange: { min: 120, max: 180 }
     },
     'biokineticist': {
-      affordable: "Basic movement and biomechanical assessment",
-      highEnd: "Advanced movement analysis with personalized exercise prescription"
+      category: 'biokineticist',
+      basePrice: 180,
+      priceRange: { min: 150, max: 200 }
     },
-    'pediatrics': {
-      affordable: "Standard pediatric health check-up",
-      highEnd: "Comprehensive pediatric assessment with developmental evaluation"
+    'dietician': {
+      category: 'dietician',
+      basePrice: 120,
+      priceRange: { min: 100, max: 150 }
     },
-    'dermatology': {
-      affordable: "Basic skin assessment and care recommendations",
-      highEnd: "Advanced dermatological evaluation with specialized treatment"
+    'personal-trainer': {
+      category: 'personal-trainer',
+      basePrice: 100,
+      priceRange: { min: 80, max: 130 }
     },
-    'orthopedics': {
-      affordable: "Standard orthopedic consultation",
-      highEnd: "Comprehensive orthopedic evaluation with specialized treatment"
+    'coaching': {
+      category: 'coaching',
+      basePrice: 140,
+      priceRange: { min: 100, max: 180 }
     },
-    'neurology': {
-      affordable: "Basic neurological check-up",
-      highEnd: "Comprehensive neurological assessment with advanced diagnostics"
-    },
-    'obstetrics-gynecology': {
-      affordable: "Standard gynecological check-up",
-      highEnd: "Comprehensive women's health assessment with specialized care"
-    },
-    'emergency-medicine': {
-      affordable: "Basic urgent care assessment",
-      highEnd: "Comprehensive emergency medical evaluation"
+    'psychology': {
+      category: 'psychology',
+      basePrice: 200,
+      priceRange: { min: 150, max: 250 }
     },
     'psychiatry': {
-      affordable: "Initial mental health consultation",
-      highEnd: "Comprehensive psychiatric evaluation with personalized treatment plan"
+      category: 'psychiatry',
+      basePrice: 300,
+      priceRange: { min: 250, max: 350 }
     },
-    'anesthesiology': {
-      affordable: "Standard pre-procedure assessment",
-      highEnd: "Comprehensive anesthetic evaluation and pain management"
-    },
-    'urology': {
-      affordable: "Basic urological health check-up",
-      highEnd: "Comprehensive urological assessment with specialized treatment"
-    },
-    'oncology': {
-      affordable: "Initial cancer screening consultation",
-      highEnd: "Comprehensive oncological evaluation with personalized treatment plan"
-    },
-    'neurosurgery': {
-      affordable: "Initial neurosurgical consultation",
-      highEnd: "Comprehensive neurosurgical evaluation with specialized treatment"
-    },
-    'infectious-disease': {
-      affordable: "Basic infectious disease screening",
-      highEnd: "Comprehensive infectious disease assessment with specialized treatment"
-    },
-    'radiology': {
-      affordable: "Standard imaging assessment",
-      highEnd: "Advanced imaging with specialized interpretation"
-    },
-    'geriatric-medicine': {
-      affordable: "Basic elder care consultation",
-      highEnd: "Comprehensive geriatric assessment with specialized care plan"
-    },
-    'plastic-surgery': {
-      affordable: "Initial cosmetic consultation",
-      highEnd: "Comprehensive aesthetic evaluation with personalized treatment plan"
-    },
-    'rheumatology': {
-      affordable: "Basic rheumatological check-up",
-      highEnd: "Comprehensive rheumatological assessment with specialized treatment"
+    'family-medicine': {
+      category: 'family-medicine',
+      basePrice: 150,
+      priceRange: { min: 120, max: 180 }
     },
     'pain-management': {
-      affordable: "Basic pain assessment and treatment",
-      highEnd: "Comprehensive pain evaluation with multimodal treatment plan"
+      category: 'pain-management',
+      basePrice: 200,
+      priceRange: { min: 150, max: 250 }
+    },
+    'podiatrist': {
+      category: 'podiatrist',
+      basePrice: 180,
+      priceRange: { min: 150, max: 210 }
+    },
+    'general-practitioner': {
+      category: 'general-practitioner',
+      basePrice: 120,
+      priceRange: { min: 100, max: 150 }
+    },
+    'sport-physician': {
+      category: 'sport-physician',
+      basePrice: 200,
+      priceRange: { min: 180, max: 250 }
+    },
+    'orthopedic-surgeon': {
+      category: 'orthopedic-surgeon',
+      basePrice: 400,
+      priceRange: { min: 350, max: 500 }
+    },
+    'gastroenterology': {
+      category: 'gastroenterology',
+      basePrice: 300,
+      priceRange: { min: 250, max: 350 }
+    },
+    'massage-therapy': {
+      category: 'massage-therapy',
+      basePrice: 100,
+      priceRange: { min: 80, max: 130 }
+    },
+    'nutrition-coaching': {
+      category: 'nutrition-coaching',
+      basePrice: 120,
+      priceRange: { min: 100, max: 150 }
+    },
+    'occupational-therapy': {
+      category: 'occupational-therapy',
+      basePrice: 160,
+      priceRange: { min: 130, max: 190 }
+    },
+    'physical-therapy': {
+      category: 'physical-therapy',
+      basePrice: 150,
+      priceRange: { min: 120, max: 180 }
+    },
+    'chiropractor': {
+      category: 'chiropractor',
+      basePrice: 140,
+      priceRange: { min: 110, max: 170 }
+    },
+    'nurse-practitioner': {
+      category: 'nurse-practitioner',
+      basePrice: 100,
+      priceRange: { min: 80, max: 120 }
+    },
+    'cardiology': {
+      category: 'cardiology',
+      basePrice: 300,
+      priceRange: { min: 250, max: 350 }
+    },
+    'dermatology': {
+      category: 'dermatology',
+      basePrice: 250,
+      priceRange: { min: 200, max: 300 }
+    },
+    'neurology': {
+      category: 'neurology',
+      basePrice: 320,
+      priceRange: { min: 280, max: 380 }
+    },
+    'endocrinology': {
+      category: 'endocrinology',
+      basePrice: 280,
+      priceRange: { min: 240, max: 320 }
+    },
+    'urology': {
+      category: 'urology',
+      basePrice: 260,
+      priceRange: { min: 220, max: 300 }
+    },
+    'oncology': {
+      category: 'oncology',
+      basePrice: 350,
+      priceRange: { min: 300, max: 400 }
+    },
+    'rheumatology': {
+      category: 'rheumatology',
+      basePrice: 270,
+      priceRange: { min: 230, max: 310 }
+    },
+    'pediatrics': {
+      category: 'pediatrics',
+      basePrice: 180,
+      priceRange: { min: 150, max: 210 }
+    },
+    'geriatrics': {
+      category: 'geriatrics',
+      basePrice: 200,
+      priceRange: { min: 170, max: 230 }
+    },
+    'sports-medicine': {
+      category: 'sports-medicine',
+      basePrice: 220,
+      priceRange: { min: 180, max: 260 }
+    },
+    'internal-medicine': {
+      category: 'internal-medicine',
+      basePrice: 240,
+      priceRange: { min: 200, max: 280 }
+    },
+    'orthopedics': {
+      category: 'orthopedics',
+      basePrice: 260,
+      priceRange: { min: 220, max: 300 }
+    },
+    'neurosurgery': {
+      category: 'neurosurgery',
+      basePrice: 500,
+      priceRange: { min: 450, max: 600 }
+    },
+    'infectious-disease': {
+      category: 'infectious-disease',
+      basePrice: 280,
+      priceRange: { min: 240, max: 320 }
+    },
+    'plastic-surgery': {
+      category: 'plastic-surgery',
+      basePrice: 450,
+      priceRange: { min: 400, max: 550 }
+    },
+    'obstetrics-gynecology': {
+      category: 'obstetrics-gynecology',
+      basePrice: 240,
+      priceRange: { min: 200, max: 280 }
+    },
+    'emergency-medicine': {
+      category: 'emergency-medicine',
+      basePrice: 300,
+      priceRange: { min: 250, max: 350 }
+    },
+    'anesthesiology': {
+      category: 'anesthesiology',
+      basePrice: 380,
+      priceRange: { min: 330, max: 430 }
+    },
+    'radiology': {
+      category: 'radiology',
+      basePrice: 260,
+      priceRange: { min: 220, max: 300 }
+    },
+    'geriatric-medicine': {
+      category: 'geriatric-medicine',
+      basePrice: 220,
+      priceRange: { min: 180, max: 260 }
+    },
+    'strength-coaching': {
+      category: 'strength-coaching',
+      basePrice: 110,
+      priceRange: { min: 90, max: 140 }
+    },
+    'run-coaching': {
+      category: 'run-coaching',
+      basePrice: 110,
+      priceRange: { min: 90, max: 140 }
+    },
+    'all': {
+      category: 'all',
+      basePrice: 150,
+      priceRange: { min: 100, max: 200 }
     }
   };
+  
+  return pricingMap[service] || {
+    category: service,
+    basePrice: 150,
+    priceRange: { min: 100, max: 200 }
+  };
+}
 
-  return isHighEnd ? 
-    descriptions[serviceType]?.highEnd || "Premium specialized service" : 
-    descriptions[serviceType]?.affordable || "Standard service";
-};
-
-const calculateTotalCost = (services: AIHealthPlan['services']): number => {
-  return services.reduce((total, service) => total + (service.price * service.sessions), 0);
-};
-
-const generatePlanName = (context: PlanContext): string => {
-  const budgetTierPrefix = context.budgetTier ? 
-    `${context.budgetTier.name.charAt(0).toUpperCase() + context.budgetTier.name.slice(1)} Budget:` : 
-    "Custom Budget:";
+// Example of how to use sessionAllocations correctly
+export function generateServicePlan(
+  services: ServiceCategory[],
+  budget: number
+): Record<ServiceCategory, SessionAllocation> {
+  const plan: Record<ServiceCategory, SessionAllocation> = {};
   
-  // Special case for knee pain + race preparation
-  const hasKneePain = context.medicalConditions?.some(c => 
-    c.toLowerCase().includes('knee') && c.toLowerCase().includes('pain')
-  );
-  
-  const hasRacePrep = context.goal?.toLowerCase().includes('race') || 
-                      context.goal?.toLowerCase().includes('run') ||
-                      context.medicalConditions?.some(c => c.toLowerCase().includes('race preparation'));
-  
-  if (hasKneePain && hasRacePrep) {
-    return `${budgetTierPrefix} Knee-Safe Race Preparation Plan`;
-  }
-  
-  // Special cases for specific conditions
-  const hasAnxiety = context.medicalConditions?.some(c => c.toLowerCase().includes('anxiety'));
-  const hasNutrition = context.medicalConditions?.some(c => c.toLowerCase().includes('nutrition'));
-  
-  if (hasAnxiety && hasNutrition && hasRacePrep) {
-    return `${budgetTierPrefix} Holistic Race Preparation Plan`;
-  }
-  
-  if (hasAnxiety && hasNutrition) {
-    return `${budgetTierPrefix} Nutrition & Mental Wellness Plan`;
-  }
-  
-  if (hasAnxiety) {
-    return `${budgetTierPrefix} Anxiety Management Plan`;
-  }
-  
-  if (hasRacePrep) {
-    return `${budgetTierPrefix} Race Training Plan`;
-  }
-  
-  // Other conditions
-  if (context.medicalConditions?.some(c => c.toLowerCase().includes('shoulder'))) {
-    return `${budgetTierPrefix} Shoulder Recovery Plan`;
-  }
-  
-  if (context.medicalConditions?.some(c => c.toLowerCase().includes('back'))) {
-    return `${budgetTierPrefix} Back Pain Relief Plan`;
-  }
-  
-  return "Customized Wellness Plan";
-};
-
-const generatePlanDescription = (context: PlanContext): string => {
-  // Special case descriptions for common combined conditions
-  const hasKneePain = context.medicalConditions?.some(c => 
-    c.toLowerCase().includes('knee') && c.toLowerCase().includes('pain')
-  );
-  
-  const hasRacePrep = context.goal?.toLowerCase().includes('race') || 
-                      context.goal?.toLowerCase().includes('run') ||
-                      context.medicalConditions?.some(c => c.toLowerCase().includes('race preparation'));
-  
-  if (hasKneePain && hasRacePrep) {
-    return "A balanced plan focusing on knee rehabilitation while preparing you for your race. " +
-           "Includes modified training approaches that protect your knee while building necessary fitness.";
-  }
-  
-  // Default description
-  return "A personalized wellness plan designed for your specific needs and goals.";
-};
-
-const determinePlanType = (context: PlanContext): AIHealthPlan['planType'] => {
-  const hasRacePrep = context.goal?.toLowerCase().includes('race') || 
-                      context.goal?.toLowerCase().includes('run') ||
-                      context.medicalConditions?.some(c => c.toLowerCase().includes('race preparation'));
-                      
-  if (hasRacePrep) {
-    return 'progressive';
-  }
-  
-  const hasRehabNeeds = context.medicalConditions?.some(c => 
-    c.toLowerCase().includes('pain') || c.toLowerCase().includes('injury')
-  );
-  
-  if (hasRehabNeeds) {
-    return 'high-impact';
-  }
-  
-  return 'best-fit';
-};
-
-const determineTimeFrame = (context: PlanContext): string => {
-  // Special case for knee pain + race prep
-  const hasKneePain = context.medicalConditions?.some(c => 
-    c.toLowerCase().includes('knee') && c.toLowerCase().includes('pain')
-  );
-  
-  const hasRacePrep = context.goal?.toLowerCase().includes('race') || 
-                      context.goal?.toLowerCase().includes('run') ||
-                      context.medicalConditions?.some(c => c.toLowerCase().includes('race preparation'));
-  
-  if (hasKneePain && hasRacePrep) {
-    // Check if there's a specific timeframe mentioned for the race
-    const raceMatch = context.goal?.match(/(\d+)\s*(weeks?|months?|days?)(.*?)(race|run|marathon|event)/i) ||
-                       context.goal?.match(/(race|run|marathon|event)(.*?)(\d+)\s*(weeks?|months?|days?)/i);
-                    
-    if (raceMatch) {
-      const amount = parseInt(raceMatch[1] || raceMatch[3], 10);
-      const unit = (raceMatch[2] || raceMatch[4]).toLowerCase();
-      return `${amount} ${unit}`;
-    }
+  services.forEach((service, index) => {
+    const pricing = getServicePricing(service);
+    const sessionsCount = budget > 1000 ? 4 : 2;
+    const priority = index === 0 ? 'high' : index === 1 ? 'medium' : 'low';
     
-    // Default timeframe for knee pain + race prep
-    return "8 weeks"; // Standard combined rehab + training timeframe
-  }
+    plan[service] = createSessionAllocation(sessionsCount, pricing.basePrice, priority);
+  });
   
-  // For standard knee pain without race prep
-  if (hasKneePain) {
-    return "6 weeks"; // Standard knee rehabilitation timeframe
-  }
-  
-  // For race prep without injury
-  if (hasRacePrep) {
-    return "4 weeks"; // Standard race preparation timeframe
-  }
-  
-  return "8 weeks"; // Default timeframe
-};
+  return plan;
+}

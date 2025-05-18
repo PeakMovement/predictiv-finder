@@ -1,212 +1,132 @@
-import { AIHealthPlan, ServiceCategory } from "./types";
 
-// Track user selections for learning
-interface UserSelection {
-  userInput: string;
-  selectedPlan: string;
-  rejectedPlans: string[];
-  timestamp: number;
-}
-
-// In-memory storage for feedback data (would be DB in production)
-const userSelections: UserSelection[] = [];
-const servicePreferenceScores: Record<ServiceCategory, number> = {} as Record<ServiceCategory, number>;
-const keywordCorrelations: Record<string, Record<ServiceCategory, number>> = {};
+import { ServiceCategory } from "./types";
+import { AIHealthPlan } from "@/types"; // Updated import path
+import { createServiceCategoryRecord } from './helpers/serviceRecordInitializer';
 
 /**
- * Record user selection for feedback learning
- * @param userInput Original query from user
- * @param selectedPlan ID of the plan the user selected
- * @param allPlans All plans that were generated
+ * Feedback system for evaluating health plans
  */
-export function recordUserSelection(
-  userInput: string, 
-  selectedPlan: string,
-  allPlans: AIHealthPlan[]
-): void {
-  const selectedPlanObj = allPlans.find(plan => plan.id === selectedPlan);
-  if (!selectedPlanObj) return;
-  
-  // Record this selection
-  const rejectedPlans = allPlans
-    .filter(plan => plan.id !== selectedPlan)
-    .map(plan => plan.id);
-  
-  userSelections.push({
-    userInput,
-    selectedPlan,
-    rejectedPlans,
-    timestamp: Date.now()
-  });
-  
-  // Update service preference scores based on this selection
-  const selectedServices = selectedPlanObj.services.map(service => service.type);
-  
-  selectedServices.forEach(service => {
-    if (!servicePreferenceScores[service]) {
-      servicePreferenceScores[service] = 0;
-    }
-    servicePreferenceScores[service] += 1;
-  });
-  
-  // Update keyword correlations
-  const words = userInput.toLowerCase().split(/\W+/).filter(word => word.length > 3);
-  
-  words.forEach(word => {
-    if (!keywordCorrelations[word]) {
-      keywordCorrelations[word] = {} as Record<ServiceCategory, number>;
-    }
-    
-    selectedServices.forEach(service => {
-      if (!keywordCorrelations[word][service]) {
-        keywordCorrelations[word][service] = 0;
-      }
-      keywordCorrelations[word][service] += 1;
-    });
-  });
-  
-  console.log("User selection recorded for learning algorithm");
-}
+
+// Plan effectiveness score type
+export type PlanEffectivenessScore = {
+  overall: number;
+  byCondition: Record<string, number>;
+  byPractitioner: Record<ServiceCategory, number>;
+};
+
+// Feedback item type
+export type PlanFeedbackItem = {
+  aspect: string;
+  score: number;
+  feedback: string;
+  suggestion?: string;
+};
 
 /**
- * Apply learned insights to enhance generated plans
- * @param plans Original generated plans
- * @param userInput Current user query
- * @returns Enhanced plans with feedback insights applied
+ * Evaluate a generated health plan and provide feedback
+ * @param plan The health plan to evaluate
+ * @param userQuery The original user query
+ * @returns Effectiveness score and feedback
  */
-export function enhancePlansWithFeedbackInsights(
-  plans: AIHealthPlan[],
-  userInput: string
-): AIHealthPlan[] {
-  if (plans.length === 0 || !userInput) {
-    return plans;
-  }
+export function evaluateHealthPlan(
+  plan: AIHealthPlan,
+  userQuery: string
+): {
+  score: PlanEffectivenessScore;
+  feedback: PlanFeedbackItem[];
+} {
+  // Initialize default scores
+  const score: PlanEffectivenessScore = {
+    overall: 0,
+    byCondition: {},
+    byPractitioner: createServiceCategoryRecord(0)
+  };
   
-  try {
-    // Analyze input for keywords
-    const words = userInput.toLowerCase().split(/\W+/).filter(word => word.length > 3);
-    
-    // Get service correlations for these keywords
-    const serviceCorrelations: Record<ServiceCategory, number> = {};
-    
-    words.forEach(word => {
-      if (keywordCorrelations[word]) {
-        Object.entries(keywordCorrelations[word]).forEach(([service, score]) => {
-          const serviceKey = service as ServiceCategory;
-          if (!serviceCorrelations[serviceKey]) {
-            serviceCorrelations[serviceKey] = 0;
-          }
-          serviceCorrelations[serviceKey] += score;
-        });
-      }
-    });
-    
-    // Apply insights to enhance plans
-    return plans.map(plan => {
-      // Deep clone to avoid mutations
-      const enhancedPlan = JSON.parse(JSON.stringify(plan)) as AIHealthPlan;
-      
-      // Calculate how well this plan matches our learned preferences
-      let matchScore = 0;
-      const planServices = plan.services.map(s => s.type);
-      
-      // Score based on service correlations with the input
-      planServices.forEach(service => {
-        if (serviceCorrelations[service]) {
-          matchScore += serviceCorrelations[service];
-        }
-      });
-      
-      // Score based on global service preference
-      planServices.forEach(service => {
-        if (servicePreferenceScores[service]) {
-          matchScore += servicePreferenceScores[service] * 0.5;
-        }
-      });
-      
-      // Normalize score
-      if (planServices.length > 0) {
-        matchScore = matchScore / planServices.length;
-      }
-      
-      // Set match score (capped at 0.95 to avoid overconfidence)
-      if (enhancedPlan.matchScore !== undefined) {
-        enhancedPlan.matchScore = Math.min(0.95, (enhancedPlan.matchScore + matchScore) / 2);
-      } else {
-        enhancedPlan.matchScore = Math.min(0.8, 0.5 + matchScore);
-      }
-      
-      return enhancedPlan;
-    }).sort((a, b) => ((b.matchScore || 0) - (a.matchScore || 0)));
-  } catch (error) {
-    console.error("Error applying feedback insights:", error);
-    return plans;
-  }
+  const feedback: PlanFeedbackItem[] = [];
+  
+  // Evaluate plan completeness
+  const completenessScore = evaluatePlanCompleteness(plan);
+  feedback.push({
+    aspect: "Completeness",
+    score: completenessScore,
+    feedback: completenessScore > 0.7 
+      ? "Plan addresses key health needs comprehensively" 
+      : "Plan may be missing some important components",
+    suggestion: completenessScore < 0.7 
+      ? "Consider adding more detail about treatment approaches" 
+      : undefined
+  });
+  
+  // Evaluate practitioner matching
+  const practitionerScore = evaluatePractitionerMatching(plan, userQuery);
+  feedback.push({
+    aspect: "Practitioner Selection",
+    score: practitionerScore,
+    feedback: practitionerScore > 0.7 
+      ? "Practitioners well-matched to your health needs" 
+      : "Some practitioners may not be optimal for your situation",
+    suggestion: practitionerScore < 0.7 
+      ? "Consider consulting with a healthcare provider for a second opinion" 
+      : undefined
+  });
+  
+  // Calculate overall score (weighted average)
+  score.overall = (completenessScore * 0.5) + (practitionerScore * 0.5);
+  
+  // Additional evaluations could be added here
+  
+  return { score, feedback };
 }
 
 /**
- * Get recommendations for services based on similar past queries
- * @param userInput Current user query
- * @returns Recommended service categories
+ * Evaluate how complete the plan is
  */
-export function getRecommendationsFromSimilarQueries(userInput: string): ServiceCategory[] {
-  if (!userInput || userSelections.length === 0) {
-    return [];
+function evaluatePlanCompleteness(plan: AIHealthPlan): number {
+  let score = 0.5; // Base score
+  
+  // Check for plan name
+  if (plan.name && plan.name.length > 5) {
+    score += 0.1;
   }
   
-  // Find similar past queries using simple text similarity
-  const similarSelections = userSelections.filter(selection => {
-    const similarity = calculateTextSimilarity(selection.userInput, userInput);
-    return similarity > 0.5; // Threshold for considering similar
-  });
-  
-  if (similarSelections.length === 0) {
-    return [];
+  // Check for description
+  if (plan.description && plan.description.length > 20) {
+    score += 0.1;
   }
   
-  // Get service counts from similar selections
-  const serviceCounts: Record<ServiceCategory, number> = {} as Record<ServiceCategory, number>;
+  // Check for service allocations
+  if (plan.servicePlan && Object.keys(plan.servicePlan).length > 0) {
+    score += 0.3;
+  }
   
-  similarSelections.forEach(selection => {
-    const selectedPlanData = userSelections.find(s => s.selectedPlan === selection.selectedPlan);
-    if (!selectedPlanData) return;
-    
-    // In a real system, we'd look up the plan details from a database
-    // For this prototype, we'll use keyword correlation as a proxy
-    const words = userInput.toLowerCase().split(/\W+/).filter(word => word.length > 3);
-    words.forEach(word => {
-      if (keywordCorrelations[word]) {
-        Object.entries(keywordCorrelations[word]).forEach(([service, count]) => {
-          const serviceKey = service as ServiceCategory;
-          if (!serviceCounts[serviceKey]) {
-            serviceCounts[serviceKey] = 0;
-          }
-          serviceCounts[serviceKey] += count;
-        });
-      }
-    });
-  });
-  
-  // Convert to array, sort by count, and take top results
-  return Object.entries(serviceCounts)
-    .sort(([, countA], [, countB]) => countB - countA)
-    .slice(0, 3)
-    .map(([service]) => service as ServiceCategory);
+  return Math.min(1.0, score);
 }
 
 /**
- * Calculate simple text similarity between two strings
- * @param text1 First text
- * @param text2 Second text
- * @returns Similarity score (0-1)
+ * Evaluate how well practitioners match user needs
  */
-function calculateTextSimilarity(text1: string, text2: string): number {
-  // Simple Jaccard similarity for demonstration
-  const words1 = new Set(text1.toLowerCase().split(/\W+/).filter(w => w.length > 3));
-  const words2 = new Set(text2.toLowerCase().split(/\W+/).filter(w => w.length > 3));
+function evaluatePractitionerMatching(plan: AIHealthPlan, userQuery: string): number {
+  let score = 0.5; // Base score
   
-  const intersection = new Set([...words1].filter(word => words2.has(word)));
-  const union = new Set([...words1, ...words2]);
+  // This would normally use more sophisticated matching logic
+  // For now use a simple implementation
   
-  return intersection.size / union.size;
+  // Initialize practitioner scores
+  const practitionerScores = createServiceCategoryRecord(0);
+  
+  // Count number of services with non-zero allocations
+  const serviceCount = Object.values(plan.servicePlan || {}).filter(
+    allocation => allocation && allocation.count > 0
+  ).length;
+  
+  // Adjust score based on service count
+  if (serviceCount >= 3) {
+    score += 0.2;
+  } else if (serviceCount >= 1) {
+    score += 0.1;
+  } else {
+    score -= 0.1;
+  }
+  
+  return Math.min(1.0, Math.max(0, score));
 }

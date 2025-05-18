@@ -2,6 +2,7 @@
 import { ServiceCategory } from "../types";
 import { PROFESSIONAL_KEYWORDS, findAllServicesByKeyword } from "../professionalKeywords";
 import { detectProfessionalPhrases } from "../professionalPhraseData";
+import { createServiceCategoryRecord } from "../helpers/serviceRecordInitializer";
 
 // Define the interface for professional service mention results
 export interface ProfessionalServiceMention {
@@ -37,7 +38,7 @@ export function detectProfessionalMentions(input: string): ProfessionalServiceMe
   const conditionMentions = checkConditionAndTreatmentMentions(inputLower);
   
   // Combine and deduplicate results
-  const combinedResults: Record<ServiceCategory, number> = {};
+  const combinedResults = createServiceCategoryRecord(0);
   
   [...directMentions, ...conditionMentions].forEach(mention => {
     // Keep the highest confidence score if there are duplicates
@@ -48,10 +49,12 @@ export function detectProfessionalMentions(input: string): ProfessionalServiceMe
   });
   
   // Convert back to array format
-  return Object.entries(combinedResults).map(([serviceCategory, confidence]) => ({
-    serviceCategory: serviceCategory as ServiceCategory,
-    confidence
-  }));
+  return Object.entries(combinedResults)
+    .filter(([_, confidence]) => confidence > 0)
+    .map(([serviceCategory, confidence]) => ({
+      serviceCategory: serviceCategory as ServiceCategory,
+      confidence
+    }));
 }
 
 /**

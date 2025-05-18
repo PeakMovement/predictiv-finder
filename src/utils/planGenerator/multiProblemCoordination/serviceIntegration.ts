@@ -1,5 +1,6 @@
 
 import { ServiceCategory } from "../types";
+import { createServiceCategoryRecord } from "../helpers/serviceRecordInitializer";
 
 /**
  * Defines complementary relationships between different service types
@@ -8,7 +9,7 @@ import { ServiceCategory } from "../types";
 export const SERVICE_COMPLEMENTARY_MAP: Record<ServiceCategory, ServiceCategory[]> = {
   'physiotherapist': ['biokineticist', 'personal-trainer', 'pain-management'],
   'biokineticist': ['physiotherapist', 'personal-trainer', 'sport-physician'],
-  'dietician': ['nutrition-coach', 'personal-trainer', 'gastroenterology'],
+  'dietician': ['nutrition-coaching', 'personal-trainer', 'gastroenterology'],
   'personal-trainer': ['physiotherapist', 'biokineticist', 'dietician'],
   'pain-management': ['physiotherapist', 'psychology'],
   'coaching': ['psychology', 'personal-trainer'],
@@ -21,7 +22,7 @@ export const SERVICE_COMPLEMENTARY_MAP: Record<ServiceCategory, ServiceCategory[
   'family-medicine': ['general-practitioner'],
   'gastroenterology': ['dietician'],
   'massage-therapy': ['physiotherapist', 'pain-management'],
-  'nutrition-coach': ['dietician', 'personal-trainer'],
+  'nutrition-coaching': ['dietician', 'personal-trainer'],
   'occupational-therapy': ['physiotherapist', 'psychology'],
   'physical-therapy': ['physiotherapist'],
   'chiropractor': ['physiotherapist'],
@@ -46,6 +47,8 @@ export const SERVICE_COMPLEMENTARY_MAP: Record<ServiceCategory, ServiceCategory[
   'anesthesiology': ['pain-management'],
   'radiology': ['general-practitioner'],
   'geriatric-medicine': ['general-practitioner'],
+  'strength-coaching': ['personal-trainer', 'biokineticist'],
+  'run-coaching': ['personal-trainer', 'physiotherapist'],
   'all': []
 };
 
@@ -53,13 +56,22 @@ export const SERVICE_COMPLEMENTARY_MAP: Record<ServiceCategory, ServiceCategory[
  * Defines synergistic relationships between services that enhance each other's effectiveness
  */
 export const SERVICE_SYNERGY_MAP: Record<ServiceCategory, Record<ServiceCategory, number>> = {
-  'physiotherapist': { 'personal-trainer': 0.8, 'pain-management': 0.7 },
-  'psychology': { 'psychiatry': 0.9, 'coaching': 0.7 },
-  'dietician': { 'personal-trainer': 0.8, 'nutrition-coach': 0.7 },
-  'pain-management': { 'physiotherapist': 0.7, 'psychology': 0.6 },
-  // Default entries for remaining categories
-  'all': {}
+  'physiotherapist': createServiceCategoryRecord(0),
+  'psychology': createServiceCategoryRecord(0),
+  'dietician': createServiceCategoryRecord(0),
+  'pain-management': createServiceCategoryRecord(0),
+  'all': createServiceCategoryRecord(0)
 };
+
+// Initialize specific synergy relationships
+SERVICE_SYNERGY_MAP['physiotherapist']['personal-trainer'] = 0.8;
+SERVICE_SYNERGY_MAP['physiotherapist']['pain-management'] = 0.7;
+SERVICE_SYNERGY_MAP['psychology']['psychiatry'] = 0.9;
+SERVICE_SYNERGY_MAP['psychology']['coaching'] = 0.7;
+SERVICE_SYNERGY_MAP['dietician']['personal-trainer'] = 0.8;
+SERVICE_SYNERGY_MAP['dietician']['nutrition-coaching'] = 0.7;
+SERVICE_SYNERGY_MAP['pain-management']['physiotherapist'] = 0.7;
+SERVICE_SYNERGY_MAP['pain-management']['psychology'] = 0.6;
 
 /**
  * Identifies services that work well together for specific condition combinations
@@ -99,7 +111,7 @@ export function identifyComplementaryServices(
   };
   
   // Initialize result
-  const result: Record<ServiceCategory, ServiceCategory[]> = {};
+  const result = createServiceCategoryRecord([]);
   
   // Check for condition combinations
   for (const key in conditionServiceMap) {
@@ -170,7 +182,7 @@ export function generateIntegratedServicePlan(
 } {
   // Initialize result
   const services: ServiceCategory[] = [];
-  const sessionAllocations: Record<ServiceCategory, number> = {};
+  const sessionAllocations = createServiceCategoryRecord(0);
   const conditionServiceMap: Record<string, ServiceCategory[]> = {};
   
   // Map each condition to appropriate services based on condition type
@@ -183,7 +195,7 @@ export function generateIntegratedServicePlan(
     'anxiety': ['psychology', 'psychiatry'],
     'depression': ['psychiatry', 'psychology'],
     'weight': ['dietician', 'personal-trainer'],
-    'nutrition': ['dietician', 'nutrition-coach'],
+    'nutrition': ['dietician', 'nutrition-coaching'],
     'diabetes': ['endocrinology', 'dietician'],
     'heart': ['cardiology', 'general-practitioner'],
     'stomach': ['gastroenterology', 'dietician'],
