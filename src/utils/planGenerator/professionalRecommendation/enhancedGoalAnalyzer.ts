@@ -1,4 +1,3 @@
-
 import { ServiceCategory } from "../types";
 import { GOAL_SYNONYMS, MENTAL_HEALTH_SYNONYMS, FITNESS_SYNONYMS } from "../symptomMappings/synonymGroups";
 
@@ -248,8 +247,8 @@ export function mapSymptomToServices(symptom: string): ServiceCategory[] {
     // Fitness goals
     'weight loss': ['dietician', 'personal-trainer', 'nutrition-coaching'],
     'muscle gain': ['personal-trainer', 'dietician', 'strength-coaching'],
-    'endurance': ['personal-trainer', 'coaching', 'run-coaches'],
-    'running': ['run-coaches', 'personal-trainer', 'sports-medicine'],
+    'endurance': ['personal-trainer', 'coaching', 'run-coaching'],
+    'running': ['run-coaching', 'personal-trainer', 'sports-medicine'],
     
     // Injuries
     'injury': ['physiotherapist', 'sports-medicine', 'orthopedics'],

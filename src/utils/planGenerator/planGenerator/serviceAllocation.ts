@@ -2,6 +2,15 @@
 import { PlanContext, ServiceAllocation, ServiceCategory, ServiceAllocationItem, BASELINE_COSTS } from "@/utils/planGenerator/types";
 import { createServiceCategoryRecord } from "../helpers/serviceRecordInitializer";
 
+// Define an extended version of ServiceAllocation to include the properties we need
+interface EnhancedServiceAllocation extends ServiceAllocation {
+  sessions?: number;
+  description?: string;
+  frequency?: string;
+  percentage?: number;
+  priority?: number;
+}
+
 /**
  * Determine required services based on user context
  */
@@ -71,8 +80,8 @@ export const determineRequiredServices = (
 export const allocateServices = (
   services: ServiceCategory[],
   context: PlanContext
-): ServiceAllocation[] => {
-  const allocatedServices: ServiceAllocation[] = [];
+): EnhancedServiceAllocation[] => {
+  const allocatedServices: EnhancedServiceAllocation[] = [];
   
   // Calculate base budget if available, with a reasonable default
   const budget = context.budget || 5000;
@@ -133,7 +142,11 @@ export const allocateServices = (
         description: getServiceDescription(service, sessionCount),
         frequency: getFrequency(service, sessionCount),
         percentage: 100 / services.length, // Simple equal distribution
-        priority: services.indexOf(service) + 1
+        priority: services.indexOf(service) + 1,
+        // Add required fields for ServiceAllocation
+        count: sessionCount, // Ensure count is set to match sessions
+        priorityLevel: services.indexOf(service) === 0 ? 'high' : 
+                     services.indexOf(service) === 1 ? 'medium' : 'low'
       });
     }
   }
@@ -148,7 +161,10 @@ export const allocateServices = (
       description: getServiceDescription(cheapestService, 1) + " (limited by budget)",
       frequency: "once",
       percentage: 100,
-      priority: 1
+      priority: 1,
+      // Add required fields for ServiceAllocation
+      count: 1,
+      priorityLevel: 'high'
     });
   }
   

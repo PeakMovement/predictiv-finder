@@ -128,12 +128,14 @@ export const SERVICE_PRICE_RANGES: Record<ServiceCategory, {min: number, max: nu
   'sport-physician': {min: 700, max: 1000},
   'orthopedic-surgeon': {min: 1000, max: 1800},
   'massage-therapy': {min: 350, max: 600},
-  'nutrition-coaching': {min: 300, max: 500}, // Fixed: nutrition-coach -> nutrition-coaching
+  'nutrition-coaching': {min: 300, max: 500},
   'occupational-therapy': {min: 500, max: 750},
   'physical-therapy': {min: 500, max: 800},
   'chiropractor': {min: 400, max: 650},
   'nurse-practitioner': {min: 350, max: 550},
   'sports-medicine': {min: 600, max: 900},
   'geriatrics': {min: 550, max: 800},
+  'strength-coaching': {min: 500, max: 700},
+  'run-coaching': {min: 500, max: 700},
   'all': {min: 500, max: 800}
 };

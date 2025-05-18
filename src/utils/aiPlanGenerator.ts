@@ -16,11 +16,10 @@ export * from './planGenerator/inputAnalyzer';
 
 // Explicitly re-export the AIGenerator types and functions
 export {
-  generateAIHealthPlans as generateAIHealthPlan,
-  analyzeUserInput,
-  processUserQuery,
-  buildPlan,
-  optimizePlan
+  generateAIHealthPlans,
+  generateAIPlan,
+  analyzeUserQuery,
+  estimateComplexityLevel
 } from './planGenerator/aiPlanGenerator';
 
 // Export the AIGeneratorSessionAllocation type explicitly

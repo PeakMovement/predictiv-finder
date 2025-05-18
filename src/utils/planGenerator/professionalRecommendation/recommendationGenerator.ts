@@ -1,3 +1,4 @@
+
 /**
  * Main recommendation generator module
  * Refactored from the original large file
@@ -12,10 +13,10 @@ import {
   ScenarioResult // Import the appropriate type
 } from "./types";
 import { matchPractitionersToNeeds } from "../categoryMatcher";
-import { validateUserInput } from "./validators";
+import { validateUserInput } from "../validators";
 import { analyzeUserHealth } from "./analysis";
 import { calculateBudget, calculateIdealSessions } from "./budget";
-import { determineIdealTiming, generateRecommendationNotes, generatePreferredTraits } from "./utils";
+import { determineIdealTiming, generateRecommendationNotes, generatePreferredTraits } from "../utils";
 import { enhancedMemoize, logger } from "@/utils/cache";
 import { processHealthScenario } from "./scenarioHandler";
 
@@ -158,7 +159,7 @@ export function generateProfessionalRecommendations(
     if (budget) {
       result.budgetAllocation = {
         total: budget,
-        breakdown: {}
+        breakdown: createServiceCategoryRecord(0)
       };
       
       result.primaryRecommendations.forEach(rec => {

@@ -1,6 +1,6 @@
-
 import { ServiceCategory } from "../types";
 import { BudgetAllocation, BudgetAlternative, BudgetConstraint, ProfessionalRecommendation } from './types';
+import { createServiceCategoryRecord } from "../helpers/serviceRecordInitializer";
 
 /**
  * Standard pricing for different service categories
@@ -309,7 +309,7 @@ export function optimizePlanForBudget(
     return sum + (pricing.basePrice * rec.sessions);
   }, 0);
 
-  const budgetAllocation: Record<ServiceCategory, number> = {};
+  const budgetAllocation = createServiceCategoryRecord(0);
   let optimizedRecommendations = [...recommendations];
   const notes: string[] = [];
 
