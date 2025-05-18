@@ -1,20 +1,17 @@
 
-import { ServiceCategory } from "../types";
+import { ServiceCategory } from '../types';
 
 /**
- * Create a record with all ServiceCategory keys initialized with the provided default value
- * This helps avoid TypeScript errors when creating partial records
- * 
- * @param defaultValue The default value to use for each service category
- * @returns A fully initialized record with all ServiceCategory keys
+ * Creates a record with all service categories initialized to a default value
+ * @param defaultValue The default value to initialize each category with
+ * @returns A record with all service categories as keys
  */
 export function createServiceCategoryRecord<T>(defaultValue: T): Record<ServiceCategory, T> {
   const record = {} as Record<ServiceCategory, T>;
   
-  // Initialize all service categories with the default value
   const allCategories: ServiceCategory[] = [
     'physiotherapist',
-    'biokineticist',
+    'biokineticist', 
     'dietician',
     'personal-trainer',
     'coaching',
@@ -53,6 +50,8 @@ export function createServiceCategoryRecord<T>(defaultValue: T): Record<ServiceC
     'anesthesiology',
     'radiology',
     'geriatric-medicine',
+    'strength-coaching',
+    'run-coaching',
     'all'
   ];
   

@@ -1,4 +1,3 @@
-
 import { ServiceCategory } from "../types";
 import { 
   MENTAL_HEALTH_SYNONYMS,
@@ -182,7 +181,7 @@ export function detectUserProblems(userInput: string): DetectedUserProblem[] {
           }
           break;
         case 'cardio':
-          relatedCategories.push('personal-trainer', 'run-coaches');
+          relatedCategories.push('personal-trainer', 'run-coaching');
           if (inputLower.includes('improve endurance') ||
               inputLower.includes('run faster') ||
               inputLower.includes('cardio')) {

@@ -54,7 +54,7 @@ export function analyzeUserQuery(query: string): Partial<UserCriteria> {
   } else if (query.toLowerCase().includes('personal trainer') || query.toLowerCase().includes('fitness')) {
     criteria.categories = ['personal-trainer'];
   } else if (query.toLowerCase().includes('running') || query.toLowerCase().includes('marathon')) {
-    criteria.categories = ['run-coaches'];
+    criteria.categories = ['run-coaching'];
   }
   
   return criteria;

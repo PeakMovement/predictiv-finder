@@ -1,53 +1,81 @@
 
 /**
- * Enhanced memoization utility for caching expensive function results
- * Implements a simple LRU (Least Recently Used) cache for better memory management
- * 
- * @param fn Function to memoize
- * @param capacity Maximum number of results to cache (default: 100)
- * @returns Memoized function with the same signature as the input function
+ * Enhanced memoization utility
+ * Provides configurable caching for expensive functions
  */
-export function enhancedMemoize<T extends Function>(fn: T, capacity: number = 100): T {
-  const cache = new Map();
-  
-  const memoized = function(...args: any[]) {
-    // Create a string key from the arguments
-    const key = JSON.stringify(args);
-    
-    // Check if result is in cache
-    if (cache.has(key)) {
-      // Move item to most recently used position
-      const value = cache.get(key);
-      cache.delete(key);
-      cache.set(key, value);
-      return value;
-    }
-    
-    // If cache is at capacity, remove least recently used item
-    if (cache.size >= capacity) {
-      const oldestKey = cache.keys().next().value;
-      cache.delete(oldestKey);
-    }
-    
-    // Calculate result and store in cache
-    const result = fn(...args);
-    cache.set(key, result);
-    return result;
-  };
-  
-  // Cast back to the original function type
-  return memoized as unknown as T;
+
+type CacheOptions = {
+  maxSize?: number;
+  ttl?: number; // Time to live in milliseconds
+};
+
+// Simple in-memory cache implementation
+interface CacheEntry<T> {
+  value: T;
+  timestamp: number;
 }
 
-/**
- * Simple logging utility for consistent log formatting
- */
+export const enhancedMemoize = <T extends (...args: any[]) => any>(
+  fn: T,
+  keyFn?: (...args: Parameters<T>) => string,
+  options: CacheOptions = {}
+): T => {
+  const cache = new Map<string, CacheEntry<ReturnType<T>>>();
+  const { maxSize = 100, ttl = 0 } = options;
+  
+  const memoizedFn = ((...args: Parameters<T>): ReturnType<T> => {
+    // Generate cache key
+    const key = keyFn ? keyFn(...args) : JSON.stringify(args);
+    const now = Date.now();
+    
+    // Check if we have a valid cached result
+    if (cache.has(key)) {
+      const entry = cache.get(key)!;
+      
+      // Check if the entry is still valid (ttl)
+      if (ttl === 0 || now - entry.timestamp < ttl) {
+        logger.debug(`Cache hit for key: ${key.slice(0, 50)}...`);
+        return entry.value;
+      } else {
+        // Entry expired
+        logger.debug(`Cache expired for key: ${key.slice(0, 50)}...`);
+        cache.delete(key);
+      }
+    }
+    
+    // Calculate the result
+    logger.debug(`Cache miss for key: ${key.slice(0, 50)}...`);
+    const result = fn(...args);
+    
+    // Store in cache
+    cache.set(key, {
+      value: result,
+      timestamp: now
+    });
+    
+    // Manage cache size
+    if (maxSize > 0 && cache.size > maxSize) {
+      // Remove oldest entry
+      const oldestKey = cache.keys().next().value;
+      cache.delete(oldestKey);
+      logger.debug(`Cache size limit reached, removed oldest entry`);
+    }
+    
+    return result;
+  }) as T;
+  
+  return memoizedFn;
+};
+
+// Simple logging utility
 export const logger = {
   debug: (message: string, ...args: any[]) => {
-    console.log(`[DEBUG] ${message}`, ...args);
+    if (process.env.NODE_ENV === 'development') {
+      console.debug(`[DEBUG] ${message}`, ...args);
+    }
   },
   info: (message: string, ...args: any[]) => {
-    console.log(`[INFO] ${message}`, ...args);
+    console.info(`[INFO] ${message}`, ...args);
   },
   warn: (message: string, ...args: any[]) => {
     console.warn(`[WARN] ${message}`, ...args);
@@ -56,42 +84,3 @@ export const logger = {
     console.error(`[ERROR] ${message}`, ...args);
   }
 };
-
-/**
- * Async equivalent of enhancedMemoize for memoizing async functions
- * 
- * @param fn Async function to memoize
- * @param capacity Maximum number of results to cache (default: 100)
- * @returns Memoized async function with the same signature as the input function
- */
-export function enhancedAsyncMemoize<T extends Function>(fn: T, capacity: number = 100): T {
-  const cache = new Map();
-  
-  const memoized = async function(...args: any[]) {
-    // Create a string key from the arguments
-    const key = JSON.stringify(args);
-    
-    // Check if result is in cache
-    if (cache.has(key)) {
-      // Move item to most recently used position
-      const value = cache.get(key);
-      cache.delete(key);
-      cache.set(key, value);
-      return value;
-    }
-    
-    // If cache is at capacity, remove least recently used item
-    if (cache.size >= capacity) {
-      const oldestKey = cache.keys().next().value;
-      cache.delete(oldestKey);
-    }
-    
-    // Calculate result and store in cache
-    const result = await fn(...args);
-    cache.set(key, result);
-    return result;
-  };
-  
-  // Cast back to the original function type
-  return memoized as unknown as T;
-}

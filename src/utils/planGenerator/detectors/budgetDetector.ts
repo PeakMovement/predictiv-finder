@@ -237,7 +237,7 @@ export const applyBudgetAwareSelection = (
     'dermatology': 1000,
     'rheumatology': 1000,
     'endocrinology': 1200,
-    'nutrition-coaching': 450, // Fixed: nutrition-coach -> nutrition-coaching
+    'nutrition-coaching': 450,
     'biokineticist': 700,
     'sports-medicine': 1100,
     'internal-medicine': 1000,
@@ -260,6 +260,8 @@ export const applyBudgetAwareSelection = (
     'anesthesiology': 1700,
     'radiology': 1200,
     'geriatric-medicine': 900,
+    'strength-coaching': 550,
+    'run-coaching': 600,
     'all': 0
   };
   
@@ -271,16 +273,14 @@ export const applyBudgetAwareSelection = (
       const serviceCost = serviceCosts[service] || 1000;
       
       // If service is expensive and has alternatives
-      if (serviceCost > detectedBudget/2 && budgetAlternatives[service]) {
+      if (serviceCost > detectedBudget/2 && result.alternatives[service] && result.alternatives[service].length > 0) {
         // Add the first affordable alternative
-        const alternativeService = budgetAlternatives[service].find(
+        const alternativeService = result.alternatives[service].find(
           alt => (serviceCosts[alt] || 1000) <= detectedBudget/2
         );
         
         if (alternativeService) {
           updatedServices.push(alternativeService);
-          // Store the alternative relationship
-          result.alternatives[service] = [alternativeService];
           console.log(`Replacing ${service} with budget-friendly ${alternativeService}`);
         } else {
           // Keep original if no affordable alternative

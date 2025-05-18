@@ -11,7 +11,10 @@ export function findAffordableAlternatives(
   budget: number
 ): ServiceCategory[] {
   // Map of services that can substitute for more expensive ones
-  const alternativeMap: Record<ServiceCategory, ServiceCategory[]> = {
+  const alternativeMap = createServiceCategoryRecord([] as ServiceCategory[]);
+  
+  // Define the known alternatives
+  const knownAlternatives: Partial<Record<ServiceCategory, ServiceCategory[]>> = {
     'psychiatry': ['psychology', 'coaching'],
     'orthopedic-surgeon': ['physiotherapist', 'orthopedics'],
     'neurosurgery': ['pain-management', 'neurology'],
@@ -21,20 +24,17 @@ export function findAffordableAlternatives(
     'endocrinology': ['dietician', 'general-practitioner']
   };
   
-  // Create a more complete map using our helper
-  const fullAlternativeMap = createServiceCategoryRecord([] as ServiceCategory[]);
-  
   // Fill in the known alternatives
-  Object.entries(alternativeMap).forEach(([service, alternatives]) => {
-    fullAlternativeMap[service as ServiceCategory] = alternatives;
+  Object.entries(knownAlternatives).forEach(([service, alternatives]) => {
+    alternativeMap[service as ServiceCategory] = alternatives as ServiceCategory[] || [];
   });
   
   // If this service has alternatives and its cost exceeds budget
-  if (fullAlternativeMap[originalService].length > 0 && 
+  if (alternativeMap[originalService].length > 0 && 
       (BASELINE_COSTS[originalService] || 0) > budget) {
     
     // Return alternatives that fit within budget
-    return fullAlternativeMap[originalService].filter(
+    return alternativeMap[originalService].filter(
       alt => (BASELINE_COSTS[alt] || 0) <= budget
     );
   }

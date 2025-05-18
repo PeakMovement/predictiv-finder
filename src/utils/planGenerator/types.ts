@@ -16,7 +16,7 @@ export type ServiceCategory =
   | 'orthopedic-surgeon'
   | 'gastroenterology'
   | 'massage-therapy'
-  | 'nutrition-coaching'  // Fixed: was 'nutrition-coach' in some files
+  | 'nutrition-coaching'
   | 'occupational-therapy'
   | 'physical-therapy'
   | 'chiropractor'
@@ -41,6 +41,8 @@ export type ServiceCategory =
   | 'anesthesiology'
   | 'radiology'
   | 'geriatric-medicine'
+  | 'strength-coaching'  // Added this
+  | 'run-coaching'       // Added this
   | 'all';  // Special type to refer to all services
 
 // Define baseline costs for service categories - useful for budget calculations
@@ -85,6 +87,8 @@ export const BASELINE_COSTS: Record<ServiceCategory, number> = {
   'anesthesiology': 1100,
   'radiology': 800,
   'geriatric-medicine': 650,
+  'strength-coaching': 550,  // Added this
+  'run-coaching': 600,       // Added this
   'all': 0
 };
 
@@ -170,6 +174,12 @@ export interface PriceRange {
   max: number;
 }
 
+// For compatibility with older code
+export interface LegacyPriceRange {
+  affordable: number;
+  highEnd: number;
+}
+
 export interface PlanContext {
   goal?: string;
   medicalConditions?: string[];
@@ -188,3 +198,4 @@ export interface ServiceAllocationItem {
   percentage: number;
   priority: number;
 }
+
