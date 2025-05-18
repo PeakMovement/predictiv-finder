@@ -1,6 +1,6 @@
 
 import { ServiceCategory } from "./types";
-import { AIHealthPlan } from "@/types"; // Updated import path
+import type { AIHealthPlan } from "@/types"; // Updated import path
 import { createServiceCategoryRecord } from './helpers/serviceRecordInitializer';
 
 /**
@@ -94,8 +94,8 @@ function evaluatePlanCompleteness(plan: AIHealthPlan): number {
     score += 0.1;
   }
   
-  // Check for service allocations
-  if (plan.servicePlan && Object.keys(plan.servicePlan).length > 0) {
+  // Check for services
+  if (plan.services && plan.services.length > 0) {
     score += 0.3;
   }
   
@@ -115,9 +115,7 @@ function evaluatePractitionerMatching(plan: AIHealthPlan, userQuery: string): nu
   const practitionerScores = createServiceCategoryRecord(0);
   
   // Count number of services with non-zero allocations
-  const serviceCount = Object.values(plan.servicePlan || {}).filter(
-    allocation => allocation && allocation.count > 0
-  ).length;
+  const serviceCount = plan.services ? plan.services.length : 0;
   
   // Adjust score based on service count
   if (serviceCount >= 3) {

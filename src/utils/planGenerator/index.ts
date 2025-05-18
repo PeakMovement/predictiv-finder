@@ -26,5 +26,5 @@ export {
 // Re-export custom determineBudgetTier from enhancedBudgetOptimizer
 export { determineBudgetTier } from './budgetHandling/enhancedBudgetOptimizer';
 
-// Explicitly re-export TreatmentModality to avoid ambiguity
+// Re-export type definitions explicitly to avoid ambiguity
 export type { TreatmentModality } from './types';

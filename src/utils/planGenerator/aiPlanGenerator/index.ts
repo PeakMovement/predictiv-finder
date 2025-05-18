@@ -8,3 +8,6 @@ export * from './serviceDescriptions';
 export * from './mockData';
 export * from './enhancedPlanGenerator';
 export * from '../multiProblemCoordination';
+
+// Export the findAlternativeCategories function explicitly
+export { findAlternativeCategories } from '../multiProblemCoordination/alternativeCategories';
