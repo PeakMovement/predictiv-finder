@@ -1,4 +1,3 @@
-
 // Update or create the ServiceCategory type definition
 export type ServiceCategory =
   | 'physiotherapist'
@@ -151,13 +150,23 @@ export interface UserPreference {
   }>;
 }
 
+// Update the TreatmentModality type to include all the treatment types used in the codebase
 export type TreatmentModality = 
   | 'stretching' 
   | 'strength-training'
   | 'cardio'
   | 'rest'
   | 'diet-restriction'
-  | 'activity';
+  | 'activity'
+  | 'medication'
+  | 'activity-modification'
+  | 'cognitive-behavioral'
+  | 'relaxation'
+  | 'performance-nutrition'
+  | 'isometric-exercise'
+  | 'light-activity'
+  | 'portion-control'
+  | 'meal-timing';
 
 export interface SessionAllocation {
   count: number;

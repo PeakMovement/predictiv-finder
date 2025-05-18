@@ -16,5 +16,5 @@ export * from './planGenerator/professionalRecommendation';
 export * from './planGenerator/inputAnalyzer';
 
 // Explicitly re-export SessionAllocation from the appropriate module
-import type { SessionAllocation as AIGeneratorSessionAllocation } from './planGenerator/aiPlanGenerator';
+import type { SessionAllocation as AIGeneratorSessionAllocation } from './planGenerator/types';
 export type { AIGeneratorSessionAllocation };

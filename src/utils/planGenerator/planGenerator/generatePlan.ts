@@ -1,5 +1,5 @@
 
-import { PlanContext, ServiceAllocationItem, ServiceAllocation, ServiceCategory } from "@/utils/planGenerator/types";
+import { PlanContext, ServiceAllocationItem } from "@/utils/planGenerator/types";
 import { AIHealthPlan } from "@/types";
 import { determineRequiredServices } from './serviceAllocation';
 import { allocateServices } from './serviceAllocation';
@@ -19,6 +19,15 @@ export const generatePlan = (context: PlanContext): AIHealthPlan => {
     const services = determineRequiredServices(context, config.allocations);
     const allocatedServices = allocateServices(services, context);
     
+    // Convert ServiceAllocation[] to the format expected by AIHealthPlan
+    const formattedServices = allocatedServices.map(service => ({
+      type: service.type,
+      price: BASELINE_COSTS[service.type] || 500,
+      sessions: service.sessions || 1,
+      description: service.description || `${service.sessions || 1} sessions with ${service.type.replace(/-/g, ' ')}`,
+      frequency: service.frequency
+    }));
+    
     // Check if plan exceeds budget and add a note if so
     const totalCost = calculateTotalCost(allocatedServices);
     let planDescription = generatePlanDescription(context);
@@ -31,7 +40,7 @@ export const generatePlan = (context: PlanContext): AIHealthPlan => {
       id: `plan-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       name: generatePlanName(context),
       description: planDescription,
-      services: allocatedServices,
+      services: formattedServices,
       totalCost: totalCost,
       planType: determinePlanType(context),
       timeFrame: determineTimeFrame(context)
@@ -55,3 +64,6 @@ export const generatePlan = (context: PlanContext): AIHealthPlan => {
     };
   }
 };
+
+// Import BASELINE_COSTS from types.ts to use in service price calculation
+import { BASELINE_COSTS } from "@/utils/planGenerator/types";

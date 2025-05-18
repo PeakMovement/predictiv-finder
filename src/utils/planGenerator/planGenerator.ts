@@ -11,13 +11,10 @@ export interface SessionAllocation {
 }
 
 // Generate a health plan name
-export function generatePlanName(primaryCondition: string, primaryServiceType: string): string {
-  // Ensure primaryServiceType is a string and has the name property
+export function generatePlanName(primaryCondition: string, primaryServiceType: ServiceCategory | string): string {
+  // Handle different input types safely
   const serviceTypeName = typeof primaryServiceType === 'string' ? 
-    primaryServiceType : 
-    (primaryServiceType && typeof primaryServiceType === 'object' && 'name' in primaryServiceType) ? 
-      primaryServiceType.name : 
-      'Therapy';
+    primaryServiceType.replace(/-/g, ' ') : 'Therapy';
   
   return `${primaryCondition} Recovery with ${serviceTypeName}`;
 }
@@ -312,7 +309,7 @@ export function generateServicePlan(
   services: ServiceCategory[],
   budget: number
 ): Record<ServiceCategory, SessionAllocation> {
-  const plan: Record<ServiceCategory, SessionAllocation> = {};
+  const plan: Record<ServiceCategory, SessionAllocation> = {} as Record<ServiceCategory, SessionAllocation>;
   
   services.forEach((service, index) => {
     const pricing = getServicePricing(service);

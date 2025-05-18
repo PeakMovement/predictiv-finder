@@ -1,5 +1,5 @@
 
-import { PlanContext, ServiceAllocation, ServiceCategory, ServiceAllocationItem, SessionAllocation, BASELINE_COSTS } from "@/utils/planGenerator/types";
+import { PlanContext, ServiceAllocation, ServiceCategory, ServiceAllocationItem, BASELINE_COSTS } from "@/utils/planGenerator/types";
 import { createServiceCategoryRecord } from "../helpers/serviceRecordInitializer";
 
 /**
@@ -86,7 +86,7 @@ export const allocateServices = (
   
   // Calculate how many sessions we can afford for each service
   let remainingBudget = budget;
-  const allocations: Record<ServiceCategory, number> = {};
+  const allocations: Record<ServiceCategory, number> = {} as Record<ServiceCategory, number>;
   
   // First pass: Ensure at least one session for each service if possible
   for (const service of sortedServices) {
@@ -129,9 +129,11 @@ export const allocateServices = (
       
       allocatedServices.push({
         type: service,
-        price: baseCost,
         sessions: sessionCount,
-        description: getServiceDescription(service, sessionCount)
+        description: getServiceDescription(service, sessionCount),
+        frequency: getFrequency(service, sessionCount),
+        percentage: 100 / services.length, // Simple equal distribution
+        priority: services.indexOf(service) + 1
       });
     }
   }
@@ -142,13 +144,37 @@ export const allocateServices = (
     const baseCost = BASELINE_COSTS[cheapestService] || 500;
     allocatedServices.push({
       type: cheapestService,
-      price: baseCost,
       sessions: 1,
-      description: getServiceDescription(cheapestService, 1) + " (limited by budget)"
+      description: getServiceDescription(cheapestService, 1) + " (limited by budget)",
+      frequency: "once",
+      percentage: 100,
+      priority: 1
     });
   }
   
   return allocatedServices;
+};
+
+/**
+ * Get appropriate frequency description based on service type and session count
+ */
+const getFrequency = (type: ServiceCategory, sessions: number): string => {
+  if (sessions === 1) return "once";
+  if (sessions === 2) return "twice";
+  
+  switch(type) {
+    case 'physiotherapist':
+    case 'personal-trainer':
+      return sessions <= 4 ? "weekly" : "twice weekly";
+    case 'psychology':
+    case 'psychiatry':
+      return "bi-weekly";
+    case 'dietician':
+    case 'nutrition-coaching':
+      return sessions <= 3 ? "monthly" : "bi-weekly";
+    default:
+      return sessions <= 4 ? "as needed" : "regularly";
+  }
 };
 
 /**

@@ -1,265 +1,145 @@
 
 import { ServiceCategory } from "../types";
-import { createServiceCategoryRecord } from "../helpers/serviceRecordInitializer";
+import { createServiceCategoryRecord, createServiceCategoryRecordWithFactory } from "../helpers/serviceRecordInitializer";
 
 /**
- * Defines complementary relationships between different service types
- * Used to coordinate treatment approaches for multiple conditions
+ * Handles integration of multiple services into a cohesive plan
  */
-export const SERVICE_COMPLEMENTARY_MAP: Record<ServiceCategory, ServiceCategory[]> = {
-  'physiotherapist': ['biokineticist', 'personal-trainer', 'pain-management'],
-  'biokineticist': ['physiotherapist', 'personal-trainer', 'sport-physician'],
-  'dietician': ['nutrition-coaching', 'personal-trainer', 'gastroenterology'],
-  'personal-trainer': ['physiotherapist', 'biokineticist', 'dietician'],
-  'pain-management': ['physiotherapist', 'psychology'],
-  'coaching': ['psychology', 'personal-trainer'],
-  'psychology': ['psychiatry', 'coaching'],
-  'psychiatry': ['psychology'],
-  'podiatrist': ['physiotherapist', 'biokineticist'],
-  'general-practitioner': ['family-medicine', 'nurse-practitioner'],
-  'sport-physician': ['physiotherapist', 'biokineticist', 'orthopedic-surgeon'],
-  'orthopedic-surgeon': ['physiotherapist', 'pain-management'],
-  'family-medicine': ['general-practitioner'],
-  'gastroenterology': ['dietician'],
-  'massage-therapy': ['physiotherapist', 'pain-management'],
-  'nutrition-coaching': ['dietician', 'personal-trainer'],
-  'occupational-therapy': ['physiotherapist', 'psychology'],
-  'physical-therapy': ['physiotherapist'],
-  'chiropractor': ['physiotherapist'],
-  'nurse-practitioner': ['general-practitioner'],
-  'cardiology': ['general-practitioner'],
-  'dermatology': ['general-practitioner'],
-  'neurology': ['psychiatry', 'psychology'],
-  'endocrinology': ['dietician'],
-  'urology': ['general-practitioner'],
-  'oncology': ['general-practitioner'],
-  'rheumatology': ['physiotherapist', 'pain-management'],
-  'pediatrics': ['general-practitioner'],
-  'geriatrics': ['general-practitioner'],
-  'sports-medicine': ['physiotherapist', 'biokineticist'],
-  'internal-medicine': ['general-practitioner'],
-  'orthopedics': ['physiotherapist', 'sport-physician'],
-  'neurosurgery': ['neurology', 'pain-management'],
-  'infectious-disease': ['general-practitioner'],
-  'plastic-surgery': ['dermatology'],
-  'obstetrics-gynecology': ['general-practitioner'],
-  'emergency-medicine': ['general-practitioner'],
-  'anesthesiology': ['pain-management'],
-  'radiology': ['general-practitioner'],
-  'geriatric-medicine': ['general-practitioner'],
-  'strength-coaching': ['personal-trainer', 'biokineticist'],
-  'run-coaching': ['personal-trainer', 'physiotherapist'],
-  'all': []
-};
 
 /**
- * Defines synergistic relationships between services that enhance each other's effectiveness
+ * Generates a coordination score between service types
+ * Higher score means better coordination/integration
  */
-export const SERVICE_SYNERGY_MAP: Record<ServiceCategory, Record<ServiceCategory, number>> = {
-  'physiotherapist': createServiceCategoryRecord(0),
-  'psychology': createServiceCategoryRecord(0),
-  'dietician': createServiceCategoryRecord(0),
-  'pain-management': createServiceCategoryRecord(0),
-  'all': createServiceCategoryRecord(0)
-};
+export const SERVICE_COORDINATION_SCORES: Record<ServiceCategory, Record<ServiceCategory, number>> = 
+  createServiceCategoryRecordWithFactory(() => createServiceCategoryRecord(0));
 
-// Initialize specific synergy relationships
-SERVICE_SYNERGY_MAP['physiotherapist']['personal-trainer'] = 0.8;
-SERVICE_SYNERGY_MAP['physiotherapist']['pain-management'] = 0.7;
-SERVICE_SYNERGY_MAP['psychology']['psychiatry'] = 0.9;
-SERVICE_SYNERGY_MAP['psychology']['coaching'] = 0.7;
-SERVICE_SYNERGY_MAP['dietician']['personal-trainer'] = 0.8;
-SERVICE_SYNERGY_MAP['dietician']['nutrition-coaching'] = 0.7;
-SERVICE_SYNERGY_MAP['pain-management']['physiotherapist'] = 0.7;
-SERVICE_SYNERGY_MAP['pain-management']['psychology'] = 0.6;
+// Initialize specific entries for key service coordination pairs
+SERVICE_COORDINATION_SCORES['physiotherapist']['biokineticist'] = 0.9;
+SERVICE_COORDINATION_SCORES['physiotherapist']['personal-trainer'] = 0.8;
+SERVICE_COORDINATION_SCORES['physiotherapist']['pain-management'] = 0.85;
+SERVICE_COORDINATION_SCORES['physiotherapist']['sport-physician'] = 0.85;
+SERVICE_COORDINATION_SCORES['physiotherapist']['massage-therapy'] = 0.8;
+
+SERVICE_COORDINATION_SCORES['psychology']['psychiatry'] = 0.95;
+SERVICE_COORDINATION_SCORES['psychology']['coaching'] = 0.8;
+SERVICE_COORDINATION_SCORES['psychology']['general-practitioner'] = 0.7;
+
+SERVICE_COORDINATION_SCORES['dietician']['nutrition-coaching'] = 0.9;
+SERVICE_COORDINATION_SCORES['dietician']['personal-trainer'] = 0.8;
+SERVICE_COORDINATION_SCORES['dietician']['gastroenterology'] = 0.85;
+
+SERVICE_COORDINATION_SCORES['pain-management']['physiotherapist'] = 0.85;
+SERVICE_COORDINATION_SCORES['pain-management']['massage-therapy'] = 0.8;
+SERVICE_COORDINATION_SCORES['pain-management']['psychology'] = 0.75;
+
+// Fill values for all other services with a reasonable default like 0.5
+Object.keys(SERVICE_COORDINATION_SCORES).forEach(service1 => {
+  Object.keys(SERVICE_COORDINATION_SCORES).forEach(service2 => {
+    if (service1 === service2) {
+      SERVICE_COORDINATION_SCORES[service1 as ServiceCategory][service2 as ServiceCategory] = 1.0; // Perfect coordination with self
+    } else if (!SERVICE_COORDINATION_SCORES[service1 as ServiceCategory][service2 as ServiceCategory]) {
+      SERVICE_COORDINATION_SCORES[service1 as ServiceCategory][service2 as ServiceCategory] = 0.5; // Default coordination score
+    }
+  });
+});
 
 /**
- * Identifies services that work well together for specific condition combinations
+ * Find the optimal service integration for a set of service categories
  * 
- * @param conditions Array of medical conditions
- * @returns Object mapping primary services to recommended complementary services
+ * @param services List of services to be integrated
+ * @returns Ordered list of services with integration scores
  */
-export function identifyComplementaryServices(
-  conditions: string[]
-): Record<ServiceCategory, ServiceCategory[]> {
-  // Map of condition combinations to optimal service combinations
-  const conditionServiceMap: Record<string, { primary: ServiceCategory, complementary: ServiceCategory[] }> = {
-    'anxiety+depression': { 
-      primary: 'psychiatry', 
-      complementary: ['psychology', 'coaching'] 
-    },
-    'back pain+stress': { 
-      primary: 'physiotherapist', 
-      complementary: ['psychology', 'pain-management'] 
-    },
-    'weight management+joint pain': { 
-      primary: 'dietician', 
-      complementary: ['physiotherapist', 'personal-trainer'] 
-    },
-    'diabetes+heart disease': { 
-      primary: 'endocrinology', 
-      complementary: ['cardiology', 'dietician'] 
-    },
-    'insomnia+anxiety': { 
-      primary: 'psychology', 
-      complementary: ['psychiatry'] 
-    },
-    'running+knee pain': { 
-      primary: 'physiotherapist', 
-      complementary: ['biokineticist', 'podiatrist'] 
-    }
-  };
+export function findOptimalServiceIntegration(
+  services: ServiceCategory[]
+): {
+  orderedServices: ServiceCategory[];
+  integrationScore: number;
+}[] {
+  if (!services || services.length <= 1) {
+    return services.map(service => ({
+      orderedServices: [service],
+      integrationScore: 1
+    }));
+  }
   
-  // Initialize result
-  const result = createServiceCategoryRecord([]);
+  const result: {
+    orderedServices: ServiceCategory[];
+    integrationScore: number;
+  }[] = [];
   
-  // Check for condition combinations
-  for (const key in conditionServiceMap) {
-    const conditionPair = key.split('+');
-    if (
-      conditionPair.every(condition => 
-        conditions.some(userCondition => 
-          userCondition.toLowerCase().includes(condition.toLowerCase())
-        )
-      )
-    ) {
-      const { primary, complementary } = conditionServiceMap[key];
-      result[primary] = complementary;
-    }
+  // Calculate total coordination score for each service
+  const serviceScores: Record<ServiceCategory, number> = {};
+  
+  services.forEach(service1 => {
+    serviceScores[service1] = 0;
+    services.forEach(service2 => {
+      if (service1 !== service2) {
+        // Get coordination score between these services
+        const score = SERVICE_COORDINATION_SCORES[service1][service2] || 0.5;
+        serviceScores[service1] += score;
+      }
+    });
+  });
+  
+  // Sort services by their total coordination score
+  const sortedServices = [...services].sort((a, b) => 
+    (serviceScores[b] || 0) - (serviceScores[a] || 0)
+  );
+  
+  // Create integration pairs with scores
+  for (let i = 0; i < sortedServices.length - 1; i++) {
+    const service1 = sortedServices[i];
+    const service2 = sortedServices[i + 1];
+    const score = SERVICE_COORDINATION_SCORES[service1][service2] || 0.5;
+    
+    result.push({
+      orderedServices: [service1, service2],
+      integrationScore: score
+    });
   }
   
   return result;
 }
 
 /**
- * Calculates integration score between two services to determine their compatibility
+ * Generate coordination notes for a service pair
  * 
  * @param service1 First service category
  * @param service2 Second service category
- * @returns Integration score between 0 and 1
+ * @returns Coordination notes as string
  */
-export function calculateServiceIntegrationScore(
-  service1: ServiceCategory, 
+export function generateCoordinationNotes(
+  service1: ServiceCategory,
   service2: ServiceCategory
-): number {
-  // Check if services are the same
-  if (service1 === service2) return 1;
-  
-  // Check for complementary relationship
-  const complementary1 = SERVICE_COMPLEMENTARY_MAP[service1] || [];
-  const complementary2 = SERVICE_COMPLEMENTARY_MAP[service2] || [];
-  
-  if (complementary1.includes(service2)) return 0.8;
-  if (complementary2.includes(service1)) return 0.8;
-  
-  // Check for synergy relationship
-  const synergies1 = SERVICE_SYNERGY_MAP[service1] || {};
-  const synergies2 = SERVICE_SYNERGY_MAP[service2] || {};
-  
-  if (synergies1[service2]) return synergies1[service2];
-  if (synergies2[service1]) return synergies2[service1];
-  
-  // Default moderate integration score
-  return 0.5;
-}
-
-/**
- * Generates an optimal service allocation plan for multiple conditions
- * 
- * @param conditions Array of conditions to address
- * @param conditionSeverity Record of condition severity scores
- * @param budget Total budget available
- * @returns Optimized service allocations for all conditions
- */
-export function generateIntegratedServicePlan(
-  conditions: string[],
-  conditionSeverity: Record<string, number>,
-  budget: number
-): {
-  services: ServiceCategory[];
-  sessionAllocations: Record<ServiceCategory, number>;
-  conditionServiceMap: Record<string, ServiceCategory[]>;
-} {
-  // Initialize result
-  const services: ServiceCategory[] = [];
-  const sessionAllocations = createServiceCategoryRecord(0);
-  const conditionServiceMap: Record<string, ServiceCategory[]> = {};
-  
-  // Map each condition to appropriate services based on condition type
-  // This is a simplified mapping - in production this would use a more sophisticated system
-  const conditionToServicesMap: Record<string, ServiceCategory[]> = {
-    'back pain': ['physiotherapist', 'pain-management'],
-    'knee pain': ['physiotherapist', 'orthopedics'],
-    'ankle pain': ['physiotherapist', 'podiatrist'],
-    'stress': ['psychology', 'coaching'],
-    'anxiety': ['psychology', 'psychiatry'],
-    'depression': ['psychiatry', 'psychology'],
-    'weight': ['dietician', 'personal-trainer'],
-    'nutrition': ['dietician', 'nutrition-coaching'],
-    'diabetes': ['endocrinology', 'dietician'],
-    'heart': ['cardiology', 'general-practitioner'],
-    'stomach': ['gastroenterology', 'dietician'],
-    'skin': ['dermatology'],
-    'headache': ['neurology', 'general-practitioner'],
-    'sleep': ['psychology', 'psychiatry'],
-    'fitness': ['personal-trainer', 'biokineticist'],
-    'general': ['general-practitioner', 'family-medicine']
+): string {
+  const coordinationTemplates: Record<string, string[]> = {
+    'high': [
+      `${service1} and ${service2} should coordinate closely on treatment progression.`,
+      `Regular communication between ${service1} and ${service2} providers is essential.`,
+      `${service1} should share assessment notes with ${service2} for optimal care.`
+    ],
+    'medium': [
+      `Some coordination between ${service1} and ${service2} would be beneficial.`,
+      `Monthly check-ins between ${service1} and ${service2} providers are recommended.`,
+      `${service1} should be aware of ${service2} treatment approaches.`
+    ],
+    'low': [
+      `Minimal coordination needed between ${service1} and ${service2}.`,
+      `${service1} and ${service2} can operate independently with awareness of overall plan.`,
+      `Annual review of progress involving both ${service1} and ${service2} is sufficient.`
+    ]
   };
   
-  // Process each condition
-  conditions.forEach(condition => {
-    const conditionLower = condition.toLowerCase();
-    let matchedServices: ServiceCategory[] = [];
-    
-    // Find matching services based on condition keywords
-    Object.entries(conditionToServicesMap).forEach(([keyword, serviceList]) => {
-      if (conditionLower.includes(keyword)) {
-        matchedServices = [...matchedServices, ...serviceList];
-      }
-    });
-    
-    // If no specific services matched, use general practitioner
-    if (matchedServices.length === 0) {
-      matchedServices = ['general-practitioner'];
-    }
-    
-    // Remove duplicates
-    matchedServices = Array.from(new Set(matchedServices));
-    
-    // Store mapping
-    conditionServiceMap[condition] = matchedServices;
-    
-    // Add to overall service list
-    services.push(...matchedServices);
-  });
+  const score = SERVICE_COORDINATION_SCORES[service1][service2] || 0.5;
   
-  // Remove duplicates from service list
-  const uniqueServices = Array.from(new Set(services));
+  // Determine coordination level based on score
+  let level = 'medium';
+  if (score >= 0.8) level = 'high';
+  else if (score < 0.6) level = 'low';
   
-  // Calculate severity-weighted session allocations
-  const totalSeverity = Object.values(conditionSeverity).reduce((sum, severity) => sum + severity, 0) || conditions.length;
-  const sessionsPerSeverityPoint = Math.max(1, Math.floor(budget / 500) / totalSeverity);
+  // Select a random template from the appropriate level
+  const templates = coordinationTemplates[level];
+  const randomIndex = Math.floor(Math.random() * templates.length);
   
-  // Allocate sessions based on conditions and their severity
-  conditions.forEach(condition => {
-    const severity = conditionSeverity[condition] || 0.5;
-    const conditionServices = conditionServiceMap[condition] || [];
-    
-    // Calculate sessions for this condition based on severity
-    const conditionSessions = Math.max(1, Math.round(severity * sessionsPerSeverityPoint));
-    
-    // Distribute sessions among services for this condition
-    const servicesCount = conditionServices.length || 1;
-    const baseSessionsPerService = Math.max(1, Math.floor(conditionSessions / servicesCount));
-    
-    conditionServices.forEach(service => {
-      sessionAllocations[service] = (sessionAllocations[service] || 0) + baseSessionsPerService;
-    });
-  });
-  
-  return {
-    services: uniqueServices,
-    sessionAllocations,
-    conditionServiceMap
-  };
+  return templates[randomIndex];
 }

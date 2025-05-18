@@ -1,367 +1,179 @@
 
-import { ServiceCategory } from "../types";
-import { prioritizeConditionsByMedicalUrgency } from "./conflictResolution";
+import { ServiceCategory, TreatmentModality } from "../types";
+import { getConflictingTreatmentModalities } from "./conflictResolution";
 
 /**
- * Treatment dependency relationship indicating one condition should be addressed 
- * before another for optimal results
+ * Prioritize conditions by medical urgency
+ * @param conditions List of medical conditions to prioritize
+ * @returns Prioritized list of conditions
  */
-export interface TreatmentDependency {
-  primaryCondition: string;
-  dependentCondition: string;
-  rationale: string;
-  dependencyStrength: number; // 0-1 scale
-}
-
-/**
- * Known treatment dependencies for common condition pairs
- */
-const KNOWN_DEPENDENCIES: TreatmentDependency[] = [
-  {
-    primaryCondition: 'anxiety',
-    dependentCondition: 'insomnia',
-    rationale: 'Treating anxiety often improves sleep issues',
-    dependencyStrength: 0.8
-  },
-  {
-    primaryCondition: 'depression',
-    dependentCondition: 'chronic fatigue',
-    rationale: 'Addressing depression typically improves energy levels',
-    dependencyStrength: 0.7
-  },
-  {
-    primaryCondition: 'obesity',
-    dependentCondition: 'joint pain',
-    rationale: 'Weight loss can reduce stress on joints and decrease pain',
-    dependencyStrength: 0.7
-  },
-  {
-    primaryCondition: 'muscle weakness',
-    dependentCondition: 'balance issues',
-    rationale: 'Strengthening muscles improves stability and balance',
-    dependencyStrength: 0.6
-  },
-  {
-    primaryCondition: 'stress',
-    dependentCondition: 'headaches',
-    rationale: 'Managing stress often reduces tension headaches',
-    dependencyStrength: 0.7
-  },
-  {
-    primaryCondition: 'inflammation',
-    dependentCondition: 'pain',
-    rationale: 'Reducing inflammation typically helps alleviate pain',
-    dependencyStrength: 0.8
-  },
-  {
-    primaryCondition: 'posture problems',
-    dependentCondition: 'back pain',
-    rationale: 'Correcting posture often reduces back pain',
-    dependencyStrength: 0.6
-  }
-];
-
-/**
- * Represents a phase in the treatment timeline
- */
-export interface TreatmentPhase {
-  name: string;
-  conditions: string[];
-  services: ServiceCategory[];
-  durationWeeks: number;
-  objectives: string[];
-}
-
-/**
- * Detect dependencies between conditions to determine optimal treatment order
- * 
- * @param conditions Array of conditions to be treated
- * @returns Array of dependencies between conditions
- */
-export function detectTreatmentDependencies(
+export function prioritizeConditionsByMedicalUrgency(
   conditions: string[]
-): TreatmentDependency[] {
-  const dependencies: TreatmentDependency[] = [];
-  
-  // Check each condition against known dependencies
-  for (let i = 0; i < conditions.length; i++) {
-    for (let j = 0; j < conditions.length; j++) {
-      if (i === j) continue;
-      
-      const condition1 = conditions[i].toLowerCase();
-      const condition2 = conditions[j].toLowerCase();
-      
-      // Check against known dependencies
-      KNOWN_DEPENDENCIES.forEach(dependency => {
-        const primary = dependency.primaryCondition.toLowerCase();
-        const dependent = dependency.dependentCondition.toLowerCase();
-        
-        if ((condition1.includes(primary) && condition2.includes(dependent)) ||
-            (condition1 === primary && condition2.includes(dependent)) ||
-            (condition1.includes(primary) && condition2 === dependent)) {
-          
-          dependencies.push({
-            primaryCondition: conditions[i],
-            dependentCondition: conditions[j],
-            rationale: dependency.rationale,
-            dependencyStrength: dependency.dependencyStrength
-          });
-        }
-      });
-    }
-  }
-  
-  return dependencies;
-}
-
-/**
- * Generate an optimized treatment timeline with sequential phases
- * 
- * @param conditions Array of conditions to be treated
- * @param conditionServiceMap Mapping of conditions to services
- * @param severityScores Severity scores for conditions
- * @returns Optimized treatment phases
- */
-export function generateOptimizedTreatmentTimeline(
-  conditions: string[],
-  conditionServiceMap: Record<string, ServiceCategory[]>,
-  severityScores: Record<string, number>
 ): {
-  phases: TreatmentPhase[];
-  dependencies: TreatmentDependency[];
-} {
-  // Detect dependencies between conditions
-  const dependencies = detectTreatmentDependencies(conditions);
+  condition: string;
+  priority: number;
+  urgency: 'high' | 'medium' | 'low';
+}[] {
+  // High priority conditions requiring immediate attention
+  const highUrgency = ['chest pain', 'stroke', 'severe bleeding', 'difficulty breathing', 
+    'severe head injury', 'seizure', 'severe allergic reaction', 'heart attack', 
+    'severe burn', 'poisoning'];
   
-  // Prioritize conditions by medical urgency
-  const prioritizedConditions = prioritizeConditionsByMedicalUrgency(
-    conditions,
-    severityScores
-  );
+  // Medium priority conditions requiring timely but not immediate attention
+  const mediumUrgency = ['fracture', 'moderate pain', 'infection', 'fever', 
+    'dehydration', 'moderate injury', 'persistent vomiting', 'migraine',
+    'moderate bleeding', 'asthma attack'];
   
-  // Build dependency graph
-  const dependencyGraph: Record<string, string[]> = {};
-  conditions.forEach(condition => {
-    dependencyGraph[condition] = [];
-  });
-  
-  dependencies.forEach(dep => {
-    if (dependencyGraph[dep.dependentCondition]) {
-      dependencyGraph[dep.dependentCondition].push(dep.primaryCondition);
-    } else {
-      dependencyGraph[dep.dependentCondition] = [dep.primaryCondition];
+  // Calculate priority and urgency for each condition
+  return conditions.map(condition => {
+    const conditionLower = condition.toLowerCase();
+    
+    // Check if condition contains high urgency keywords
+    if (highUrgency.some(urgent => conditionLower.includes(urgent))) {
+      return { condition, priority: 1, urgency: 'high' as const };
     }
-  });
-  
-  // Topologically sort conditions based on dependencies and priorities
-  const sortedConditions = topologicalSort(
-    conditions,
-    dependencyGraph,
-    prioritizedConditions.map(p => p.condition)
-  );
-  
-  // Group conditions into phases
-  const phases = createTreatmentPhases(sortedConditions, conditionServiceMap);
-  
-  return {
-    phases,
-    dependencies
-  };
+    
+    // Check if condition contains medium urgency keywords
+    if (mediumUrgency.some(urgent => conditionLower.includes(urgent))) {
+      return { condition, priority: 0.7, urgency: 'medium' as const };
+    }
+    
+    // Default to low urgency
+    return { condition, priority: 0.4, urgency: 'low' as const };
+  }).sort((a, b) => b.priority - a.priority); // Sort by priority (highest first)
 }
 
 /**
- * Topologically sort conditions based on dependency graph and priorities
+ * Optimize treatment timeline based on medical conditions
+ * @param conditions List of medical conditions
+ * @param treatments Map of treatments by condition
+ * @returns Optimized timeline of treatments 
  */
-function topologicalSort(
+export function optimizeTreatmentTimeline(
   conditions: string[],
-  dependencyGraph: Record<string, string[]>,
-  prioritizedOrder: string[]
-): string[] {
-  const visited = new Set<string>();
-  const result: string[] = [];
+  treatments: Record<string, TreatmentModality[]>
+): {
+  phase: 'immediate' | 'short-term' | 'medium-term' | 'long-term';
+  treatments: Array<{ condition: string; modality: TreatmentModality }>;
+}[] {
+  // Prioritize conditions by urgency
+  const prioritizedConditions = prioritizeConditionsByMedicalUrgency(conditions);
   
-  // First handle conditions with medical urgency priority
-  prioritizedOrder.forEach(condition => {
-    if (!visited.has(condition)) {
-      visit(condition);
-    }
-  });
+  // Get conflict map to avoid scheduling conflicting treatments together
+  const conflictMap = getConflictingTreatmentModalities();
   
-  // Then handle any remaining conditions
-  conditions.forEach(condition => {
-    if (!visited.has(condition)) {
-      visit(condition);
-    }
-  });
+  // Initialize timeline phases
+  const timeline = [
+    { phase: 'immediate' as const, treatments: [] as Array<{ condition: string; modality: TreatmentModality }> },
+    { phase: 'short-term' as const, treatments: [] as Array<{ condition: string; modality: TreatmentModality }> },
+    { phase: 'medium-term' as const, treatments: [] as Array<{ condition: string; modality: TreatmentModality }> },
+    { phase: 'long-term' as const, treatments: [] as Array<{ condition: string; modality: TreatmentModality }> }
+  ];
   
-  function visit(condition: string) {
-    // If already visited during recursion, we have a cycle - break it
-    if (visited.has(condition)) return;
+  // Assign treatments to phases based on priority
+  prioritizedConditions.forEach(({ condition, urgency }) => {
+    const conditionTreatments = treatments[condition] || [];
     
-    visited.add(condition);
-    
-    // Visit dependencies first (this ensures we address conditions that need to be treated first)
-    const dependencies = dependencyGraph[condition] || [];
-    dependencies.forEach(dep => {
-      if (!visited.has(dep)) {
-        visit(dep);
-      }
-    });
-    
-    result.push(condition);
-  }
-  
-  return result;
-}
-
-/**
- * Create treatment phases from sorted conditions
- */
-function createTreatmentPhases(
-  sortedConditions: string[],
-  conditionServiceMap: Record<string, ServiceCategory[]>
-): TreatmentPhase[] {
-  const phases: TreatmentPhase[] = [];
-  
-  // Check if we need phasing at all
-  if (sortedConditions.length <= 2) {
-    // Simple case: all conditions in one phase
-    const allServices = new Set<ServiceCategory>();
-    sortedConditions.forEach(condition => {
-      const services = conditionServiceMap[condition] || [];
-      services.forEach(service => allServices.add(service));
-    });
-    
-    phases.push({
-      name: "Comprehensive Treatment Phase",
-      conditions: [...sortedConditions],
-      services: Array.from(allServices),
-      durationWeeks: 4 * Math.min(3, sortedConditions.length),
-      objectives: sortedConditions.map(condition => `Address ${condition}`)
-    });
-  } else {
-    // Complex case: multiple phases needed
-    
-    // Phase 1: Urgent conditions (first 1-2 conditions from sorted list)
-    const phase1Conditions = sortedConditions.slice(0, Math.min(2, Math.ceil(sortedConditions.length / 3)));
-    const phase1Services = new Set<ServiceCategory>();
-    phase1Conditions.forEach(condition => {
-      const services = conditionServiceMap[condition] || [];
-      services.forEach(service => phase1Services.add(service));
-    });
-    
-    phases.push({
-      name: "Initial Treatment Phase",
-      conditions: phase1Conditions,
-      services: Array.from(phase1Services),
-      durationWeeks: 4,
-      objectives: phase1Conditions.map(condition => `Address ${condition}`)
-    });
-    
-    // Phase 2: Secondary conditions
-    if (sortedConditions.length > 2) {
-      const remainingConditions = sortedConditions.slice(phase1Conditions.length);
-      const phase2EndIndex = Math.min(3, Math.ceil(remainingConditions.length / 2));
-      const phase2Conditions = remainingConditions.slice(0, phase2EndIndex);
-      const phase2Services = new Set<ServiceCategory>();
-      
-      phase2Conditions.forEach(condition => {
-        const services = conditionServiceMap[condition] || [];
-        services.forEach(service => phase2Services.add(service));
-      });
-      
-      phases.push({
-        name: "Secondary Treatment Phase",
-        conditions: phase2Conditions,
-        services: Array.from(phase2Services),
-        durationWeeks: 4,
-        objectives: phase2Conditions.map(condition => `Address ${condition}`)
-      });
-      
-      // Phase 3: Remaining conditions & maintenance
-      if (remainingConditions.length > phase2EndIndex) {
-        const phase3Conditions = remainingConditions.slice(phase2EndIndex);
-        const phase3Services = new Set<ServiceCategory>();
-        
-        phase3Conditions.forEach(condition => {
-          const services = conditionServiceMap[condition] || [];
-          services.forEach(service => phase3Services.add(service));
-        });
-        
-        phases.push({
-          name: "Maintenance & Final Treatment Phase",
-          conditions: phase3Conditions,
-          services: Array.from(phase3Services),
-          durationWeeks: 4,
-          objectives: phase3Conditions.map(condition => `Address ${condition}`)
-        });
-      }
-    }
-  }
-  
-  return phases;
-}
-
-/**
- * Generate projected outcomes for the optimized timeline phases
- * 
- * @param phases Treatment phases
- * @param conditionSeverity Severity scores for conditions
- * @returns Projected outcomes for each phase
- */
-export function generateProjectedOutcomes(
-  phases: TreatmentPhase[],
-  conditionSeverity: Record<string, number>
-): Array<{
-  phase: string;
-  weekNumber: number;
-  projectedImprovements: Record<string, number>;
-  milestones: string[];
-}> {
-  const outcomes: Array<{
-    phase: string;
-    weekNumber: number;
-    projectedImprovements: Record<string, number>;
-    milestones: string[];
-  }> = [];
-  
-  let currentWeek = 0;
-  
-  phases.forEach((phase, phaseIndex) => {
-    const phaseResults = {
-      phase: phase.name,
-      weekNumber: currentWeek + phase.durationWeeks,
-      projectedImprovements: {} as Record<string, number>,
-      milestones: [] as string[]
-    };
-    
-    // Calculate improvement for each condition in this phase
-    phase.conditions.forEach(condition => {
-      const severity = conditionSeverity[condition] || 0.5;
-      const baseImprovement = 0.3; // 30% improvement is the baseline
-      
-      // More severe conditions have more room for improvement
-      const improvementFactor = severity * 0.5;
-      
-      // Adjustment for phase (earlier phases focus on more urgent conditions)
-      const phaseAdjustment = phaseIndex === 0 ? 0.2 : 0.1;
-      
-      // Calculate total projected improvement
-      const totalImprovement = Math.min(0.8, baseImprovement + improvementFactor + phaseAdjustment);
-      
-      phaseResults.projectedImprovements[condition] = totalImprovement;
-      
-      // Generate milestone based on improvement
-      if (totalImprovement > 0.5) {
-        phaseResults.milestones.push(`Significant improvement in ${condition}`);
+    conditionTreatments.forEach(modality => {
+      if (urgency === 'high') {
+        timeline[0].treatments.push({ condition, modality });
+      } else if (urgency === 'medium') {
+        timeline[1].treatments.push({ condition, modality });
       } else {
-        phaseResults.milestones.push(`Moderate improvement in ${condition}`);
+        // Split low urgency treatments between medium and long-term
+        if (timeline[2].treatments.length <= timeline[3].treatments.length) {
+          timeline[2].treatments.push({ condition, modality });
+        } else {
+          timeline[3].treatments.push({ condition, modality });
+        }
       }
     });
-    
-    outcomes.push(phaseResults);
-    currentWeek += phase.durationWeeks;
   });
   
-  return outcomes;
+  // Ensure each phase has at least one treatment if possible
+  if (timeline[0].treatments.length === 0 && timeline[1].treatments.length > 0) {
+    timeline[0].treatments.push(timeline[1].treatments.shift()!);
+  }
+  
+  if (timeline[2].treatments.length === 0 && timeline[3].treatments.length > 0) {
+    timeline[2].treatments.push(timeline[3].treatments.shift()!);
+  }
+  
+  // Remove empty phases
+  return timeline.filter(phase => phase.treatments.length > 0);
+}
+
+/**
+ * Create a service schedule based on optimized timeline
+ * @param timeline Optimized treatment timeline
+ * @returns Schedule of services
+ */
+export function createServiceSchedule(
+  timeline: {
+    phase: 'immediate' | 'short-term' | 'medium-term' | 'long-term';
+    treatments: Array<{ condition: string; modality: TreatmentModality }>;
+  }[]
+): {
+  timeframe: string;
+  services: ServiceCategory[];
+  frequency: string;
+  description: string;
+}[] {
+  // Map treatment modalities to service categories
+  const modalityToService: Record<TreatmentModality, ServiceCategory[]> = {
+    'stretching': ['physiotherapist', 'physical-therapy'],
+    'strength-training': ['personal-trainer', 'biokineticist'],
+    'cardio': ['personal-trainer', 'sport-physician'],
+    'rest': ['general-practitioner'],
+    'diet-restriction': ['dietician', 'nutrition-coaching'],
+    'activity': ['personal-trainer', 'biokineticist'],
+    'medication': ['general-practitioner', 'pain-management'],
+    'activity-modification': ['physiotherapist', 'occupational-therapy'],
+    'cognitive-behavioral': ['psychology'],
+    'relaxation': ['psychology', 'massage-therapy'],
+    'performance-nutrition': ['dietician', 'nutrition-coaching'],
+    'isometric-exercise': ['physiotherapist', 'personal-trainer'],
+    'light-activity': ['personal-trainer', 'physiotherapist'],
+    'portion-control': ['dietician', 'nutrition-coaching'],
+    'meal-timing': ['dietician', 'nutrition-coaching']
+  };
+  
+  // Map phases to timeframes
+  const phaseTimeframes = {
+    'immediate': '1-2 weeks',
+    'short-term': '2-4 weeks',
+    'medium-term': '1-3 months',
+    'long-term': '3-6 months'
+  };
+  
+  // Map phases to frequencies
+  const phaseFrequencies = {
+    'immediate': '2-3 sessions per week',
+    'short-term': '1-2 sessions per week',
+    'medium-term': '2-4 sessions per month',
+    'long-term': '1-2 sessions per month'
+  };
+  
+  // Create schedule
+  return timeline.map(phase => {
+    // Collect all required services for this phase
+    const allServices = phase.treatments.flatMap(treatment => 
+      modalityToService[treatment.modality] || []
+    );
+    
+    // Remove duplicates
+    const uniqueServices = Array.from(new Set(allServices));
+    
+    // Create description based on conditions and treatments
+    const conditionsText = Array.from(
+      new Set(phase.treatments.map(t => t.condition))
+    ).join(', ');
+    
+    return {
+      timeframe: phaseTimeframes[phase.phase],
+      services: uniqueServices,
+      frequency: phaseFrequencies[phase.phase],
+      description: `Focus on ${conditionsText} with ${uniqueServices.slice(0, 3).join(', ')} sessions`
+    };
+  });
 }
