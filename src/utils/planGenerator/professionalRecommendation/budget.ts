@@ -1,359 +1,338 @@
 
-import { ServiceCategory } from "../types";
-import { createServiceCategoryRecord } from "../helpers/serviceRecordInitializer";
+import { BudgetAllocation, BudgetAlternative, BudgetConstraint, ProfessionalRecommendation, ServiceCategory, ServicePricing } from './types';
 
 /**
- * Base prices for each service category per session
- * These are conservative estimates and can be adjusted
+ * Standard pricing for different service categories
+ * These represent typical market rates for various professional services
  */
-const BASELINE_COSTS: Record<ServiceCategory, number> = createServiceCategoryRecord(0);
-
-// Set baseline costs for each service
-BASELINE_COSTS.physiotherapist = 750;
-BASELINE_COSTS.biokineticist = 700;
-BASELINE_COSTS.dietician = 650;
-BASELINE_COSTS['personal-trainer'] = 500;
-BASELINE_COSTS.coaching = 600;
-BASELINE_COSTS.psychology = 900;
-BASELINE_COSTS.psychiatry = 1500;
-BASELINE_COSTS['family-medicine'] = 800;
-BASELINE_COSTS['pain-management'] = 1200;
-BASELINE_COSTS.podiatrist = 750;
-BASELINE_COSTS['general-practitioner'] = 600;
-BASELINE_COSTS['sport-physician'] = 1200;
-BASELINE_COSTS['orthopedic-surgeon'] = 2000;
-BASELINE_COSTS.gastroenterology = 1500;
-BASELINE_COSTS['massage-therapy'] = 600;
-BASELINE_COSTS['nutrition-coaching'] = 500;
-BASELINE_COSTS['occupational-therapy'] = 800;
-BASELINE_COSTS['physical-therapy'] = 750;
-BASELINE_COSTS.chiropractor = 700;
-BASELINE_COSTS['nurse-practitioner'] = 500;
-BASELINE_COSTS.cardiology = 1500;
-BASELINE_COSTS.dermatology = 1200;
-BASELINE_COSTS.neurology = 1800;
-BASELINE_COSTS.endocrinology = 1400;
-BASELINE_COSTS.urology = 1300;
-BASELINE_COSTS.oncology = 2000;
-BASELINE_COSTS.rheumatology = 1500;
-BASELINE_COSTS.pediatrics = 800;
-BASELINE_COSTS.geriatrics = 900;
-BASELINE_COSTS['sports-medicine'] = 1100;
-BASELINE_COSTS['internal-medicine'] = 1200;
-BASELINE_COSTS.orthopedics = 1400;
-BASELINE_COSTS.neurosurgery = 3000;
-BASELINE_COSTS['infectious-disease'] = 1500;
-BASELINE_COSTS['plastic-surgery'] = 2500;
-BASELINE_COSTS['obstetrics-gynecology'] = 1200;
-BASELINE_COSTS['emergency-medicine'] = 1500;
-BASELINE_COSTS.anesthesiology = 1800;
-BASELINE_COSTS.radiology = 1300;
-BASELINE_COSTS['geriatric-medicine'] = 900;
-BASELINE_COSTS.all = 1000; // Generic fallback
+export const standardServicePricing: Record<ServiceCategory, ServicePricing> = {
+  'physiotherapist': {
+    category: 'physiotherapist',
+    basePrice: 800,
+    priceRange: { min: 650, max: 1200 }
+  },
+  'biokineticist': {
+    category: 'biokineticist',
+    basePrice: 750,
+    priceRange: { min: 600, max: 900 }
+  },
+  'dietician': {
+    category: 'dietician',
+    basePrice: 700,
+    priceRange: { min: 550, max: 950 }
+  },
+  'personal-trainer': {
+    category: 'personal-trainer',
+    basePrice: 600,
+    priceRange: { min: 400, max: 1000 }
+  },
+  'pain-management': {
+    category: 'pain-management',
+    basePrice: 1200,
+    priceRange: { min: 900, max: 1800 }
+  },
+  'psychology': {
+    category: 'psychology',
+    basePrice: 1100,
+    priceRange: { min: 900, max: 1500 }
+  },
+  'psychiatry': {
+    category: 'psychiatry',
+    basePrice: 1500,
+    priceRange: { min: 1200, max: 2500 }
+  },
+  'coaching': {
+    category: 'coaching',
+    basePrice: 750,
+    priceRange: { min: 600, max: 1200 }
+  },
+  'general-practitioner': {
+    category: 'general-practitioner',
+    basePrice: 850,
+    priceRange: { min: 700, max: 1200 }
+  },
+  'podiatrist': {
+    category: 'podiatrist',
+    basePrice: 900,
+    priceRange: { min: 750, max: 1200 }
+  },
+  'family-medicine': {
+    category: 'family-medicine',
+    basePrice: 900,
+    priceRange: { min: 800, max: 1300 }
+  },
+  'sport-physician': {
+    category: 'sport-physician',
+    basePrice: 1200,
+    priceRange: { min: 1000, max: 1800 }
+  },
+  'orthopedic-surgeon': {
+    category: 'orthopedic-surgeon',
+    basePrice: 2500,
+    priceRange: { min: 2000, max: 3500 }
+  },
+  // Expanded service categories
+  'gastroenterology': {
+    category: 'gastroenterology',
+    basePrice: 1800,
+    priceRange: { min: 1500, max: 2200 }
+  },
+  'massage-therapy': {
+    category: 'massage-therapy',
+    basePrice: 600,
+    priceRange: { min: 450, max: 950 }
+  },
+  'nutrition-coach': {
+    category: 'nutrition-coach',
+    basePrice: 550,
+    priceRange: { min: 400, max: 750 }
+  },
+  'occupational-therapy': {
+    category: 'occupational-therapy',
+    basePrice: 750,
+    priceRange: { min: 650, max: 950 }
+  },
+  'physical-therapy': {
+    category: 'physical-therapy',
+    basePrice: 800,
+    priceRange: { min: 650, max: 1100 }
+  },
+  'chiropractor': {
+    category: 'chiropractor',
+    basePrice: 700,
+    priceRange: { min: 550, max: 950 }
+  },
+  'nurse-practitioner': {
+    category: 'nurse-practitioner',
+    basePrice: 650,
+    priceRange: { min: 500, max: 850 }
+  },
+  'cardiology': {
+    category: 'cardiology',
+    basePrice: 2000,
+    priceRange: { min: 1700, max: 2800 }
+  },
+  'dermatology': {
+    category: 'dermatology',
+    basePrice: 1500,
+    priceRange: { min: 1200, max: 2200 }
+  },
+  'neurology': {
+    category: 'neurology',
+    basePrice: 2100,
+    priceRange: { min: 1800, max: 3000 }
+  },
+  'endocrinology': {
+    category: 'endocrinology',
+    basePrice: 1800,
+    priceRange: { min: 1500, max: 2400 }
+  },
+  'urology': {
+    category: 'urology',
+    basePrice: 1700,
+    priceRange: { min: 1400, max: 2300 }
+  },
+  'oncology': {
+    category: 'oncology',
+    basePrice: 2200,
+    priceRange: { min: 1900, max: 3200 }
+  },
+  'rheumatology': {
+    category: 'rheumatology',
+    basePrice: 1800,
+    priceRange: { min: 1500, max: 2400 }
+  },
+  'pediatrics': {
+    category: 'pediatrics',
+    basePrice: 900,
+    priceRange: { min: 750, max: 1300 }
+  },
+  'geriatrics': {
+    category: 'geriatrics',
+    basePrice: 1100,
+    priceRange: { min: 900, max: 1500 }
+  },
+  'sports-medicine': {
+    category: 'sports-medicine',
+    basePrice: 1200,
+    priceRange: { min: 1000, max: 1700 }
+  },
+  'internal-medicine': {
+    category: 'internal-medicine',
+    basePrice: 1400,
+    priceRange: { min: 1200, max: 1900 }
+  },
+  'orthopedics': {
+    category: 'orthopedics',
+    basePrice: 1500,
+    priceRange: { min: 1300, max: 2100 }
+  },
+  'neurosurgery': {
+    category: 'neurosurgery',
+    basePrice: 3000,
+    priceRange: { min: 2500, max: 5000 }
+  },
+  'infectious-disease': {
+    category: 'infectious-disease',
+    basePrice: 1600,
+    priceRange: { min: 1300, max: 2200 }
+  },
+  'plastic-surgery': {
+    category: 'plastic-surgery',
+    basePrice: 2500,
+    priceRange: { min: 2000, max: 4000 }
+  },
+  'obstetrics-gynecology': {
+    category: 'obstetrics-gynecology',
+    basePrice: 1400,
+    priceRange: { min: 1100, max: 1900 }
+  },
+  'emergency-medicine': {
+    category: 'emergency-medicine',
+    basePrice: 1800,
+    priceRange: { min: 1500, max: 2500 }
+  },
+  'anesthesiology': {
+    category: 'anesthesiology',
+    basePrice: 2000,
+    priceRange: { min: 1600, max: 2800 }
+  },
+  'radiology': {
+    category: 'radiology',
+    basePrice: 1800,
+    priceRange: { min: 1400, max: 2600 }
+  },
+  'geriatric-medicine': {
+    category: 'geriatric-medicine',
+    basePrice: 1300,
+    priceRange: { min: 1100, max: 1800 }
+  },
+  'all': {
+    category: 'all',
+    basePrice: 1000, 
+    priceRange: { min: 600, max: 2000 }
+  }
+};
 
 /**
- * Calculate the budget required for a service category
- * @param category The service category
- * @param sessions Number of sessions
- * @returns Total budget required
+ * Budget-friendly alternatives to expensive professional services
  */
-export function calculateBudget(category: ServiceCategory, sessions: number = 1): number {
-  const costPerSession = BASELINE_COSTS[category] || 1000; // Default to 1000 if not found
-  return costPerSession * sessions;
-}
+export const budgetAlternatives: Record<string, BudgetAlternative> = {
+  "psychiatry": {
+    originalService: "psychiatry",
+    alternatives: ["psychology", "coaching"],
+    costReduction: 0.35
+  },
+  "orthopedic-surgeon": {
+    originalService: "orthopedic-surgeon",
+    alternatives: ["physiotherapist", "orthopedics"],
+    costReduction: 0.50
+  }
+};
 
 /**
- * Calculate ideal number of sessions based on service type and condition severity
- * @param category The service category
- * @param severity Condition severity (0 to 1)
- * @returns Recommended number of sessions
+ * Calculate budget allocation based on professional recommendations and budget constraints
  */
-export function calculateIdealSessions(category: ServiceCategory, severity: number = 0.5): number {
-  // Base sessions by category
-  let baseSessions = 4; // Default
-  
-  // Adjust based on service type
-  switch (category) {
-    case 'physiotherapist':
-    case 'biokineticist':
-    case 'personal-trainer':
-      baseSessions = 6; // These often require more sessions
-      break;
-    case 'psychiatry':
-    case 'orthopedic-surgeon':
-    case 'neurosurgery':
-      baseSessions = 2; // These often require fewer, more intensive sessions
-      break;
-    case 'dietician':
-    case 'coaching':
-    case 'psychology':
-      baseSessions = 4; // Standard frequency
-      break;
-    default:
-      baseSessions = 3;
+export function allocateBudget(
+  recommendations: ProfessionalRecommendation[],
+  budget?: BudgetConstraint
+): BudgetAllocation {
+  // Default response if no budget constraint
+  if (!budget) {
+    const totalCost = recommendations.reduce(
+      (sum, rec) => sum + (standardServicePricing[rec.category].basePrice * rec.sessions),
+      0
+    );
+    
+    // Create default breakdown with full price for each service
+    const breakdown = recommendations.reduce((result, rec) => {
+      result[rec.category] = standardServicePricing[rec.category].basePrice * rec.sessions;
+      return result;
+    }, {} as Record<ServiceCategory, number>);
+    
+    return { total: totalCost, breakdown };
   }
   
-  // Adjust for severity
-  if (severity < 0.3) {
-    return Math.max(1, Math.floor(baseSessions * 0.7)); // Lower severity needs fewer sessions
-  } else if (severity > 0.7) {
-    return Math.ceil(baseSessions * 1.5); // Higher severity needs more sessions
-  }
-  
-  return baseSessions;
-}
-
-/**
- * Find affordable alternatives for expensive services
- * @param originalCategory The original service category
- * @param budget Available budget
- * @param requiredSessions Number of sessions needed
- * @returns Array of affordable alternatives
- */
-export function findAffordableAlternatives(
-  originalCategory: ServiceCategory,
-  budget: number,
-  requiredSessions: number = 4
-): { category: ServiceCategory; reasoning: string; savings: number }[] {
-  const originalCost = BASELINE_COSTS[originalCategory] * requiredSessions;
-  
-  // If within budget, no alternatives needed
-  if (originalCost <= budget) {
-    return [];
-  }
-  
-  // Define alternative mappings (more affordable alternatives)
-  const alternativeMappings: Record<string, { alternatives: ServiceCategory[], reasoning: string }> = {
-    'psychiatry': {
-      alternatives: ['psychology', 'coaching'],
-      reasoning: 'Can provide support for mild to moderate mental health issues'
-    },
-    'orthopedic-surgeon': {
-      alternatives: ['physiotherapist', 'biokineticist'],
-      reasoning: 'Can help with musculoskeletal issues that don't require surgery'
-    },
-    'neurosurgery': {
-      alternatives: ['neurology', 'pain-management'],
-      reasoning: 'Can help manage symptoms for conditions that don't require immediate surgery'
-    },
-    'plastic-surgery': {
-      alternatives: ['dermatology'],
-      reasoning: 'Can address some skin concerns non-surgically'
-    },
-    'cardiology': {
-      alternatives: ['general-practitioner', 'internal-medicine'],
-      reasoning: 'Can handle initial assessment and mild cardiac conditions'
-    },
-    'sport-physician': {
-      alternatives: ['physiotherapist', 'biokineticist'],
-      reasoning: 'Can address many sports-related issues at lower cost'
-    },
-    'gastroenterology': {
-      alternatives: ['dietician', 'general-practitioner'],
-      reasoning: 'Can help with diet-related digestive issues'
-    }
-  };
-  
-  const alternatives: { category: ServiceCategory; reasoning: string; savings: number }[] = [];
-  
-  // Check if we have alternatives for this category
-  const mapping = alternativeMappings[originalCategory];
-  if (mapping) {
-    mapping.alternatives.forEach(altCategory => {
-      const altCost = BASELINE_COSTS[altCategory] * requiredSessions;
-      const savings = originalCost - altCost;
-      
-      if (altCost <= budget && savings > 0) {
-        alternatives.push({
-          category: altCategory,
-          reasoning: mapping.reasoning,
-          savings
-        });
-      }
-    });
-  }
-  
-  // Sort by cost (lowest first)
-  return alternatives.sort((a, b) => 
-    (BASELINE_COSTS[a.category] - BASELINE_COSTS[b.category])
+  // Calculate total cost of all recommendations at standard pricing
+  const standardTotalCost = recommendations.reduce(
+    (sum, rec) => sum + (standardServicePricing[rec.category].basePrice * rec.sessions),
+    0
   );
-}
-
-/**
- * Optimize a plan to fit within budget constraints
- * @param recommendations Array of service recommendations
- * @param budget Total available budget
- * @returns Optimized recommendations and budget allocation
- */
-export function optimizePlanForBudget(
-  recommendations: Array<{
-    category: ServiceCategory;
-    sessions: number;
-    priority: 'high' | 'medium' | 'low';
-  }>,
-  budget: number
-): {
-  optimizedRecommendations: Array<{
-    category: ServiceCategory;
-    sessions: number;
-    priority: 'high' | 'medium' | 'low';
-  }>;
-  budgetAllocation: Record<ServiceCategory, number>;
-  totalCost: number;
-  notes: string[];
-} {
-  const notes: string[] = [];
-  let remainingBudget = budget;
   
-  // Calculate initial cost
-  let totalInitialCost = 0;
-  recommendations.forEach(rec => {
-    totalInitialCost += calculateBudget(rec.category, rec.sessions);
-  });
-  
-  // If we're already within budget, return as is
-  if (totalInitialCost <= budget) {
-    const budgetAllocation: Record<ServiceCategory, number> = {};
-    recommendations.forEach(rec => {
-      budgetAllocation[rec.category] = calculateBudget(rec.category, rec.sessions);
-    });
+  // If budget is sufficient for standard pricing, use that
+  if (budget.total >= standardTotalCost) {
+    const breakdown = recommendations.reduce((result, rec) => {
+      result[rec.category] = standardServicePricing[rec.category].basePrice * rec.sessions;
+      return result;
+    }, {} as Record<ServiceCategory, number>);
     
-    return {
-      optimizedRecommendations: recommendations,
-      budgetAllocation,
-      totalCost: totalInitialCost,
-      notes: ['Plan is within budget constraints.']
-    };
+    return { total: standardTotalCost, breakdown };
   }
   
-  // We need to optimize
-  notes.push(`Original plan cost R${totalInitialCost} exceeds budget of R${budget}. Optimizing plan.`);
-  
-  // Sort by priority (high to low)
+  // Budget optimization needed
+  // Sort recommendations by priority
   const sortedRecs = [...recommendations].sort((a, b) => {
-    const priorityOrder = { high: 0, medium: 1, low: 2 };
-    return priorityOrder[a.priority] - priorityOrder[b.priority];
+    // Priority comparisons first
+    if (a.priority === 'high' && b.priority !== 'high') return -1;
+    if (a.priority !== 'high' && b.priority === 'high') return 1;
+    if (a.priority === 'medium' && b.priority === 'low') return -1;
+    if (a.priority === 'low' && b.priority === 'medium') return 1;
+    
+    // Then by cost if priorities are equal
+    return (
+      standardServicePricing[a.category].basePrice - 
+      standardServicePricing[b.category].basePrice
+    );
   });
   
-  const optimizedRecs: typeof recommendations = [];
-  const budgetAllocation: Record<ServiceCategory, number> = {};
+  // Start with minimum viable allocation
+  let remainingBudget = budget.total;
+  const breakdown = {} as Record<ServiceCategory, number>;
   
-  // First pass: Include high priority with potentially reduced sessions
-  sortedRecs.filter(rec => rec.priority === 'high').forEach(rec => {
-    let sessions = rec.sessions;
-    let cost = calculateBudget(rec.category, sessions);
+  // First pass: ensure at least one session for high priority services
+  for (const rec of sortedRecs.filter(r => r.priority === 'high')) {
+    const minCost = Math.min(
+      standardServicePricing[rec.category].priceRange.min,
+      standardServicePricing[rec.category].basePrice * 0.8
+    );
     
-    // If too expensive, reduce sessions
-    while (cost > remainingBudget && sessions > 1) {
-      sessions--;
-      cost = calculateBudget(rec.category, sessions);
+    if (remainingBudget >= minCost) {
+      breakdown[rec.category] = minCost;
+      remainingBudget -= minCost;
+    }
+  }
+  
+  // Second pass: distribute remaining budget proportionally to priorities and remaining sessions
+  for (const rec of sortedRecs) {
+    if (!breakdown[rec.category]) {
+      breakdown[rec.category] = 0;
     }
     
-    if (cost <= remainingBudget) {
-      // We can afford this (possibly with reduced sessions)
-      optimizedRecs.push({
-        ...rec,
-        sessions
-      });
-      
-      budgetAllocation[rec.category] = cost;
-      remainingBudget -= cost;
-      
-      if (sessions < rec.sessions) {
-        notes.push(`Reduced ${rec.category} from ${rec.sessions} to ${sessions} sessions to fit budget.`);
-      }
-    } else {
-      // Can't afford even 1 session, look for alternatives
-      const alternatives = findAffordableAlternatives(rec.category, remainingBudget, 2);
-      
-      if (alternatives.length > 0) {
-        const alt = alternatives[0];
-        const altSessions = 2; // Start with minimum meaningful number
-        const altCost = calculateBudget(alt.category, altSessions);
-        
-        optimizedRecs.push({
-          category: alt.category,
-          sessions: altSessions,
-          priority: rec.priority
-        });
-        
-        budgetAllocation[alt.category] = altCost;
-        remainingBudget -= altCost;
-        
-        notes.push(`Substituted ${rec.category} with more affordable ${alt.category} (${alt.reasoning}).`);
-      } else {
-        notes.push(`Could not include ${rec.category} due to budget constraints.`);
-      }
-    }
-  });
-  
-  // Second pass: Include medium and low priority if budget allows
-  sortedRecs.filter(rec => rec.priority !== 'high').forEach(rec => {
-    let sessions = rec.sessions;
-    let cost = calculateBudget(rec.category, sessions);
+    const priorityFactor = rec.priority === 'high' ? 3 : rec.priority === 'medium' ? 2 : 1;
+    const remainingSessions = rec.sessions - (breakdown[rec.category] > 0 ? 1 : 0);
     
-    // If too expensive, reduce sessions
-    while (cost > remainingBudget && sessions > 1) {
-      sessions--;
-      cost = calculateBudget(rec.category, sessions);
-    }
-    
-    if (cost <= remainingBudget) {
-      // We can afford this (possibly with reduced sessions)
-      optimizedRecs.push({
-        ...rec,
-        sessions
-      });
+    if (remainingSessions > 0) {
+      const availableForService = remainingBudget * (priorityFactor / sortedRecs.reduce(
+        (sum, r) => sum + (r.priority === 'high' ? 3 : r.priority === 'medium' ? 2 : 1),
+        0
+      ));
       
-      budgetAllocation[rec.category] = cost;
-      remainingBudget -= cost;
+      const sessionCost = Math.min(
+        standardServicePricing[rec.category].priceRange.min,
+        availableForService / remainingSessions
+      );
       
-      if (sessions < rec.sessions) {
-        notes.push(`Reduced ${rec.category} from ${rec.sessions} to ${sessions} sessions to fit budget.`);
-      }
-    } 
-    // For non-high priority, we silently skip if unaffordable
-  });
-  
-  // Third pass: If we have remaining budget and fewer than 3 services, add complementary options
-  if (remainingBudget > BASELINE_COSTS.dietician && optimizedRecs.length < 3) {
-    // Affordable complementary services
-    const affordableServices = ['coaching', 'dietician', 'personal-trainer']
-      .filter(service => {
-        // Skip services we already included
-        const serviceCategory = service as ServiceCategory;
-        return !optimizedRecs.some(rec => rec.category === serviceCategory);
-      })
-      .map(service => service as ServiceCategory);
-    
-    if (affordableServices.length > 0) {
-      const complementaryService = affordableServices[0];
-      const sessions = Math.floor(remainingBudget / BASELINE_COSTS[complementaryService]);
+      const additionalCost = sessionCost * remainingSessions;
       
-      if (sessions > 0) {
-        const cost = calculateBudget(complementaryService, sessions);
-        
-        optimizedRecs.push({
-          category: complementaryService,
-          sessions,
-          priority: 'low'
-        });
-        
-        budgetAllocation[complementaryService] = cost;
-        remainingBudget -= cost;
-        
-        notes.push(`Added complementary ${complementaryService} service (${sessions} sessions) with remaining budget.`);
+      if (remainingBudget >= additionalCost && additionalCost > 0) {
+        breakdown[rec.category] += additionalCost;
+        remainingBudget -= additionalCost;
       }
     }
   }
   
-  // Calculate total cost
-  const totalCost = budget - remainingBudget;
+  // Calculate the actual total spent
+  const total = Object.values(breakdown).reduce((sum, cost) => sum + cost, 0);
   
-  return {
-    optimizedRecommendations: optimizedRecs,
-    budgetAllocation,
-    totalCost,
-    notes
-  };
+  return { total, breakdown };
 }
