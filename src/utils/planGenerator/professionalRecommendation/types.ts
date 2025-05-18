@@ -99,3 +99,11 @@ export interface BudgetAlternative {
   alternatives: ServiceCategory[];
   costReduction: number;
 }
+
+// Options for professional recommendation
+export interface ProfessionalRecommendationOptions {
+  maxRecommendations?: number;
+  includeSupportingServices?: boolean;
+  optimizeBudget?: boolean;
+  considerLocation?: boolean;
+}

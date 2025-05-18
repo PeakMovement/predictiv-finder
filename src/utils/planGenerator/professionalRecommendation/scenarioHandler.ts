@@ -1,5 +1,6 @@
 
-import { ScenarioResult, ServiceCategory } from "./types";
+import { ScenarioResult } from "./types";
+import { ServiceCategory } from "../types";
 
 /**
  * Process a user health scenario to determine appropriate professionals

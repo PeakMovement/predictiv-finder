@@ -16,7 +16,7 @@ export * from './planGenerator/inputAnalyzer';
 
 // Explicitly re-export the AIGenerator types and functions
 export {
-  generateAIHealthPlan,
+  generateAIHealthPlans as generateAIHealthPlan,
   analyzeUserInput,
   processUserQuery,
   buildPlan,
@@ -26,3 +26,6 @@ export {
 // Export the AIGeneratorSessionAllocation type explicitly
 import type { SessionAllocation as AIGeneratorSessionAllocation } from './planGenerator/types';
 export type { AIGeneratorSessionAllocation };
+
+// Export findAlternativeCategories
+export { findAlternativeCategories } from './planGenerator/multiProblemCoordination/alternativeCategories';

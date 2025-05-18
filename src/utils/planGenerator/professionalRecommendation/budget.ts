@@ -1,5 +1,6 @@
 
-import { BudgetAllocation, BudgetAlternative, BudgetConstraint, ProfessionalRecommendation, ServiceCategory, ServicePricing } from './types';
+import { ServiceCategory } from "../types";
+import { BudgetAllocation, BudgetAlternative, BudgetConstraint, ProfessionalRecommendation } from './types';
 
 /**
  * Standard pricing for different service categories
@@ -82,8 +83,8 @@ export const standardServicePricing: Record<ServiceCategory, ServicePricing> = {
     basePrice: 600,
     priceRange: { min: 450, max: 950 }
   },
-  'nutrition-coach': {
-    category: 'nutrition-coach',
+  'nutrition-coaching': {
+    category: 'nutrition-coaching',
     basePrice: 550,
     priceRange: { min: 400, max: 750 }
   },
@@ -207,12 +208,32 @@ export const standardServicePricing: Record<ServiceCategory, ServicePricing> = {
     basePrice: 1300,
     priceRange: { min: 1100, max: 1800 }
   },
+  'strength-coaching': {
+    category: 'strength-coaching',
+    basePrice: 550,
+    priceRange: { min: 400, max: 750 }
+  },
+  'run-coaching': {
+    category: 'run-coaching',
+    basePrice: 600,
+    priceRange: { min: 450, max: 800 }
+  },
   'all': {
     category: 'all',
     basePrice: 1000, 
     priceRange: { min: 600, max: 2000 }
   }
 };
+
+// Add missing interfaces
+interface ServicePricing {
+  category: ServiceCategory;
+  basePrice: number;
+  priceRange: {
+    min: number;
+    max: number;
+  };
+}
 
 /**
  * Budget-friendly alternatives to expensive professional services
@@ -229,6 +250,98 @@ export const budgetAlternatives: Record<string, BudgetAlternative> = {
     costReduction: 0.50
   }
 };
+
+/**
+ * Calculate budget for a service
+ */
+export function calculateBudget(
+  serviceType: ServiceCategory,
+  sessions: number
+): number {
+  const pricing = standardServicePricing[serviceType] || standardServicePricing['all'];
+  return pricing.basePrice * sessions;
+}
+
+/**
+ * Calculate the ideal number of sessions based on condition severity and professional type
+ */
+export function calculateIdealSessions(category: ServiceCategory, conditionSeverity: number): number {
+  let idealSessions = 1; // Default
+  
+  if (conditionSeverity > 0.7) {
+    // High severity conditions need more sessions
+    if (['physiotherapist', 'personal-trainer', 'psychiatry'].includes(category)) {
+      idealSessions = 4;
+    } else if (['dietician', 'family-medicine', 'coaching'].includes(category)) {
+      idealSessions = 2;
+    } else {
+      idealSessions = 3;
+    }
+  } else if (conditionSeverity > 0.4) {
+    // Medium severity
+    if (['physiotherapist', 'personal-trainer'].includes(category)) {
+      idealSessions = 3;
+    } else {
+      idealSessions = 2;
+    }
+  } else {
+    // Low severity
+    if (['personal-trainer', 'coaching'].includes(category)) {
+      idealSessions = 2;
+    } else {
+      idealSessions = 1;
+    }
+  }
+  
+  return idealSessions;
+}
+
+/**
+ * Optimize a plan for budget constraints
+ */
+export function optimizePlanForBudget(
+  recommendations: ProfessionalRecommendation[],
+  budget: number
+) {
+  // Basic implementation - will be improved
+  const totalCost = recommendations.reduce((sum, rec) => {
+    const pricing = standardServicePricing[rec.category] || standardServicePricing['all'];
+    return sum + (pricing.basePrice * rec.sessions);
+  }, 0);
+
+  const budgetAllocation: Record<ServiceCategory, number> = {};
+  let optimizedRecommendations = [...recommendations];
+  const notes: string[] = [];
+
+  if (totalCost > budget) {
+    notes.push(`Your recommended plan cost (${totalCost}) exceeds your budget (${budget}). We've optimized it.`);
+    
+    // Simple optimization - reduce sessions on lower priority recommendations
+    optimizedRecommendations = recommendations.map(rec => {
+      if (rec.priority === 'low') {
+        return { ...rec, sessions: Math.max(1, Math.floor(rec.sessions / 2)) };
+      } else if (rec.priority === 'medium') {
+        return { ...rec, sessions: Math.max(1, rec.sessions - 1) };
+      }
+      return rec;
+    });
+  }
+  
+  // Calculate final costs
+  optimizedRecommendations.forEach(rec => {
+    const pricing = standardServicePricing[rec.category] || standardServicePricing['all'];
+    budgetAllocation[rec.category] = pricing.basePrice * rec.sessions;
+  });
+  
+  const finalCost = Object.values(budgetAllocation).reduce((sum, cost) => sum + cost, 0);
+  
+  return {
+    optimizedRecommendations,
+    totalCost: finalCost,
+    budgetAllocation,
+    notes
+  };
+}
 
 /**
  * Calculate budget allocation based on professional recommendations and budget constraints

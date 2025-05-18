@@ -32,6 +32,53 @@ SERVICE_COORDINATION_SCORES['pain-management']['physiotherapist'] = 0.85;
 SERVICE_COORDINATION_SCORES['pain-management']['massage-therapy'] = 0.8;
 SERVICE_COORDINATION_SCORES['pain-management']['psychology'] = 0.75;
 
+// Initialize base service scores record
+const baseServiceScores: Record<ServiceCategory, number> = {
+  'physiotherapist': 0,
+  'biokineticist': 0,
+  'dietician': 0,
+  'personal-trainer': 0,
+  'coaching': 0,
+  'psychology': 0,
+  'psychiatry': 0,
+  'family-medicine': 0,
+  'pain-management': 0,
+  'podiatrist': 0,
+  'general-practitioner': 0,
+  'sport-physician': 0,
+  'orthopedic-surgeon': 0,
+  'gastroenterology': 0,
+  'massage-therapy': 0,
+  'nutrition-coaching': 0,
+  'occupational-therapy': 0,
+  'physical-therapy': 0,
+  'chiropractor': 0,
+  'nurse-practitioner': 0,
+  'cardiology': 0,
+  'dermatology': 0,
+  'neurology': 0,
+  'endocrinology': 0,
+  'urology': 0,
+  'oncology': 0,
+  'rheumatology': 0,
+  'pediatrics': 0,
+  'geriatrics': 0,
+  'sports-medicine': 0,
+  'internal-medicine': 0,
+  'orthopedics': 0,
+  'neurosurgery': 0,
+  'infectious-disease': 0,
+  'plastic-surgery': 0,
+  'obstetrics-gynecology': 0,
+  'emergency-medicine': 0,
+  'anesthesiology': 0,
+  'radiology': 0,
+  'geriatric-medicine': 0,
+  'strength-coaching': 0,
+  'run-coaching': 0,
+  'all': 0
+};
+
 // Fill values for all other services with a reasonable default like 0.5
 Object.keys(SERVICE_COORDINATION_SCORES).forEach(service1 => {
   Object.keys(SERVICE_COORDINATION_SCORES).forEach(service2 => {
@@ -68,7 +115,7 @@ export function findOptimalServiceIntegration(
   }[] = [];
   
   // Calculate total coordination score for each service
-  const serviceScores: Record<ServiceCategory, number> = {};
+  const serviceScores: Record<ServiceCategory, number> = { ...baseServiceScores };
   
   services.forEach(service1 => {
     serviceScores[service1] = 0;

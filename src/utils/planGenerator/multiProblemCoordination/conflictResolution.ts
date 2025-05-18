@@ -30,6 +30,18 @@ export function getConflictingTreatmentModalities(): Map<TreatmentModality, Trea
   conflictMap.set('rest', ['activity', 'strength-training', 'cardio']);
   conflictMap.set('activity', ['rest']);
   conflictMap.set('diet-restriction', ['performance-nutrition']);
+  conflictMap.set('stretching', []);
+  conflictMap.set('strength-training', []);
+  conflictMap.set('cardio', []);
+  conflictMap.set('medication', []);
+  conflictMap.set('activity-modification', []);
+  conflictMap.set('cognitive-behavioral', []);
+  conflictMap.set('relaxation', []);
+  conflictMap.set('performance-nutrition', ['diet-restriction']);
+  conflictMap.set('isometric-exercise', []);
+  conflictMap.set('light-activity', []);
+  conflictMap.set('portion-control', []);
+  conflictMap.set('meal-timing', []);
   
   return conflictMap;
 }
@@ -135,7 +147,16 @@ export function generateTreatmentAlternatives(
     'strength-training': ['stretching', 'isometric-exercise'],
     'cardio': ['light-activity', 'activity-modification'],
     'diet-restriction': ['portion-control', 'meal-timing'],
-    'medication': ['relaxation', 'cognitive-behavioral']
+    'medication': ['relaxation', 'cognitive-behavioral'],
+    'stretching': ['relaxation', 'activity-modification'],
+    'activity-modification': ['stretching', 'light-activity'],
+    'cognitive-behavioral': ['relaxation', 'light-activity'],
+    'relaxation': ['cognitive-behavioral', 'stretching'],
+    'performance-nutrition': ['meal-timing', 'portion-control'],
+    'isometric-exercise': ['stretching', 'activity-modification'],
+    'light-activity': ['stretching', 'activity-modification'],
+    'portion-control': ['meal-timing', 'diet-restriction'],
+    'meal-timing': ['portion-control', 'diet-restriction']
   };
   
   // Gather all alternatives

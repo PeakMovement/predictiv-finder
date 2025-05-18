@@ -1,3 +1,4 @@
+
 // Update or create the ServiceCategory type definition
 export type ServiceCategory =
   | 'physiotherapist'
@@ -91,6 +92,24 @@ export const BASELINE_COSTS: Record<ServiceCategory, number> = {
   'all': 0
 };
 
+// Update the TreatmentModality type to include all the treatment types used in the codebase
+export type TreatmentModality = 
+  | 'stretching' 
+  | 'strength-training'
+  | 'cardio'
+  | 'rest'
+  | 'diet-restriction'
+  | 'activity'
+  | 'medication'
+  | 'activity-modification'
+  | 'cognitive-behavioral'
+  | 'relaxation'
+  | 'performance-nutrition'
+  | 'isometric-exercise'
+  | 'light-activity'
+  | 'portion-control'
+  | 'meal-timing';
+
 // Additional types needed
 export interface BudgetTier {
   name: string;
@@ -117,12 +136,16 @@ export interface ServiceConfigurationByBudget {
   };
 }
 
+// Updated ServiceAllocation interfaces to support both old and new formats
 export interface ServiceAllocation {
   type: ServiceCategory;
   percentage: number;
   priority: number;
   minSessions?: number;
   maxSessions?: number;
+  sessions?: number;  // Added for compatibility
+  description?: string; // Added for compatibility
+  frequency?: string; // Added for compatibility
 }
 
 export interface ComorbidityGroup {
@@ -149,24 +172,6 @@ export interface UserPreference {
     outcome: 'positive' | 'neutral' | 'negative';
   }>;
 }
-
-// Update the TreatmentModality type to include all the treatment types used in the codebase
-export type TreatmentModality = 
-  | 'stretching' 
-  | 'strength-training'
-  | 'cardio'
-  | 'rest'
-  | 'diet-restriction'
-  | 'activity'
-  | 'medication'
-  | 'activity-modification'
-  | 'cognitive-behavioral'
-  | 'relaxation'
-  | 'performance-nutrition'
-  | 'isometric-exercise'
-  | 'light-activity'
-  | 'portion-control'
-  | 'meal-timing';
 
 export interface SessionAllocation {
   count: number;
@@ -209,4 +214,7 @@ export interface ServiceAllocationItem {
   type: ServiceCategory;
   percentage: number;
   priority: number;
+  price?: number; // Added for compatibility
+  sessions?: number; // Added for compatibility 
+  description?: string; // Added for compatibility
 }
