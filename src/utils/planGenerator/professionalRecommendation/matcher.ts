@@ -3,6 +3,7 @@ import { ServiceCategory } from "../types";
 import { CategoryRecommendation } from "./types";
 import { matchPractitionersToNeeds as originalMatchPractitioners } from "../categoryMatcher";
 import { enhancedMemoize } from "@/utils/cache";
+import { createServiceCategoryRecord } from "../helpers/serviceRecordInitializer";
 
 /**
  * Cached version of the matchPractitionersToNeeds function
@@ -42,3 +43,25 @@ export const cachedMatchPractitioners = enhancedMemoize(
   },
   { maxSize: 50, ttl: 10 * 60 * 1000 } // 10 minutes TTL, max 50 items
 );
+
+/**
+ * Public function that matches practitioners to user needs
+ * This wrapper allows for consistent typing across the application
+ */
+export const matchPractitionersToNeeds = (
+  symptoms: string[],
+  severityScores: Record<string, number>,
+  goals: any[],
+  location?: string,
+  isRemote?: boolean,
+  hasBudgetConstraint?: boolean
+): CategoryRecommendation[] => {
+  return cachedMatchPractitioners(
+    symptoms,
+    severityScores,
+    goals,
+    location,
+    isRemote,
+    hasBudgetConstraint
+  );
+};

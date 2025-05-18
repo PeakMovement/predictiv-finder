@@ -61,3 +61,65 @@ export function createServiceCategoryRecord<T>(defaultValue: T): Record<ServiceC
   
   return record;
 }
+
+/**
+ * Helper function to initialize a record with deep-cloned default values
+ * Useful for complex object types
+ */
+export function createServiceCategoryRecordWithFactory<T>(
+  factory: () => T
+): Record<ServiceCategory, T> {
+  const record = {} as Record<ServiceCategory, T>;
+  
+  const allCategories: ServiceCategory[] = [
+    'physiotherapist',
+    'biokineticist', 
+    'dietician',
+    'personal-trainer',
+    'coaching',
+    'psychology',
+    'psychiatry',
+    'family-medicine',
+    'pain-management',
+    'podiatrist',
+    'general-practitioner',
+    'sport-physician',
+    'orthopedic-surgeon',
+    'gastroenterology',
+    'massage-therapy',
+    'nutrition-coaching',
+    'occupational-therapy',
+    'physical-therapy',
+    'chiropractor',
+    'nurse-practitioner',
+    'cardiology',
+    'dermatology',
+    'neurology',
+    'endocrinology',
+    'urology',
+    'oncology',
+    'rheumatology',
+    'pediatrics',
+    'geriatrics',
+    'sports-medicine',
+    'internal-medicine',
+    'orthopedics',
+    'neurosurgery',
+    'infectious-disease',
+    'plastic-surgery',
+    'obstetrics-gynecology',
+    'emergency-medicine',
+    'anesthesiology',
+    'radiology',
+    'geriatric-medicine',
+    'strength-coaching',
+    'run-coaching',
+    'all'
+  ];
+  
+  allCategories.forEach(category => {
+    record[category] = factory(); // Call factory for each category to get a fresh instance
+  });
+  
+  return record;
+}

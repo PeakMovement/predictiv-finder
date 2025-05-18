@@ -4,6 +4,7 @@
  */
 
 import { ServiceCategory } from "../types";
+import { AIHealthPlan } from "@/types"; // Import from the correct path
 import { 
   ProfessionalRecommendation, 
   CategoryRecommendation,

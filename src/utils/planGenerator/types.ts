@@ -191,6 +191,9 @@ export interface PlanContext {
   serviceCount?: number;
   intensity?: 'light' | 'standard' | 'intensive';
   duration?: 'short-term' | 'medium-term' | 'long-term';
+  timeAvailability?: number; // Add the missing field
+  ageGroup?: 'child' | 'teen' | 'adult' | 'senior'; // Add the missing field from PlanContext in types.d.ts
+  isUrgent?: boolean; // Add the missing field from PlanContext in types.d.ts
 }
 
 export interface ServiceAllocationItem {
@@ -198,4 +201,3 @@ export interface ServiceAllocationItem {
   percentage: number;
   priority: number;
 }
-
