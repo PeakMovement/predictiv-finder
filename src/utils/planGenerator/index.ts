@@ -30,6 +30,6 @@ export { determineBudgetTier } from './budgetHandling/enhancedBudgetOptimizer';
 export type { TreatmentModality } from './types';
 export { BASELINE_COSTS } from './types';
 
-// Explicitly re-export SessionAllocation to avoid ambiguity
-import type { ServiceCategory, SessionAllocation } from './types';
-export type { ServiceCategory, SessionAllocation };
+// Explicitly re-export ServiceAllocation to avoid ambiguity
+import type { ServiceCategory, ServiceAllocation } from './types';
+export type { ServiceCategory, ServiceAllocation };

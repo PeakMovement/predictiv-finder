@@ -50,6 +50,19 @@ export function getServiceDescription(serviceType: ServiceCategory): string {
     'geriatric-medicine': 'Specialized healthcare for the elderly focusing on managing multiple conditions and maintaining independence.',
     'strength-coaching': 'Specialized coaching focused on improving strength, power and muscle development with expert technique guidance.',
     'run-coaching': 'Specialized coaching for runners of all levels, focusing on technique, training plans and performance improvement.',
+    'gynecology': 'Specialized care focusing on women\'s reproductive health, including preventive care and treatment of disorders.',
+    'ophthalmology': 'Medical specialty concerned with diagnosis and treatment of eye disorders and vision care.',
+    'speech-therapy': 'Specialized therapy to assess, diagnose, and treat speech, language, and swallowing disorders.',
+    'audiology': 'Healthcare profession concerned with diagnosis and treatment of hearing and balance disorders.',
+    'acupuncture': 'Traditional Chinese medical therapy involving insertion of thin needles into specific points on the body.',
+    'yoga-instructor': 'Guided yoga practice focusing on physical postures, breathing techniques, and meditation for overall wellbeing.',
+    'pilates-instructor': 'Specialized instruction in Pilates method exercises focusing on core strength, flexibility, and body awareness.',
+    'tai-chi-instructor': 'Instruction in gentle, flowing movements of tai chi to improve balance, coordination, and mental wellbeing.',
+    'naturopathy': 'Alternative medicine system using natural therapies including herbs, nutrition, and lifestyle counseling.',
+    'homeopathy': 'Alternative medicine system based on the principle that substances causing symptoms can, in minute doses, treat those same symptoms.',
+    'osteopathy': 'Manual therapy focusing on moving, stretching, and massaging muscles and joints to treat musculoskeletal issues.',
+    'pharmacy': 'Expert management and provision of medications, including medication review and advice.',
+    'medical-specialist': 'Specialized medical care focusing on specific body systems, conditions, or population groups.',
     'all': 'Comprehensive healthcare services addressing all aspects of your physical and mental wellbeing.'
   };
   

@@ -89,7 +89,7 @@ export const analyzeUserInput = (input: string): {
   // Check for specific professionals mentioned
   const professionalServices = detectProfessionalMentions(inputLower);
   professionalServices.forEach(service => {
-    // Access the serviceCategory property instead of trying to add the whole object
+    // Use the updated type structure
     serviceCategories.add(service.serviceCategory);
     
     // Track practitioner preferences with confidence scores

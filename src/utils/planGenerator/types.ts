@@ -68,8 +68,13 @@ export interface ServiceAllocation {
   sessions?: number;
 }
 
-// Additional type definitions needed for imported but missing types
-export type BudgetTier = 'low' | 'medium' | 'high' | 'premium';
+// Update BudgetTier from string union to interface to match how it's used
+export interface BudgetTier {
+  name: string;
+  range: { min: number; max: number };
+  maxSessions: number;
+  budget: number;
+}
 
 export const BASELINE_COSTS: Record<ServiceCategory, number> = {
   'physiotherapist': 600,
@@ -135,9 +140,12 @@ export interface PriceRange {
   max: number;
 }
 
+// Update LegacyPriceRange to match how it's being used
 export interface LegacyPriceRange {
   low: number;
   high: number;
+  affordable?: number; // Make these optional to match how they're being used
+  highEnd?: number;
 }
 
 export interface ServiceConfigurationByBudget {
@@ -184,9 +192,15 @@ export interface UserPreference {
   budgetConstraint?: number;
 }
 
-// Add TreatmentModality type that's being imported elsewhere
+// Update TreatmentModality to include all the values being used
 export type TreatmentModality = 
   | 'in-person'
   | 'remote'
-  | 'hybrid';
-
+  | 'hybrid'
+  | 'stretching'
+  | 'strength-training'
+  | 'rest'
+  | 'activity'
+  | 'diet-restriction'
+  | 'cardio'
+  | 'medication';

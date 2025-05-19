@@ -1,62 +1,71 @@
 
-/**
- * Type adapters for compatibility between different interfaces
- * This module helps maintain backwards compatibility while we transition
- * to more consistent and organized types
- */
-
-import { PriceRange, LegacyPriceRange, BudgetTier } from '../types';
+import { BudgetTier, LegacyPriceRange, PriceRange } from '../types';
 
 /**
- * Converts a legacy price range to the new standard format
+ * Adapters for converting between different versions of types
+ * to maintain compatibility between modules
  */
-export function adaptLegacyPriceRange(legacyRange: LegacyPriceRange): PriceRange {
+
+/**
+ * Converts a legacy price range to the new standardized format
+ * @param legacyRange The legacy price range object
+ * @returns Standardized price range object
+ */
+export function convertLegacyPriceRange(legacyRange: LegacyPriceRange): PriceRange {
   return {
-    min: legacyRange.affordable,
-    max: legacyRange.highEnd
+    min: legacyRange.low,
+    max: legacyRange.high
   };
 }
 
 /**
- * Converts a standard price range to the legacy format
- * (Used for backwards compatibility with older modules)
+ * Creates a legacy price range object from min/max values
+ * @param min Minimum price value
+ * @param max Maximum price value
+ * @returns Legacy price range format
  */
-export function adaptToPriceRange(standardRange: PriceRange): LegacyPriceRange {
+export function createLegacyPriceRange(min: number, max: number): LegacyPriceRange {
   return {
-    affordable: standardRange.min,
-    highEnd: standardRange.max
+    low: min,
+    high: max
   };
 }
 
 /**
- * Convert string-based budget tier to full BudgetTier object
+ * Converts a string budget tier to a full BudgetTier object
+ * @param tier String tier name
+ * @returns BudgetTier object with appropriate values
  */
-export function adaptBudgetTierString(tierName: string, budget: number): BudgetTier {
-  const tiers: Record<string, BudgetTier> = {
-    'low': {
-      name: 'low',
-      range: { min: 0, max: 2000 },
-      maxSessions: 4,
-      budget
-    },
-    'medium': {
-      name: 'medium',
-      range: { min: 2001, max: 5000 },
-      maxSessions: 8,
-      budget
-    },
-    'high': {
-      name: 'high',
-      range: { min: 5001, max: 10000 },
-      maxSessions: 12,
-      budget
-    }
-  };
-  
-  return tiers[tierName] || {
-    name: 'medium',
-    range: { min: 2001, max: 5000 },
-    maxSessions: 6,
-    budget
-  };
+export function convertStringToBudgetTier(tier: string): BudgetTier {
+  switch (tier.toLowerCase()) {
+    case 'low':
+      return {
+        name: 'low',
+        range: { min: 0, max: 1000 },
+        maxSessions: 2,
+        budget: 500
+      };
+    case 'medium':
+      return {
+        name: 'medium',
+        range: { min: 1001, max: 2500 },
+        maxSessions: 3,
+        budget: 2250
+      };
+    case 'high':
+      return {
+        name: 'high',
+        range: { min: 2501, max: 10000 },
+        maxSessions: 4,
+        budget: 5000
+      };
+    default:
+      // Default to medium tier
+      return {
+        name: 'medium',
+        range: { min: 1001, max: 2500 },
+        maxSessions: 3,
+        budget: 2250
+      };
+  }
 }
