@@ -1,110 +1,67 @@
 
 /**
- * Input validation utilities for the plan generator system
+ * Input validation utilities
  */
-
-export interface InputValidationResult {
-  isValid: boolean;
-  errorMessage: string;
-}
+import { logger } from "@/utils/cache";
 
 /**
- * Validates user input for plan generation
- * @param input User input string
- * @returns Validation result with error message if invalid
+ * Validates user input for health plan generation
+ * @param userInput Raw text input from the user
+ * @returns Validation result with success status and error message if applicable
  */
-export function validateUserInput(input: string): InputValidationResult {
-  if (!input || typeof input !== 'string') {
+export function validateUserInput(userInput: string) {
+  // Simple validation for now
+  if (!userInput || userInput.trim().length === 0) {
     return {
       isValid: false,
-      errorMessage: 'Input must be a non-empty string'
+      errorMessage: "Please provide some information about your health needs."
     };
   }
-  
-  if (input.trim().length < 3) {
+
+  if (userInput.trim().length < 5) {
     return {
       isValid: false,
-      errorMessage: 'Input must contain at least 3 characters'
+      errorMessage: "Please provide more details about your health needs."
     };
   }
-  
-  // Check for potential harmful content
-  const problematicPatterns = [
-    /^[<>{}\[\]\\\/]+$/,     // Just special characters
-    /script\s*:/i,           // script: injection
-    /on\w+\s*=/i,            // event handlers
+
+  // Check for potential harmful or inappropriate content
+  const lowerInput = userInput.toLowerCase();
+  const blockedPhrases = [
+    "suicide", "kill myself", "harm myself", "self harm",
+    "die", "death", "murder", "illegal drugs"
   ];
   
-  for (const pattern of problematicPatterns) {
-    if (pattern.test(input)) {
+  for (const phrase of blockedPhrases) {
+    if (lowerInput.includes(phrase)) {
+      logger.warn(`Potentially concerning content detected: "${phrase}"`);
       return {
         isValid: false,
-        errorMessage: 'Input contains potentially unsafe content'
+        errorMessage: "This type of content cannot be processed. Please contact a healthcare provider directly."
       };
     }
   }
-  
+
   return {
     isValid: true,
-    errorMessage: ''
+    errorMessage: ""
   };
 }
 
 /**
- * Validates that a budget value is reasonable
- * @param budget Budget amount
- * @returns Validation result
+ * Validates if a budget value is reasonable
+ * @param budget The budget amount to validate
+ * @returns True if the budget is valid, false otherwise
  */
-export function validateBudget(budget: number): InputValidationResult {
-  if (typeof budget !== 'number') {
-    return {
-      isValid: false,
-      errorMessage: 'Budget must be a number'
-    };
+export function validateBudget(budget: number) {
+  if (isNaN(budget) || budget <= 0) {
+    return false;
   }
   
-  if (budget <= 0) {
-    return {
-      isValid: false,
-      errorMessage: 'Budget must be greater than zero'
-    };
+  // Set an upper limit to prevent unrealistic values
+  if (budget > 100000) {
+    return false;
   }
   
-  if (budget > 1000000) {
-    return {
-      isValid: false,
-      errorMessage: 'Budget seems unreasonably high'
-    };
-  }
-  
-  return {
-    isValid: true,
-    errorMessage: ''
-  };
-}
-
-/**
- * Validates service categories
- * @param categories List of service categories
- * @returns Validation result
- */
-export function validateServiceCategories(categories: string[]): InputValidationResult {
-  if (!Array.isArray(categories)) {
-    return {
-      isValid: false,
-      errorMessage: 'Categories must be provided as an array'
-    };
-  }
-  
-  if (categories.length === 0) {
-    return {
-      isValid: false,
-      errorMessage: 'At least one service category is required'
-    };
-  }
-  
-  return {
-    isValid: true,
-    errorMessage: ''
-  };
+  return true;
 }

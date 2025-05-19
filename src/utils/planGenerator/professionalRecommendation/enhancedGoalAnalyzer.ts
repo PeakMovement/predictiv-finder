@@ -191,3 +191,96 @@ export function suggestPrimaryCategoryForGoal(goal: string): ServiceCategory | n
     return null;
   }
 }
+
+/**
+ * Comprehensive goal analysis that combines multiple detection methods
+ * for more accurate goal extraction and service matching
+ * 
+ * @param userInput Raw text input from the user
+ * @returns Detailed analysis of user's goals and related data
+ */
+export function analyzeGoalComprehensively(userInput: string) {
+  try {
+    logger.debug("Analyzing goals comprehensively for input:", userInput);
+    
+    const inputLower = userInput.toLowerCase();
+    
+    // Extract all possible goals from user input
+    const extractedGoals = extractGoals(userInput);
+    
+    // Determine urgency level
+    let urgency: 'low' | 'medium' | 'high' = 'low';
+    if (inputLower.includes('urgent') || 
+        inputLower.includes('immediate') || 
+        inputLower.includes('emergency')) {
+      urgency = 'high';
+    } else if (inputLower.includes('soon') || 
+              inputLower.includes('quickly') || 
+              inputLower.includes('as soon as')) {
+      urgency = 'medium';
+    }
+    
+    // Determine primary goal and secondary goals
+    const primaryGoal = extractedGoals.length > 0 ? extractedGoals[0] : undefined;
+    const secondaryGoals = extractedGoals.length > 1 ? extractedGoals.slice(1) : [];
+    
+    // Determine goal timeframe
+    const hasShortTermGoal = inputLower.includes('week') || 
+                          inputLower.includes('days') ||
+                          inputLower.includes('immediate');
+                          
+    const hasMediumTermGoal = inputLower.includes('month') || 
+                           inputLower.includes('several weeks');
+                           
+    const hasLongTermGoal = inputLower.includes('year') || 
+                         inputLower.includes('long term') ||
+                         inputLower.includes('permanent');
+    
+    // Suggest categories based on all extracted goals
+    const suggestedCategories: ServiceCategory[] = [];
+    
+    extractedGoals.forEach(goal => {
+      const goalCategories = analyzeUserGoal(goal);
+      goalCategories.forEach(category => {
+        if (!suggestedCategories.includes(category)) {
+          suggestedCategories.push(category);
+        }
+      });
+    });
+    
+    // Get primary category
+    let primaryCategory: ServiceCategory | null = null;
+    if (primaryGoal) {
+      primaryCategory = suggestPrimaryCategoryForGoal(primaryGoal);
+    }
+    
+    // Return the comprehensive goal analysis
+    return {
+      primaryGoal,
+      secondaryGoals,
+      urgency,
+      suggestedCategories,
+      primaryCategory,
+      timeframe: {
+        isShortTerm: hasShortTermGoal,
+        isMediumTerm: hasMediumTermGoal,
+        isLongTerm: hasLongTermGoal
+      }
+    };
+  } catch (error) {
+    logger.error("Error in comprehensive goal analysis:", error);
+    // Return a basic response in case of error
+    return {
+      primaryGoal: undefined,
+      secondaryGoals: [],
+      urgency: 'low' as const,
+      suggestedCategories: [],
+      primaryCategory: null,
+      timeframe: {
+        isShortTerm: false,
+        isMediumTerm: true,
+        isLongTerm: false
+      }
+    };
+  }
+}
