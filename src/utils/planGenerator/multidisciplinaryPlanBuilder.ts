@@ -1,3 +1,4 @@
+
 import { ServiceCategory } from "./types";
 import { PlanContext, ServiceAllocationItem } from "./types";
 import { createServiceCategoryRecord } from "./helpers/serviceRecordInitializer";
@@ -251,7 +252,65 @@ function calculateBudgetAllocation(
   totalBudget: number,
   optimize: boolean
 ): Record<ServiceCategory, number> {
-  const allocation: Record<ServiceCategory, number> = {};
+  // Initialize allocation with all service categories
+  const allocation: Record<ServiceCategory, number> = {
+    'physiotherapist': 0,
+    'biokineticist': 0,
+    'dietician': 0,
+    'personal-trainer': 0,
+    'psychology': 0,
+    'coaching': 0,
+    'psychiatry': 0,
+    'general-practitioner': 0,
+    'family-medicine': 0,
+    'cardiology': 0,
+    'endocrinology': 0,
+    'gastroenterology': 0,
+    'neurology': 0,
+    'orthopedic-surgeon': 0,
+    'rheumatology': 0,
+    'sports-medicine': 0,
+    'dermatology': 0,
+    'gynecology': 0,
+    'ophthalmology': 0,
+    'pain-management': 0,
+    'podiatrist': 0,
+    'occupational-therapy': 0,
+    'speech-therapy': 0,
+    'audiology': 0,
+    'nutrition-coaching': 0,
+    'chiropractor': 0,
+    'massage-therapy': 0,
+    'acupuncture': 0,
+    'yoga-instructor': 0,
+    'pilates-instructor': 0,
+    'tai-chi-instructor': 0,
+    'naturopathy': 0,
+    'homeopathy': 0,
+    'osteopathy': 0,
+    'pharmacy': 0,
+    'medical-specialist': 0,
+    'pediatrics': 0,
+    'geriatrics': 0,
+    'physical-therapy': 0,
+    'strength-coaching': 0,
+    'run-coaching': 0,
+    'internal-medicine': 0,
+    'infectious-disease': 0,
+    'plastic-surgery': 0,
+    'orthopedics': 0,
+    'neurosurgery': 0,
+    'oncology': 0,
+    'urology': 0,
+    'obstetrics-gynecology': 0,
+    'emergency-medicine': 0,
+    'anesthesiology': 0,
+    'radiology': 0,
+    'geriatric-medicine': 0,
+    'sport-physician': 0,
+    'nurse-practitioner': 0,
+    'all': 0
+  };
   
   if (optimize) {
     // Sophisticated budget allocation based on service importance

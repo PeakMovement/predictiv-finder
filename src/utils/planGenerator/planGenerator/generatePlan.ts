@@ -1,5 +1,5 @@
 
-import { PlanContext, ServiceAllocation, ServiceAllocationItem } from "@/utils/planGenerator/types";
+import { PlanContext, ServiceAllocation, ServiceAllocationItem, ServiceCategory } from "../types";
 import { AIHealthPlan } from "@/types";
 import { determineRequiredServices } from './serviceAllocation';
 import { allocateServices } from './serviceAllocation';
@@ -10,16 +10,13 @@ import { determinePlanType } from './planTypeDetection';
 import { determineTimeFrame } from './timeFrameDetection';
 
 // Import BASELINE_COSTS from types.ts to use in service price calculation
-import { BASELINE_COSTS } from "@/utils/planGenerator/types";
+import { BASELINE_COSTS } from "../types";
 
 // Extend ServiceAllocation interface for the generatePlan function
 interface EnhancedServiceAllocation extends ServiceAllocation {
-  type: ServiceCategory;
   percentage?: number;
-  sessions?: number;
   description?: string;
   frequency?: string;
-  priority?: number;
 }
 
 // Export the generatePlan function

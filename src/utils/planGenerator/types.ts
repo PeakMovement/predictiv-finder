@@ -68,7 +68,7 @@ export interface ServiceAllocation {
   sessions?: number;
 }
 
-// Add ServiceAllocationItem type that was missing
+// Add ServiceAllocationItem type
 export interface ServiceAllocationItem {
   type: ServiceCategory;
   percentage: number;
@@ -94,7 +94,7 @@ export interface PlanContext {
   duration?: 'short-term' | 'medium-term' | 'long-term';
 }
 
-// Update BudgetTier from string union to interface to match how it's used
+// Update BudgetTier to be interface with proper properties
 export interface BudgetTier {
   name: string;
   range: { min: number; max: number };
@@ -166,7 +166,7 @@ export interface PriceRange {
   max: number;
 }
 
-// Update LegacyPriceRange to match how it's being used
+// Update LegacyPriceRange to include all required properties
 export interface LegacyPriceRange {
   low: number;
   high: number;
@@ -212,7 +212,7 @@ export interface UserPreference {
   budgetConstraint?: number;
 }
 
-// Update TreatmentModality to include all the values being used
+// Update TreatmentModality to include all values being used
 export type TreatmentModality = 
   | 'in-person'
   | 'remote'

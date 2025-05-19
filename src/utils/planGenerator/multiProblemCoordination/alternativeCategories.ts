@@ -47,6 +47,19 @@ const ALTERNATIVE_CATEGORY_MAP: Record<ServiceCategory, ServiceCategory[]> = {
   'anesthesiology': ['pain-management', 'emergency-medicine'],
   'radiology': ['internal-medicine', 'orthopedics'],
   'geriatric-medicine': ['geriatrics', 'internal-medicine'],
+  'gynecology': ['obstetrics-gynecology', 'general-practitioner'],
+  'ophthalmology': ['general-practitioner', 'neurology'],
+  'speech-therapy': ['occupational-therapy', 'psychology'],
+  'audiology': ['general-practitioner', 'neurology'],
+  'acupuncture': ['massage-therapy', 'pain-management'],
+  'yoga-instructor': ['pilates-instructor', 'personal-trainer'],
+  'pilates-instructor': ['yoga-instructor', 'personal-trainer'],
+  'tai-chi-instructor': ['yoga-instructor', 'pilates-instructor'],
+  'naturopathy': ['dietician', 'homeopathy'],
+  'homeopathy': ['naturopathy', 'dietician'],
+  'osteopathy': ['physiotherapist', 'chiropractor'],
+  'pharmacy': ['general-practitioner', 'nurse-practitioner'],
+  'medical-specialist': ['general-practitioner', 'internal-medicine'],
   'all': ['general-practitioner', 'personal-trainer', 'dietician']
 };
 
