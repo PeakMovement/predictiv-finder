@@ -1,4 +1,3 @@
-
 /**
  * Main recommendation generator module
  * Refactored from the original large file
@@ -19,6 +18,7 @@ import { calculateBudget, calculateIdealSessions } from "./budget";
 import { determineIdealTiming, generateRecommendationNotes, generatePreferredTraits } from "../utils";
 import { enhancedMemoize, logger } from "@/utils/cache";
 import { processHealthScenario } from "./scenarioHandler";
+import { createServiceCategoryRecord } from "../helpers/serviceRecordInitializer";
 
 /**
  * Generates comprehensive professional recommendations based on user input

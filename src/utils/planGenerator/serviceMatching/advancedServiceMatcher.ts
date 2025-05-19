@@ -11,7 +11,7 @@ type EvidenceLevelMapping = Partial<Record<ServiceCategory, EvidenceLevel>>;
 type SpecialPopulationOverrides = Partial<Record<'child' | 'elderly' | 'athlete' | 'pregnant', {
   recommended: ServiceCategory[];
   contraindicated?: ServiceCategory[];
-}>>;
+}>};
 
 /**
  * Enhanced condition/symptom to service mapping with evidence levels and specialized populations
@@ -147,12 +147,12 @@ const ENHANCED_CONDITION_MAPPINGS: Record<string, EnhancedServiceMapping> = {
   },
   'digestive issues': {
     primaryServices: ['gastroenterology', 'dietician'],
-    secondaryServices: ['general-practitioner', 'nutrition-coach'],
+    secondaryServices: ['general-practitioner', 'nutrition-coaching'],
     evidenceLevels: {
       'gastroenterology': 'high',
       'dietician': 'high',
       'general-practitioner': 'medium',
-      'nutrition-coach': 'low'
+      'nutrition-coaching': 'low'
     }
   }
 };
@@ -210,7 +210,7 @@ const SPECIAL_POPULATIONS: SpecialPopulation[] = [
   {
     type: 'child',
     ageRange: [0, 12],
-    recommendedServices: ['pediatrics', 'family-medicine', 'nutrition-coach'],
+    recommendedServices: ['pediatrics', 'family-medicine', 'nutrition-coaching'],
     contraindicatedServices: ['psychiatry', 'pain-management'],
     specializedProviders: ['pediatrics', 'family-medicine']
   },
@@ -560,7 +560,7 @@ function findAlternativeServices(
   const SERVICE_ALTERNATIVES: Partial<Record<ServiceCategory, ServiceCategory[]>> = {
     'physiotherapist': ['biokineticist', 'physical-therapy', 'chiropractor'],
     'biokineticist': ['physiotherapist', 'personal-trainer'],
-    'dietician': ['nutrition-coach', 'coaching'],
+    'dietician': ['nutrition-coaching', 'coaching'],
     'personal-trainer': ['biokineticist', 'coaching'],
     'psychology': ['psychiatry', 'coaching'],
     'psychiatry': ['psychology', 'general-practitioner'],

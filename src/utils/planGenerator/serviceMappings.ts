@@ -1,4 +1,3 @@
-
 import { ServiceCategory, ServiceConfigurationByBudget } from "./types";
 
 export const CONDITION_TO_SERVICES: Record<string, ServiceCategory[]> = {
@@ -93,7 +92,7 @@ export const SERVICE_CONFIGS_BY_BUDGET: ServiceConfigurationByBudget = {
   }
 };
 
-// Update price range structure to use min/max pattern consistently
+// Update price range structure to use min/max pattern consistently and include missing categories
 export const SERVICE_PRICE_RANGES: Record<ServiceCategory, {min: number, max: number}> = {
   'dietician': {min: 400, max: 600},
   'personal-trainer': {min: 350, max: 500},

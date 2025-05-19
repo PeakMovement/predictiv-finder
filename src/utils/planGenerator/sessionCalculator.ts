@@ -1,215 +1,368 @@
+// Update the SessionAllocation objects to include count and priorityLevel
+import { ServiceCategory, ServiceAllocation, BASELINE_COSTS } from './types';
 
-import { ServiceAllocation, ServiceCategory, SessionAllocation, PriceRange } from './types';
-
-// Re-export as calculateSessions for backwards compatibility
-export const calculateSessions = distributeSessionsByBudget;
+export function calculateDefaultSessionAllocations(): Record<ServiceCategory, ServiceAllocation> {
+  return {
+    'physiotherapist': { 
+      sessions: 4, 
+      costPerSession: 600, 
+      totalCost: 2400,
+      count: 4,
+      priorityLevel: 'high'
+    },
+    'biokineticist': { 
+      sessions: 4, 
+      costPerSession: 550, 
+      totalCost: 2200,
+      count: 4,
+      priorityLevel: 'high'
+    },
+    'dietician': { 
+      sessions: 3, 
+      costPerSession: 500, 
+      totalCost: 1500,
+      count: 3,
+      priorityLevel: 'medium'
+    },
+    'personal-trainer': { 
+      sessions: 3, 
+      costPerSession: 450, 
+      totalCost: 1350,
+      count: 3,
+      priorityLevel: 'medium'
+    },
+    'coaching': { 
+      sessions: 2, 
+      costPerSession: 400, 
+      totalCost: 800,
+      count: 2,
+      priorityLevel: 'low'
+    },
+    'psychology': { 
+      sessions: 2, 
+      costPerSession: 800, 
+      totalCost: 1600,
+      count: 2,
+      priorityLevel: 'low'
+    },
+    'psychiatry': { 
+      sessions: 1, 
+      costPerSession: 1000, 
+      totalCost: 1000,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'family-medicine': { 
+      sessions: 1, 
+      costPerSession: 550, 
+      totalCost: 550,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'pain-management': { 
+      sessions: 2, 
+      costPerSession: 700, 
+      totalCost: 1400,
+      count: 2,
+      priorityLevel: 'low'
+    },
+    'podiatrist': { 
+      sessions: 1, 
+      costPerSession: 550, 
+      totalCost: 550,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'general-practitioner': { 
+      sessions: 1, 
+      costPerSession: 600, 
+      totalCost: 600,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'sport-physician': { 
+      sessions: 1, 
+      costPerSession: 800, 
+      totalCost: 800,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'orthopedic-surgeon': { 
+      sessions: 1, 
+      costPerSession: 1200, 
+      totalCost: 1200,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'gastroenterology': { 
+      sessions: 1, 
+      costPerSession: 900, 
+      totalCost: 900,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'massage-therapy': { 
+      sessions: 2, 
+      costPerSession: 350, 
+      totalCost: 700,
+      count: 2,
+      priorityLevel: 'low'
+    },
+    'nutrition-coaching': { 
+      sessions: 2, 
+      costPerSession: 400, 
+      totalCost: 800,
+      count: 2,
+      priorityLevel: 'low'
+    },
+    'occupational-therapy': { 
+      sessions: 2, 
+      costPerSession: 500, 
+      totalCost: 1000,
+      count: 2,
+      priorityLevel: 'low'
+    },
+    'physical-therapy': { 
+      sessions: 3, 
+      costPerSession: 550, 
+      totalCost: 1650,
+      count: 3,
+      priorityLevel: 'medium'
+    },
+    'chiropractor': { 
+      sessions: 3, 
+      costPerSession: 450, 
+      totalCost: 1350,
+      count: 3,
+      priorityLevel: 'medium'
+    },
+    'nurse-practitioner': { 
+      sessions: 1, 
+      costPerSession: 400, 
+      totalCost: 400,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'cardiology': { 
+      sessions: 1, 
+      costPerSession: 900, 
+      totalCost: 900,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'dermatology': { 
+      sessions: 1, 
+      costPerSession: 700, 
+      totalCost: 700,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'neurology': { 
+      sessions: 1, 
+      costPerSession: 850, 
+      totalCost: 850,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'endocrinology': { 
+      sessions: 1, 
+      costPerSession: 800, 
+      totalCost: 800,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'urology': { 
+      sessions: 1, 
+      costPerSession: 750, 
+      totalCost: 750,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'oncology': { 
+      sessions: 1, 
+      costPerSession: 1100, 
+      totalCost: 1100,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'rheumatology': { 
+      sessions: 1, 
+      costPerSession: 750, 
+      totalCost: 750,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'pediatrics': { 
+      sessions: 1, 
+      costPerSession: 600, 
+      totalCost: 600,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'geriatrics': { 
+      sessions: 1, 
+      costPerSession: 650, 
+      totalCost: 650,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'sports-medicine': { 
+      sessions: 1, 
+      costPerSession: 700, 
+      totalCost: 700,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'internal-medicine': { 
+      sessions: 1, 
+      costPerSession: 700, 
+      totalCost: 700,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'orthopedics': { 
+      sessions: 1, 
+      costPerSession: 900, 
+      totalCost: 900,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'neurosurgery': { 
+      sessions: 1, 
+      costPerSession: 1500, 
+      totalCost: 1500,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'infectious-disease': { 
+      sessions: 1, 
+      costPerSession: 850, 
+      totalCost: 850,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'plastic-surgery': { 
+      sessions: 1, 
+      costPerSession: 1400, 
+      totalCost: 1400,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'obstetrics-gynecology': { 
+      sessions: 1, 
+      costPerSession: 750, 
+      totalCost: 750,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'emergency-medicine': { 
+      sessions: 1, 
+      costPerSession: 1000, 
+      totalCost: 1000,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'anesthesiology': { 
+      sessions: 1, 
+      costPerSession: 1100, 
+      totalCost: 1100,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'radiology': { 
+      sessions: 1, 
+      costPerSession: 800, 
+      totalCost: 800,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'geriatric-medicine': { 
+      sessions: 1, 
+      costPerSession: 650, 
+      totalCost: 650,
+      count: 1,
+      priorityLevel: 'low'
+    },
+    'strength-coaching': { 
+      sessions: 3, 
+      costPerSession: 550, 
+      totalCost: 1650,
+      count: 3,
+      priorityLevel: 'medium'
+    },
+    'run-coaching': { 
+      sessions: 3, 
+      costPerSession: 600, 
+      totalCost: 1800,
+      count: 3,
+      priorityLevel: 'medium'
+    },
+    'all': { 
+      sessions: 1, 
+      costPerSession: 500, 
+      totalCost: 500,
+      count: 1,
+      priorityLevel: 'low'
+    }
+  };
+}
 
 /**
  * Distributes sessions based on budget and service priorities
  */
 export function distributeSessionsByBudget(
-  budget: number = 2500,
-  services: Array<{ type: ServiceCategory; priority: number }>
-): Record<ServiceCategory, SessionAllocation> {
-  // Create a default empty allocation
-  const defaultSessionAllocation: Record<ServiceCategory, SessionAllocation> = {
-    'physiotherapist': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'biokineticist': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'dietician': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'personal-trainer': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'pain-management': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'coaching': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'psychology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'psychiatry': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'podiatrist': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'general-practitioner': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'sport-physician': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'orthopedic-surgeon': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'family-medicine': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'gastroenterology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'massage-therapy': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'nutrition-coach': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'occupational-therapy': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'physical-therapy': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'chiropractor': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'nurse-practitioner': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'cardiology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'dermatology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'neurology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'endocrinology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'urology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'oncology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'rheumatology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'pediatrics': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'geriatrics': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'sports-medicine': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'internal-medicine': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'orthopedics': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'neurosurgery': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'infectious-disease': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'plastic-surgery': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'obstetrics-gynecology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'emergency-medicine': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'anesthesiology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'radiology': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'geriatric-medicine': { sessions: 0, costPerSession: 0, totalCost: 0 },
-    'all': { sessions: 0, costPerSession: 0, totalCost: 0 }
-  };
-
-  // Basic validation
-  if (!budget || budget <= 0 || !services || services.length === 0) {
-    return defaultSessionAllocation;
-  }
-
-  const sessionAllocation: Record<ServiceCategory, SessionAllocation> = { ...defaultSessionAllocation };
+  budget: number,
+  servicePriorities: { type: ServiceCategory; priority: number }[]
+): Record<ServiceCategory, ServiceAllocation> {
+  const defaultAllocations = calculateDefaultSessionAllocations();
+  const availableServices = servicePriorities.map(sp => sp.type);
   
-  // Calculate total priority
-  const totalPriority = services.reduce((sum, service) => sum + service.priority, 0) || 1;
+  let remainingBudget = budget;
+  const distributedSessions: Record<ServiceCategory, ServiceAllocation> = {};
   
-  // Get price ranges for services
-  const priceRanges = getServicePriceRanges();
+  // Initialize with zero sessions
+  availableServices.forEach(service => {
+    distributedSessions[service] = {
+      sessions: 0,
+      costPerSession: defaultAllocations[service].costPerSession,
+      totalCost: 0,
+      count: 0,
+      priorityLevel: 'low'
+    };
+  });
   
   // Sort services by priority (highest first)
-  const sortedServices = [...services].sort((a, b) => b.priority - a.priority);
+  const sortedServices = [...servicePriorities].sort((a, b) => b.priority - a.priority);
   
-  // Phase 1: Initial session allocation based on priority
-  const totalServices = sortedServices.length;
-  
-  // Base number of sessions per service
-  const baseSessionsPerService = budget >= 2000 ? 2 : 1;
-  
-  // Available budget after initial allocation
-  let remainingBudget = budget;
-  
-  // First pass: Allocate base sessions to all services
-  for (const service of sortedServices) {
-    const priceRange = priceRanges[service.type] || { 
-      low: { min: 400, max: 600 },
-      medium: { min: 500, max: 800 }, 
-      high: { min: 700, max: 1200 }
-    };
+  // Allocate sessions based on priority
+  for (const servicePriority of sortedServices) {
+    const service = servicePriority.type;
+    const defaultAllocation = defaultAllocations[service];
     
-    // Use medium tier pricing for initial allocation
-    const costPerSession = Math.floor((priceRange.medium.min + priceRange.medium.max) / 2);
+    if (!defaultAllocation) {
+      console.warn(`No default allocation found for service: ${service}`);
+      continue;
+    }
     
-    // Ensure we have enough budget for base sessions
-    if (costPerSession * baseSessionsPerService <= remainingBudget) {
-      sessionAllocation[service.type] = {
-        sessions: baseSessionsPerService,
+    const { costPerSession } = defaultAllocation;
+    
+    // Allocate as many sessions as possible without exceeding the budget
+    let affordableSessions = Math.floor(remainingBudget / costPerSession);
+    affordableSessions = Math.min(affordableSessions, 5); // Cap at 5 sessions
+    
+    if (affordableSessions > 0) {
+      distributedSessions[service] = {
+        sessions: affordableSessions,
         costPerSession: costPerSession,
-        totalCost: costPerSession * baseSessionsPerService
+        totalCost: costPerSession * affordableSessions,
+        count: affordableSessions,
+        priorityLevel: servicePriority.priority > 0.7 ? 'high' : 
+                       servicePriority.priority > 0.4 ? 'medium' : 'low'
       };
       
-      remainingBudget -= costPerSession * baseSessionsPerService;
+      remainingBudget -= costPerSession * affordableSessions;
     }
   }
   
-  // Second pass: Distribute remaining budget based on priority
-  if (remainingBudget > 0) {
-    for (const service of sortedServices) {
-      if (sessionAllocation[service.type].sessions === 0) continue;
-      
-      // Calculate share of remaining budget
-      const priorityShare = service.priority / totalPriority;
-      const additionalBudget = remainingBudget * priorityShare;
-      const costPerSession = sessionAllocation[service.type].costPerSession;
-      
-      // Calculate additional sessions
-      const additionalSessions = Math.floor(additionalBudget / costPerSession);
-      
-      if (additionalSessions > 0) {
-        sessionAllocation[service.type].sessions += additionalSessions;
-        sessionAllocation[service.type].totalCost += additionalSessions * costPerSession;
-        remainingBudget -= additionalSessions * costPerSession;
-      }
-    }
-  }
-
-  return sessionAllocation;
-}
-
-/**
- * Get price ranges for different service types and budget tiers
- */
-function getServicePriceRanges(): Record<ServiceCategory, Record<string, PriceRange>> {
-  // Initialize with basic price ranges for common services
-  const priceRanges: Partial<Record<ServiceCategory, Record<string, PriceRange>>> = {
-    'physiotherapist': {
-      low: { min: 400, max: 600 },
-      medium: { min: 600, max: 900 },
-      high: { min: 900, max: 1200 }
-    },
-    'personal-trainer': {
-      low: { min: 300, max: 450 },
-      medium: { min: 450, max: 700 },
-      high: { min: 700, max: 1000 }
-    }
-  };
-  
-  // Default price ranges for all other services
-  const defaultRanges = {
-    low: { min: 400, max: 600 },
-    medium: { min: 600, max: 900 },
-    high: { min: 900, max: 1500 }
-  };
-  
-  // Create a complete record with all service categories
-  const fullPriceRanges: Record<ServiceCategory, Record<string, PriceRange>> = {} as Record<ServiceCategory, Record<string, PriceRange>>;
-  
-  // Add all service categories
-  const allServiceCategories: ServiceCategory[] = [
-    'physiotherapist', 'biokineticist', 'dietician', 'personal-trainer',
-    'pain-management', 'coaching', 'psychology', 'psychiatry', 
-    'podiatrist', 'general-practitioner', 'sport-physician', 'orthopedic-surgeon',
-    'family-medicine', 'gastroenterology', 'massage-therapy', 'nutrition-coach',
-    'occupational-therapy', 'physical-therapy', 'chiropractor', 'nurse-practitioner',
-    'cardiology', 'dermatology', 'neurology', 'endocrinology',
-    'urology', 'oncology', 'rheumatology', 'pediatrics',
-    'geriatrics', 'sports-medicine', 'internal-medicine', 'orthopedics',
-    'neurosurgery', 'infectious-disease', 'plastic-surgery', 'obstetrics-gynecology',
-    'emergency-medicine', 'anesthesiology', 'radiology', 'geriatric-medicine',
-    'all'
-  ];
-  
-  // Fill in all service categories with default or specific ranges
-  for (const category of allServiceCategories) {
-    fullPriceRanges[category] = priceRanges[category] || { ...defaultRanges };
-  }
-  
-  return fullPriceRanges;
-}
-
-/**
- * Legacy function for determining session count based on budget
- */
-export function calculateSessionsForBudget(
-  budget: number,
-  costPerSession: number | PriceRange | LegacyPriceRange,
-  minSessions: number = 1,
-  maxSessions: number = 8
-): number {
-  // Determine the actual cost per session
-  let actualCostPerSession: number;
-  
-  if (typeof costPerSession === 'number') {
-    actualCostPerSession = costPerSession;
-  } else if ('min' in costPerSession && 'max' in costPerSession) {
-    // Use average cost for PriceRange
-    actualCostPerSession = (costPerSession.min + costPerSession.max) / 2;
-  } else {
-    // Use average cost for LegacyPriceRange
-    actualCostPerSession = (costPerSession.affordable + costPerSession.highEnd) / 2;
-  }
-  
-  // Calculate affordable sessions based on budget
-  let affordableSessions = Math.floor(budget / actualCostPerSession);
-  
-  // Constrain within min and max sessions
-  return Math.min(Math.max(affordableSessions, minSessions), maxSessions);
-}
-
-// Add missing LegacyPriceRange interface if it doesn't exist in types.ts
-interface LegacyPriceRange {
-  affordable: number;
-  highEnd: number;
+  return distributedSessions;
 }

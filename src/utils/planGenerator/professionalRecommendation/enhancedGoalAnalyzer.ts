@@ -1,278 +1,193 @@
+/**
+ * Enhanced goal analyzer module
+ * Refactored from the original large file
+ */
+
 import { ServiceCategory } from "../types";
-import { GOAL_SYNONYMS, MENTAL_HEALTH_SYNONYMS, FITNESS_SYNONYMS } from "../symptomMappings/synonymGroups";
+import { logger } from "@/utils/cache";
 
-interface GoalAnalysisResult {
-  primaryGoal: string;
-  secondaryGoals: string[];
-  urgency: 'low' | 'medium' | 'high';
-  severity: number;
-  budgetContraints: {
-    hasBudgetLimit: boolean;
-    estimatedBudget?: number;
-    isVeryBudgetSensitive: boolean;
-  };
-  timeConstraints: {
-    hasTimeframe: boolean;
-    preferredDuration?: string;
-    isUrgent: boolean;
-  };
-  keywordAnalysis: {
-    symptomMatches: string[];
-    goalMatches: string[];
-    serviceMatches: ServiceCategory[];
-  };
+/**
+ * Analyzes user goals and suggests relevant service categories
+ * @param goal User's stated goal
+ * @returns Suggested service categories based on the goal
+ */
+export function analyzeUserGoal(goal: string): ServiceCategory[] {
+  try {
+    logger.debug("Analyzing user goal:", goal);
+    
+    const lowerGoal = goal.toLowerCase();
+    const suggestedCategories: ServiceCategory[] = [];
+    
+    // Goal-based service suggestions
+    if (lowerGoal.includes('weight loss') || lowerGoal.includes('lose weight')) {
+      suggestedCategories.push('dietician', 'personal-trainer');
+    }
+    
+    if (lowerGoal.includes('gain muscle') || lowerGoal.includes('build muscle')) {
+      suggestedCategories.push('personal-trainer', 'dietician');
+    }
+    
+    if (lowerGoal.includes('reduce stress') || lowerGoal.includes('manage stress')) {
+      suggestedCategories.push('psychology', 'coaching');
+    }
+    
+    if (lowerGoal.includes('improve fitness') || lowerGoal.includes('get fitter')) {
+      suggestedCategories.push('personal-trainer', 'physiotherapist');
+    }
+    
+    if (lowerGoal.includes('recover from injury') || lowerGoal.includes('rehabilitation')) {
+      suggestedCategories.push('physiotherapist', 'biokineticist');
+    }
+    
+    if (lowerGoal.includes('improve diet') || lowerGoal.includes('eat healthier')) {
+      suggestedCategories.push('dietician', 'nutrition-coaching');
+    }
+    
+    if (lowerGoal.includes('manage pain') || lowerGoal.includes('reduce pain')) {
+      suggestedCategories.push('pain-management', 'physiotherapist');
+    }
+    
+    if (lowerGoal.includes('improve sleep') || lowerGoal.includes('sleep better')) {
+      suggestedCategories.push('psychology', 'coaching');
+    }
+    
+    if (lowerGoal.includes('increase energy') || lowerGoal.includes('reduce fatigue')) {
+      suggestedCategories.push('dietician', 'personal-trainer');
+    }
+    
+    if (lowerGoal.includes('improve mobility') || lowerGoal.includes('move better')) {
+      suggestedCategories.push('physiotherapist', 'biokineticist');
+    }
+    
+    return suggestedCategories;
+  } catch (error) {
+    logger.error("Error analyzing user goal:", error);
+    return [];
+  }
 }
 
 /**
- * Enhanced goal analyzer that extracts comprehensive information from user input
- * Improves accuracy in detecting budget constraints and problem severity
- * 
- * @param userInput The raw text input from the user
- * @returns Detailed analysis of goals, budget, and health conditions
+ * Extracts specific goals from user input
+ * @param userInput Text input from the user
+ * @returns Array of extracted goals
  */
-export function analyzeGoalComprehensively(userInput: string): GoalAnalysisResult {
-  console.log("Performing comprehensive goal analysis");
-  const inputLower = userInput.toLowerCase();
-  
-  // Initialize result
-  const result: GoalAnalysisResult = {
-    primaryGoal: "",
-    secondaryGoals: [],
-    urgency: 'low',
-    severity: 0.5,
-    budgetContraints: {
-      hasBudgetLimit: false,
-      isVeryBudgetSensitive: false
-    },
-    timeConstraints: {
-      hasTimeframe: false,
-      isUrgent: false
-    },
-    keywordAnalysis: {
-      symptomMatches: [],
-      goalMatches: [],
-      serviceMatches: []
-    }
-  };
-  
-  // BUDGET DETECTION - Significantly enhanced
-  // Check for explicit budget mentions first
-  const budgetMatches = inputLower.match(/r\s*(\d+)/i) || 
-                         inputLower.match(/budget.*?(\d+)/i) ||
-                         inputLower.match(/afford.*?(\d+)/i) ||
-                         inputLower.match(/spend.*?(\d+)/i) ||
-                         inputLower.match(/cost.*?(\d+)/i);
-  
-  if (budgetMatches && budgetMatches[1]) {
-    const extractedBudget = parseInt(budgetMatches[1], 10);
-    result.budgetContraints.hasBudgetLimit = true;
-    result.budgetContraints.estimatedBudget = extractedBudget;
-    console.log(`Detected explicit budget: R${extractedBudget}`);
+export function extractGoals(userInput: string): string[] {
+  try {
+    logger.debug("Extracting goals from user input:", userInput);
     
-    // Determine if user is very budget sensitive (budget mentioned < 1500)
-    if (extractedBudget < 1500) {
-      result.budgetContraints.isVeryBudgetSensitive = true;
-      console.log("User appears very budget sensitive");
-    }
-  }
-  
-  // Look for implicit budget constraints
-  const budgetSensitivityTerms = [
-    'cheap', 'affordable', 'low cost', 'budget', 'expensive', 
-    'save money', 'limited budget', 'tight budget', 'cost effective',
-    'low price', 'reasonable price', "can't afford", 'too much money',
-    'payment plan', 'installments', 'economic', 'financial constraints',
-    'money is tight', 'on a budget', 'financially', 'cost conscious'
-  ];
-  
-  const budgetSensitiveMatches = budgetSensitivityTerms.filter(term => 
-    inputLower.includes(term)
-  );
-  
-  if (budgetSensitiveMatches.length > 0) {
-    result.budgetContraints.hasBudgetLimit = true;
+    const lowerInput = userInput.toLowerCase();
+    const extractedGoals: string[] = [];
     
-    // If we haven't already detected a specific budget, estimate one based on context
-    if (!result.budgetContraints.estimatedBudget) {
-      // Set a reasonable default based on the sensitivity words detected
-      if (budgetSensitiveMatches.some(m => 
-          m.includes('tight') || m.includes("can't afford") || 
-          m.includes('low') || m.includes('cheap'))) {
-        result.budgetContraints.estimatedBudget = 1000;
-        result.budgetContraints.isVeryBudgetSensitive = true;
-        console.log("Detected high budget sensitivity, setting estimate to R1000");
-      } else {
-        result.budgetContraints.estimatedBudget = 2000;
-        console.log("Detected moderate budget sensitivity, setting estimate to R2000");
-      }
+    // Goal extraction patterns
+    if (lowerInput.includes('weight loss') || lowerInput.includes('lose weight')) {
+      extractedGoals.push('weight loss');
     }
     
-    // Multiple budget terms indicate higher sensitivity
-    if (budgetSensitiveMatches.length >= 2) {
-      result.budgetContraints.isVeryBudgetSensitive = true;
-      console.log("Multiple budget terms detected, marking as very budget sensitive");
+    if (lowerInput.includes('gain muscle') || lowerInput.includes('build muscle')) {
+      extractedGoals.push('muscle gain');
     }
-  }
-  
-  // GOAL EXTRACTION - With synonyms and context
-  const extractedGoals = new Set<string>();
-  
-  // Check all goal synonyms for matches
-  Object.entries(GOAL_SYNONYMS).forEach(([goalType, synonyms]) => {
-    if (synonyms.some(syn => inputLower.includes(syn))) {
-      extractedGoals.add(goalType);
-      result.keywordAnalysis.goalMatches.push(goalType);
+    
+    if (lowerInput.includes('reduce stress') || lowerInput.includes('manage stress')) {
+      extractedGoals.push('stress reduction');
     }
-  });
-  
-  // Check mental health specific terms
-  Object.entries(MENTAL_HEALTH_SYNONYMS).forEach(([condition, synonyms]) => {
-    if (synonyms.some(syn => inputLower.includes(syn))) {
-      extractedGoals.add(`mental health: ${condition}`);
-      result.keywordAnalysis.symptomMatches.push(condition);
+    
+    if (lowerInput.includes('improve fitness') || lowerInput.includes('get fitter')) {
+      extractedGoals.push('fitness improvement');
     }
-  });
-  
-  // Check fitness specific terms
-  Object.entries(FITNESS_SYNONYMS).forEach(([fitnessType, synonyms]) => {
-    if (synonyms.some(syn => inputLower.includes(syn))) {
-      extractedGoals.add(`fitness: ${fitnessType}`);
-      result.keywordAnalysis.goalMatches.push(fitnessType);
+    
+    if (lowerInput.includes('recover from injury') || lowerInput.includes('rehabilitation')) {
+      extractedGoals.push('injury recovery');
     }
-  });
-  
-  // Special cases with high extraction confidence
-  if (inputLower.includes('marathon') || 
-      inputLower.includes('race') ||
-      inputLower.includes('run')) {
-    extractedGoals.add('run training');
-    result.keywordAnalysis.goalMatches.push('run training');
-  }
-  
-  if (inputLower.includes('injur') || 
-      inputLower.includes('recover')) {
-    extractedGoals.add('injury recovery');
-    result.keywordAnalysis.symptomMatches.push('injury');
-  }
-  
-  if (inputLower.includes('weight')) {
-    if (inputLower.includes('lose') || inputLower.includes('loss')) {
-      extractedGoals.add('weight loss');
-      result.keywordAnalysis.goalMatches.push('weight loss');
-    } else if (inputLower.includes('gain')) {
-      extractedGoals.add('weight gain');
-      result.keywordAnalysis.goalMatches.push('weight gain');
+    
+    if (lowerInput.includes('improve diet') || lowerInput.includes('eat healthier')) {
+      extractedGoals.push('diet improvement');
     }
+    
+    if (lowerInput.includes('manage pain') || lowerInput.includes('reduce pain')) {
+      extractedGoals.push('pain management');
+    }
+    
+    if (lowerInput.includes('improve sleep') || lowerInput.includes('sleep better')) {
+      extractedGoals.push('sleep improvement');
+    }
+    
+    if (lowerInput.includes('increase energy') || lowerInput.includes('reduce fatigue')) {
+      extractedGoals.push('energy increase');
+    }
+    
+    if (lowerInput.includes('improve mobility') || lowerInput.includes('move better')) {
+      extractedGoals.push('mobility improvement');
+    }
+    
+    return extractedGoals;
+  } catch (error) {
+    logger.error("Error extracting goals from user input:", error);
+    return [];
   }
-  
-  // SEVERITY DETECTION - Looking for indicators of problem magnitude
-  const severeTerms = ['severe', 'extreme', 'terrible', 'unbearable', 'worst', 'excruciating', 'can\'t'];
-  const moderateTerms = ['moderate', 'significant', 'considerable', 'noticeable'];
-  const mildTerms = ['mild', 'slight', 'minor', 'little'];
-  
-  if (severeTerms.some(term => inputLower.includes(term))) {
-    result.severity = 0.9;
-    console.log("Detected severe condition indicators");
-  } else if (moderateTerms.some(term => inputLower.includes(term))) {
-    result.severity = 0.6;
-    console.log("Detected moderate condition indicators");
-  } else if (mildTerms.some(term => inputLower.includes(term))) {
-    result.severity = 0.3;
-    console.log("Detected mild condition indicators");
-  }
-  
-  // URGENCY DETECTION - Much more comprehensive
-  const highUrgencyTerms = ['emergency', 'urgent', 'immediately', 'asap', 'right away', 'critical', 'severe pain'];
-  const mediumUrgencyTerms = ['soon', 'quickly', 'getting worse', 'deteriorating', 'need help', 'concerning'];
-  
-  if (highUrgencyTerms.some(term => inputLower.includes(term))) {
-    result.urgency = 'high';
-    result.timeConstraints.isUrgent = true;
-    console.log("Detected high urgency indicators");
-  } else if (mediumUrgencyTerms.some(term => inputLower.includes(term))) {
-    result.urgency = 'medium';
-    console.log("Detected medium urgency indicators");
-  }
-  
-  // TIME CONSTRAINT DETECTION
-  const timeframeMatches = inputLower.match(/(\d+)\s*(day|week|month|year)s?/) || 
-                           inputLower.match(/(a|one)\s*(day|week|month|year)/);
-  
-  if (timeframeMatches) {
-    result.timeConstraints.hasTimeframe = true;
-    result.timeConstraints.preferredDuration = timeframeMatches[0];
-    console.log("Detected timeframe:", timeframeMatches[0]);
-  }
-  
-  // Special event detection (often implies timeframe)
-  const eventTerms = ['wedding', 'vacation', 'holiday', 'trip', 'competition', 'race', 'marathon'];
-  if (eventTerms.some(term => inputLower.includes(term))) {
-    result.timeConstraints.hasTimeframe = true;
-    console.log("Detected special event - implied timeframe");
-  }
-  
-  // Set primary and secondary goals
-  const goalArray = Array.from(extractedGoals);
-  if (goalArray.length > 0) {
-    result.primaryGoal = goalArray[0];
-    result.secondaryGoals = goalArray.slice(1);
-  }
-  
-  console.log("Goal analysis complete:", result);
-  return result;
 }
 
 /**
- * Maps common symptoms to relevant health professionals
- * @param symptom Detected symptom
- * @returns Recommended service categories
+ * Suggests primary service category based on user goal
+ * @param goal User's stated goal
+ * @returns Primary service category based on the goal
  */
-export function mapSymptomToServices(symptom: string): ServiceCategory[] {
-  // Map of symptoms to appropriate service categories
-  const symptomServiceMap: Record<string, ServiceCategory[]> = {
-    // Pain conditions
-    'back pain': ['physiotherapist', 'chiropractor', 'pain-management', 'orthopedics'],
-    'neck pain': ['physiotherapist', 'chiropractor', 'pain-management'],
-    'joint pain': ['physiotherapist', 'orthopedics', 'rheumatology'],
-    'knee pain': ['physiotherapist', 'orthopedics', 'sports-medicine'],
-    'headache': ['family-medicine', 'neurology', 'pain-management'],
-    'migraine': ['neurology', 'family-medicine'],
+export function suggestPrimaryCategoryForGoal(goal: string): ServiceCategory | null {
+  try {
+    logger.debug("Suggesting primary category for goal:", goal);
     
-    // Mental health
-    'anxiety': ['psychiatry', 'psychology', 'coaching'],
-    'depression': ['psychiatry', 'psychology'],
-    'stress': ['psychology', 'coaching', 'psychiatry'],
-    'burnout': ['psychology', 'coaching', 'psychiatry'],
+    const lowerGoal = goal.toLowerCase();
+    let primaryCategory: ServiceCategory | null = null;
     
-    // Fitness goals
-    'weight loss': ['dietician', 'personal-trainer', 'nutrition-coaching'],
-    'muscle gain': ['personal-trainer', 'dietician', 'strength-coaching'],
-    'endurance': ['personal-trainer', 'coaching', 'run-coaching'],
-    'running': ['run-coaching', 'personal-trainer', 'sports-medicine'],
+    // Goal-based primary category suggestions
+    if (lowerGoal.includes('weight loss') || lowerGoal.includes('lose weight')) {
+      primaryCategory = 'dietician';
+    }
     
-    // Injuries
-    'injury': ['physiotherapist', 'sports-medicine', 'orthopedics'],
-    'sprain': ['physiotherapist', 'orthopedics'],
-    'strain': ['physiotherapist', 'sports-medicine'],
-    'fracture': ['orthopedics', 'physiotherapist'],
+    if (lowerGoal.includes('gain muscle') || lowerGoal.includes('build muscle')) {
+      primaryCategory = 'personal-trainer';
+    }
     
-    // Digestive issues
-    'stomach': ['gastroenterology', 'dietician', 'family-medicine'],
-    'digestive': ['gastroenterology', 'dietician'],
-    'ibs': ['gastroenterology', 'dietician'],
-    'acid reflux': ['gastroenterology', 'family-medicine'],
+    if (lowerGoal.includes('reduce stress') || lowerGoal.includes('manage stress')) {
+      primaryCategory = 'psychology';
+    }
     
-    // Cardiac
-    'heart': ['cardiology', 'family-medicine'],
-    'blood pressure': ['cardiology', 'family-medicine'],
-    'cholesterol': ['cardiology', 'dietician'],
+    if (lowerGoal.includes('improve fitness') || lowerGoal.includes('get fitter')) {
+      primaryCategory = 'personal-trainer';
+    }
     
-    // General
-    'fatigue': ['family-medicine', 'endocrinology'],
-    'tired': ['family-medicine', 'endocrinology'],
-    'dizzy': ['family-medicine', 'neurology'],
-    'general health': ['family-medicine']
-  };
-  
-  return symptomServiceMap[symptom.toLowerCase()] || ['family-medicine'];
+    if (lowerGoal.includes('recover from injury') || lowerGoal.includes('rehabilitation')) {
+      primaryCategory = 'physiotherapist';
+    }
+    
+    if (lowerGoal.includes('improve diet') || lowerGoal.includes('eat healthier')) {
+      primaryCategory = 'dietician';
+    }
+    
+    if (lowerGoal.includes('manage pain') || lowerGoal.includes('reduce pain')) {
+      primaryCategory = 'pain-management';
+    }
+    
+    if (lowerGoal.includes('improve sleep') || lowerGoal.includes('sleep better')) {
+      primaryCategory = 'psychology';
+    }
+    
+    if (lowerGoal.includes('increase energy') || lowerGoal.includes('reduce fatigue')) {
+      primaryCategory = 'dietician';
+    }
+    
+    if (lowerGoal.includes('improve mobility') || lowerGoal.includes('move better')) {
+      primaryCategory = 'physiotherapist';
+    }
+
+    if (lowerGoal.includes('running') || lowerGoal.includes('marathon')) {
+      const suggestedCategories: ServiceCategory[] = [];
+      suggestedCategories.push('personal-trainer', 'run-coaching');
+      primaryCategory = 'run-coaching';
+    }
+    
+    return primaryCategory;
+  } catch (error) {
+    logger.error("Error suggesting primary category for goal:", error);
+    return null;
+  }
 }

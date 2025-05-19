@@ -2,12 +2,12 @@
 import { PlanContext, ServiceAllocation, ServiceCategory, ServiceAllocationItem, BASELINE_COSTS } from "@/utils/planGenerator/types";
 import { createServiceCategoryRecord } from "../helpers/serviceRecordInitializer";
 
-// Define an extended version of ServiceAllocation to include the properties we need
-interface EnhancedServiceAllocation extends ServiceAllocation {
+// Define an extended version of ServiceAllocation with additional properties
+interface EnhancedServiceAllocation extends Omit<ServiceAllocation, "percentage"> {
+  percentage?: number;
   sessions?: number;
   description?: string;
   frequency?: string;
-  percentage?: number;
   priority?: number;
 }
 
@@ -143,8 +143,9 @@ export const allocateServices = (
         frequency: getFrequency(service, sessionCount),
         percentage: 100 / services.length, // Simple equal distribution
         priority: services.indexOf(service) + 1,
-        // Add required fields for ServiceAllocation
-        count: sessionCount, // Ensure count is set to match sessions
+        // Required fields for ServiceAllocation
+        costPerSession: baseCost,
+        totalCost: baseCost * sessionCount,
         priorityLevel: services.indexOf(service) === 0 ? 'high' : 
                      services.indexOf(service) === 1 ? 'medium' : 'low'
       });
@@ -162,8 +163,9 @@ export const allocateServices = (
       frequency: "once",
       percentage: 100,
       priority: 1,
-      // Add required fields for ServiceAllocation
-      count: 1,
+      // Required fields for ServiceAllocation
+      costPerSession: baseCost,
+      totalCost: baseCost,
       priorityLevel: 'high'
     });
   }
