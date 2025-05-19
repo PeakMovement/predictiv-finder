@@ -1,3 +1,4 @@
+
 import { ServiceCategory, ComorbidityGroup, SpecialPopulation, UserPreference } from "../types";
 import { ServiceMatchResult } from "./serviceMatchTypes";
 
@@ -11,7 +12,7 @@ type EvidenceLevelMapping = Partial<Record<ServiceCategory, EvidenceLevel>>;
 type SpecialPopulationOverrides = Partial<Record<'child' | 'elderly' | 'athlete' | 'pregnant', {
   recommended: ServiceCategory[];
   contraindicated?: ServiceCategory[];
-}>};
+}>>;
 
 /**
  * Enhanced condition/symptom to service mapping with evidence levels and specialized populations
