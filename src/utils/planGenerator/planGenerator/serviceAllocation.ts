@@ -3,7 +3,8 @@ import { PlanContext, ServiceAllocation, ServiceCategory, ServiceAllocationItem,
 import { createServiceCategoryRecord } from "../helpers/serviceRecordInitializer";
 
 // Define an extended version of ServiceAllocation with additional properties
-interface EnhancedServiceAllocation extends Omit<ServiceAllocation, "percentage"> {
+interface EnhancedServiceAllocation extends ServiceAllocation {
+  type: ServiceCategory;
   percentage?: number;
   sessions?: number;
   description?: string;
@@ -144,6 +145,7 @@ export const allocateServices = (
         percentage: 100 / services.length, // Simple equal distribution
         priority: services.indexOf(service) + 1,
         // Required fields for ServiceAllocation
+        count: sessionCount,
         costPerSession: baseCost,
         totalCost: baseCost * sessionCount,
         priorityLevel: services.indexOf(service) === 0 ? 'high' : 
@@ -158,6 +160,7 @@ export const allocateServices = (
     const baseCost = BASELINE_COSTS[cheapestService] || 500;
     allocatedServices.push({
       type: cheapestService,
+      count: 1,
       sessions: 1,
       description: getServiceDescription(cheapestService, 1) + " (limited by budget)",
       frequency: "once",

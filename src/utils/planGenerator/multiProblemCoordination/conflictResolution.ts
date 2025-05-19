@@ -42,6 +42,9 @@ export function getConflictingTreatmentModalities(): Map<TreatmentModality, Trea
   conflictMap.set('light-activity', []);
   conflictMap.set('portion-control', []);
   conflictMap.set('meal-timing', []);
+  conflictMap.set('in-person', []);
+  conflictMap.set('remote', []);
+  conflictMap.set('hybrid', []);
   
   return conflictMap;
 }
@@ -156,7 +159,10 @@ export function generateTreatmentAlternatives(
     'isometric-exercise': ['stretching', 'activity-modification'],
     'light-activity': ['stretching', 'activity-modification'],
     'portion-control': ['meal-timing', 'diet-restriction'],
-    'meal-timing': ['portion-control', 'diet-restriction']
+    'meal-timing': ['portion-control', 'diet-restriction'],
+    'in-person': ['hybrid'],
+    'remote': ['hybrid'],
+    'hybrid': ['in-person', 'remote']
   };
   
   // Gather all alternatives

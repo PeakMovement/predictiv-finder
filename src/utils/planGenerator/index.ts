@@ -33,3 +33,6 @@ export { BASELINE_COSTS } from './types';
 // Explicitly re-export ServiceAllocation to avoid ambiguity
 import type { ServiceCategory, ServiceAllocation } from './types';
 export type { ServiceCategory, ServiceAllocation };
+
+// Export the PlanContext and ServiceAllocationItem types
+export type { PlanContext, ServiceAllocationItem } from './types';

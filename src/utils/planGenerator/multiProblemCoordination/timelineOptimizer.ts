@@ -120,7 +120,7 @@ export function createServiceSchedule(
   description: string;
 }[] {
   // Map treatment modalities to service categories
-  const modalityToService: Record<TreatmentModality, ServiceCategory[]> = {
+  const modalityToService: Record<string, ServiceCategory[]> = {
     'stretching': ['physiotherapist', 'physical-therapy'],
     'strength-training': ['personal-trainer', 'biokineticist'],
     'cardio': ['personal-trainer', 'sport-physician'],
@@ -135,7 +135,10 @@ export function createServiceSchedule(
     'isometric-exercise': ['physiotherapist', 'personal-trainer'],
     'light-activity': ['personal-trainer', 'physiotherapist'],
     'portion-control': ['dietician', 'nutrition-coaching'],
-    'meal-timing': ['dietician', 'nutrition-coaching']
+    'meal-timing': ['dietician', 'nutrition-coaching'],
+    'in-person': ['general-practitioner'],
+    'remote': ['psychology'],
+    'hybrid': ['coaching']
   };
   
   // Map phases to timeframes
@@ -157,9 +160,10 @@ export function createServiceSchedule(
   // Create schedule
   return timeline.map(phase => {
     // Collect all required services for this phase
-    const allServices = phase.treatments.flatMap(treatment => 
-      modalityToService[treatment.modality] || []
-    );
+    const allServices = phase.treatments.flatMap(treatment => {
+      const modalityKey = treatment.modality as string;
+      return modalityToService[modalityKey] || [];
+    });
     
     // Remove duplicates
     const uniqueServices = Array.from(new Set(allServices));

@@ -14,17 +14,20 @@ import { BASELINE_COSTS } from "@/utils/planGenerator/types";
 
 // Extend ServiceAllocation interface for the generatePlan function
 interface EnhancedServiceAllocation extends ServiceAllocation {
+  type: ServiceCategory;
+  percentage?: number;
   sessions?: number;
   description?: string;
   frequency?: string;
+  priority?: number;
 }
 
 // Export the generatePlan function
 export const generatePlan = (context: PlanContext): AIHealthPlan => {
   try {
     const config = context.budgetTier ? 
-      { allocations: [], requiresDoctor: false, preferHighEnd: false } : 
-      { allocations: [], requiresDoctor: false, preferHighEnd: false };
+      { allocations: [] as ServiceAllocationItem[], requiresDoctor: false, preferHighEnd: false } : 
+      { allocations: [] as ServiceAllocationItem[], requiresDoctor: false, preferHighEnd: false };
     
     const services = determineRequiredServices(context, config.allocations);
     const allocatedServices = allocateServices(services, context) as EnhancedServiceAllocation[];

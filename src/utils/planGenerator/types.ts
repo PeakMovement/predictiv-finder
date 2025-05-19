@@ -42,7 +42,6 @@ export type ServiceCategory =
   | 'physical-therapy'
   | 'strength-coaching'
   | 'run-coaching'
-  // Adding the missing service categories that are causing errors
   | 'internal-medicine'
   | 'infectious-disease'
   | 'plastic-surgery'
@@ -57,15 +56,42 @@ export type ServiceCategory =
   | 'geriatric-medicine'
   | 'sport-physician'
   | 'nurse-practitioner'
-  | 'all'; // Used for catch-all situations
+  | 'all';
 
 // Define the ServiceAllocation interface
 export interface ServiceAllocation {
+  type: ServiceCategory;
   count: number;
   priorityLevel: 'critical' | 'high' | 'medium' | 'low';
   costPerSession?: number;
   totalCost?: number;
   sessions?: number;
+}
+
+// Add ServiceAllocationItem type that was missing
+export interface ServiceAllocationItem {
+  type: ServiceCategory;
+  percentage: number;
+  priority: number;
+  minSessions?: number;
+  maxSessions?: number;
+}
+
+// Add PlanContext interface
+export interface PlanContext {
+  ageGroup?: 'child' | 'teen' | 'adult' | 'senior';
+  medicalConditions?: string[];
+  goal?: string;
+  budget?: number;
+  budgetTier?: string;
+  location?: string;
+  isUrgent?: boolean;
+  timeAvailability?: number;
+  preferOnline?: boolean;
+  isRemote?: boolean;
+  serviceCount?: number;
+  intensity?: 'light' | 'standard' | 'intensive';
+  duration?: 'short-term' | 'medium-term' | 'long-term';
 }
 
 // Update BudgetTier from string union to interface to match how it's used
@@ -144,19 +170,13 @@ export interface PriceRange {
 export interface LegacyPriceRange {
   low: number;
   high: number;
-  affordable?: number; // Make these optional to match how they're being used
+  affordable?: number;
   highEnd?: number;
 }
 
 export interface ServiceConfigurationByBudget {
   [key: string]: {
-    allocations: Array<{
-      type: ServiceCategory;
-      percentage: number;
-      priority: number;
-      minSessions?: number;
-      maxSessions?: number;
-    }>;
+    allocations: Array<ServiceAllocationItem>;
     requiresDoctor: boolean;
     preferHighEnd: boolean;
   };
@@ -203,4 +223,12 @@ export type TreatmentModality =
   | 'activity'
   | 'diet-restriction'
   | 'cardio'
-  | 'medication';
+  | 'medication'
+  | 'activity-modification'
+  | 'cognitive-behavioral'
+  | 'relaxation'
+  | 'performance-nutrition'
+  | 'isometric-exercise'
+  | 'light-activity'
+  | 'portion-control'
+  | 'meal-timing';
