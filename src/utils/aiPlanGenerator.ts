@@ -22,9 +22,9 @@ export {
   estimateComplexityLevel
 } from './planGenerator/aiPlanGenerator';
 
-// Export the AIGeneratorSessionAllocation type explicitly
-import type { SessionAllocation as AIGeneratorSessionAllocation } from './planGenerator/types';
-export type { AIGeneratorSessionAllocation };
+// Export the SessionAllocation type explicitly 
+import type { ServiceAllocation } from './planGenerator/types';
+export type { ServiceAllocation as AIGeneratorSessionAllocation };
 
 // Export findAlternativeCategories
 export { findAlternativeCategories } from './planGenerator/multiProblemCoordination/alternativeCategories';

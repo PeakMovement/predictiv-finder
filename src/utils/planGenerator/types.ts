@@ -41,7 +41,23 @@ export type ServiceCategory =
   | 'geriatrics'
   | 'physical-therapy'
   | 'strength-coaching'
-  | 'run-coaching';
+  | 'run-coaching'
+  // Adding the missing service categories that are causing errors
+  | 'internal-medicine'
+  | 'infectious-disease'
+  | 'plastic-surgery'
+  | 'orthopedics'
+  | 'neurosurgery'
+  | 'oncology'
+  | 'urology'
+  | 'obstetrics-gynecology'
+  | 'emergency-medicine'
+  | 'anesthesiology'
+  | 'radiology'
+  | 'geriatric-medicine'
+  | 'sport-physician'
+  | 'nurse-practitioner'
+  | 'all'; // Used for catch-all situations
 
 // Define the ServiceAllocation interface
 export interface ServiceAllocation {
@@ -50,6 +66,92 @@ export interface ServiceAllocation {
   costPerSession?: number;
   totalCost?: number;
   sessions?: number;
+}
+
+// Additional type definitions needed for imported but missing types
+export type BudgetTier = 'low' | 'medium' | 'high' | 'premium';
+
+export const BASELINE_COSTS: Record<ServiceCategory, number> = {
+  'physiotherapist': 600,
+  'biokineticist': 550,
+  'dietician': 500,
+  'personal-trainer': 400,
+  'psychology': 800,
+  'coaching': 450,
+  'psychiatry': 900,
+  'general-practitioner': 500,
+  'family-medicine': 600,
+  'cardiology': 1000,
+  'endocrinology': 800,
+  'gastroenterology': 800,
+  'neurology': 900,
+  'orthopedic-surgeon': 1200,
+  'rheumatology': 800,
+  'sports-medicine': 750,
+  'dermatology': 750,
+  'gynecology': 800,
+  'ophthalmology': 700,
+  'pain-management': 700,
+  'podiatrist': 600,
+  'occupational-therapy': 650,
+  'speech-therapy': 600,
+  'audiology': 500,
+  'nutrition-coaching': 400,
+  'chiropractor': 500,
+  'massage-therapy': 450,
+  'acupuncture': 450,
+  'yoga-instructor': 300,
+  'pilates-instructor': 350,
+  'tai-chi-instructor': 300,
+  'naturopathy': 400,
+  'homeopathy': 350,
+  'osteopathy': 500,
+  'pharmacy': 250,
+  'medical-specialist': 900,
+  'pediatrics': 650,
+  'geriatrics': 700,
+  'physical-therapy': 600,
+  'strength-coaching': 500,
+  'run-coaching': 450,
+  'internal-medicine': 750,
+  'infectious-disease': 900,
+  'plastic-surgery': 1500,
+  'orthopedics': 800,
+  'neurosurgery': 2000,
+  'oncology': 1200,
+  'urology': 800,
+  'obstetrics-gynecology': 800,
+  'emergency-medicine': 1500,
+  'anesthesiology': 1000,
+  'radiology': 700,
+  'geriatric-medicine': 750,
+  'sport-physician': 800,
+  'nurse-practitioner': 450,
+  'all': 700
+};
+
+export interface PriceRange {
+  min: number;
+  max: number;
+}
+
+export interface LegacyPriceRange {
+  low: number;
+  high: number;
+}
+
+export interface ServiceConfigurationByBudget {
+  [key: string]: {
+    allocations: Array<{
+      type: ServiceCategory;
+      percentage: number;
+      priority: number;
+      minSessions?: number;
+      maxSessions?: number;
+    }>;
+    requiresDoctor: boolean;
+    preferHighEnd: boolean;
+  };
 }
 
 // Define the ComorbidityGroup interface
@@ -81,3 +183,10 @@ export interface UserPreference {
   preferredSessionFrequency?: 'daily' | 'weekly' | 'bi-weekly' | 'monthly';
   budgetConstraint?: number;
 }
+
+// Add TreatmentModality type that's being imported elsewhere
+export type TreatmentModality = 
+  | 'in-person'
+  | 'remote'
+  | 'hybrid';
+
