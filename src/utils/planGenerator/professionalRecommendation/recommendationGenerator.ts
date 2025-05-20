@@ -1,3 +1,4 @@
+
 /**
  * Main recommendation generator module
  * Refactored from the original large file
@@ -144,7 +145,7 @@ export function generateProfessionalRecommendations(
           // Calculate severity and session count
           const conditionSeverity = primaryCondition && severityScores[primaryCondition] !== undefined ? 
             severityScores[primaryCondition] : 0.5;
-          const idealSessions = calculateOptimalSessions(category, budget || 5000, 1);
+          const idealSessions = calculateOptimalSessions(category, conditionSeverity);
           
           // Add to primary recommendations
           result.primaryRecommendations.push({

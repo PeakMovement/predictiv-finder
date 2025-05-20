@@ -63,13 +63,9 @@ export const computeServiceCost = (
 export const allocateBudget = (
   services: ServiceCategory[],
   budget: number
-): Record<ServiceCategory, { sessions: number; cost: number; priority: number }> => {
-  // Initialize allocation record with empty values
-  const allocation = createServiceCategoryRecord<{ sessions: number; cost: number; priority: number }>({
-    sessions: 0,
-    cost: 0,
-    priority: 0
-  });
+): Record<ServiceCategory, number> => {
+  // Initialize allocation record with zero values
+  const allocation = createServiceCategoryRecord<number>(0);
   
   // Sort services by importance/priority
   const prioritizedServices = [...services].sort((a, b) => {
@@ -91,11 +87,7 @@ export const allocateBudget = (
     const allocatedSessions = Math.min(maxSessions, recommendedSessions);
     const totalCost = allocatedSessions * costPerSession;
     
-    allocation[service] = {
-      sessions: allocatedSessions,
-      cost: totalCost,
-      priority: index + 1
-    };
+    allocation[service] = totalCost;
     
     remainingBudget -= totalCost;
   });
@@ -107,9 +99,12 @@ export const allocateBudget = (
 export const optimizePlanForBudget = (
   services: ServiceCategory[],
   budget: number
-) => {
+): Record<ServiceCategory, number> => {
   return allocateBudget(services, budget);
 };
+
+// Export optimizeBudgetAllocation for compatibility
+export const optimizeBudgetAllocation = optimizePlanForBudget;
 
 // Add missing exports for any functions referenced elsewhere
 export const calculateBudget = (services: ServiceCategory[], sessionCounts: number[]) => {

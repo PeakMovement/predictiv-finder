@@ -15,8 +15,7 @@ import { analyzeUserHealth } from "./analysis";
 import { 
   computeServiceCost, 
   calculateOptimalSessions, 
-  optimizeBudgetAllocation, 
-  allocateBudget 
+  allocateBudget
 } from "./budget";
 import { enhancedMemoize, logger } from "@/utils/cache";
 import { processHealthScenario } from "./scenarioHandler";
@@ -135,7 +134,7 @@ export function generateProfessionalRecommendations(
         const conditionSeverity = primaryCondition && severityScores[primaryCondition] !== undefined ? 
           severityScores[primaryCondition] : 0.5;
         
-        const idealSessions = calculateOptimalSessions(category, budget || 5000, 1);
+        const idealSessions = calculateOptimalSessions(category, conditionSeverity);
         
         // Create recommendation
         return {
