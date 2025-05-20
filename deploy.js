@@ -2,12 +2,14 @@
 #!/usr/bin/env node
 
 /**
- * Simple deployment script for health planning application
+ * Deployment script for Predictiv Health planning application
+ * Specifically configured for Firebase hosting at predictiv.co.za
  */
 
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const readline = require('readline');
 
 // Color output helpers
 const colors = {
@@ -27,7 +29,7 @@ function log(message, color = colors.reset) {
 async function deploy() {
   try {
     // Step 1: Build the application
-    log("Step 1: Building the application...", colors.blue);
+    log("Step 1: Building the application for production...", colors.blue);
     execSync("npm run build", { stdio: 'inherit' });
     log("✓ Build successful!", colors.green);
     
@@ -37,42 +39,58 @@ async function deploy() {
       throw new Error("Build directory 'dist' not found");
     }
     
-    // Step 3: Offer deployment options
-    log("\nStep 2: Choose a deployment option:", colors.blue);
-    log("1) Vercel (Recommended for personal projects)");
-    log("2) Netlify (Good for team collaboration)");
-    log("3) Firebase (Includes hosting and backend services)");
-    log("4) Custom deployment (Copy files to your server)");
+    // Step 3: Firebase deployment (primary recommended option for predictiv.co.za)
+    log("\nStep 3: Deploying to Firebase (for predictiv.co.za):", colors.blue);
     
-    // Since we can't actually get user input here, this is just a template
-    // for the user to follow manually
-    log("\nTo deploy with Vercel:", colors.yellow);
-    log("1. Install Vercel CLI: npm install -g vercel");
-    log("2. Run: vercel login");
-    log("3. Run: vercel --prod");
+    // Check if Firebase CLI is installed
+    try {
+      execSync("firebase --version", { stdio: 'ignore' });
+      log("✓ Firebase CLI detected", colors.green);
+    } catch (error) {
+      log("× Firebase CLI not found. Installing Firebase tools...", colors.yellow);
+      execSync("npm install -g firebase-tools", { stdio: 'inherit' });
+      log("✓ Firebase tools installed", colors.green);
+    }
     
-    log("\nTo deploy with Netlify:", colors.yellow);
-    log("1. Install Netlify CLI: npm install -g netlify-cli");
-    log("2. Run: netlify login");
-    log("3. Run: netlify deploy --prod");
+    // Check for firebase.json configuration
+    const firebaseConfigPath = path.join(process.cwd(), 'firebase.json');
+    if (!fs.existsSync(firebaseConfigPath)) {
+      log("× Firebase configuration not found. Initializing Firebase...", colors.yellow);
+      log("\nFollow these steps in the Firebase init process:", colors.bright);
+      log(" 1. Select 'Hosting: Configure files for Firebase Hosting'");
+      log(" 2. Select your Firebase project (or create a new one)");
+      log(" 3. Specify 'dist' as your public directory");
+      log(" 4. Configure as a single-page app: Yes");
+      log(" 5. Set up automatic builds and deploys with GitHub: No (unless desired)");
+      log("\nRunning firebase init...", colors.blue);
+      
+      execSync("firebase login", { stdio: 'inherit' });
+      execSync("firebase init hosting", { stdio: 'inherit' });
+      
+      log("✓ Firebase initialized", colors.green);
+    } else {
+      log("✓ Firebase configuration found", colors.green);
+      
+      // Verify firebase.json has correct public directory
+      const firebaseConfig = JSON.parse(fs.readFileSync(firebaseConfigPath, 'utf8'));
+      if (firebaseConfig.hosting && firebaseConfig.hosting.public !== 'dist') {
+        log("⚠️  Warning: Firebase is not configured to use 'dist' directory", colors.yellow);
+        log("   Current setting: " + firebaseConfig.hosting.public, colors.yellow);
+        log("   Consider updating firebase.json to use 'dist' as the public directory", colors.yellow);
+      }
+    }
     
-    log("\nTo deploy with Firebase:", colors.yellow);
-    log("1. Install Firebase tools: npm install -g firebase-tools");
-    log("2. Run: firebase login");
-    log("3. Run: firebase init hosting");
-    log("4. Run: firebase deploy --only hosting");
+    // Deploy to Firebase
+    log("\nDeploying to Firebase (this will make the app live on predictiv.co.za)...", colors.blue);
+    execSync("firebase deploy --only hosting", { stdio: 'inherit' });
     
-    log("\nFor custom deployment:", colors.yellow);
-    log("1. Copy all files from the 'dist' folder to your web server");
-    log("2. Configure your server to handle single page application routing");
+    log("\n✅ Deployment complete! Your app should now be live at predictiv.co.za", colors.green);
+    log("\nIf your site is still showing the Firebase welcome page:", colors.yellow);
+    log("1. Verify your domain DNS settings point to Firebase hosting");
+    log("2. Check that your domain is properly configured in Firebase Hosting settings");
+    log("3. It may take a few minutes for DNS changes to propagate");
+    log("\nFor custom domain setup help visit: https://firebase.google.com/docs/hosting/custom-domain", colors.bright);
     
-    log("\nStep 3: After deployment, setup your custom domain:", colors.blue);
-    log("1. Go to your hosting provider's dashboard");
-    log("2. Add your domain name to your project");
-    log("3. Configure DNS settings with your domain registrar");
-    log("4. Set up SSL/TLS for secure HTTPS connections");
-    
-    log("\nFor more detailed instructions, refer to your hosting provider's documentation.", colors.bright);
   } catch (error) {
     log(`Error: ${error.message}`, colors.red);
     process.exit(1);
