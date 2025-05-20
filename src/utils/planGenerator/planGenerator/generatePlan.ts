@@ -17,6 +17,7 @@ interface EnhancedServiceAllocation extends ServiceAllocation {
   percentage?: number;
   description?: string;
   frequency?: string;
+  type: ServiceCategory; // Explicitly include type
 }
 
 // Export the generatePlan function

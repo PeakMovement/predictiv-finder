@@ -61,54 +61,68 @@ export function distributeBudgetAcrossServices(
   remainingBudget: number;
   prioritizedConditions: string[];
 } {
-  // Default costs per service - in a real system, this would be fetched from a database
-  const costPerService: Record<ServiceCategory, number> = {
-    'physiotherapist': 150,
-    'biokineticist': 180, 
-    'dietician': 120,
-    'personal-trainer': 100,
-    'coaching': 140,
-    'psychology': 200,
-    'psychiatry': 300,
-    'family-medicine': 150,
-    'pain-management': 200,
-    'podiatrist': 180,
-    'general-practitioner': 120,
-    'sport-physician': 200,
-    'orthopedic-surgeon': 400,
-    'gastroenterology': 300,
-    'massage-therapy': 100,
-    'nutrition-coaching': 120,
-    'occupational-therapy': 160,
-    'physical-therapy': 150,
-    'chiropractor': 140,
-    'nurse-practitioner': 100,
-    'cardiology': 300,
-    'dermatology': 250,
-    'neurology': 320,
-    'endocrinology': 280,
-    'urology': 260,
-    'oncology': 350,
-    'rheumatology': 270,
-    'pediatrics': 180,
-    'geriatrics': 200,
-    'sports-medicine': 220,
-    'internal-medicine': 240,
-    'orthopedics': 260,
-    'neurosurgery': 500,
-    'infectious-disease': 280,
-    'plastic-surgery': 450,
-    'obstetrics-gynecology': 240,
-    'emergency-medicine': 300,
-    'anesthesiology': 380,
-    'radiology': 260,
-    'geriatric-medicine': 220,
-    'strength-coaching': 110,
-    'run-coaching': 110,
-    'all': 150 // Default value
-  };
+  // Create cost map using createServiceCategoryRecord
+  const costPerService = createServiceCategoryRecord(0);
   
-  // Initialize allocation with factory to create proper structure for each service
+  // Set specific costs for common services
+  costPerService['physiotherapist'] = 150;
+  costPerService['biokineticist'] = 180;
+  costPerService['dietician'] = 120;
+  costPerService['personal-trainer'] = 100;
+  costPerService['coaching'] = 140;
+  costPerService['psychology'] = 200;
+  costPerService['psychiatry'] = 300;
+  costPerService['family-medicine'] = 150;
+  costPerService['pain-management'] = 200;
+  costPerService['podiatrist'] = 180;
+  costPerService['general-practitioner'] = 120;
+  costPerService['sport-physician'] = 200;
+  costPerService['orthopedic-surgeon'] = 400;
+  costPerService['gastroenterology'] = 300;
+  costPerService['massage-therapy'] = 100;
+  costPerService['nutrition-coaching'] = 120;
+  costPerService['occupational-therapy'] = 160;
+  costPerService['physical-therapy'] = 150;
+  costPerService['chiropractor'] = 140;
+  costPerService['nurse-practitioner'] = 100;
+  costPerService['cardiology'] = 300;
+  costPerService['dermatology'] = 250;
+  costPerService['neurology'] = 320;
+  costPerService['endocrinology'] = 280;
+  costPerService['urology'] = 260;
+  costPerService['oncology'] = 350;
+  costPerService['rheumatology'] = 270;
+  costPerService['pediatrics'] = 180;
+  costPerService['geriatrics'] = 200;
+  costPerService['sports-medicine'] = 220;
+  costPerService['internal-medicine'] = 240;
+  costPerService['orthopedics'] = 260;
+  costPerService['neurosurgery'] = 500;
+  costPerService['infectious-disease'] = 280;
+  costPerService['plastic-surgery'] = 450;
+  costPerService['obstetrics-gynecology'] = 240;
+  costPerService['emergency-medicine'] = 300;
+  costPerService['anesthesiology'] = 380;
+  costPerService['radiology'] = 260;
+  costPerService['geriatric-medicine'] = 220;
+  costPerService['strength-coaching'] = 110;
+  costPerService['run-coaching'] = 110;
+  costPerService['gynecology'] = 240;
+  costPerService['ophthalmology'] = 250;
+  costPerService['speech-therapy'] = 170;
+  costPerService['audiology'] = 180;
+  costPerService['acupuncture'] = 130;
+  costPerService['yoga-instructor'] = 90;
+  costPerService['pilates-instructor'] = 100;
+  costPerService['tai-chi-instructor'] = 90;
+  costPerService['naturopathy'] = 140;
+  costPerService['homeopathy'] = 120;
+  costPerService['osteopathy'] = 150;
+  costPerService['pharmacy'] = 60;
+  costPerService['medical-specialist'] = 280;
+  costPerService['all'] = 150;
+  
+  // Initialize allocation using factory
   const allocation = createServiceCategoryRecordWithFactory<SessionAllocation>(() => ({
     sessions: 0,
     costPerSession: 0,

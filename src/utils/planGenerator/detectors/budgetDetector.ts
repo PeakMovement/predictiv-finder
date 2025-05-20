@@ -200,70 +200,72 @@ export const applyBudgetAwareSelection = (
     return result;
   }
   
-  // Budget-friendly alternatives for expensive services - define for those that have alternatives
-  // This now uses a map variable instead of a full Record declaration
-  const budgetAlternativesMappings: Array<[ServiceCategory, ServiceCategory[]]> = [
-    ['psychiatry', ['psychology', 'coaching']],
-    ['orthopedic-surgeon', ['orthopedics', 'physiotherapist']],
-    ['neurosurgery', ['neurology', 'pain-management']],
-    ['cardiology', ['family-medicine', 'internal-medicine']],
-    ['gastroenterology', ['family-medicine', 'dietician']],
-    ['dermatology', ['family-medicine']],
-    ['rheumatology', ['family-medicine', 'pain-management']],
-    ['endocrinology', ['family-medicine', 'dietician']]
-  ];
+  // Budget-friendly alternatives for expensive services
+  const budgetAlternatives: Record<ServiceCategory, ServiceCategory[]> = createServiceCategoryRecord([] as ServiceCategory[]);
+
+  // Define specific budget alternatives for key services
+  budgetAlternatives['psychiatry'] = ['psychology', 'coaching'];
+  budgetAlternatives['orthopedic-surgeon'] = ['orthopedics', 'physiotherapist'];
+  budgetAlternatives['neurosurgery'] = ['neurology', 'pain-management'];
+  budgetAlternatives['cardiology'] = ['family-medicine', 'internal-medicine'];
+  budgetAlternatives['gastroenterology'] = ['family-medicine', 'dietician'];
+  budgetAlternatives['dermatology'] = ['family-medicine'];
+  budgetAlternatives['rheumatology'] = ['family-medicine', 'pain-management'];
+  budgetAlternatives['endocrinology'] = ['family-medicine', 'dietician'];
   
   // Apply mappings to our result.alternatives
-  budgetAlternativesMappings.forEach(([category, alternatives]) => {
-    result.alternatives[category] = alternatives;
+  Object.keys(budgetAlternatives).forEach(key => {
+    const category = key as ServiceCategory;
+    result.alternatives[category] = budgetAlternatives[category];
   });
   
-  // Service costs (approximate per session)
-  const serviceCosts: Record<ServiceCategory, number> = {
-    'family-medicine': 600,
-    'physiotherapist': 700,
-    'dietician': 550,
-    'personal-trainer': 450,
-    'psychiatry': 1200,
-    'orthopedic-surgeon': 1800,
-    'orthopedics': 1200,
-    'neurosurgery': 2200,
-    'neurology': 1300,
-    'cardiology': 1400,
-    'gastroenterology': 1400,
-    'coaching': 500,
-    'psychology': 900,
-    'pain-management': 900,
-    'dermatology': 1000,
-    'rheumatology': 1000,
-    'endocrinology': 1200,
-    'nutrition-coaching': 450,
-    'biokineticist': 700,
-    'sports-medicine': 1100,
-    'internal-medicine': 1000,
-    'physical-therapy': 750,
-    'chiropractor': 600,
-    'podiatrist': 750,
-    'general-practitioner': 600,
-    'sport-physician': 1200,
-    'massage-therapy': 500,
-    'occupational-therapy': 700,
-    'nurse-practitioner': 500,
-    'urology': 1100,
-    'oncology': 1600,
-    'pediatrics': 900,
-    'geriatrics': 950,
-    'infectious-disease': 1300,
-    'plastic-surgery': 2100,
-    'obstetrics-gynecology': 1100,
-    'emergency-medicine': 1500,
-    'anesthesiology': 1700,
-    'radiology': 1200,
-    'geriatric-medicine': 900,
-    'strength-coaching': 550,
-    'run-coaching': 600,
-    'all': 0
-  };
+  // Service costs (approximate per session) - use createServiceCategoryRecord
+  const serviceCosts = createServiceCategoryRecord(0);
+  
+  // Fill in specific costs for common services
+  serviceCosts['family-medicine'] = 600;
+  serviceCosts['physiotherapist'] = 700;
+  serviceCosts['dietician'] = 550;
+  serviceCosts['personal-trainer'] = 450;
+  serviceCosts['psychiatry'] = 1200;
+  serviceCosts['orthopedic-surgeon'] = 1800;
+  serviceCosts['orthopedics'] = 1200;
+  serviceCosts['neurosurgery'] = 2200;
+  serviceCosts['neurology'] = 1300;
+  serviceCosts['cardiology'] = 1400;
+  serviceCosts['gastroenterology'] = 1400;
+  serviceCosts['coaching'] = 500;
+  serviceCosts['psychology'] = 900;
+  serviceCosts['pain-management'] = 900;
+  serviceCosts['dermatology'] = 1000;
+  serviceCosts['rheumatology'] = 1000;
+  serviceCosts['endocrinology'] = 1200;
+  serviceCosts['nutrition-coaching'] = 450;
+  serviceCosts['biokineticist'] = 700;
+  serviceCosts['sports-medicine'] = 1100;
+  serviceCosts['internal-medicine'] = 1000;
+  serviceCosts['physical-therapy'] = 750;
+  serviceCosts['chiropractor'] = 600;
+  serviceCosts['podiatrist'] = 750;
+  serviceCosts['general-practitioner'] = 600;
+  serviceCosts['sport-physician'] = 1200;
+  serviceCosts['massage-therapy'] = 500;
+  serviceCosts['occupational-therapy'] = 700;
+  serviceCosts['nurse-practitioner'] = 500;
+  serviceCosts['urology'] = 1100;
+  serviceCosts['oncology'] = 1600;
+  serviceCosts['pediatrics'] = 900;
+  serviceCosts['geriatrics'] = 950;
+  serviceCosts['infectious-disease'] = 1300;
+  serviceCosts['plastic-surgery'] = 2100;
+  serviceCosts['obstetrics-gynecology'] = 1100;
+  serviceCosts['emergency-medicine'] = 1500;
+  serviceCosts['anesthesiology'] = 1700;
+  serviceCosts['radiology'] = 1200;
+  serviceCosts['geriatric-medicine'] = 900;
+  serviceCosts['strength-coaching'] = 550;
+  serviceCosts['run-coaching'] = 600;
+  // Set a reasonable default for other services
   
   // For tight budgets, replace expensive services with alternatives
   if (detectedBudget < 2000) {

@@ -170,8 +170,8 @@ export interface PriceRange {
 export interface LegacyPriceRange {
   low: number;
   high: number;
-  affordable?: number;
-  highEnd?: number;
+  affordable: number;
+  highEnd: number;
 }
 
 export interface ServiceConfigurationByBudget {
@@ -232,3 +232,4 @@ export type TreatmentModality =
   | 'light-activity'
   | 'portion-control'
   | 'meal-timing';
+
