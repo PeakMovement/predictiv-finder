@@ -28,8 +28,8 @@ export function createLegacyPriceRange(min: number, max: number): LegacyPriceRan
   return {
     low: min,
     high: max,
-    affordable: min,
-    highEnd: max
+    affordable: min, // Add missing property
+    highEnd: max     // Add missing property
   };
 }
 

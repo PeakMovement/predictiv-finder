@@ -81,7 +81,7 @@ export function createSessionAllocation(
 // Example pricing function
 export function getServicePricing(service: ServiceCategory): ServicePricing {
   // Create default pricing map using createServiceCategoryRecord
-  const pricingMap = createServiceCategoryRecord({
+  const pricingMap = createServiceCategoryRecord<ServicePricing>({
     category: 'general-practitioner' as ServiceCategory,
     basePrice: 150,
     priceRange: { min: 100, max: 200 }
@@ -140,31 +140,32 @@ export function getServicePricing(service: ServiceCategory): ServicePricing {
   return pricingMap[service];
 }
 
-// Example of how to use sessionAllocations correctly
+// Example of how to use sessionAllocations correctly - Fixed the type issue here
 export function generateServicePlan(
   services: ServiceCategory[],
   budget: number
 ): Record<ServiceCategory, SessionAllocation> {
   // Initialize plan with createServiceCategoryRecord
-  const plan = createServiceCategoryRecord({
+  const plan = createServiceCategoryRecord<SessionAllocation>({
     sessions: 0,
     costPerSession: 0,
     totalCost: 0,
     count: 0,
-    priorityLevel: 'low' as const
+    priorityLevel: 'low'
   });
   
   services.forEach((service, index) => {
     const pricing = getServicePricing(service);
     const sessionsCount = budget > 1000 ? 4 : 2;
-    const priority = index === 0 ? 'high' : index === 1 ? 'medium' : 'low';
+    // Correctly handle priority level based on index
+    const priority: 'high' | 'medium' | 'low' = index === 0 ? 'high' : index === 1 ? 'medium' : 'low';
     
     plan[service] = {
       sessions: sessionsCount,
       costPerSession: pricing.basePrice,
       totalCost: sessionsCount * pricing.basePrice,
       count: sessionsCount,
-      priorityLevel: priority
+      priorityLevel: priority // This now accepts high, medium, or low
     };
   });
   
