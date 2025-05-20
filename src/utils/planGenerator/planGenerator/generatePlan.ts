@@ -1,5 +1,5 @@
 
-import { PlanContext, ServiceAllocation, ServiceAllocationItem, ServiceCategory } from "../types";
+import { ServiceAllocation, ServiceCategory } from "../types";
 import { AIHealthPlan } from "@/types";
 import { determineRequiredServices } from './serviceAllocation';
 import { allocateServices } from './serviceAllocation';
@@ -17,15 +17,14 @@ interface EnhancedServiceAllocation extends ServiceAllocation {
   percentage?: number;
   description?: string;
   frequency?: string;
-  type: ServiceCategory; // Explicitly include type
 }
 
 // Export the generatePlan function
-export const generatePlan = (context: PlanContext): AIHealthPlan => {
+export const generatePlan = (context: any): AIHealthPlan => {
   try {
     const config = context.budgetTier ? 
-      { allocations: [] as ServiceAllocationItem[], requiresDoctor: false, preferHighEnd: false } : 
-      { allocations: [] as ServiceAllocationItem[], requiresDoctor: false, preferHighEnd: false };
+      { allocations: [] as any[], requiresDoctor: false, preferHighEnd: false } : 
+      { allocations: [] as any[], requiresDoctor: false, preferHighEnd: false };
     
     const services = determineRequiredServices(context, config.allocations);
     const allocatedServices = allocateServices(services, context) as EnhancedServiceAllocation[];
@@ -64,7 +63,7 @@ export const generatePlan = (context: PlanContext): AIHealthPlan => {
       name: "Basic Health Plan",
       description: "A simple health plan covering essential services.",
       services: [{
-        type: 'general-practitioner',
+        type: 'general-practitioner' as ServiceCategory,
         price: 400,
         sessions: 2,
         description: "Standard medical consultations"

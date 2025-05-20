@@ -1,4 +1,3 @@
-
 import { ServiceCategory } from "../types";
 import { ServicePricing } from "./types";
 import { createServiceCategoryRecord } from "../helpers/serviceRecordInitializer";
@@ -91,6 +90,108 @@ export function computeServiceCost(
 }
 
 /**
+ * Calculate ideal session count based on service type and condition severity
+ * 
+ * @param service Service category
+ * @param severity Condition severity (0-1)
+ * @returns Recommended number of sessions
+ */
+export function calculateIdealSessions(
+  service: ServiceCategory,
+  severity: number = 0.5
+): number {
+  // Base sessions by service type
+  const baseMap: Record<string, number> = {
+    'physiotherapist': 6,
+    'psychology': 8,
+    'dietician': 4,
+    'personal-trainer': 8,
+    'general-practitioner': 2
+  };
+  
+  // Get base sessions or default to 4
+  const baseSessions = baseMap[service] || 4;
+  
+  // Adjust by severity (higher severity means more sessions)
+  return Math.max(1, Math.round(baseSessions * (0.5 + severity/2)));
+}
+
+/**
+ * Allocate budget across multiple services
+ */
+export function allocateBudget(
+  services: ServiceCategory[],
+  budget: number
+): Record<ServiceCategory, number> {
+  const allocation = createServiceCategoryRecord(0);
+  
+  if (services.length === 0) return allocation;
+  
+  const perService = Math.floor(budget / services.length);
+  services.forEach(service => {
+    allocation[service] = perService;
+  });
+  
+  return allocation;
+}
+
+/**
+ * Optimize a plan to fit within budget constraints
+ */
+export function optimizePlanForBudget(
+  recommendations: Array<{
+    category: ServiceCategory,
+    sessions: number,
+    priority: 'high' | 'medium' | 'low',
+    reasoning: string
+  }>,
+  budget: number
+) {
+  // Initialize result
+  const result = {
+    optimizedRecommendations: [...recommendations],
+    totalCost: 0,
+    budgetAllocation: createServiceCategoryRecord(0),
+    notes: ['Budget optimization applied'] as string[]
+  };
+  
+  // Calculate initial total cost
+  let totalCost = 0;
+  recommendations.forEach(rec => {
+    const costPerSession = servicePricingMap[rec.category]?.basePrice || 150;
+    totalCost += costPerSession * rec.sessions;
+    result.budgetAllocation[rec.category] = costPerSession * rec.sessions;
+  });
+  
+  result.totalCost = totalCost;
+  
+  // If within budget, return as is
+  if (totalCost <= budget) {
+    return result;
+  }
+  
+  // Need to optimize - reduce sessions proportionally
+  const reduction = budget / totalCost;
+  result.notes.push(`Budget constraint requires reducing services to ${Math.round(reduction * 100)}% of ideal`);
+  
+  // Apply reduction prioritizing higher priority services
+  result.optimizedRecommendations = recommendations.map(rec => {
+    const priority = rec.priority === 'high' ? 1 : rec.priority === 'medium' ? 0.8 : 0.6;
+    const adjusted = Math.max(1, Math.floor(rec.sessions * reduction * priority));
+    
+    const costPerSession = servicePricingMap[rec.category]?.basePrice || 150;
+    result.budgetAllocation[rec.category] = costPerSession * adjusted;
+    
+    return {
+      ...rec,
+      sessions: adjusted
+    };
+  });
+  
+  return result;
+}
+
+/**
  * Optimize the allocation of budget across multiple services
  * 
  * @param services Array of service categories
@@ -110,12 +211,12 @@ export function optimizeBudgetAllocation(
   // Default priority for all services
   const defaultPriority = 0.5;
   
-  // Initialize allocation
-  const allocation: Record<ServiceCategory, {
-    sessions: number;
-    cost: number;
-    priority: number;
-  }> = {};
+  // Initialize allocation with all service categories
+  const allocation = createServiceCategoryRecord({
+    sessions: 0,
+    cost: 0,
+    priority: defaultPriority
+  });
   
   // First pass: ensure minimum sessions for each service
   let remainingBudget = budget;

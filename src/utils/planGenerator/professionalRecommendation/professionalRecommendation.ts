@@ -12,8 +12,12 @@ import {
 } from "./types";
 import { matchPractitionersToNeeds } from "./matcher";
 import { analyzeUserHealth } from "./analysis";
-import { allocateBudget } from "./budget";
-import { calculateIdealSessions, optimizePlanForBudget } from "./budget";
+import { 
+  computeServiceCost, 
+  calculateOptimalSessions, 
+  optimizeBudgetAllocation, 
+  allocateBudget 
+} from "./budget";
 import { enhancedMemoize, logger } from "@/utils/cache";
 import { processHealthScenario } from "./scenarioHandler";
 
@@ -131,7 +135,7 @@ export function generateProfessionalRecommendations(
         const conditionSeverity = primaryCondition && severityScores[primaryCondition] !== undefined ? 
           severityScores[primaryCondition] : 0.5;
         
-        const idealSessions = calculateIdealSessions(category, conditionSeverity);
+        const idealSessions = calculateOptimalSessions(category, budget || 5000, 1);
         
         // Create recommendation
         return {
@@ -144,20 +148,31 @@ export function generateProfessionalRecommendations(
     
     // If we have a budget, apply budget optimization
     if (budget) {
-      const optimized = optimizePlanForBudget(unoptimizedRecommendations, budget);
+      const budgetAllocation = allocateBudget(
+        unoptimizedRecommendations.map(r => r.category),
+        budget
+      );
       
-      result.primaryRecommendations = optimized.optimizedRecommendations
-        .filter((_, index) => index < 2); // Top 2 are primary
+      result.primaryRecommendations = unoptimizedRecommendations
+        .filter((_, index) => index < 2) // Top 2 are primary
+        .map(rec => ({
+          ...rec,
+          sessions: Math.max(1, Math.floor(budgetAllocation[rec.category] / computeServiceCost(rec.category, 1)))
+        }));
       
-      result.complementaryRecommendations = optimized.optimizedRecommendations
-        .filter((_, index) => index >= 2); // Rest are complementary
+      result.complementaryRecommendations = unoptimizedRecommendations
+        .filter((_, index) => index >= 2) // Rest are complementary
+        .map(rec => ({
+          ...rec,
+          sessions: Math.max(1, Math.floor(budgetAllocation[rec.category] / computeServiceCost(rec.category, 1)))
+        }));
       
       result.budgetAllocation = {
-        total: optimized.totalCost,
-        breakdown: optimized.budgetAllocation
+        total: budget,
+        breakdown: budgetAllocation
       };
       
-      result.notes = optimized.notes;
+      result.notes = ['Budget optimized plan'];
     } else {
       // Without budget constraints, use the top 2 as primary and others as complementary
       result.primaryRecommendations = unoptimizedRecommendations

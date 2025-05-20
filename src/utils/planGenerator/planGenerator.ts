@@ -159,7 +159,13 @@ export function generateServicePlan(
     const sessionsCount = budget > 1000 ? 4 : 2;
     const priority = index === 0 ? 'high' : index === 1 ? 'medium' : 'low';
     
-    plan[service] = createSessionAllocation(sessionsCount, pricing.basePrice, priority);
+    plan[service] = {
+      sessions: sessionsCount,
+      costPerSession: pricing.basePrice,
+      totalCost: sessionsCount * pricing.basePrice,
+      count: sessionsCount,
+      priorityLevel: priority
+    };
   });
   
   return plan;

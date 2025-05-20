@@ -1,4 +1,3 @@
-
 import { ServiceCategory } from "../types";
 import { createServiceCategoryRecord } from "../helpers/serviceRecordInitializer";
 
@@ -136,7 +135,7 @@ function determineComorbidityServices(
       'hypertension': ['cardiology', 'dietician'],
       'obesity': ['dietician', 'personal-trainer'],
       'depression': ['psychology'],
-      'chronic kidney disease': ['nephrology']
+      'chronic kidney disease': ['neurology']
     },
     'hypertension': {
       'diabetes': ['endocrinology', 'dietician'],
@@ -181,4 +180,3 @@ function calculateTreatmentCost(treatment: Treatment): number {
   const totalSessions = treatment.sessionsPerWeek * treatment.duration;
   return costPerSession * totalSessions;
 }
-

@@ -27,7 +27,9 @@ export function convertLegacyPriceRange(legacyRange: LegacyPriceRange): PriceRan
 export function createLegacyPriceRange(min: number, max: number): LegacyPriceRange {
   return {
     low: min,
-    high: max
+    high: max,
+    affordable: min,
+    highEnd: max
   };
 }
 

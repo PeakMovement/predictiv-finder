@@ -14,7 +14,10 @@ import {
 import { matchPractitionersToNeeds } from "../categoryMatcher";
 import { validateUserInput } from "../validators";
 import { analyzeUserHealth } from "./analysis";
-import { calculateBudget, calculateIdealSessions } from "./budget";
+import { 
+  computeServiceCost, 
+  calculateOptimalSessions 
+} from "./budget";
 import { determineIdealTiming, generateRecommendationNotes, generatePreferredTraits } from "../utils";
 import { enhancedMemoize, logger } from "@/utils/cache";
 import { processHealthScenario } from "./scenarioHandler";
@@ -141,7 +144,7 @@ export function generateProfessionalRecommendations(
           // Calculate severity and session count
           const conditionSeverity = primaryCondition && severityScores[primaryCondition] !== undefined ? 
             severityScores[primaryCondition] : 0.5;
-          const idealSessions = calculateIdealSessions(category, conditionSeverity);
+          const idealSessions = calculateOptimalSessions(category, budget || 5000, 1);
           
           // Add to primary recommendations
           result.primaryRecommendations.push({
@@ -163,7 +166,7 @@ export function generateProfessionalRecommendations(
       };
       
       result.primaryRecommendations.forEach(rec => {
-        const sessionCost = calculateBudget(rec.category, 1); 
+        const sessionCost = computeServiceCost(rec.category, 1); 
         result.budgetAllocation!.breakdown[rec.category] = sessionCost * rec.sessions;
       });
     }
