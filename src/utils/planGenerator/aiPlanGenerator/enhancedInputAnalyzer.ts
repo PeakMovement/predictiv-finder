@@ -1,5 +1,4 @@
 
-import { useState, useEffect } from 'react';
 import { extractHealthData, HealthDataExtractionOptions } from '../../healthDataExtraction';
 import { extractHealthDataWithLocalModel } from '../../healthDataExtraction/localModelExtractor';
 
