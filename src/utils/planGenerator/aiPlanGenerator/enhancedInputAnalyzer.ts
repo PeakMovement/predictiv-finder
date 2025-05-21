@@ -1,5 +1,7 @@
 
+import { useState, useEffect } from 'react';
 import { extractHealthData, HealthDataExtractionOptions } from '../../healthDataExtraction';
+import { extractHealthDataWithLocalModel } from '../../healthDataExtraction/localModelExtractor';
 
 /**
  * Enhanced analyzer that leverages the unified health data extraction system
