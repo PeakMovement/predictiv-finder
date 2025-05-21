@@ -39,8 +39,55 @@ async function deploy() {
       throw new Error("Build directory 'dist' not found");
     }
     
-    // Step 3: Firebase deployment (primary recommended option for predictiv.co.za)
-    log("\nStep 3: Deploying to Firebase (for predictiv.co.za):", colors.blue);
+    // Step 3: Ensure we have a proper firebase.json file
+    const firebaseConfigPath = path.join(process.cwd(), 'firebase.json');
+    if (!fs.existsSync(firebaseConfigPath)) {
+      log("Creating minimal firebase.json configuration for hosting...", colors.yellow);
+      const minimalConfig = {
+        "hosting": {
+          "public": "dist",
+          "ignore": [
+            "firebase.json",
+            "**/.*",
+            "**/node_modules/**"
+          ],
+          "rewrites": [
+            {
+              "source": "**",
+              "destination": "/index.html"
+            }
+          ]
+        }
+      };
+      
+      fs.writeFileSync(firebaseConfigPath, JSON.stringify(minimalConfig, null, 2));
+      log("✓ Created firebase.json with proper configuration", colors.green);
+    } else {
+      // Check and update existing firebase.json if needed
+      const firebaseConfig = JSON.parse(fs.readFileSync(firebaseConfigPath, 'utf8'));
+      if (firebaseConfig.hosting && firebaseConfig.hosting.public !== 'dist') {
+        log("Updating firebase.json to use 'dist' as the public directory...", colors.yellow);
+        firebaseConfig.hosting.public = 'dist';
+        fs.writeFileSync(firebaseConfigPath, JSON.stringify(firebaseConfig, null, 2));
+        log("✓ Updated firebase.json configuration", colors.green);
+      }
+      
+      // Ensure we have SPA rewrites
+      if (!firebaseConfig.hosting.rewrites || !firebaseConfig.hosting.rewrites.length) {
+        log("Adding SPA rewrites to firebase.json...", colors.yellow);
+        firebaseConfig.hosting.rewrites = [
+          {
+            "source": "**",
+            "destination": "/index.html"
+          }
+        ];
+        fs.writeFileSync(firebaseConfigPath, JSON.stringify(firebaseConfig, null, 2));
+        log("✓ Added SPA rewrites to firebase.json", colors.green);
+      }
+    }
+    
+    // Step 4: Firebase deployment
+    log("\nStep 4: Deploying to Firebase (for predictiv.co.za):", colors.blue);
     
     // Check if Firebase CLI is installed
     try {
@@ -52,44 +99,16 @@ async function deploy() {
       log("✓ Firebase tools installed", colors.green);
     }
     
-    // Check for firebase.json configuration
-    const firebaseConfigPath = path.join(process.cwd(), 'firebase.json');
-    if (!fs.existsSync(firebaseConfigPath)) {
-      log("× Firebase configuration not found. Initializing Firebase...", colors.yellow);
-      log("\nFollow these steps in the Firebase init process:", colors.bright);
-      log(" 1. Select 'Hosting: Configure files for Firebase Hosting'");
-      log(" 2. Select your Firebase project (or create a new one)");
-      log(" 3. Specify 'dist' as your public directory");
-      log(" 4. Configure as a single-page app: Yes");
-      log(" 5. Set up automatic builds and deploys with GitHub: No (unless desired)");
-      log("\nRunning firebase init...", colors.blue);
-      
-      execSync("firebase login", { stdio: 'inherit' });
-      execSync("firebase init hosting", { stdio: 'inherit' });
-      
-      log("✓ Firebase initialized", colors.green);
-    } else {
-      log("✓ Firebase configuration found", colors.green);
-      
-      // Verify firebase.json has correct public directory
-      const firebaseConfig = JSON.parse(fs.readFileSync(firebaseConfigPath, 'utf8'));
-      if (firebaseConfig.hosting && firebaseConfig.hosting.public !== 'dist') {
-        log("⚠️  Warning: Firebase is not configured to use 'dist' directory", colors.yellow);
-        log("   Current setting: " + firebaseConfig.hosting.public, colors.yellow);
-        log("   Consider updating firebase.json to use 'dist' as the public directory", colors.yellow);
-      }
-    }
-    
     // Deploy to Firebase
     log("\nDeploying to Firebase (this will make the app live on predictiv.co.za)...", colors.blue);
     execSync("firebase deploy --only hosting", { stdio: 'inherit' });
     
-    log("\n✅ Deployment complete! Your app should now be live at predictiv.co.za", colors.green);
+    log("\n✅ Deployment complete! Your app should now be visible at predictiv.co.za", colors.green);
     log("\nIf your site is still showing the Firebase welcome page:", colors.yellow);
-    log("1. Verify your domain DNS settings point to Firebase hosting");
-    log("2. Check that your domain is properly configured in Firebase Hosting settings");
-    log("3. It may take a few minutes for DNS changes to propagate");
-    log("\nFor custom domain setup help visit: https://firebase.google.com/docs/hosting/custom-domain", colors.bright);
+    log("1. Make sure you've logged into the correct Firebase account with 'firebase login'");
+    log("2. Verify you're deploying to the correct Firebase project with 'firebase use --add'");
+    log("3. Ensure your domain DNS settings point to Firebase hosting");
+    log("4. It may take a few minutes for DNS changes and deployment to propagate");
     
   } catch (error) {
     log(`Error: ${error.message}`, colors.red);

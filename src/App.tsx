@@ -6,6 +6,7 @@ import Index from './pages/Index';
 import HowItWorks from './pages/HowItWorks';
 import Services from './pages/Services';
 import Professionals from './pages/Professionals';
+import NotFound from './pages/NotFound'; // Add NotFound import
 import { EnhancedErrorBoundary } from './components/enhanced-error-handling';
 import { PlanGenerationErrorFallbackAdapter } from './components/enhanced-error-handling';
 
@@ -26,6 +27,7 @@ function App() {
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/services" element={<Services />} />
           <Route path="/professionals" element={<Professionals />} />
+          <Route path="*" element={<NotFound />} /> {/* Add catch-all route */}
         </Routes>
       </EnhancedErrorBoundary>
     </div>
