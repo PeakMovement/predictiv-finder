@@ -32,7 +32,7 @@ export default defineConfig(({ mode }) => ({
         manualChunks: {
           // Split vendor chunks for better caching
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['lucide-react', '@radix-ui/react-icons'],
+          'ui-vendor': ['lucide-react'],
           'utils': ['@/utils']
         }
       }
