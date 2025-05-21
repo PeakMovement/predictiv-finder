@@ -86,21 +86,55 @@ async function deploy() {
       }
     }
     
-    // Step 4: Firebase deployment
-    log("\nStep 4: Deploying to Firebase (for predictiv.co.za):", colors.blue);
+    // Step 4: Check if Firebase CLI is installed and prompt to run firebase use if needed
+    log("\nStep 4: Checking Firebase configuration:", colors.blue);
     
-    // Check if Firebase CLI is installed
     try {
       execSync("firebase --version", { stdio: 'ignore' });
       log("✓ Firebase CLI detected", colors.green);
+      
+      // Check if project is configured
+      let hasValidProject = false;
+      try {
+        const output = execSync("firebase projects:list", { encoding: 'utf8' });
+        log("Checking if Firebase project is configured...", colors.yellow);
+        
+        // Simple check to see if we're logged in and have any projects
+        if (output.includes("│ Project │")) {
+          hasValidProject = true;
+        }
+      } catch (err) {
+        // Could not list projects, likely not logged in
+        hasValidProject = false;
+      }
+      
+      if (!hasValidProject) {
+        log("⚠️ Please login to Firebase first:", colors.yellow);
+        log("Run the following command and follow the prompts:", colors.reset);
+        log("  firebase login", colors.bright);
+        return;
+      }
+      
+      // Check if .firebaserc exists
+      const firebaseRcPath = path.join(process.cwd(), '.firebaserc');
+      if (!fs.existsSync(firebaseRcPath)) {
+        log("⚠️ No Firebase project selected for this directory", colors.yellow);
+        log("Run the following command and select the project for predictiv.co.za:", colors.reset);
+        log("  firebase use --add", colors.bright);
+        return;
+      }
+      
     } catch (error) {
       log("× Firebase CLI not found. Installing Firebase tools...", colors.yellow);
       execSync("npm install -g firebase-tools", { stdio: 'inherit' });
       log("✓ Firebase tools installed", colors.green);
+      log("Please run this script again and then log in with 'firebase login'", colors.bright);
+      return;
     }
     
-    // Deploy to Firebase
-    log("\nDeploying to Firebase (this will make the app live on predictiv.co.za)...", colors.blue);
+    // Step 5: Firebase deployment
+    log("\nStep 5: Deploying to Firebase (for predictiv.co.za):", colors.blue);
+    log("Deploying to Firebase (this will make the app live on predictiv.co.za)...", colors.blue);
     execSync("firebase deploy --only hosting", { stdio: 'inherit' });
     
     log("\n✅ Deployment complete! Your app should now be visible at predictiv.co.za", colors.green);
