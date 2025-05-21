@@ -33,7 +33,8 @@ export default defineConfig(({ mode }) => ({
           // Split vendor chunks for better caching
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'ui-vendor': ['lucide-react'],
-          'utils': ['@/utils']
+          // Fix: Don't reference directory directly, only specific modules
+          'utils-lib': ['/src/utils/cache.ts', '/src/utils/formatters.ts']
         }
       }
     },
