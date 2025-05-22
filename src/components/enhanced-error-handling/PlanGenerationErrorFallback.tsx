@@ -91,14 +91,19 @@ export const PlanGenerationErrorFallback: React.FC<PlanGenerationErrorFallbackPr
  * Adapter component to make PlanGenerationErrorFallback compatible with EnhancedErrorBoundary
  */
 export const PlanGenerationErrorFallbackAdapter = ({ error, resetErrorBoundary }: FallbackProps) => {
+  // Extract properties from PlanGenerationError if available
+  const errorType = error && typeof error === 'object' && 'type' in error ? (error as any).type : undefined;
+  const userMessage = error && typeof error === 'object' && 'userMessage' in error ? (error as any).userMessage : undefined;
+  const suggestions = error && typeof error === 'object' && 'suggestions' in error ? (error as any).suggestions : [];
+  
   return (
     <PlanGenerationErrorFallback
       error={error}
       onBack={resetErrorBoundary}
       onRetry={resetErrorBoundary}
-      errorType={error.hasOwnProperty('type') ? (error as any).type : undefined}
-      userMessage={error.hasOwnProperty('userMessage') ? (error as any).userMessage : undefined}
-      suggestions={error.hasOwnProperty('suggestions') ? (error as any).suggestions : []}
+      errorType={errorType}
+      userMessage={userMessage}
+      suggestions={suggestions}
     />
   );
 };

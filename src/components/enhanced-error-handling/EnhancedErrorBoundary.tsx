@@ -79,12 +79,8 @@ class EnhancedErrorBoundary extends Component<EnhancedErrorBoundaryProps, Enhanc
   // Render the fallback UI if there's an error
   render(): ReactNode {
     if (this.state.hasError && this.state.error) {
-      const enhancedError = this.state.error instanceof PlanGenerationError
-        ? this.state.error
-        : new Error(this.state.error.message);
-        
       return this.props.fallback({
-        error: enhancedError,
+        error: this.state.error,
         resetErrorBoundary: this.resetErrorBoundary
       });
     }
