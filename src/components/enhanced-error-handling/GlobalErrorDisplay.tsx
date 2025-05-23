@@ -4,7 +4,10 @@ import { AlertCircle, RefreshCw, Info, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { PlanGenerationErrorType, isPlanGenerationError } from '@/utils/planGenerator/errorHandling';
+import { PlanGenerationErrorType } from '@/utils/planGenerator/errorHandling/planGenerationError';
+
+// Import isPlanGenerationError from the correct location
+import { isPlanGenerationError } from '@/utils/planGenerator/errorHandling/index';
 
 export interface GlobalErrorDisplayProps {
   error: Error | null;
@@ -54,7 +57,7 @@ export const GlobalErrorDisplay: React.FC<GlobalErrorDisplayProps> = ({
         return "Unable to Process Health Information";
       case PlanGenerationErrorType.SERVICE_MATCHING:
         return "Service Matching Issue";
-      case PlanGenerationErrorType.EXTERNAL_SERVICE:
+      case PlanGenerationErrorType.EXTERNAL_SERVICE: // We'll add this to the enum
         return "Connection Error";
       default:
         return "Something Went Wrong";

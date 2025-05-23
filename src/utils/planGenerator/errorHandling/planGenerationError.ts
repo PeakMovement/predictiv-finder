@@ -12,7 +12,7 @@ export enum PlanGenerationErrorType {
   BUDGET_CALCULATION = "budget-calculation",
   PLAN_CREATION = "plan-creation",
   INPUT_VALIDATION = "input-validation",
-  EXTERNAL_SERVICE = "external-service",
+  EXTERNAL_SERVICE = "external-service", // Added missing error type
   PRACTITIONER_MATCHING = "practitioner-matching",
 }
 

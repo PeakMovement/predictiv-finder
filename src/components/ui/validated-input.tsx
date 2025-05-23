@@ -93,7 +93,7 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
           rows={rows}
           className={cn(
             showError ? "border-red-300 focus-visible:ring-red-300" : "",
-            props.className
+            props.className || ""
           )}
         />
       ) : (
@@ -103,7 +103,7 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
           onChange={handleChange}
           className={cn(
             showError ? "border-red-300 focus-visible:ring-red-300" : "",
-            props.className
+            props.className || ""
           )}
         />
       )}
