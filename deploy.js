@@ -39,6 +39,13 @@ async function deploy() {
       throw new Error("Build directory 'dist' not found");
     }
     
+    // Verify the index.html exists in dist
+    const indexPath = path.join(distPath, 'index.html');
+    if (!fs.existsSync(indexPath)) {
+      throw new Error("index.html not found in dist folder - build may be incomplete");
+    }
+    log("✓ Verified that dist/index.html exists", colors.green);
+    
     // Step 3: Ensure we have a proper firebase.json file
     const firebaseConfigPath = path.join(process.cwd(), 'firebase.json');
     if (!fs.existsSync(firebaseConfigPath)) {
@@ -93,36 +100,14 @@ async function deploy() {
       execSync("firebase --version", { stdio: 'ignore' });
       log("✓ Firebase CLI detected", colors.green);
       
-      // Check if project is configured
-      let hasValidProject = false;
-      try {
-        const output = execSync("firebase projects:list", { encoding: 'utf8' });
-        log("Checking if Firebase project is configured...", colors.yellow);
-        
-        // Simple check to see if we're logged in and have any projects
-        if (output.includes("│ Project │")) {
-          hasValidProject = true;
-        }
-      } catch (err) {
-        // Could not list projects, likely not logged in
-        hasValidProject = false;
-      }
+      // Force project selection to ensure we're deploying to the right project
+      log("Please select your Firebase project for deployment:", colors.yellow);
+      execSync("firebase use --add", { stdio: 'inherit' });
       
-      if (!hasValidProject) {
-        log("⚠️ Please login to Firebase first:", colors.yellow);
-        log("Run the following command and follow the prompts:", colors.reset);
-        log("  firebase login", colors.bright);
-        return;
-      }
-      
-      // Check if .firebaserc exists
-      const firebaseRcPath = path.join(process.cwd(), '.firebaserc');
-      if (!fs.existsSync(firebaseRcPath)) {
-        log("⚠️ No Firebase project selected for this directory", colors.yellow);
-        log("Run the following command and select the project for predictiv.co.za:", colors.reset);
-        log("  firebase use --add", colors.bright);
-        return;
-      }
+      // List the selected project
+      const projectOutput = execSync("firebase projects:list", { encoding: 'utf8' });
+      log("\nCurrently selected Firebase project:", colors.green);
+      console.log(projectOutput);
       
     } catch (error) {
       log("× Firebase CLI not found. Installing Firebase tools...", colors.yellow);
@@ -132,16 +117,16 @@ async function deploy() {
       return;
     }
     
-    // Step 5: Firebase deployment
+    // Step 5: Firebase deployment with --force flag to ensure clean deployment
     log("\nStep 5: Deploying to Firebase (for predictiv.co.za):", colors.blue);
-    log("Deploying to Firebase (this will make the app live on predictiv.co.za)...", colors.blue);
-    execSync("firebase deploy --only hosting", { stdio: 'inherit' });
+    log("Deploying to Firebase (this will make the app live)...", colors.blue);
+    execSync("firebase deploy --only hosting --force", { stdio: 'inherit' });
     
-    log("\n✅ Deployment complete! Your app should now be visible at predictiv.co.za", colors.green);
+    log("\n✅ Deployment complete! Your app should now be visible at your Firebase hosting URL", colors.green);
     log("\nIf your site is still showing the Firebase welcome page:", colors.yellow);
-    log("1. Make sure you've logged into the correct Firebase account with 'firebase login'");
-    log("2. Verify you're deploying to the correct Firebase project with 'firebase use --add'");
-    log("3. Ensure your domain DNS settings point to Firebase hosting");
+    log("1. Make sure your Firebase project is correctly set up and linked");
+    log("2. Check the contents of your dist folder to ensure it contains your app files");
+    log("3. Verify your domain DNS settings point to Firebase hosting");
     log("4. It may take a few minutes for DNS changes and deployment to propagate");
     
   } catch (error) {
