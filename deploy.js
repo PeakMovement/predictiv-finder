@@ -3,13 +3,12 @@
 
 /**
  * Deployment script for Predictiv Health planning application
- * Specifically configured for Firebase hosting at predictiv.co.za
+ * Specifically configured for Firebase hosting
  */
 
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const readline = require('readline');
 
 // Color output helpers
 const colors = {
@@ -118,7 +117,7 @@ async function deploy() {
     }
     
     // Step 5: Firebase deployment with --force flag to ensure clean deployment
-    log("\nStep 5: Deploying to Firebase (for predictiv.co.za):", colors.blue);
+    log("\nStep 5: Deploying to Firebase:", colors.blue);
     log("Deploying to Firebase (this will make the app live)...", colors.blue);
     execSync("firebase deploy --only hosting --force", { stdio: 'inherit' });
     
