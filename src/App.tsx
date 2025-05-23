@@ -6,9 +6,11 @@ import Index from './pages/Index';
 import HowItWorks from './pages/HowItWorks';
 import Services from './pages/Services';
 import Professionals from './pages/Professionals';
-import NotFound from './pages/NotFound'; // Add NotFound import
+import NotFound from './pages/NotFound';
 import { EnhancedErrorBoundary } from './components/enhanced-error-handling';
 import { PlanGenerationErrorFallbackAdapter } from './components/enhanced-error-handling';
+import { ToastProvider } from './components/ui/toast-provider';
+import { Toaster } from './components/ui/toaster';
 
 function App() {
   const [errorKey, setErrorKey] = useState('initial');
@@ -16,21 +18,24 @@ function App() {
   const resetKeys = () => setErrorKey(`reset-${Date.now()}`);
 
   return (
-    <div className="app min-h-screen bg-gray-50 dark:bg-gray-900">
-      <EnhancedErrorBoundary 
-        key={errorKey} 
-        resetKeys={[resetKeys]} 
-        fallback={PlanGenerationErrorFallbackAdapter}
-      >
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/how-it-works" element={<HowItWorks />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/professionals" element={<Professionals />} />
-          <Route path="*" element={<NotFound />} /> {/* Add catch-all route */}
-        </Routes>
-      </EnhancedErrorBoundary>
-    </div>
+    <ToastProvider>
+      <div className="app min-h-screen bg-gray-50 dark:bg-gray-900">
+        <EnhancedErrorBoundary 
+          key={errorKey} 
+          resetKeys={[resetKeys]} 
+          fallback={PlanGenerationErrorFallbackAdapter}
+        >
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/professionals" element={<Professionals />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </EnhancedErrorBoundary>
+        <Toaster />
+      </div>
+    </ToastProvider>
   );
 }
 
