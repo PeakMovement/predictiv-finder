@@ -132,8 +132,7 @@ function convertToAIHealthPlan(optimizedPlan: OptimizedPlan, context: any): AIHe
     id: `plan-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     name: generatePlanName({
       medicalConditions,
-      goal,
-      isOptimized: true
+      goal
     }),
     description: `Utility-maximized plan for ${medicalConditions.join(', ')}. This plan optimally balances health benefits, cost, and time constraints to maximize overall value.`,
     services: optimizedPlan.allocations.map(allocation => ({
@@ -151,19 +150,19 @@ function convertToAIHealthPlan(optimizedPlan: OptimizedPlan, context: any): AIHe
     })
   };
   
-  // Add plan metrics
-  plan.matchScore = 0.95; // High confidence in utility-maximized plan
-  plan.utilityScore = optimizedPlan.totalUtility;
-  plan.timeRequiredMinutes = optimizedPlan.totalTime;
-  plan.optimizationNotes = optimizedPlan.notes;
+  // Add plan metrics as custom properties
+  (plan as any).matchScore = 0.95; // High confidence in utility-maximized plan
+  (plan as any).utilityScore = optimizedPlan.totalUtility;
+  (plan as any).timeRequiredMinutes = optimizedPlan.totalTime;
+  (plan as any).optimizationNotes = optimizedPlan.notes;
   
   // Add additional context if available
   if (location) {
-    plan.location = location;
+    (plan as any).location = location;
   }
   
   if (preferOnline !== undefined) {
-    plan.isRemote = preferOnline;
+    (plan as any).isRemote = preferOnline;
   }
   
   return plan;
