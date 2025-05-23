@@ -3,8 +3,10 @@ import { AIHealthPlan, ServiceCategory } from '@/types';
 import { generatePlanName, generatePlanDescription } from './planNaming';
 import { determinePlanType } from './planTypeDetection';
 import { determineTimeFrame } from './timeFrameDetection';
-import { maximizeUtility, generateTreatmentOptions, OptimizedPlan } from '../optimizers/utilityMaximizer';
+import { maximizeUtility, generateTreatmentOptions } from '../optimizers/utilityMaximizer';
 import { PlanGenerationError, PlanGenerationErrorType } from '../errorHandling/planGenerationError';
+import { EnhancedTreatmentOption, getTreatmentsByGoal, getTreatmentsByLocation } from '../data/treatmentOptions';
+import { maximizeUtilityEnhanced } from '../optimizers/enhancedUtilityMaximizer';
 
 /**
  * Generate a plan using utility maximization approach
@@ -36,6 +38,9 @@ export function generateUtilityBasedPlan(
     location?: string;
     preferOnline?: boolean;
     diversityFactor?: number; // 0-1
+    availableDays?: string[];
+    timeOfDay?: 'morning' | 'afternoon' | 'evening';
+    useRealTreatmentData?: boolean;
   }
 ): AIHealthPlan {
   try {
@@ -48,7 +53,12 @@ export function generateUtilityBasedPlan(
       goal,
       urgency = 5,
       conditionSeverity = 0.5,
-      diversityFactor = 0.3
+      diversityFactor = 0.3,
+      location,
+      preferOnline,
+      availableDays,
+      timeOfDay,
+      useRealTreatmentData = false
     } = context;
     
     if (!serviceTypes || serviceTypes.length === 0) {
@@ -78,24 +88,78 @@ export function generateUtilityBasedPlan(
     // Use the main condition for utility calculations
     const mainCondition = medicalConditions[0];
     
-    // Generate treatment options
-    const treatmentOptions = generateTreatmentOptions(
-      serviceTypes,
-      mainCondition,
-      conditionSeverity,
-      urgency
-    );
+    let optimizedPlan;
     
-    // Run utility maximization
-    const optimizedPlan = maximizeUtility(
-      treatmentOptions,
-      {
-        budget,
-        timeAvailable: timeAvailability,
-        diversityFactor,
-        urgencyWeight: urgency > 7 ? 2.0 : 1.5
+    if (useRealTreatmentData) {
+      // Use the real treatment data from our dataset
+      let availableTreatments: EnhancedTreatmentOption[] = [];
+      
+      // Convert goal to keywords for filtering
+      const goalKeywords = goal ? goal.toLowerCase().split(/\s+/) : [];
+      
+      // If we have specific goals, filter treatments by goals
+      if (goalKeywords.length > 0) {
+        availableTreatments = getTreatmentsByGoal(goalKeywords);
       }
-    );
+      
+      // If no treatments match goals or no goals specified, filter by medical conditions
+      if (availableTreatments.length === 0) {
+        availableTreatments = getTreatmentsByGoal(medicalConditions);
+      }
+      
+      // If location is specified, filter by location
+      if (location && availableTreatments.length > 0) {
+        const locationTreatments = getTreatmentsByLocation(location);
+        // Intersection of goal and location treatments
+        availableTreatments = availableTreatments.filter(t => 
+          locationTreatments.some(lt => lt.id === t.id)
+        );
+      }
+      
+      // If still no treatments, use all treatments
+      if (availableTreatments.length === 0) {
+        console.log("No specific treatments matched criteria, using all available treatments");
+        
+        // Import all treatments
+        const { treatmentOptions } = require('../data/treatmentOptions');
+        availableTreatments = treatmentOptions;
+      }
+      
+      // Use enhanced utility maximizer
+      optimizedPlan = maximizeUtilityEnhanced(
+        availableTreatments,
+        {
+          budget,
+          timeAvailable: timeAvailability,
+          diversityFactor,
+          urgencyWeight: urgency > 7 ? 2.0 : 1.5,
+          location,
+          preferOnline,
+          availableDays,
+          timeOfDay,
+          goalKeywords: [...medicalConditions, ...(goal ? goal.toLowerCase().split(/\s+/) : [])]
+        }
+      );
+    } else {
+      // Use the standard approach with generated treatment options
+      const treatmentOptions = generateTreatmentOptions(
+        serviceTypes,
+        mainCondition,
+        conditionSeverity,
+        urgency
+      );
+      
+      // Run utility maximization
+      optimizedPlan = maximizeUtility(
+        treatmentOptions,
+        {
+          budget,
+          timeAvailable: timeAvailability,
+          diversityFactor,
+          urgencyWeight: urgency > 7 ? 2.0 : 1.5
+        }
+      );
+    }
     
     // Convert optimized plan to AIHealthPlan format
     return convertToAIHealthPlan(optimizedPlan, context);
@@ -119,12 +183,13 @@ export function generateUtilityBasedPlan(
 /**
  * Convert an optimized plan to AIHealthPlan format
  */
-function convertToAIHealthPlan(optimizedPlan: OptimizedPlan, context: any): AIHealthPlan {
+function convertToAIHealthPlan(optimizedPlan: any, context: any): AIHealthPlan {
   const {
     medicalConditions = ['general health'],
     goal = 'improve health',
     location,
-    preferOnline
+    preferOnline,
+    useRealTreatmentData
   } = context;
   
   // Create the plan
@@ -135,12 +200,25 @@ function convertToAIHealthPlan(optimizedPlan: OptimizedPlan, context: any): AIHe
       goal
     }),
     description: `Utility-maximized plan for ${medicalConditions.join(', ')}. This plan optimally balances health benefits, cost, and time constraints to maximize overall value.`,
-    services: optimizedPlan.allocations.map(allocation => ({
-      type: allocation.serviceType,
-      price: allocation.totalCost / allocation.sessionsPerMonth,
-      sessions: allocation.sessionsPerMonth,
-      description: `${allocation.sessionsPerMonth}× ${allocation.serviceType.replace(/-/g, ' ')} sessions (${Math.round(allocation.percentageBudget)}% of budget)`
-    })),
+    services: optimizedPlan.allocations.map((allocation: any) => {
+      // Different structure between standard and enhanced optimizers
+      if (useRealTreatmentData) {
+        return {
+          type: allocation.serviceType,
+          price: allocation.totalCost / allocation.sessionsPerMonth,
+          sessions: allocation.sessionsPerMonth,
+          description: `${allocation.sessionsPerMonth}× ${allocation.name} with ${allocation.practitioner} (${Math.round(allocation.percentageBudget)}% of budget)`,
+          frequency: `${allocation.availability || 'Flexible'}`
+        };
+      } else {
+        return {
+          type: allocation.serviceType,
+          price: allocation.totalCost / allocation.sessionsPerMonth,
+          sessions: allocation.sessionsPerMonth,
+          description: `${allocation.sessionsPerMonth}× ${allocation.serviceType.replace(/-/g, ' ')} sessions (${Math.round(allocation.percentageBudget)}% of budget)`
+        };
+      }
+    }),
     totalCost: optimizedPlan.totalCost,
     planType: 'best-fit',
     timeFrame: determineTimeFrame({
@@ -150,11 +228,24 @@ function convertToAIHealthPlan(optimizedPlan: OptimizedPlan, context: any): AIHe
     })
   };
   
+  // Add enhanced plan properties if available
+  if (useRealTreatmentData && optimizedPlan.timelineEstimate) {
+    (plan as any).expectedTimeToResults = `${optimizedPlan.timelineEstimate} weeks`;
+  }
+  
   // Add plan metrics as custom properties
   (plan as any).matchScore = 0.95; // High confidence in utility-maximized plan
   (plan as any).utilityScore = optimizedPlan.totalUtility;
   (plan as any).timeRequiredMinutes = optimizedPlan.totalTime;
   (plan as any).optimizationNotes = optimizedPlan.notes;
+  
+  // Add location breakdown if available
+  if (useRealTreatmentData && optimizedPlan.locationBreakdown) {
+    (plan as any).sessionBreakdown = {
+      inPerson: optimizedPlan.locationBreakdown.inPerson,
+      remote: optimizedPlan.locationBreakdown.remote
+    };
+  }
   
   // Add additional context if available
   if (location) {
@@ -163,6 +254,11 @@ function convertToAIHealthPlan(optimizedPlan: OptimizedPlan, context: any): AIHe
   
   if (preferOnline !== undefined) {
     (plan as any).isRemote = preferOnline;
+  }
+  
+  // Add availability notes if present
+  if (optimizedPlan.availabilityNotes && optimizedPlan.availabilityNotes.length > 0) {
+    (plan as any).availabilityNotes = optimizedPlan.availabilityNotes;
   }
   
   return plan;
@@ -182,6 +278,9 @@ export function generateUtilityBasedPlans(
     conditionSeverity?: number;
     location?: string;
     preferOnline?: boolean;
+    availableDays?: string[];
+    timeOfDay?: 'morning' | 'afternoon' | 'evening';
+    useRealTreatmentData?: boolean;
   }
 ): AIHealthPlan[] {
   const plans: AIHealthPlan[] = [];
@@ -189,21 +288,24 @@ export function generateUtilityBasedPlans(
   // Standard balanced plan
   plans.push(generateUtilityBasedPlan({
     ...context,
-    diversityFactor: 0.3
+    diversityFactor: 0.3,
+    useRealTreatmentData: context.useRealTreatmentData || false
   }));
   
   // High diversity plan - spreads resources across more services
   plans.push(generateUtilityBasedPlan({
     ...context,
     diversityFactor: 0.7,
-    budget: context.budget * 0.95 // Slightly reduced budget to account for admin costs
+    budget: context.budget * 0.95, // Slightly reduced budget to account for admin costs
+    useRealTreatmentData: context.useRealTreatmentData || false
   }));
   
   // Focused plan - concentrates resources on fewer high-impact services
   plans.push(generateUtilityBasedPlan({
     ...context,
     diversityFactor: 0.1,
-    serviceTypes: context.serviceTypes.slice(0, Math.max(3, Math.floor(context.serviceTypes.length / 2)))
+    serviceTypes: context.serviceTypes.slice(0, Math.max(3, Math.floor(context.serviceTypes.length / 2))),
+    useRealTreatmentData: context.useRealTreatmentData || false
   }));
   
   // Set appropriate plan types
