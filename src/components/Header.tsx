@@ -5,9 +5,11 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserProfileMenu } from './auth/UserProfileMenu';
 import { LoginModal } from './auth/LoginModal';
+import { useAuth } from '@/context/AuthContext';
 
 export const Header = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   
   const openLoginModal = () => setIsLoginModalOpen(true);
@@ -44,6 +46,11 @@ export const Header = () => {
         <Link to="/professionals" className="text-gray-600 hover:text-system-blue transition-colors dark:text-gray-300 dark:hover:text-system-teal">
           Professionals
         </Link>
+        {isAuthenticated && (
+          <Link to="/dashboard" className="text-gray-600 hover:text-system-blue transition-colors dark:text-gray-300 dark:hover:text-system-teal">
+            Dashboard
+          </Link>
+        )}
       </nav>
       
       <div className="flex items-center space-x-2">
