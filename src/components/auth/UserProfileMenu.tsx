@@ -1,6 +1,7 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { ProfileService } from '@/services/profile-service';
 import { LogOut, User } from 'lucide-react';
 import {
   DropdownMenu,
@@ -19,7 +20,23 @@ interface UserProfileMenuProps {
 
 export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ openLoginModal }) => {
   const { currentUser, logout, isAuthenticated } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
   
+  useEffect(() => {
+    if (currentUser) {
+      loadProfile();
+    }
+  }, [currentUser]);
+
+  const loadProfile = async () => {
+    try {
+      const userProfile = await ProfileService.getCurrentUserProfile();
+      setProfile(userProfile);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
+  };
+
   // Handle logout
   const handleLogout = async () => {
     try {
@@ -43,14 +60,18 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ openLoginModal
   
   // Get user initials for avatar fallback
   const getUserInitials = () => {
-    if (!currentUser?.displayName) return "U";
-    return currentUser.displayName
+    const name = profile?.full_name || currentUser?.email;
+    if (!name) return "U";
+    
+    return name
       .split(' ')
-      .map(name => name[0])
+      .map((part: string) => part[0])
       .join('')
       .toUpperCase()
       .substring(0, 2);
   };
+
+  const displayName = profile?.full_name || currentUser?.email || "User";
 
   return (
     <DropdownMenu>
@@ -58,8 +79,8 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ openLoginModal
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar>
             <AvatarImage 
-              src={currentUser?.photoURL || undefined} 
-              alt={currentUser?.displayName || "User avatar"} 
+              src={profile?.avatar_url || undefined} 
+              alt={displayName} 
             />
             <AvatarFallback className="bg-health-teal text-white">
               {getUserInitials()}
@@ -70,7 +91,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ openLoginModal
       
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>
-          {currentUser?.displayName || "User Account"}
+          {displayName}
           <p className="text-sm font-normal text-gray-500 truncate max-w-[200px]">
             {currentUser?.email}
           </p>
