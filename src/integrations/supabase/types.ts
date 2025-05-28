@@ -9,6 +9,56 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      availability_slots: {
+        Row: {
+          calendar_integration_id: string | null
+          created_at: string
+          end_time: string
+          event_title: string | null
+          external_event_id: string | null
+          id: string
+          is_available: boolean
+          practitioner_id: string
+          start_time: string
+          sync_source: string
+          updated_at: string
+        }
+        Insert: {
+          calendar_integration_id?: string | null
+          created_at?: string
+          end_time: string
+          event_title?: string | null
+          external_event_id?: string | null
+          id?: string
+          is_available?: boolean
+          practitioner_id: string
+          start_time: string
+          sync_source: string
+          updated_at?: string
+        }
+        Update: {
+          calendar_integration_id?: string | null
+          created_at?: string
+          end_time?: string
+          event_title?: string | null
+          external_event_id?: string | null
+          id?: string
+          is_available?: boolean
+          practitioner_id?: string
+          start_time?: string
+          sync_source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_slots_calendar_integration_id_fkey"
+            columns: ["calendar_integration_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           appointment_date: string
@@ -55,6 +105,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      calendar_integrations: {
+        Row: {
+          api_credentials: Json
+          calendar_id: string | null
+          created_at: string
+          id: string
+          integration_type: string
+          last_sync_at: string | null
+          practitioner_id: string
+          sync_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          api_credentials: Json
+          calendar_id?: string | null
+          created_at?: string
+          id?: string
+          integration_type: string
+          last_sync_at?: string | null
+          practitioner_id: string
+          sync_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          api_credentials?: Json
+          calendar_id?: string | null
+          created_at?: string
+          id?: string
+          integration_type?: string
+          last_sync_at?: string | null
+          practitioner_id?: string
+          sync_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
       }
       health_plans: {
         Row: {
