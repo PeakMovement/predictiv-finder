@@ -10,7 +10,8 @@ export enum PlanGenerationErrorType {
   SERVICE_MATCHING = 'service_matching',
   BUDGET_CALCULATION = 'budget_calculation',
   PLAN_CREATION = 'plan_creation',
-  PRACTITIONER_MATCHING = 'practitioner_matching', // Add missing error type
+  PRACTITIONER_MATCHING = 'practitioner_matching',
+  EXTERNAL_SERVICE = 'external_service', // Added missing error type
   UNEXPECTED = 'unexpected'
 }
 
@@ -53,6 +54,10 @@ export class PlanGenerationError extends Error {
         return "There was an issue calculating costs for your plan. Please try specifying your budget more clearly.";
       case PlanGenerationErrorType.PLAN_CREATION:
         return "We encountered an issue creating your health plan. Please try again with different criteria.";
+      case PlanGenerationErrorType.PRACTITIONER_MATCHING:
+        return "We had trouble finding matching practitioners for your needs. Please try adjusting your criteria.";
+      case PlanGenerationErrorType.EXTERNAL_SERVICE:
+        return "There was a connection issue with an external service. Please try again later.";
       default:
         return "An unexpected error occurred while generating your plan. Please try again.";
     }
@@ -80,6 +85,14 @@ export class PlanGenerationError extends Error {
       suggestions: this.suggestions
     };
   }
+}
+
+/**
+ * Type guard to check if an error is a PlanGenerationError
+ */
+export function isPlanGenerationError(error: any): error is PlanGenerationError {
+  return error instanceof PlanGenerationError || 
+         (error && typeof error === 'object' && error.name === 'PlanGenerationError');
 }
 
 /**

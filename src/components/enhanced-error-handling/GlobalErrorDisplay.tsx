@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { PlanGenerationErrorType } from '@/utils/planGenerator/errorHandling/planGenerationError';
 
-// Import isPlanGenerationError from the correct location
-import { isPlanGenerationError } from '@/utils/planGenerator/errorHandling/index';
+// Import the type guard function from the correct location
+import { isPlanGenerationError } from '@/utils/planGenerator/errorHandling';
 
 export interface GlobalErrorDisplayProps {
   error: Error | null;
@@ -57,7 +57,7 @@ export const GlobalErrorDisplay: React.FC<GlobalErrorDisplayProps> = ({
         return "Unable to Process Health Information";
       case PlanGenerationErrorType.SERVICE_MATCHING:
         return "Service Matching Issue";
-      case PlanGenerationErrorType.EXTERNAL_SERVICE: // We'll add this to the enum
+      case PlanGenerationErrorType.EXTERNAL_SERVICE:
         return "Connection Error";
       default:
         return "Something Went Wrong";
@@ -74,7 +74,7 @@ export const GlobalErrorDisplay: React.FC<GlobalErrorDisplayProps> = ({
         action: onRetry ? <Button size="sm" onClick={onRetry}>Retry</Button> : undefined
       });
     }
-  }, [error, toast, onRetry]);
+  }, [error, toast, onRetry, userMessage]);
 
   return (
     <AnimatePresence>
@@ -82,7 +82,7 @@ export const GlobalErrorDisplay: React.FC<GlobalErrorDisplayProps> = ({
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
-        className={`bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded-lg shadow-md p-4 mb-4 ${className}`}
+        className={`bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded-lg shadow-md p-4 mb-4 ${className || ''}`}
       >
         <div className="flex items-start">
           <div className="flex-shrink-0 mt-0.5">

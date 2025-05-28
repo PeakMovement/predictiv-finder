@@ -89,7 +89,7 @@ const AppContent: React.FC = () => {
   return (
     <main className="container max-w-6xl mx-auto px-4 py-8">
       <AnimatePresence mode="wait">
-        <ErrorDisplay error={error || ""} />
+        <ErrorDisplay error={error} />
         
         {stage === 'home' && (
           <HomeHero 

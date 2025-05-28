@@ -12,7 +12,7 @@ export enum PlanGenerationErrorType {
   BUDGET_CALCULATION = "budget-calculation",
   PLAN_CREATION = "plan-creation",
   INPUT_VALIDATION = "input-validation",
-  EXTERNAL_SERVICE = "external-service", // Added missing error type
+  EXTERNAL_SERVICE = "external-service",
   PRACTITIONER_MATCHING = "practitioner-matching",
 }
 
@@ -44,6 +44,14 @@ export class PlanGenerationError extends Error {
       Error.captureStackTrace(this, PlanGenerationError);
     }
   }
+}
+
+/**
+ * Type guard to check if an error is a PlanGenerationError
+ */
+export function isPlanGenerationError(error: any): error is PlanGenerationError {
+  return error instanceof PlanGenerationError || 
+         (error && typeof error === 'object' && error.name === 'PlanGenerationError');
 }
 
 /**
