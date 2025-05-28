@@ -13,11 +13,15 @@ import { Calendar, Clock, MapPin, Star, Settings } from 'lucide-react';
 interface PractitionerCardProps {
   practitioner: Practitioner;
   onSelect: (practitioner: Practitioner) => void;
+  matchScore?: number;
+  matchReasons?: string[];
 }
 
 export const PractitionerCard: React.FC<PractitionerCardProps> = ({ 
   practitioner, 
-  onSelect 
+  onSelect,
+  matchScore,
+  matchReasons
 }) => {
   const [showAvailability, setShowAvailability] = useState(false);
   const [showIntegrationDialog, setShowIntegrationDialog] = useState(false);
@@ -57,12 +61,30 @@ export const PractitionerCard: React.FC<PractitionerCardProps> = ({
             <span className="text-lg font-bold text-modern-dark mt-1">
               R{practitioner.pricePerSession}
             </span>
+            {matchScore && (
+              <Badge variant="teal" className="mt-1 text-xs">
+                {matchScore}% match
+              </Badge>
+            )}
           </div>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-4">
         <p className="text-modern-gray text-sm">{practitioner.bio}</p>
+
+        {matchReasons && matchReasons.length > 0 && (
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-modern-dark">Why this is a good match:</p>
+            <div className="flex flex-wrap gap-1">
+              {matchReasons.slice(0, 3).map((reason, index) => (
+                <Badge key={index} variant="outline" className="text-xs">
+                  {reason}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center space-x-4 text-sm text-modern-gray">
           <div className="flex items-center space-x-1">
