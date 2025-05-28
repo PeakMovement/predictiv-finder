@@ -30,7 +30,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Practitioner, UserCriteria } from '@/types';
-import PractitionerCard from './PractitionerCard';
+import { PractitionerCard } from './PractitionerCard';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { PRACTITIONERS } from '@/data/mockData';
