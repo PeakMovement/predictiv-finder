@@ -20,7 +20,7 @@ export const Header = () => {
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="py-4 px-6 flex justify-between items-center bg-white/95 backdrop-blur-sm dark:bg-modern-charcoal-900/95 sticky top-0 z-50 border-b border-modern-silver-200 dark:border-modern-charcoal-700"
+      className="py-4 px-6 flex justify-between items-center bg-system-lightGray/80 backdrop-blur-sm dark:bg-system-darkGray/80 sticky top-0 z-50 shadow-sm"
     >
       <div className="flex items-center">
         <Link to="/" className="flex items-center">
@@ -30,24 +30,24 @@ export const Header = () => {
           >
             🧠
           </motion.div>
-          <h1 className="text-xl font-bold bg-gradient-to-r from-modern-charcoal-700 to-modern-charcoal-900 bg-clip-text text-transparent dark:from-modern-silver-200 dark:to-modern-silver-100">
+          <h1 className="text-xl font-bold bg-gradient-to-r from-system-blue to-system-purple bg-clip-text text-transparent">
             Predictiv. Health
           </h1>
         </Link>
       </div>
       
       <nav className="hidden md:flex items-center space-x-6">
-        <Link to="/how-it-works" className="text-modern-charcoal-600 hover:text-modern-charcoal-900 transition-colors dark:text-modern-silver-300 dark:hover:text-modern-silver-100">
+        <Link to="/how-it-works" className="text-gray-600 hover:text-system-blue transition-colors dark:text-gray-300 dark:hover:text-system-teal">
           How It Works
         </Link>
-        <Link to="/services" className="text-modern-charcoal-600 hover:text-modern-charcoal-900 transition-colors dark:text-modern-silver-300 dark:hover:text-modern-silver-100">
+        <Link to="/services" className="text-gray-600 hover:text-system-blue transition-colors dark:text-gray-300 dark:hover:text-system-teal">
           Services
         </Link>
-        <Link to="/professionals" className="text-modern-charcoal-600 hover:text-modern-charcoal-900 transition-colors dark:text-modern-silver-300 dark:hover:text-modern-silver-100">
+        <Link to="/professionals" className="text-gray-600 hover:text-system-blue transition-colors dark:text-gray-300 dark:hover:text-system-teal">
           Professionals
         </Link>
         {isAuthenticated && (
-          <Link to="/dashboard" className="text-modern-charcoal-600 hover:text-modern-charcoal-900 transition-colors dark:text-modern-silver-300 dark:hover:text-modern-silver-100">
+          <Link to="/dashboard" className="text-gray-600 hover:text-system-blue transition-colors dark:text-gray-300 dark:hover:text-system-teal">
             Dashboard
           </Link>
         )}
