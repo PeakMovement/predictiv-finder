@@ -1,10 +1,13 @@
 
+// Import types and classes from planGenerationError module
+import { PlanGenerationError, PlanGenerationErrorType, safePlanOperation } from './planGenerationError';
+
+// Re-export everything from sub-modules, but handle duplicates carefully
 export * from './planGenerationError';
-export * from './inputValidation';
 export * from './serviceErrors';
 
-// Export the error handling utilities
-export { PlanGenerationError, PlanGenerationErrorType, safePlanOperation } from './planGenerationError';
+// Only export validateHealthPlanInput from inputValidation to avoid conflicts
+export { validateHealthPlanInput, detectLowQualityInput } from './inputValidation';
 
 /**
  * Type guard to check if an error is a PlanGenerationError
