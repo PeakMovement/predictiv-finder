@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { ProfileService } from '@/services/profile-service';
@@ -51,7 +50,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ openLoginModal
     return (
       <Button 
         onClick={openLoginModal}
-        className="bg-health-purple hover:bg-health-purple-dark"
+        className="bg-modern-charcoal-800 hover:bg-modern-charcoal-900 text-white border-0"
       >
         Sign In
       </Button>
@@ -76,36 +75,36 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ openLoginModal
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+        <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-modern-silver-100 dark:hover:bg-modern-charcoal-800">
           <Avatar>
             <AvatarImage 
               src={profile?.avatar_url || undefined} 
               alt={displayName} 
             />
-            <AvatarFallback className="bg-health-teal text-white">
+            <AvatarFallback className="bg-modern-silver-500 text-white">
               {getUserInitials()}
             </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="bg-white dark:bg-modern-charcoal-800 border-modern-silver-200 dark:border-modern-charcoal-700">
         <DropdownMenuLabel>
           {displayName}
-          <p className="text-sm font-normal text-gray-500 truncate max-w-[200px]">
+          <p className="text-sm font-normal text-modern-charcoal-500 dark:text-modern-silver-400 truncate max-w-[200px]">
             {currentUser?.email}
           </p>
         </DropdownMenuLabel>
         
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="bg-modern-silver-200 dark:bg-modern-charcoal-700" />
         
-        <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+        <DropdownMenuItem className="flex items-center gap-2 cursor-pointer hover:bg-modern-silver-50 dark:hover:bg-modern-charcoal-700">
           <User className="h-4 w-4" />
           <span>My Profile</span>
         </DropdownMenuItem>
         
         <DropdownMenuItem 
-          className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
+          className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
           onClick={handleLogout}
         >
           <LogOut className="h-4 w-4" />

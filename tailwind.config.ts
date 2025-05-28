@@ -63,39 +63,54 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// New system colors
-				system: {
-					blue: '#007AFF',
-					green: '#34C759',
-					red: '#FF3B30',
-					orange: '#FF9500',
-					teal: '#5AC8FA',
-					indigo: '#5856D6',
-					purple: '#AF52DE',
-					lightGray: '#F2F2F7',
-					darkGray: '#1C1C1E',
+				// Modern silver, white, black palette
+				modern: {
+					silver: {
+						50: '#f8fafc',
+						100: '#f1f5f9',
+						200: '#e2e8f0',
+						300: '#cbd5e1',
+						400: '#94a3b8',
+						500: '#64748b',
+						600: '#475569',
+						700: '#334155',
+						800: '#1e293b',
+						900: '#0f172a'
+					},
+					charcoal: {
+						50: '#f9fafb',
+						100: '#f3f4f6',
+						200: '#e5e7eb',
+						300: '#d1d5db',
+						400: '#9ca3af',
+						500: '#6b7280',
+						600: '#4b5563',
+						700: '#374151',
+						800: '#1f2937',
+						900: '#111827'
+					}
 				},
-				// Custom health app colors - updated with the new color scheme
+				// Updated health app colors with modern palette
 				health: {
-					teal: {
-						light: '#7ADEEA',
-						DEFAULT: '#5AC8FA',
-						dark: '#3ABEF1'
+					silver: {
+						light: '#f1f5f9',
+						DEFAULT: '#94a3b8',
+						dark: '#475569'
 					},
-					purple: {
-						light: '#BF7DE8',
-						DEFAULT: '#AF52DE',
-						dark: '#9E2ECF'
+					charcoal: {
+						light: '#6b7280',
+						DEFAULT: '#374151',
+						dark: '#111827'
 					},
-					orange: {
-						light: '#FFAA40',
-						DEFAULT: '#FF9500',
-						dark: '#E67E00'
+					accent: {
+						light: '#e2e8f0',
+						DEFAULT: '#64748b',
+						dark: '#334155'
 					},
-					blue: {
-						light: '#F2F2F7',
-						DEFAULT: '#007AFF',
-						dark: '#1C1C1E'
+					contrast: {
+						light: '#f8fafc',
+						DEFAULT: '#0f172a',
+						dark: '#000000'
 					}
 				}
 			},
