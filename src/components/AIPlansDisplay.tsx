@@ -7,6 +7,7 @@ import { analyzeUserInput } from '@/utils/planGenerator/inputAnalyzer';
 import { Badge } from '@/components/ui/badge';
 import { HealthPlanCardSkeleton } from '@/components/ui/skeleton-loaders';
 import { EnhancedLoadingIndicator } from '@/components/ui/enhanced-loading-indicator';
+import { useOfflineStatus } from '@/hooks/useOfflineStatus';
 
 interface AIPlansDisplayProps {
   plans: AIHealthPlan[];
@@ -23,6 +24,8 @@ export const AIPlansDisplay = ({
   onBack,
   isLoading = false
 }: AIPlansDisplayProps) => {
+  const { isOffline } = useOfflineStatus();
+
   if (isLoading) {
     return (
       <div className="w-full max-w-4xl mx-auto">
@@ -35,12 +38,14 @@ export const AIPlansDisplay = ({
           >
             ←
           </Button>
-          <h2 className="text-2xl font-semibold">Analyzing Your Health Needs</h2>
+          <h2 className="text-2xl font-semibold">
+            {isOffline ? "Offline - Loading Saved Plans" : "Analyzing Your Health Needs"}
+          </h2>
         </div>
         
         <EnhancedLoadingIndicator
-          state="loading"
-          loadingText="Our AI is creating your custom health plans..."
+          state={isOffline ? "offline" : "loading"}
+          loadingText={isOffline ? "Loading saved data..." : "Our AI is creating your custom health plans..."}
           showSkeleton={true}
           skeletonComponent={
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -86,7 +91,10 @@ export const AIPlansDisplay = ({
         >
           ←
         </Button>
-        <h2 className="text-2xl font-semibold">Your Custom AI Health Plans</h2>
+        <h2 className="text-2xl font-semibold">
+          Your Custom AI Health Plans
+          {isOffline && <span className="text-sm text-muted-foreground ml-2">(Offline Mode)</span>}
+        </h2>
       </div>
       
       <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg mb-6">
@@ -138,6 +146,12 @@ export const AIPlansDisplay = ({
             )}
           </div>
         )}
+
+        {isOffline && (
+          <div className="mt-3 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 rounded text-sm text-amber-700 dark:text-amber-300">
+            ⚠️ You're offline. Plan details may be limited and booking features are unavailable.
+          </div>
+        )}
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -153,7 +167,12 @@ export const AIPlansDisplay = ({
       
       <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
         <p>Each plan is customized to your specific needs and budget constraints.</p>
-        <p>Select a plan to view details and book with professionals.</p>
+        <p>
+          {isOffline 
+            ? "Select a plan to view cached details. Booking will be available when you're back online."
+            : "Select a plan to view details and book with professionals."
+          }
+        </p>
       </div>
     </motion.div>
   );

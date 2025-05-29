@@ -9,8 +9,8 @@ import { AvailabilityCalendar } from './calendar/AvailabilityCalendar';
 import { CalendarIntegrationDialog } from './calendar/CalendarIntegrationDialog';
 import { useCalendarIntegration } from '@/hooks/useCalendarIntegration';
 import { useNetworkOperation } from '@/hooks/useOfflineStatus';
-import { Calendar, Clock, MapPin, Star, Settings } from 'lucide-react';
-import { EnhancedLoadingIndicator } from '@/components/ui/enhanced-loading-indicator';
+import { Calendar, Clock, MapPin, Star, Settings, WifiOff } from 'lucide-react';
+import { EnhancedLoadingIndicator, useLoadingState } from '@/components/ui/enhanced-loading-indicator';
 
 interface PractitionerCardProps {
   practitioner: Practitioner;
@@ -27,26 +27,52 @@ export const PractitionerCard: React.FC<PractitionerCardProps> = ({
 }) => {
   const [showAvailability, setShowAvailability] = useState(false);
   const [showIntegrationDialog, setShowIntegrationDialog] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const { integrations, loadIntegrations, syncCalendars } = useCalendarIntegration(practitioner.id);
-  const { executeIfOnline } = useNetworkOperation();
+  const { executeIfOnline, isOnline } = useNetworkOperation();
+  
+  // Use the enhanced loading state hook for calendar sync
+  const { 
+    state: syncState, 
+    setLoading: setSyncLoading, 
+    setSuccess: setSyncSuccess, 
+    setError: setSyncError,
+    reset: resetSyncState 
+  } = useLoadingState();
 
   const handleBooking = () => {
+    if (!isOnline) {
+      setSyncError("Booking unavailable offline. Please connect to the internet.");
+      return;
+    }
     onSelect(practitioner);
   };
 
   const handleSyncCalendars = async () => {
-    setIsLoading(true);
+    resetSyncState();
+    setSyncLoading();
+    
     await executeIfOnline(
       async () => {
-        await syncCalendars(practitioner.id);
-        await loadIntegrations(practitioner.id);
+        try {
+          await syncCalendars(practitioner.id);
+          await loadIntegrations(practitioner.id);
+          setSyncSuccess();
+        } catch (error) {
+          setSyncError("Failed to sync calendars. Please try again.");
+        }
       },
       () => {
-        console.log('Calendar sync will happen when back online');
+        setSyncError("Calendar sync requires an internet connection");
       }
     );
-    setIsLoading(false);
+  };
+
+  const handleViewAvailability = () => {
+    if (!isOnline) {
+      setSyncError("Availability requires an internet connection");
+      return;
+    }
+    setShowAvailability(true);
   };
 
   return (
@@ -77,6 +103,12 @@ export const PractitionerCard: React.FC<PractitionerCardProps> = ({
             {matchScore && (
               <Badge variant="teal" className="mt-1 text-xs">
                 {matchScore}% match
+              </Badge>
+            )}
+            {!isOnline && (
+              <Badge variant="outline" className="mt-1 text-xs text-muted-foreground">
+                <WifiOff className="w-3 h-3 mr-1" />
+                Offline
               </Badge>
             )}
           </div>
@@ -111,16 +143,18 @@ export const PractitionerCard: React.FC<PractitionerCardProps> = ({
           )}
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 flex-wrap gap-2">
           <Dialog>
             <DialogTrigger asChild>
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => setShowAvailability(true)}
+                onClick={handleViewAvailability}
+                disabled={!isOnline}
+                className={!isOnline ? "opacity-50" : ""}
               >
                 <Calendar className="w-4 h-4 mr-2" />
-                View Availability
+                {isOnline ? "View Availability" : "Offline"}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
@@ -139,17 +173,20 @@ export const PractitionerCard: React.FC<PractitionerCardProps> = ({
           </Dialog>
 
           <EnhancedLoadingIndicator
-            state={isLoading ? "loading" : "idle"}
-            loadingText="Syncing..."
+            state={syncState}
+            loadingText="Syncing calendars..."
+            errorMessage="Sync failed"
+            onRetry={handleSyncCalendars}
           >
             <Button 
               variant="outline" 
               size="sm"
               onClick={handleSyncCalendars}
-              disabled={isLoading}
+              disabled={!isOnline || syncState === "loading"}
+              className={!isOnline ? "opacity-50" : ""}
             >
               <Clock className="w-4 h-4 mr-2" />
-              Sync Calendars
+              {!isOnline ? "Offline" : syncState === "loading" ? "Syncing..." : "Sync Calendars"}
             </Button>
           </EnhancedLoadingIndicator>
 
@@ -157,14 +194,16 @@ export const PractitionerCard: React.FC<PractitionerCardProps> = ({
             variant="outline" 
             size="sm"
             onClick={() => setShowIntegrationDialog(true)}
+            disabled={!isOnline}
+            className={!isOnline ? "opacity-50" : ""}
           >
             <Settings className="w-4 h-4 mr-2" />
-            Manage
+            {isOnline ? "Manage" : "Offline"}
           </Button>
         </div>
 
         <div className="flex justify-between items-center pt-2">
-          <div className="flex space-x-1">
+          <div className="flex space-x-1 flex-wrap">
             {integrations.length > 0 ? (
               integrations.map((integration) => (
                 <Badge key={integration.id} variant="silver" className="text-xs">
@@ -172,17 +211,30 @@ export const PractitionerCard: React.FC<PractitionerCardProps> = ({
                 </Badge>
               ))
             ) : (
-              <span className="text-xs text-modern-gray">No calendar integrations</span>
+              <span className="text-xs text-modern-gray">
+                {isOnline ? "No calendar integrations" : "Calendar data unavailable offline"}
+              </span>
             )}
           </div>
           
-          <Button onClick={handleBooking} className="modern-button">
-            Book Session
+          <Button 
+            onClick={handleBooking} 
+            className="modern-button"
+            disabled={!isOnline}
+          >
+            {isOnline ? "Book Session" : "Offline - Unavailable"}
           </Button>
         </div>
 
+        {/* Display sync errors */}
+        {syncState === "error" && (
+          <div className="text-xs text-red-600 dark:text-red-400 mt-2">
+            Calendar sync failed. Please check your connection and try again.
+          </div>
+        )}
+
         <CalendarIntegrationDialog
-          isOpen={showIntegrationDialog}
+          isOpen={showIntegrationDialog && isOnline}
           onClose={() => setShowIntegrationDialog(false)}
           practitionerId={practitioner.id}
           onIntegrationAdded={() => loadIntegrations(practitioner.id)}

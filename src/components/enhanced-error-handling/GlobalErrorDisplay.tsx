@@ -17,7 +17,7 @@ export interface GlobalErrorDisplayProps {
 }
 
 /**
- * Enhanced global error display with offline detection
+ * Enhanced global error display with offline detection and network-aware messaging
  */
 export const GlobalErrorDisplay: React.FC<GlobalErrorDisplayProps> = ({
   error,
@@ -27,7 +27,7 @@ export const GlobalErrorDisplay: React.FC<GlobalErrorDisplayProps> = ({
   autoHideAfter
 }) => {
   const { toast } = useToast();
-  const { isOffline } = useOfflineStatus();
+  const { isOffline, isOnline } = useOfflineStatus();
   
   // Auto-hide after specified duration
   React.useEffect(() => {
@@ -46,6 +46,7 @@ export const GlobalErrorDisplay: React.FC<GlobalErrorDisplayProps> = ({
   // Check if this is a network-related error
   const isNetworkError = error.message.toLowerCase().includes('network') || 
                          error.message.toLowerCase().includes('fetch') ||
+                         error.message.toLowerCase().includes('connection') ||
                          isOffline;
   
   // Extract error information
@@ -55,7 +56,11 @@ export const GlobalErrorDisplay: React.FC<GlobalErrorDisplayProps> = ({
   
   // Tailor the error message based on error type and network status
   const getErrorTitle = () => {
-    if (isNetworkError || isOffline) {
+    if (isOffline) {
+      return "You're Offline";
+    }
+    
+    if (isNetworkError) {
       return "Connection Problem";
     }
     
@@ -74,30 +79,46 @@ export const GlobalErrorDisplay: React.FC<GlobalErrorDisplayProps> = ({
   };
 
   const getErrorMessage = () => {
-    if (isNetworkError || isOffline) {
-      return "Please check your internet connection and try again.";
+    if (isOffline) {
+      return "Please check your internet connection. Your data will be saved when you're back online.";
     }
+    
+    if (isNetworkError) {
+      return "We're having trouble connecting to our services. Please check your connection and try again.";
+    }
+    
     return userMessage;
   };
 
   const getErrorIcon = () => {
-    if (isNetworkError || isOffline) {
+    if (isOffline || isNetworkError) {
       return <WifiOff className="h-5 w-5 text-red-500" />;
     }
     return <AlertCircle className="h-5 w-5 text-red-500" />;
   };
+
+  const getRetryButtonText = () => {
+    if (isOffline) {
+      return "Offline - Check Connection";
+    }
+    return "Try Again";
+  };
   
-  // Display the error as a toast notification as well
+  // Display the error as a toast notification as well (but only once)
   React.useEffect(() => {
     if (error) {
       toast({
         title: getErrorTitle(),
         description: getErrorMessage(),
         variant: "destructive",
-        action: onRetry ? <Button size="sm" onClick={onRetry}>Retry</Button> : undefined
+        action: (onRetry && isOnline) ? (
+          <Button size="sm" onClick={onRetry} disabled={isOffline}>
+            {getRetryButtonText()}
+          </Button>
+        ) : undefined
       });
     }
-  }, [error, toast, onRetry]);
+  }, [error, isOffline]); // Add isOffline dependency to update toast when status changes
 
   return (
     <AnimatePresence>
@@ -117,6 +138,11 @@ export const GlobalErrorDisplay: React.FC<GlobalErrorDisplayProps> = ({
             </h3>
             <div className="mt-1 text-sm text-red-700 dark:text-red-200">
               <p>{getErrorMessage()}</p>
+              {isOffline && (
+                <p className="mt-2 text-xs text-red-600 dark:text-red-300">
+                  Some features may be limited while offline.
+                </p>
+              )}
             </div>
             <div className="mt-3 flex gap-x-2">
               {onRetry && (
@@ -127,8 +153,8 @@ export const GlobalErrorDisplay: React.FC<GlobalErrorDisplayProps> = ({
                   onClick={onRetry}
                   disabled={isOffline}
                 >
-                  <RefreshCw className="h-3.5 w-3.5 mr-1" />
-                  {isOffline ? 'Offline' : 'Try Again'}
+                  <RefreshCw className={`h-3.5 w-3.5 mr-1 ${isOffline ? 'opacity-50' : ''}`} />
+                  {getRetryButtonText()}
                 </Button>
               )}
               {onDismiss && (
