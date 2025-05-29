@@ -166,32 +166,32 @@ export const EnhancedLoadingIndicator: React.FC<EnhancedLoadingIndicatorProps> =
  */
 export const useLoadingState = (initialState: LoadingState = "idle") => {
   const [state, setState] = React.useState<LoadingState>(initialState);
-  const [error, setError] = React.useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   const setLoading = () => {
     setState("loading");
-    setError(null);
+    setErrorMessage(null);
   };
 
   const setSuccess = () => {
     setState("success");
-    setError(null);
+    setErrorMessage(null);
   };
 
-  const setError = React.useCallback((errorMessage: string) => {
+  const setError = React.useCallback((message: string) => {
     setState("error");
-    setError(errorMessage);
+    setErrorMessage(message);
   }, []);
 
   const setOffline = () => setState("offline");
   const reset = () => {
     setState("idle");
-    setError(null);
+    setErrorMessage(null);
   };
 
   return {
     state,
-    error,
+    error: errorMessage,
     isLoading: state === "loading",
     isError: state === "error",
     isSuccess: state === "success",
