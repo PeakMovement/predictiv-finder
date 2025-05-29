@@ -5,6 +5,8 @@ import { AIHealthPlan } from '@/types';
 import HealthPlanCard from './HealthPlanCard';
 import { analyzeUserInput } from '@/utils/planGenerator/inputAnalyzer';
 import { Badge } from '@/components/ui/badge';
+import { HealthPlanCardSkeleton } from '@/components/ui/skeleton-loaders';
+import { EnhancedLoadingIndicator } from '@/components/ui/enhanced-loading-indicator';
 
 interface AIPlansDisplayProps {
   plans: AIHealthPlan[];
@@ -36,19 +38,18 @@ export const AIPlansDisplay = ({
           <h2 className="text-2xl font-semibold">Analyzing Your Health Needs</h2>
         </div>
         
-        <div className="text-center py-12">
-          <div className="inline-block animate-pulse-soft mb-6">
-            <span className="text-5xl">🧠</span>
-          </div>
-          <h3 className="text-xl font-medium mb-2">Our AI is creating your custom health plans</h3>
-          <p className="text-gray-600 dark:text-gray-300">This might take a few moments...</p>
-          
-          <div className="mt-8 flex justify-center">
-            <div className="bg-gray-200 dark:bg-gray-700 w-64 h-2 rounded-full overflow-hidden">
-              <div className="bg-health-purple h-full w-2/3 rounded-full animate-pulse"></div>
+        <EnhancedLoadingIndicator
+          state="loading"
+          loadingText="Our AI is creating your custom health plans..."
+          showSkeleton={true}
+          skeletonComponent={
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <HealthPlanCardSkeleton />
+              <HealthPlanCardSkeleton />
+              <HealthPlanCardSkeleton />
             </div>
-          </div>
-        </div>
+          }
+        />
       </div>
     );
   }

@@ -1,12 +1,11 @@
 
 import React from 'react';
-import { AlertCircle, RefreshCw, Info, X } from 'lucide-react';
+import { AlertCircle, RefreshCw, WifiOff, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useOfflineStatus } from '@/hooks/useOfflineStatus';
 import { PlanGenerationErrorType } from '@/utils/planGenerator/errorHandling/planGenerationError';
-
-// Import the type guard function from the correct location
 import { isPlanGenerationError } from '@/utils/planGenerator/errorHandling';
 
 export interface GlobalErrorDisplayProps {
@@ -14,11 +13,11 @@ export interface GlobalErrorDisplayProps {
   onDismiss?: () => void;
   onRetry?: () => void;
   className?: string;
-  autoHideAfter?: number; // in milliseconds
+  autoHideAfter?: number;
 }
 
 /**
- * A consistent global error display component that can be used throughout the app
+ * Enhanced global error display with offline detection
  */
 export const GlobalErrorDisplay: React.FC<GlobalErrorDisplayProps> = ({
   error,
@@ -28,6 +27,7 @@ export const GlobalErrorDisplay: React.FC<GlobalErrorDisplayProps> = ({
   autoHideAfter
 }) => {
   const { toast } = useToast();
+  const { isOffline } = useOfflineStatus();
   
   // Auto-hide after specified duration
   React.useEffect(() => {
@@ -43,13 +43,22 @@ export const GlobalErrorDisplay: React.FC<GlobalErrorDisplayProps> = ({
   // If there's no error, don't render anything
   if (!error) return null;
   
-  // Extract error information (specialized for PlanGenerationError if applicable)
+  // Check if this is a network-related error
+  const isNetworkError = error.message.toLowerCase().includes('network') || 
+                         error.message.toLowerCase().includes('fetch') ||
+                         isOffline;
+  
+  // Extract error information
   const isPlanError = isPlanGenerationError(error);
   const errorType = isPlanError ? (error as any).type : PlanGenerationErrorType.UNEXPECTED;
   const userMessage = isPlanError ? (error as any).userMessage : error.message;
   
-  // Tailor the error message based on error type
+  // Tailor the error message based on error type and network status
   const getErrorTitle = () => {
+    if (isNetworkError || isOffline) {
+      return "Connection Problem";
+    }
+    
     switch (errorType) {
       case PlanGenerationErrorType.INPUT_VALIDATION:
         return "Please Check Your Input";
@@ -58,10 +67,24 @@ export const GlobalErrorDisplay: React.FC<GlobalErrorDisplayProps> = ({
       case PlanGenerationErrorType.SERVICE_MATCHING:
         return "Service Matching Issue";
       case PlanGenerationErrorType.EXTERNAL_SERVICE:
-        return "Connection Error";
+        return "Service Unavailable";
       default:
         return "Something Went Wrong";
     }
+  };
+
+  const getErrorMessage = () => {
+    if (isNetworkError || isOffline) {
+      return "Please check your internet connection and try again.";
+    }
+    return userMessage;
+  };
+
+  const getErrorIcon = () => {
+    if (isNetworkError || isOffline) {
+      return <WifiOff className="h-5 w-5 text-red-500" />;
+    }
+    return <AlertCircle className="h-5 w-5 text-red-500" />;
   };
   
   // Display the error as a toast notification as well
@@ -69,12 +92,12 @@ export const GlobalErrorDisplay: React.FC<GlobalErrorDisplayProps> = ({
     if (error) {
       toast({
         title: getErrorTitle(),
-        description: userMessage,
+        description: getErrorMessage(),
         variant: "destructive",
         action: onRetry ? <Button size="sm" onClick={onRetry}>Retry</Button> : undefined
       });
     }
-  }, [error, toast, onRetry, userMessage]);
+  }, [error, toast, onRetry]);
 
   return (
     <AnimatePresence>
@@ -86,14 +109,14 @@ export const GlobalErrorDisplay: React.FC<GlobalErrorDisplayProps> = ({
       >
         <div className="flex items-start">
           <div className="flex-shrink-0 mt-0.5">
-            <AlertCircle className="h-5 w-5 text-red-500" />
+            {getErrorIcon()}
           </div>
           <div className="ml-3 flex-1">
             <h3 className="text-sm font-medium text-red-800 dark:text-red-300">
               {getErrorTitle()}
             </h3>
             <div className="mt-1 text-sm text-red-700 dark:text-red-200">
-              <p>{userMessage}</p>
+              <p>{getErrorMessage()}</p>
             </div>
             <div className="mt-3 flex gap-x-2">
               {onRetry && (
@@ -102,9 +125,10 @@ export const GlobalErrorDisplay: React.FC<GlobalErrorDisplayProps> = ({
                   variant="outline" 
                   className="border-red-300 text-red-700 hover:bg-red-50 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-900/30"
                   onClick={onRetry}
+                  disabled={isOffline}
                 >
                   <RefreshCw className="h-3.5 w-3.5 mr-1" />
-                  Try Again
+                  {isOffline ? 'Offline' : 'Try Again'}
                 </Button>
               )}
               {onDismiss && (
@@ -124,29 +148,6 @@ export const GlobalErrorDisplay: React.FC<GlobalErrorDisplayProps> = ({
       </motion.div>
     </AnimatePresence>
   );
-};
-
-/**
- * Hook to manage global error state throughout the app
- */
-export const useGlobalError = () => {
-  const [error, setError] = React.useState<Error | null>(null);
-  
-  const showError = (newError: Error | string) => {
-    if (typeof newError === 'string') {
-      setError(new Error(newError));
-    } else {
-      setError(newError);
-    }
-  };
-  
-  const clearError = () => setError(null);
-  
-  return {
-    error,
-    showError,
-    clearError
-  };
 };
 
 export default GlobalErrorDisplay;

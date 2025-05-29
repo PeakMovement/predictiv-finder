@@ -8,7 +8,9 @@ import { Practitioner } from '@/types';
 import { AvailabilityCalendar } from './calendar/AvailabilityCalendar';
 import { CalendarIntegrationDialog } from './calendar/CalendarIntegrationDialog';
 import { useCalendarIntegration } from '@/hooks/useCalendarIntegration';
+import { useNetworkOperation } from '@/hooks/useOfflineStatus';
 import { Calendar, Clock, MapPin, Star, Settings } from 'lucide-react';
+import { EnhancedLoadingIndicator } from '@/components/ui/enhanced-loading-indicator';
 
 interface PractitionerCardProps {
   practitioner: Practitioner;
@@ -25,15 +27,26 @@ export const PractitionerCard: React.FC<PractitionerCardProps> = ({
 }) => {
   const [showAvailability, setShowAvailability] = useState(false);
   const [showIntegrationDialog, setShowIntegrationDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { integrations, loadIntegrations, syncCalendars } = useCalendarIntegration(practitioner.id);
+  const { executeIfOnline } = useNetworkOperation();
 
   const handleBooking = () => {
     onSelect(practitioner);
   };
 
   const handleSyncCalendars = async () => {
-    await syncCalendars(practitioner.id);
-    await loadIntegrations(practitioner.id);
+    setIsLoading(true);
+    await executeIfOnline(
+      async () => {
+        await syncCalendars(practitioner.id);
+        await loadIntegrations(practitioner.id);
+      },
+      () => {
+        console.log('Calendar sync will happen when back online');
+      }
+    );
+    setIsLoading(false);
   };
 
   return (
@@ -125,14 +138,20 @@ export const PractitionerCard: React.FC<PractitionerCardProps> = ({
             </DialogContent>
           </Dialog>
 
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleSyncCalendars}
+          <EnhancedLoadingIndicator
+            state={isLoading ? "loading" : "idle"}
+            loadingText="Syncing..."
           >
-            <Clock className="w-4 h-4 mr-2" />
-            Sync Calendars
-          </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleSyncCalendars}
+              disabled={isLoading}
+            >
+              <Clock className="w-4 h-4 mr-2" />
+              Sync Calendars
+            </Button>
+          </EnhancedLoadingIndicator>
 
           <Button 
             variant="outline" 

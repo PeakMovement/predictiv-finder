@@ -9,6 +9,8 @@ import { AIHealthPlan } from "@/types";
 import { useAppNavigation } from "@/hooks/use-app-navigation";
 import { usePractitionerService } from "@/services/practitioner-service";
 import { useAIPlansService } from "@/services/ai-plans-service";
+import { OfflineBanner } from "@/components/ui/offline-banner";
+import { EnhancedLoadingIndicator } from "@/components/ui/enhanced-loading-indicator";
 
 // Import our component stages
 import AIInputStage from "./app-stages/AIInputStage";
@@ -86,103 +88,122 @@ const AppContent: React.FC = () => {
     setShowCustomizer(false);
   };
 
-  return (
-    <main className="container max-w-6xl mx-auto px-4 py-8">
-      <AnimatePresence mode="wait">
-        <ErrorDisplay error={error} />
-        
-        {stage === 'home' && (
-          <HomeHero 
-            onSelectCategoryFlow={() => setStage('category-selector')} 
-            onSelectAIFlow={() => setStage('ai-input')} 
-          />
-        )}
-        
-        {stage === 'category-selector' && (
-          <EnhancedCategorySelection
-            selectedCategories={selectedCategories}
-            onCategoryToggle={handleCategoryToggle}
-            onContinue={() => handleCategorySubmit(selectedCategories)}
-          />
-        )}
-        
-        {stage === 'category-questionnaire' && selectedCategories.length > 0 && (
-          <QuestionnaireView
-            categories={selectedCategories}
-            onSubmit={handleQuestionnaireSubmit}
-            onBack={() => setStage('category-selector')}
-          />
-        )}
-        
-        {stage === 'practitioner-list' && (
-          <PractitionerView
-            practitioners={getMatchingPractitioners(userCriteria)}
-            criteria={userCriteria}
-            onSelectPractitioner={handleSelectPractitioner}
-            onBack={() => setStage('category-questionnaire')}
-            onAIAssistant={() => setStage('ai-input')}
-          />
-        )}
-        
-        {stage === 'ai-input' && (
-          <AIInputStage
-            onSubmit={handleAIInputSubmitWithGeneration}
-            isLoading={isGenerating}
-            onBack={resetToHome}
-          />
-        )}
-        
-        {stage === 'ai-plans' && !showComparison && (
-          <AIPlanStage
-            plans={aiPlans}
-            userInput={userQuery}
-            isLoading={isGenerating}
-            onSelectPlan={handleSelectPlan}
-            onBack={() => setStage('ai-input')}
-            onCompare={() => setShowComparison(true)}
-          />
-        )}
-        
-        {stage === 'ai-plans' && showComparison && (
-          <ComparisonView
-            plans={aiPlans}
-            onSelectPlan={handleSelectPlan}
-            onBack={() => setShowComparison(false)}
-          />
-        )}
+  // Determine loading state for the current stage
+  const getLoadingState = () => {
+    if (error) return "error";
+    if (isGenerating) return "loading";
+    return "success";
+  };
 
-        {stage === 'plan-details' && selectedPlan && !showCustomizer && !showProgress && (
-          <PlanDetailsStage
-            plan={selectedPlan}
-            userQuery={userQuery}
-            onBack={() => setStage('ai-plans')}
-            onCustomize={handleCustomizePlan}
-            onTrackProgress={() => setShowProgress(true)}
-          />
-        )}
+  return (
+    <>
+      <OfflineBanner />
+      <main className="container max-w-6xl mx-auto px-4 py-8">
+        <AnimatePresence mode="wait">
+          <ErrorDisplay error={error} />
+          
+          {stage === 'home' && (
+            <HomeHero 
+              onSelectCategoryFlow={() => setStage('category-selector')} 
+              onSelectAIFlow={() => setStage('ai-input')} 
+            />
+          )}
+          
+          {stage === 'category-selector' && (
+            <EnhancedCategorySelection
+              selectedCategories={selectedCategories}
+              onCategoryToggle={handleCategoryToggle}
+              onContinue={() => handleCategorySubmit(selectedCategories)}
+            />
+          )}
+          
+          {stage === 'category-questionnaire' && selectedCategories.length > 0 && (
+            <QuestionnaireView
+              categories={selectedCategories}
+              onSubmit={handleQuestionnaireSubmit}
+              onBack={() => setStage('category-selector')}
+            />
+          )}
+          
+          {stage === 'practitioner-list' && (
+            <PractitionerView
+              practitioners={getMatchingPractitioners(userCriteria)}
+              criteria={userCriteria}
+              onSelectPractitioner={handleSelectPractitioner}
+              onBack={() => setStage('category-questionnaire')}
+              onAIAssistant={() => setStage('ai-input')}
+            />
+          )}
+          
+          {stage === 'ai-input' && (
+            <AIInputStage
+              onSubmit={handleAIInputSubmitWithGeneration}
+              isLoading={isGenerating}
+              onBack={resetToHome}
+            />
+          )}
+          
+          {stage === 'ai-plans' && !showComparison && (
+            <EnhancedLoadingIndicator
+              state={getLoadingState()}
+              loadingText="Creating your personalized health plans..."
+              errorMessage={error || "Failed to generate plans"}
+              onRetry={() => generateAIPlans(userQuery)}
+              showSkeleton={true}
+              skeletonLines={3}
+            >
+              <AIPlanStage
+                plans={aiPlans}
+                userInput={userQuery}
+                isLoading={isGenerating}
+                onSelectPlan={handleSelectPlan}
+                onBack={() => setStage('ai-input')}
+                onCompare={() => setShowComparison(true)}
+              />
+            </EnhancedLoadingIndicator>
+          )}
+          
+          {stage === 'ai-plans' && showComparison && (
+            <ComparisonView
+              plans={aiPlans}
+              onSelectPlan={handleSelectPlan}
+              onBack={() => setShowComparison(false)}
+            />
+          )}
+
+          {stage === 'plan-details' && selectedPlan && !showCustomizer && !showProgress && (
+            <PlanDetailsStage
+              plan={selectedPlan}
+              userQuery={userQuery}
+              onBack={() => setStage('ai-plans')}
+              onCustomize={handleCustomizePlan}
+              onTrackProgress={() => setShowProgress(true)}
+            />
+          )}
+          
+          {stage === 'plan-details' && selectedPlan && showCustomizer && (
+            <CustomizerView
+              plan={selectedPlan}
+              onSave={handleSaveCustomizedPlan}
+              onCancel={() => setShowCustomizer(false)}
+            />
+          )}
+          
+          {stage === 'plan-details' && selectedPlan && showProgress && (
+            <ProgressView
+              plan={selectedPlan}
+              onBack={() => setShowProgress(false)}
+            />
+          )}
+        </AnimatePresence>
         
-        {stage === 'plan-details' && selectedPlan && showCustomizer && (
-          <CustomizerView
-            plan={selectedPlan}
-            onSave={handleSaveCustomizedPlan}
-            onCancel={() => setShowCustomizer(false)}
-          />
-        )}
-        
-        {stage === 'plan-details' && selectedPlan && showProgress && (
-          <ProgressView
-            plan={selectedPlan}
-            onBack={() => setShowProgress(false)}
-          />
-        )}
-      </AnimatePresence>
-      
-      <NavigationControls 
-        stage={stage}
-        onBack={handleBack}
-        onStartOver={resetToHome}
-      />
-    </main>
+        <NavigationControls 
+          stage={stage}
+          onBack={handleBack}
+          onStartOver={resetToHome}
+        />
+      </main>
+    </>
   );
 };
 
