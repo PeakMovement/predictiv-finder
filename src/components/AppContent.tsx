@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import HomeHero from "@/components/homepage/HomeHero";
@@ -11,6 +10,7 @@ import { usePractitionerService } from "@/services/practitioner-service";
 import { useAIPlansService } from "@/services/ai-plans-service";
 import { OfflineBanner } from "@/components/ui/offline-banner";
 import { EnhancedLoadingIndicator } from "@/components/ui/enhanced-loading-indicator";
+import StateRestorationBanner from "@/components/offline/StateRestorationBanner";
 
 // Import our component stages
 import AIInputStage from "./app-stages/AIInputStage";
@@ -40,6 +40,7 @@ const AppContent: React.FC = () => {
     userCriteria,
     userQuery,
     selectedPlan,
+    showRestorationBanner,
     handleBack,
     resetToHome,
     handleCategoryToggle,
@@ -47,7 +48,9 @@ const AppContent: React.FC = () => {
     handleQuestionnaireSubmit,
     handleAIInputSubmit,
     handleSelectPlan,
-    setUserQuery
+    setUserQuery,
+    restorePersistedState,
+    dismissRestorationBanner
   } = useAppNavigation();
   
   const {
@@ -227,6 +230,15 @@ const AppContent: React.FC = () => {
   return (
     <>
       <OfflineBanner />
+      
+      {showRestorationBanner && (
+        <StateRestorationBanner
+          onRestore={restorePersistedState}
+          onDismiss={dismissRestorationBanner}
+          timestamp={Date.now() - 1000} // This will be updated with actual timestamp from persisted state
+        />
+      )}
+      
       <main className="container max-w-6xl mx-auto px-4 py-8">
         <ErrorDisplay error={error} />
         

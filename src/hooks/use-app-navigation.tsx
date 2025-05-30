@@ -1,16 +1,15 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AppStage } from "@/types/app";
 import { ServiceCategory, DetailedUserCriteria, AIHealthPlan } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { findAlternativeCategories } from "@/utils/aiPlanGenerator";
 import { validateArrayInput } from "@/utils/inputValidation";
+import { useOfflinePersistence } from "./use-offline-persistence";
 
 /**
  * Custom hook for managing application navigation and state transitions
- * Encapsulates navigation logic and state management for the main application flow
- * 
- * @returns An object containing navigation state and handler functions
+ * Now includes offline persistence capabilities
  */
 export function useAppNavigation() {
   const [stage, setStage] = useState<AppStage>('home');
@@ -25,7 +24,65 @@ export function useAppNavigation() {
   });
   const [userQuery, setUserQuery] = useState<string>('');
   const [selectedPlan, setSelectedPlan] = useState<AIHealthPlan | null>(null);
+  const [showRestorationBanner, setShowRestorationBanner] = useState(false);
+  
   const { toast } = useToast();
+  const { 
+    saveState, 
+    getPersistedState, 
+    clearPersistedState, 
+    hasPersistedState,
+    isHydrated 
+  } = useOfflinePersistence();
+
+  // Check for persisted state on hydration
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    if (hasPersistedState()) {
+      const persistedState = getPersistedState();
+      if (persistedState && persistedState.stage !== 'home') {
+        setShowRestorationBanner(true);
+      }
+    }
+  }, [isHydrated, hasPersistedState, getPersistedState]);
+
+  // Persist state whenever it changes (but only after hydration)
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    saveState({
+      stage,
+      selectedCategories,
+      userCriteria,
+      userQuery,
+      selectedPlan
+    });
+  }, [isHydrated, stage, selectedCategories, userCriteria, userQuery, selectedPlan, saveState]);
+
+  // Restore state from persistence
+  const restorePersistedState = useCallback(() => {
+    const persistedState = getPersistedState();
+    if (persistedState) {
+      if (persistedState.stage) setStage(persistedState.stage);
+      if (persistedState.selectedCategories) setSelectedCategories(persistedState.selectedCategories);
+      if (persistedState.userCriteria) setUserCriteria(persistedState.userCriteria);
+      if (persistedState.userQuery) setUserQuery(persistedState.userQuery);
+      if (persistedState.selectedPlan) setSelectedPlan(persistedState.selectedPlan);
+      
+      toast({
+        title: "Progress restored",
+        description: "Your previous session has been restored.",
+      });
+    }
+    setShowRestorationBanner(false);
+  }, [getPersistedState, toast]);
+
+  // Dismiss restoration banner
+  const dismissRestorationBanner = useCallback(() => {
+    setShowRestorationBanner(false);
+    clearPersistedState();
+  }, [clearPersistedState]);
 
   /**
    * Resets the application state to initial values
@@ -42,7 +99,9 @@ export function useAppNavigation() {
       }
     });
     setUserQuery('');
-  }, []);
+    setSelectedPlan(null);
+    clearPersistedState();
+  }, [clearPersistedState]);
   
   /**
    * Handles navigation to previous stage based on current stage
@@ -152,6 +211,7 @@ export function useAppNavigation() {
     userCriteria,
     userQuery,
     selectedPlan,
+    showRestorationBanner,
     
     // Action handlers
     handleBack,
@@ -162,5 +222,9 @@ export function useAppNavigation() {
     handleAIInputSubmit,
     handleSelectPlan,
     setUserQuery,
+    
+    // Offline persistence
+    restorePersistedState,
+    dismissRestorationBanner,
   };
 }
