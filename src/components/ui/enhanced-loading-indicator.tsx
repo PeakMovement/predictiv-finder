@@ -59,19 +59,37 @@ export const EnhancedLoadingIndicator: React.FC<EnhancedLoadingIndicatorProps> =
 }) => {
   const [showLoading, setShowLoading] = React.useState(false);
   const [isOnline, setIsOnline] = React.useState(navigator.onLine);
+  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  // Handle minimum loading time to prevent flashing
+  // Handle minimum loading time to prevent flashing with improved cleanup
   React.useEffect(() => {
-    let timer: NodeJS.Timeout;
+    // Clear any existing timer
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
     
     if (state === "loading") {
-      timer = setTimeout(() => setShowLoading(true), minLoadingTime);
+      // Show loading immediately if minLoadingTime is 0
+      if (minLoadingTime === 0) {
+        setShowLoading(true);
+      } else {
+        timerRef.current = setTimeout(() => {
+          setShowLoading(true);
+          timerRef.current = null;
+        }, minLoadingTime);
+      }
     } else {
+      // Immediately hide loading for non-loading states
       setShowLoading(false);
     }
 
+    // Cleanup function
     return () => {
-      if (timer) clearTimeout(timer);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
     };
   }, [state, minLoadingTime]);
 
@@ -127,7 +145,7 @@ export const EnhancedLoadingIndicator: React.FC<EnhancedLoadingIndicatorProps> =
     );
   }
 
-  // Loading state
+  // Loading state - only show if timer has elapsed or immediate display
   if (state === "loading" && showLoading) {
     if (showSkeleton) {
       return (
