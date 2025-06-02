@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import HomeHero from "@/components/homepage/HomeHero";
@@ -50,7 +51,8 @@ const AppContent: React.FC = () => {
     handleSelectPlan,
     setUserQuery,
     restorePersistedState,
-    dismissRestorationBanner
+    dismissRestorationBanner,
+    getPersistedState
   } = useAppNavigation();
   
   const {
@@ -91,12 +93,15 @@ const AppContent: React.FC = () => {
     setShowCustomizer(false);
   };
 
-  // Determine loading state for the current stage
+  // Determine loading state for the current stage with reduced minimum time
   const getLoadingState = () => {
     if (error) return "error";
     if (isGenerating) return "loading";
     return "success";
   };
+
+  // Get persisted state for restoration banner
+  const persistedState = getPersistedState();
 
   // Render the main content based on current stage
   const renderMainContent = () => {
@@ -166,6 +171,7 @@ const AppContent: React.FC = () => {
           onRetry={() => generateAIPlans(userQuery)}
           showSkeleton={true}
           skeletonLines={3}
+          minLoadingTime={100}
         >
           <AIPlanStage
             plans={aiPlans}
@@ -231,11 +237,16 @@ const AppContent: React.FC = () => {
     <>
       <OfflineBanner />
       
-      {showRestorationBanner && (
+      {showRestorationBanner && persistedState && (
         <StateRestorationBanner
           onRestore={restorePersistedState}
           onDismiss={dismissRestorationBanner}
-          timestamp={Date.now() - 1000} // This will be updated with actual timestamp from persisted state
+          persistedState={{
+            stage: persistedState.stage || 'home',
+            selectedCategories: persistedState.selectedCategories || [],
+            userQuery: persistedState.userQuery || '',
+            timestamp: persistedState.timestamp || Date.now()
+          }}
         />
       )}
       

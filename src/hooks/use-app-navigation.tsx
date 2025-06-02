@@ -226,5 +226,6 @@ export function useAppNavigation() {
     // Offline persistence
     restorePersistedState,
     dismissRestorationBanner,
+    getPersistedState,
   };
 }

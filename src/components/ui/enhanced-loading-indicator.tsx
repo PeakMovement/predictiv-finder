@@ -38,12 +38,12 @@ export interface EnhancedLoadingIndicatorProps {
   skeletonComponent?: React.ReactNode;
   /** Additional styling */
   className?: string;
-  /** Minimum loading time to prevent flashing */
+  /** Minimum loading time to prevent flashing - reduced default */
   minLoadingTime?: number;
 }
 
 /**
- * Enhanced loading indicator with multiple states and skeleton support
+ * Enhanced loading indicator with improved anti-flashing behavior
  */
 export const EnhancedLoadingIndicator: React.FC<EnhancedLoadingIndicatorProps> = ({
   state,
@@ -55,22 +55,23 @@ export const EnhancedLoadingIndicator: React.FC<EnhancedLoadingIndicatorProps> =
   skeletonLines = 3,
   skeletonComponent,
   className,
-  minLoadingTime = 300
+  minLoadingTime = 100
 }) => {
   const [showLoading, setShowLoading] = React.useState(false);
   const [isOnline, setIsOnline] = React.useState(navigator.onLine);
   const timerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = React.useRef<number | null>(null);
 
-  // Handle minimum loading time to prevent flashing with improved cleanup
+  // Improved anti-flashing with minimum display time
   React.useEffect(() => {
-    // Clear any existing timer
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
     
     if (state === "loading") {
-      // Show loading immediately if minLoadingTime is 0
+      startTimeRef.current = Date.now();
+      
       if (minLoadingTime === 0) {
         setShowLoading(true);
       } else {
@@ -80,18 +81,34 @@ export const EnhancedLoadingIndicator: React.FC<EnhancedLoadingIndicatorProps> =
         }, minLoadingTime);
       }
     } else {
-      // Immediately hide loading for non-loading states
-      setShowLoading(false);
+      // If we were showing loading, ensure minimum display time
+      if (showLoading && startTimeRef.current) {
+        const elapsedTime = Date.now() - startTimeRef.current;
+        const remainingTime = Math.max(0, 200 - elapsedTime); // Minimum 200ms display
+        
+        if (remainingTime > 0) {
+          timerRef.current = setTimeout(() => {
+            setShowLoading(false);
+            startTimeRef.current = null;
+            timerRef.current = null;
+          }, remainingTime);
+        } else {
+          setShowLoading(false);
+          startTimeRef.current = null;
+        }
+      } else {
+        setShowLoading(false);
+        startTimeRef.current = null;
+      }
     }
 
-    // Cleanup function
     return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
     };
-  }, [state, minLoadingTime]);
+  }, [state, minLoadingTime, showLoading]);
 
   // Monitor online/offline status
   React.useEffect(() => {
@@ -145,7 +162,7 @@ export const EnhancedLoadingIndicator: React.FC<EnhancedLoadingIndicatorProps> =
     );
   }
 
-  // Loading state - only show if timer has elapsed or immediate display
+  // Loading state - only show if conditions are met
   if (state === "loading" && showLoading) {
     if (showSkeleton) {
       return (
@@ -157,7 +174,7 @@ export const EnhancedLoadingIndicator: React.FC<EnhancedLoadingIndicatorProps> =
                   key={i} 
                   className={cn(
                     "h-4 w-full",
-                    i === skeletonLines - 1 && "w-3/4" // Last line shorter
+                    i === skeletonLines - 1 && "w-3/4"
                   )} 
                 />
               ))}
