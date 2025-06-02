@@ -1,8 +1,8 @@
-
 import React, { useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import HomeHero from "@/components/homepage/HomeHero";
 import NavigationControls from "@/components/homepage/NavigationControls";
+import MobileNavigationControls from "@/components/homepage/MobileNavigationControls";
 import EnhancedCategorySelection from "@/components/EnhancedCategorySelection";
 import { AppStage } from "@/types/app";
 import { AIHealthPlan } from "@/types";
@@ -14,6 +14,7 @@ import { EnhancedLoadingIndicator } from "@/components/ui/enhanced-loading-indic
 import StateRestorationBanner from "@/components/offline/StateRestorationBanner";
 import BreadcrumbNavigation from "@/components/ui/breadcrumb-navigation";
 import { ContextualErrorDisplay } from "@/components/ui/contextual-error-display";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Import our component stages
 import AIInputStage from "./app-stages/AIInputStage";
@@ -34,6 +35,8 @@ import {
  * Handles rendering different views based on the current application stage
  */
 const AppContent: React.FC = () => {
+  const isMobile = useIsMobile();
+  
   // Custom hooks for navigation and services
   const {
     stage, 
@@ -271,7 +274,7 @@ const AppContent: React.FC = () => {
         />
       )}
       
-      <main className="container max-w-6xl mx-auto px-4 py-8">
+      <main className={`container max-w-6xl mx-auto px-4 py-8 ${isMobile ? 'pb-24' : ''}`}>
         <BreadcrumbNavigation 
           currentStage={stage}
           onNavigate={navigateToStage}
@@ -290,11 +293,20 @@ const AppContent: React.FC = () => {
           {renderMainContent()}
         </AnimatePresence>
         
-        <NavigationControls 
-          stage={stage}
-          onBack={handleBack}
-          onStartOver={resetToHome}
-        />
+        {/* Use mobile-responsive navigation */}
+        {isMobile ? (
+          <MobileNavigationControls 
+            stage={stage}
+            onBack={handleBack}
+            onStartOver={resetToHome}
+          />
+        ) : (
+          <NavigationControls 
+            stage={stage}
+            onBack={handleBack}
+            onStartOver={resetToHome}
+          />
+        )}
       </main>
     </>
   );

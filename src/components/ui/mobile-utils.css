@@ -1,0 +1,62 @@
+
+/* Mobile-specific utility classes for better touch experience */
+
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+.safe-area-padding-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.h-safe-area-inset-bottom {
+  height: env(safe-area-inset-bottom);
+}
+
+/* Ensure touch targets are at least 44px */
+@media (max-width: 768px) {
+  .min-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improve form spacing on mobile */
+  .mobile-form-spacing > * + * {
+    margin-top: 1rem;
+  }
+  
+  /* Better button spacing on mobile */
+  .mobile-button-spacing {
+    gap: 0.75rem;
+  }
+  
+  /* Prevent zoom on form inputs */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .error-indicator {
+    border: 2px solid currentColor;
+  }
+  
+  .status-indicator {
+    border: 2px solid currentColor;
+    background-color: transparent;
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe {
+    animation: none;
+    transition: none;
+  }
+}

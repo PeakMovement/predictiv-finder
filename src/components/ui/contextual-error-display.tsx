@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { AlertTriangle, RefreshCw, WifiOff, ArrowLeft, Home } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AppStage } from '@/types/app';
 import { useOfflineStatus } from '@/hooks/useOfflineStatus';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ContextualErrorDisplayProps {
   error: string | null;
@@ -69,7 +70,17 @@ export const ContextualErrorDisplay: React.FC<ContextualErrorDisplayProps> = ({
   className = ''
 }) => {
   const { isOffline } = useOfflineStatus();
+  const isMobile = useIsMobile();
   const context = stageContexts[currentStage];
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  // Focus management for accessibility
+  useEffect(() => {
+    if (error && errorRef.current) {
+      // Announce error to screen readers
+      errorRef.current.focus();
+    }
+  }, [error]);
 
   if (!error) return null;
 
@@ -109,30 +120,35 @@ export const ContextualErrorDisplay: React.FC<ContextualErrorDisplayProps> = ({
         label: 'Try Again',
         action: onRetry,
         icon: RefreshCw,
-        variant: 'default' as const
+        variant: 'default' as const,
+        description: 'Retry the last action'
       });
     }
 
     if (onBack && currentStage !== 'home') {
       actions.push({
-        label: 'Go Back',
+        label: isMobile ? 'Back' : 'Go Back',
         action: onBack,
         icon: ArrowLeft,
-        variant: 'outline' as const
+        variant: 'outline' as const,
+        description: 'Return to previous step'
       });
     }
 
     if (onHome && currentStage !== 'home') {
       actions.push({
-        label: 'Start Over',
+        label: isMobile ? 'Home' : 'Start Over',
         action: onHome,
         icon: Home,
-        variant: 'outline' as const
+        variant: 'outline' as const,
+        description: 'Return to home page'
       });
     }
 
     return actions;
   };
+
+  const recoveryActions = getRecoveryActions();
 
   return (
     <AnimatePresence>
@@ -142,45 +158,73 @@ export const ContextualErrorDisplay: React.FC<ContextualErrorDisplayProps> = ({
         exit={{ opacity: 0, y: -10 }}
         className={className}
       >
-        <Alert variant="destructive" className="mb-4">
+        <Alert 
+          variant="destructive" 
+          className="mb-4"
+          ref={errorRef}
+          tabIndex={-1}
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+        >
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0 mt-0.5">
               {isOffline || isNetworkError ? (
-                <WifiOff className="h-4 w-4" />
+                <WifiOff 
+                  className="h-4 w-4" 
+                  aria-hidden="true"
+                />
               ) : (
-                <AlertTriangle className="h-4 w-4" />
+                <AlertTriangle 
+                  className="h-4 w-4" 
+                  aria-hidden="true"
+                />
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <AlertTitle className="mb-2">{getErrorTitle()}</AlertTitle>
+              <AlertTitle className="mb-2">
+                {getErrorTitle()}
+              </AlertTitle>
               <AlertDescription className="space-y-3">
                 <p>{getErrorMessage()}</p>
                 
                 <div className="bg-destructive/5 p-3 rounded-md border border-destructive/20">
                   <p className="text-sm font-medium mb-2">What you can try:</p>
-                  <ul className="list-disc pl-4 space-y-1 text-sm">
+                  <ul className="list-disc pl-4 space-y-1 text-sm" role="list">
                     {getSuggestions().map((suggestion, i) => (
-                      <li key={i}>{suggestion}</li>
+                      <li key={i} role="listitem">{suggestion}</li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {getRecoveryActions().map((action, i) => (
+                <div className={`flex ${isMobile ? 'flex-col' : 'flex-wrap'} gap-2 pt-2`}>
+                  {recoveryActions.map((action, i) => (
                     <Button
                       key={i}
                       size="sm"
                       variant={action.variant}
                       onClick={action.action}
-                      disabled={isOffline && action.label === 'Try Again'}
-                      className="flex items-center gap-1"
+                      disabled={isOffline && action.label.includes('Try')}
+                      className={`flex items-center gap-1 min-h-[44px] touch-manipulation ${
+                        isMobile ? 'w-full justify-center' : ''
+                      }`}
+                      aria-label={action.description}
+                      title={action.description}
                     >
-                      <action.icon className="h-3 w-3" />
+                      <action.icon className="h-3 w-3" aria-hidden="true" />
                       {action.label}
                     </Button>
                   ))}
                   {onDismiss && (
-                    <Button size="sm" variant="ghost" onClick={onDismiss}>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={onDismiss}
+                      className={`min-h-[44px] touch-manipulation ${
+                        isMobile ? 'w-full justify-center' : ''
+                      }`}
+                      aria-label="Dismiss this error message"
+                    >
                       Dismiss
                     </Button>
                   )}
@@ -188,12 +232,15 @@ export const ContextualErrorDisplay: React.FC<ContextualErrorDisplayProps> = ({
 
                 {!isOffline && context.fallbackActions.length > 0 && (
                   <details className="text-sm">
-                    <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                    <summary 
+                      className="cursor-pointer text-muted-foreground hover:text-foreground min-h-[44px] touch-manipulation flex items-center"
+                      aria-label="Show additional recovery options"
+                    >
                       Other options
                     </summary>
-                    <ul className="list-disc pl-4 mt-2 space-y-1 text-muted-foreground">
+                    <ul className="list-disc pl-4 mt-2 space-y-1 text-muted-foreground" role="list">
                       {context.fallbackActions.map((action, i) => (
-                        <li key={i}>{action}</li>
+                        <li key={i} role="listitem">{action}</li>
                       ))}
                     </ul>
                   </details>
