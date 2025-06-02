@@ -43,7 +43,8 @@ export const MobileNavigationControls: React.FC<MobileNavigationControlsProps> =
     return null;
   }
 
-  const canGoBack = stage !== 'home';
+  // Since we return early for 'home', we know stage is never 'home' here
+  const canGoBack = true;
   const currentStageLabel = stageLabels[stage] || 'Health Journey';
 
   if (!isMobile) {
