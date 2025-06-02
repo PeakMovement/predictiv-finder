@@ -12,6 +12,8 @@ import { useAIPlansService } from "@/services/ai-plans-service";
 import { OfflineBanner } from "@/components/ui/offline-banner";
 import { EnhancedLoadingIndicator } from "@/components/ui/enhanced-loading-indicator";
 import StateRestorationBanner from "@/components/offline/StateRestorationBanner";
+import BreadcrumbNavigation from "@/components/ui/breadcrumb-navigation";
+import { ContextualErrorDisplay } from "@/components/ui/contextual-error-display";
 
 // Import our component stages
 import AIInputStage from "./app-stages/AIInputStage";
@@ -20,7 +22,6 @@ import PlanDetailsStage from "./app-stages/PlanDetailsStage";
 
 // Import new refactored components
 import {
-  ErrorDisplay,
   ComparisonView,
   CustomizerView,
   ProgressView,
@@ -44,6 +45,7 @@ const AppContent: React.FC = () => {
     showRestorationBanner,
     handleBack,
     resetToHome,
+    navigateToStage,
     handleCategoryToggle,
     handleCategorySubmit,
     handleQuestionnaireSubmit,
@@ -72,6 +74,7 @@ const AppContent: React.FC = () => {
   const [showComparison, setShowComparison] = useState(false);
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [showProgress, setShowProgress] = useState(false);
+  const [dismissedError, setDismissedError] = useState<string | null>(null);
   
   // Combine AI input submit with plan generation
   const handleAIInputSubmitWithGeneration = (input: string) => {
@@ -93,9 +96,9 @@ const AppContent: React.FC = () => {
     setShowCustomizer(false);
   };
 
-  // Determine loading state for the current stage with reduced minimum time
+  // Determine loading state for the current stage
   const getLoadingState = () => {
-    if (error) return "error";
+    if (error && error !== dismissedError) return "error";
     if (isGenerating) return "loading";
     return "success";
   };
@@ -103,14 +106,32 @@ const AppContent: React.FC = () => {
   // Get persisted state for restoration banner
   const persistedState = getPersistedState();
 
+  // Handle error retry with context
+  const handleErrorRetry = () => {
+    setDismissedError(null);
+    switch (stage) {
+      case 'ai-plans':
+        if (userQuery) generateAIPlans(userQuery);
+        break;
+      default:
+        // Generic retry - could reload data or reset state
+        window.location.reload();
+    }
+  };
+
+  // Handle error dismissal
+  const handleErrorDismiss = () => {
+    setDismissedError(error);
+  };
+
   // Render the main content based on current stage
   const renderMainContent = () => {
     if (stage === 'home') {
       return (
         <HomeHero 
           key="home"
-          onSelectCategoryFlow={() => setStage('category-selector')} 
-          onSelectAIFlow={() => setStage('ai-input')} 
+          onSelectCategoryFlow={() => navigateToStage('category-selector')} 
+          onSelectAIFlow={() => navigateToStage('ai-input')} 
         />
       );
     }
@@ -132,7 +153,7 @@ const AppContent: React.FC = () => {
           key="category-questionnaire"
           categories={selectedCategories}
           onSubmit={handleQuestionnaireSubmit}
-          onBack={() => setStage('category-selector')}
+          onBack={() => navigateToStage('category-selector')}
         />
       );
     }
@@ -144,8 +165,8 @@ const AppContent: React.FC = () => {
           practitioners={getMatchingPractitioners(userCriteria)}
           criteria={userCriteria}
           onSelectPractitioner={handleSelectPractitioner}
-          onBack={() => setStage('category-questionnaire')}
-          onAIAssistant={() => setStage('ai-input')}
+          onBack={() => navigateToStage('category-questionnaire')}
+          onAIAssistant={() => navigateToStage('ai-input')}
         />
       );
     }
@@ -168,7 +189,7 @@ const AppContent: React.FC = () => {
           state={getLoadingState()}
           loadingText="Creating your personalized health plans..."
           errorMessage={error || "Failed to generate plans"}
-          onRetry={() => generateAIPlans(userQuery)}
+          onRetry={handleErrorRetry}
           showSkeleton={true}
           skeletonLines={3}
           minLoadingTime={100}
@@ -178,7 +199,7 @@ const AppContent: React.FC = () => {
             userInput={userQuery}
             isLoading={isGenerating}
             onSelectPlan={handleSelectPlan}
-            onBack={() => setStage('ai-input')}
+            onBack={() => navigateToStage('ai-input')}
             onCompare={() => setShowComparison(true)}
           />
         </EnhancedLoadingIndicator>
@@ -202,7 +223,7 @@ const AppContent: React.FC = () => {
           key="plan-details"
           plan={selectedPlan}
           userQuery={userQuery}
-          onBack={() => setStage('ai-plans')}
+          onBack={() => navigateToStage('ai-plans')}
           onCustomize={handleCustomizePlan}
           onTrackProgress={() => setShowProgress(true)}
         />
@@ -251,7 +272,19 @@ const AppContent: React.FC = () => {
       )}
       
       <main className="container max-w-6xl mx-auto px-4 py-8">
-        <ErrorDisplay error={error} />
+        <BreadcrumbNavigation 
+          currentStage={stage}
+          onNavigate={navigateToStage}
+        />
+        
+        <ContextualErrorDisplay
+          error={error && error !== dismissedError ? error : null}
+          currentStage={stage}
+          onRetry={handleErrorRetry}
+          onBack={handleBack}
+          onHome={resetToHome}
+          onDismiss={handleErrorDismiss}
+        />
         
         <AnimatePresence mode="wait">
           {renderMainContent()}
