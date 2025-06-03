@@ -1,99 +1,154 @@
 
 import React from 'react';
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Brain, Heart, Stethoscope, Users, TrendingUp, Calendar } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 interface HomeHeroProps {
-  onSelectCategoryFlow: () => void;
-  onSelectAIFlow: () => void;
+  onNavigateToCategories: () => void;
+  onNavigateToAI: () => void;
+  onShowDashboard?: () => void;
 }
 
-const HomeHero: React.FC<HomeHeroProps> = ({ onSelectCategoryFlow, onSelectAIFlow }) => {
+export const HomeHero: React.FC<HomeHeroProps> = ({ 
+  onNavigateToCategories, 
+  onNavigateToAI,
+  onShowDashboard 
+}) => {
+  const { isAuthenticated } = useAuth();
+
   return (
-    <motion.div
-      key="home"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="text-center py-16"
-    >
-      <motion.h1 
-        className="text-4xl md:text-5xl font-bold mb-6"
-        initial={{ y: -20 }}
-        animate={{ y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
-        Your Path to Wellness,&nbsp;
-        <span className="bg-gradient-to-r from-health-teal to-health-purple bg-clip-text text-transparent">
-          Personalized
-        </span>
-      </motion.h1>
-      
-      <motion.p 
-        className="text-xl text-gray-600 dark:text-gray-300 mb-12 max-w-2xl mx-auto"
-        initial={{ y: -20 }}
-        animate={{ y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        Let's build your complete health, fitness, and wellness journey — tailored to your goals and budget.
-      </motion.p>
-      
-      <motion.div 
-        className="flex flex-col md:flex-row gap-4 justify-center"
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.4 }}
-      >
-        <Button 
-          onClick={onSelectCategoryFlow}
-          className="text-lg py-6 px-8 bg-health-teal hover:bg-health-teal-dark flex items-center"
-          size="lg"
-        >
-          <span className="emoji-icon">🔍</span>
-          I Know What I Need
-        </Button>
-        <Button 
-          onClick={onSelectAIFlow}
-          className="text-lg py-6 px-8 bg-health-purple hover:bg-health-purple-dark flex items-center"
-          size="lg"
-        >
-          <span className="emoji-icon">🧠</span>
-          Explain My Goal
-        </Button>
-      </motion.div>
-      
-      <motion.div 
-        className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-center"
-        initial={{ y: 40, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.6 }}
-      >
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
-          <div className="w-16 h-16 mx-auto bg-health-teal/20 rounded-full flex items-center justify-center mb-4">
-            <span className="text-2xl">🤝</span>
-          </div>
-          <h3 className="text-xl font-semibold mb-2">Expert Matching</h3>
-          <p className="text-gray-600 dark:text-gray-300">Connect with qualified professionals that match your exact needs.</p>
+    <div className="space-y-8">
+      {/* Hero Section */}
+      <div className="text-center space-y-6">
+        <div className="space-y-4">
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight">
+            Your Personal
+            <span className="text-health-purple block">Health Navigator</span>
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Get personalized health plans and connect with the right professionals 
+            for your wellness journey using AI-powered recommendations.
+          </p>
         </div>
-        
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
-          <div className="w-16 h-16 mx-auto bg-health-purple/20 rounded-full flex items-center justify-center mb-4">
-            <span className="text-2xl">💰</span>
-          </div>
-          <h3 className="text-xl font-semibold mb-2">Budget Friendly</h3>
-          <p className="text-gray-600 dark:text-gray-300">Find services that fit your financial plan without compromising quality.</p>
+
+        {/* Quick Access Dashboard for Authenticated Users */}
+        {isAuthenticated && onShowDashboard && (
+          <Card className="max-w-md mx-auto bg-health-purple/5 border-health-purple/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-health-purple">
+                <TrendingUp className="h-5 w-5" />
+                Welcome Back!
+              </CardTitle>
+              <CardDescription>
+                Continue tracking your health journey
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={onShowDashboard}
+                className="w-full bg-health-purple hover:bg-health-purple-dark"
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                View Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Main Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
+          <Button 
+            size="lg" 
+            onClick={onNavigateToAI}
+            className="bg-health-purple hover:bg-health-purple-dark text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+          >
+            <Brain className="h-5 w-5" />
+            AI Health Assistant
+          </Button>
+          <Button 
+            size="lg" 
+            variant="outline" 
+            onClick={onNavigateToCategories}
+            className="border-health-purple text-health-purple hover:bg-health-purple hover:text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+          >
+            <Stethoscope className="h-5 w-5" />
+            Browse Categories
+          </Button>
         </div>
-        
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
-          <div className="w-16 h-16 mx-auto bg-health-orange/20 rounded-full flex items-center justify-center mb-4">
-            <span className="text-2xl">🧠</span>
-          </div>
-          <h3 className="text-xl font-semibold mb-2">AI Planning</h3>
-          <p className="text-gray-600 dark:text-gray-300">Get personalized health plans based on your unique situation.</p>
+      </div>
+
+      {/* Feature Cards */}
+      <div className="grid md:grid-cols-3 gap-6 mt-12">
+        <Card className="text-center hover:shadow-lg transition-shadow duration-300">
+          <CardHeader>
+            <div className="mx-auto w-12 h-12 bg-health-teal/10 rounded-full flex items-center justify-center mb-4">
+              <Brain className="h-6 w-6 text-health-teal" />
+            </div>
+            <CardTitle>AI-Powered Insights</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              Describe your health needs and get personalized recommendations powered by advanced AI.
+            </CardDescription>
+          </CardContent>
+        </Card>
+
+        <Card className="text-center hover:shadow-lg transition-shadow duration-300">
+          <CardHeader>
+            <div className="mx-auto w-12 h-12 bg-health-purple/10 rounded-full flex items-center justify-center mb-4">
+              <Users className="h-6 w-6 text-health-purple" />
+            </div>
+            <CardTitle>Expert Network</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              Connect with verified healthcare professionals and wellness experts in your area.
+            </CardDescription>
+          </CardContent>
+        </Card>
+
+        <Card className="text-center hover:shadow-lg transition-shadow duration-300">
+          <CardHeader>
+            <div className="mx-auto w-12 h-12 bg-health-orange/10 rounded-full flex items-center justify-center mb-4">
+              <Heart className="h-6 w-6 text-health-orange" />
+            </div>
+            <CardTitle>Personalized Plans</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              Get tailored health plans that fit your budget, schedule, and specific wellness goals.
+            </CardDescription>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Statistics */}
+      <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-8 mt-12">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Trusted by Health-Conscious Individuals</h2>
+          <p className="text-gray-600">Join thousands who've improved their wellness journey</p>
         </div>
-      </motion.div>
-    </motion.div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          <div>
+            <div className="text-3xl font-bold text-health-purple">500+</div>
+            <div className="text-gray-600">Healthcare Professionals</div>
+          </div>
+          <div>
+            <div className="text-3xl font-bold text-health-teal">10k+</div>
+            <div className="text-gray-600">Personalized Plans</div>
+          </div>
+          <div>
+            <div className="text-3xl font-bold text-health-orange">95%</div>
+            <div className="text-gray-600">Satisfaction Rate</div>
+          </div>
+          <div>
+            <div className="text-3xl font-bold text-health-purple">24/7</div>
+            <div className="text-gray-600">AI Support</div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
-
-export default HomeHero;
