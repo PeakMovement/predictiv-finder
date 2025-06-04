@@ -51,7 +51,7 @@ export const useOfflinePersistence = () => {
   }, []);
 
   // Get persisted state from localStorage
-  const getPersistedState = useCallback((): Partial<PersistedAppState> | null => {
+  const getPersistedState = useCallback((): PersistedAppState | null => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (!stored) return null;

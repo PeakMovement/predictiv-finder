@@ -1,26 +1,19 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
 import { AIHealthPlan } from "@/types";
 import SafeAIPlansDisplay from "@/components/AIPlansDisplay/SafeAIPlansDisplay";
 
 interface AIPlanStageProps {
-  plans: AIHealthPlan[];
-  userInput: string;
-  isLoading: boolean;
+  userQuery: string;
   onSelectPlan: (plan: AIHealthPlan) => void;
-  onBack: () => void;
-  onCompare: () => void;
+  onError: (errorMessage: string) => void;
 }
 
 const AIPlanStage: React.FC<AIPlanStageProps> = ({
-  plans,
-  userInput,
-  isLoading,
+  userQuery,
   onSelectPlan,
-  onBack,
-  onCompare
+  onError
 }) => {
   return (
     <motion.div
@@ -30,21 +23,12 @@ const AIPlanStage: React.FC<AIPlanStageProps> = ({
       exit={{ opacity: 0 }}
       className="py-8"
     >
-      <div className="mb-6">
-        <Button 
-          variant="outline" 
-          onClick={onCompare}
-          className="ml-auto block"
-        >
-          Compare Plans
-        </Button>
-      </div>
       <SafeAIPlansDisplay 
-        plans={plans}
-        userInput={userInput}
+        plans={[]}
+        userInput={userQuery}
         onSelectPlan={onSelectPlan}
-        onBack={onBack}
-        isLoading={isLoading}
+        onBack={() => {}}
+        isLoading={false}
       />
     </motion.div>
   );

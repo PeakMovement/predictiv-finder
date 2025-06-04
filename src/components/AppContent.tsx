@@ -12,14 +12,14 @@ import { MobileNavigationControls } from "@/components/homepage/MobileNavigation
 import { ContextualErrorDisplay } from "@/components/ui/contextual-error-display";
 import { useAuth } from "@/context/AuthContext";
 
-// Import existing stage components
+// Import existing stage components with default imports
 import { HomeHero } from "@/components/homepage/HomeHero";
 import { EnhancedCategorySelection } from "@/components/EnhancedCategorySelection";
 import { CategoryQuestionnaire } from "@/components/CategoryQuestionnaire";
 import { PractitionerList } from "@/components/PractitionerList";
-import { AIInputStage } from "@/components/app-stages/AIInputStage";
-import { AIPlanStage } from "@/components/app-stages/AIPlanStage";
-import { PlanDetailsStage } from "@/components/app-stages/PlanDetailsStage";
+import AIInputStage from "@/components/app-stages/AIInputStage";
+import AIPlanStage from "@/components/app-stages/AIPlanStage";
+import PlanDetailsStage from "@/components/app-stages/PlanDetailsStage";
 
 const AppContent: React.FC = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -44,6 +44,7 @@ const AppContent: React.FC = () => {
     handleSelectPlan,
     restorePersistedState,
     dismissRestorationBanner,
+    getPersistedState,
   } = useAppNavigation();
 
   const handleError = (errorMessage: string) => {
@@ -84,14 +85,14 @@ const AppContent: React.FC = () => {
           <EnhancedCategorySelection
             selectedCategories={selectedCategories}
             onCategoryToggle={handleCategoryToggle}
-            onSubmit={handleCategorySubmit}
+            onContinue={handleCategorySubmit}
             onError={handleError}
           />
         );
       case 'category-questionnaire':
         return (
           <CategoryQuestionnaire
-            selectedCategories={selectedCategories}
+            categories={selectedCategories}
             onSubmit={handleQuestionnaireSubmit}
             onError={handleError}
           />
@@ -99,7 +100,7 @@ const AppContent: React.FC = () => {
       case 'practitioner-list':
         return (
           <PractitionerList
-            userCriteria={userCriteria}
+            criteria={userCriteria}
             onError={handleError}
           />
         );
@@ -137,6 +138,9 @@ const AppContent: React.FC = () => {
     }
   };
 
+  // Get persisted state for the restoration banner
+  const persistedState = getPersistedState();
+
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-health-blue-light via-health-teal-light to-health-purple-light">
       {/* PWA and Offline Status */}
@@ -169,10 +173,11 @@ const AppContent: React.FC = () => {
       </header>
 
       {/* State Restoration Banner */}
-      {showRestorationBanner && (
+      {showRestorationBanner && persistedState && (
         <StateRestorationBanner
           onRestore={restorePersistedState}
           onDismiss={dismissRestorationBanner}
+          persistedState={persistedState}
         />
       )}
 

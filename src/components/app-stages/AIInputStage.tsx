@@ -2,28 +2,16 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import AIAssistantInput from "@/components/AIAssistantInput";
-import { PlanGenerationErrorType } from "@/utils/planGenerator/errorHandling";
 
 interface AIInputStageProps {
   onSubmit: (input: string) => void;
-  isLoading: boolean;
-  onBack: () => void;
+  onError: (errorMessage: string) => void;
 }
 
 const AIInputStage: React.FC<AIInputStageProps> = ({
   onSubmit,
-  isLoading,
-  onBack
+  onError
 }) => {
-  const [inputError, setInputError] = useState<{
-    type: PlanGenerationErrorType;
-    message: string;
-  } | null>(null);
-
-  const handleError = (type: PlanGenerationErrorType, message: string) => {
-    setInputError({ type, message });
-  };
-
   return (
     <motion.div
       key="ai-input"
@@ -34,7 +22,7 @@ const AIInputStage: React.FC<AIInputStageProps> = ({
     >
       <AIAssistantInput 
         onSubmit={onSubmit} 
-        isLoading={isLoading}
+        isLoading={false}
       />
     </motion.div>
   );
