@@ -86,7 +86,6 @@ const AppContent: React.FC = () => {
             selectedCategories={selectedCategories}
             onCategoryToggle={handleCategoryToggle}
             onContinue={() => handleCategorySubmit(selectedCategories)}
-            onError={handleError}
           />
         );
       case 'category-questionnaire':
@@ -94,12 +93,19 @@ const AppContent: React.FC = () => {
           <CategoryQuestionnaire
             categories={selectedCategories}
             onSubmit={handleQuestionnaireSubmit}
+            onBack={handleBack}
           />
         );
       case 'practitioner-list':
         return (
           <PractitionerList
+            practitioners={[]}
             criteria={userCriteria}
+            onSelectPractitioner={(practitioner) => {
+              console.log('Selected practitioner:', practitioner);
+            }}
+            onBack={handleBack}
+            onAIAssistant={() => handleStageNavigation('ai-input')}
           />
         );
       case 'ai-input':
