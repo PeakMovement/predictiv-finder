@@ -85,7 +85,7 @@ const AppContent: React.FC = () => {
           <EnhancedCategorySelection
             selectedCategories={selectedCategories}
             onCategoryToggle={handleCategoryToggle}
-            onContinue={handleCategorySubmit}
+            onContinue={() => handleCategorySubmit(selectedCategories)}
             onError={handleError}
           />
         );
@@ -94,14 +94,12 @@ const AppContent: React.FC = () => {
           <CategoryQuestionnaire
             categories={selectedCategories}
             onSubmit={handleQuestionnaireSubmit}
-            onError={handleError}
           />
         );
       case 'practitioner-list':
         return (
           <PractitionerList
             criteria={userCriteria}
-            onError={handleError}
           />
         );
       case 'ai-input':
@@ -146,31 +144,6 @@ const AppContent: React.FC = () => {
       {/* PWA and Offline Status */}
       <PWAInstallPrompt />
       <OfflineIndicator />
-      
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200/50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button 
-                onClick={handleGoHome}
-                className="text-2xl font-bold text-health-purple hover:text-health-purple-dark transition-colors"
-              >
-                Predictiv Health
-              </button>
-              {isAuthenticated && (
-                <button
-                  onClick={() => setShowDashboard(!showDashboard)}
-                  className="text-sm text-health-purple hover:text-health-purple-dark transition-colors"
-                >
-                  {showDashboard ? 'Back to App' : 'Dashboard'}
-                </button>
-              )}
-            </div>
-            <UserProfileMenu openLoginModal={() => setIsLoginModalOpen(true)} />
-          </div>
-        </div>
-      </header>
 
       {/* State Restoration Banner */}
       {showRestorationBanner && persistedState && (

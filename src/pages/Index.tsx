@@ -1,6 +1,5 @@
 
 import React from "react";
-import Header from "@/components/Header";
 import AppContent from "@/components/AppContent";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
@@ -11,8 +10,6 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 const Index: React.FC = () => {
   return (
     <div className="min-h-screen bg-health-blue-light dark:bg-gray-900">
-      <Header />
-      
       <ErrorBoundary>
         <AppContent />
       </ErrorBoundary>
