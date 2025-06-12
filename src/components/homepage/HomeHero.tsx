@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -115,7 +114,21 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
           </Card>
         </Link>
 
-        <TestimonialsCard />
+        <Link to="/success-stories" className="block">
+          <Card className="text-center hover:shadow-lg transition-shadow duration-300 cursor-pointer group h-full">
+            <CardHeader>
+              <div className="mx-auto w-12 h-12 bg-health-orange/10 rounded-full flex items-center justify-center mb-4 group-hover:bg-health-orange/20 transition-colors">
+                <Heart className="h-6 w-6 text-health-orange" />
+              </div>
+              <CardTitle className="group-hover:text-health-orange transition-colors">Success Stories</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>
+                Read inspiring testimonials from people who transformed their health with personalized plans.
+              </CardDescription>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Statistics */}
@@ -144,86 +157,5 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
         </div>
       </div>
     </div>
-  );
-};
-
-// Testimonials Card Component
-const TestimonialsCard: React.FC = () => {
-  const [showTestimonials, setShowTestimonials] = React.useState(false);
-
-  const testimonials = [
-    {
-      name: "Sarah Johnson",
-      condition: "Chronic back pain",
-      result: "Pain reduced by 80% in 3 months",
-      quote: "The AI matched me with the perfect physiotherapist and created a plan that actually worked for my lifestyle."
-    },
-    {
-      name: "Michael Chen",
-      condition: "Weight management",
-      result: "Lost 25kg sustainably",
-      quote: "The personalized nutrition and fitness plan was exactly what I needed. Having everything coordinated made all the difference."
-    },
-    {
-      name: "Emma Williams",
-      condition: "Anxiety and stress",
-      result: "Significant improvement in mental health",
-      quote: "The integrated approach combining therapy, nutrition, and exercise helped me get my life back on track."
-    }
-  ];
-
-  if (showTestimonials) {
-    return (
-      <Card className="text-center hover:shadow-lg transition-shadow duration-300">
-        <CardHeader>
-          <div className="mx-auto w-12 h-12 bg-health-orange/10 rounded-full flex items-center justify-center mb-4">
-            <Heart className="h-6 w-6 text-health-orange" />
-          </div>
-          <CardTitle>Success Stories</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {testimonials.map((testimonial, index) => (
-            <div key={index} className="text-left p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 italic mb-2">"{testimonial.quote}"</p>
-              <div className="text-sm">
-                <p className="font-semibold">{testimonial.name}</p>
-                <p className="text-gray-500">{testimonial.condition}</p>
-                <p className="text-health-orange font-medium">{testimonial.result}</p>
-              </div>
-            </div>
-          ))}
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setShowTestimonials(false)}
-            className="mt-4"
-          >
-            Show Less
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card 
-      className="text-center hover:shadow-lg transition-shadow duration-300 cursor-pointer group"
-      onClick={() => setShowTestimonials(true)}
-    >
-      <CardHeader>
-        <div className="mx-auto w-12 h-12 bg-health-orange/10 rounded-full flex items-center justify-center mb-4 group-hover:bg-health-orange/20 transition-colors">
-          <Heart className="h-6 w-6 text-health-orange" />
-        </div>
-        <CardTitle className="group-hover:text-health-orange transition-colors">Personalized Plans</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <CardDescription>
-          Get tailored health plans that fit your budget, schedule, and specific wellness goals.
-        </CardDescription>
-        <Button variant="ghost" size="sm" className="mt-4 text-health-orange">
-          View Success Stories →
-        </Button>
-      </CardContent>
-    </Card>
   );
 };

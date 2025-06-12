@@ -6,6 +6,7 @@ import Index from './pages/Index';
 import HowItWorks from './pages/HowItWorks';
 import Services from './pages/Services';
 import Professionals from './pages/Professionals';
+import SuccessStories from './pages/SuccessStories';
 import NotFound from './pages/NotFound';
 import { EnhancedErrorBoundary } from './components/enhanced-error-handling';
 import { PlanGenerationErrorFallbackAdapter } from './components/enhanced-error-handling';
@@ -30,6 +31,7 @@ function App() {
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/services" element={<Services />} />
             <Route path="/professionals" element={<Professionals />} />
+            <Route path="/success-stories" element={<SuccessStories />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </EnhancedErrorBoundary>
