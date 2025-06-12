@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Brain, Heart, Stethoscope, Users, TrendingUp, Calendar } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { Link } from 'react-router-dom';
 
 interface HomeHeroProps {
   onNavigateToCategories: () => void;
@@ -81,12 +82,15 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
 
       {/* Feature Cards */}
       <div className="grid md:grid-cols-3 gap-6 mt-12">
-        <Card className="text-center hover:shadow-lg transition-shadow duration-300">
+        <Card 
+          className="text-center hover:shadow-lg transition-shadow duration-300 cursor-pointer group"
+          onClick={onNavigateToAI}
+        >
           <CardHeader>
-            <div className="mx-auto w-12 h-12 bg-health-teal/10 rounded-full flex items-center justify-center mb-4">
+            <div className="mx-auto w-12 h-12 bg-health-teal/10 rounded-full flex items-center justify-center mb-4 group-hover:bg-health-teal/20 transition-colors">
               <Brain className="h-6 w-6 text-health-teal" />
             </div>
-            <CardTitle>AI-Powered Insights</CardTitle>
+            <CardTitle className="group-hover:text-health-teal transition-colors">AI-Powered Insights</CardTitle>
           </CardHeader>
           <CardContent>
             <CardDescription>
@@ -95,33 +99,23 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
           </CardContent>
         </Card>
 
-        <Card className="text-center hover:shadow-lg transition-shadow duration-300">
-          <CardHeader>
-            <div className="mx-auto w-12 h-12 bg-health-purple/10 rounded-full flex items-center justify-center mb-4">
-              <Users className="h-6 w-6 text-health-purple" />
-            </div>
-            <CardTitle>Expert Network</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CardDescription>
-              Connect with verified healthcare professionals and wellness experts in your area.
-            </CardDescription>
-          </CardContent>
-        </Card>
+        <Link to="/professionals" className="block">
+          <Card className="text-center hover:shadow-lg transition-shadow duration-300 cursor-pointer group h-full">
+            <CardHeader>
+              <div className="mx-auto w-12 h-12 bg-health-purple/10 rounded-full flex items-center justify-center mb-4 group-hover:bg-health-purple/20 transition-colors">
+                <Users className="h-6 w-6 text-health-purple" />
+              </div>
+              <CardTitle className="group-hover:text-health-purple transition-colors">Expert Network</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>
+                Connect with verified healthcare professionals and wellness experts in your area.
+              </CardDescription>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card className="text-center hover:shadow-lg transition-shadow duration-300">
-          <CardHeader>
-            <div className="mx-auto w-12 h-12 bg-health-orange/10 rounded-full flex items-center justify-center mb-4">
-              <Heart className="h-6 w-6 text-health-orange" />
-            </div>
-            <CardTitle>Personalized Plans</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CardDescription>
-              Get tailored health plans that fit your budget, schedule, and specific wellness goals.
-            </CardDescription>
-          </CardContent>
-        </Card>
+        <TestimonialsCard />
       </div>
 
       {/* Statistics */}
@@ -150,5 +144,86 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
         </div>
       </div>
     </div>
+  );
+};
+
+// Testimonials Card Component
+const TestimonialsCard: React.FC = () => {
+  const [showTestimonials, setShowTestimonials] = React.useState(false);
+
+  const testimonials = [
+    {
+      name: "Sarah Johnson",
+      condition: "Chronic back pain",
+      result: "Pain reduced by 80% in 3 months",
+      quote: "The AI matched me with the perfect physiotherapist and created a plan that actually worked for my lifestyle."
+    },
+    {
+      name: "Michael Chen",
+      condition: "Weight management",
+      result: "Lost 25kg sustainably",
+      quote: "The personalized nutrition and fitness plan was exactly what I needed. Having everything coordinated made all the difference."
+    },
+    {
+      name: "Emma Williams",
+      condition: "Anxiety and stress",
+      result: "Significant improvement in mental health",
+      quote: "The integrated approach combining therapy, nutrition, and exercise helped me get my life back on track."
+    }
+  ];
+
+  if (showTestimonials) {
+    return (
+      <Card className="text-center hover:shadow-lg transition-shadow duration-300">
+        <CardHeader>
+          <div className="mx-auto w-12 h-12 bg-health-orange/10 rounded-full flex items-center justify-center mb-4">
+            <Heart className="h-6 w-6 text-health-orange" />
+          </div>
+          <CardTitle>Success Stories</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {testimonials.map((testimonial, index) => (
+            <div key={index} className="text-left p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-600 italic mb-2">"{testimonial.quote}"</p>
+              <div className="text-sm">
+                <p className="font-semibold">{testimonial.name}</p>
+                <p className="text-gray-500">{testimonial.condition}</p>
+                <p className="text-health-orange font-medium">{testimonial.result}</p>
+              </div>
+            </div>
+          ))}
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowTestimonials(false)}
+            className="mt-4"
+          >
+            Show Less
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card 
+      className="text-center hover:shadow-lg transition-shadow duration-300 cursor-pointer group"
+      onClick={() => setShowTestimonials(true)}
+    >
+      <CardHeader>
+        <div className="mx-auto w-12 h-12 bg-health-orange/10 rounded-full flex items-center justify-center mb-4 group-hover:bg-health-orange/20 transition-colors">
+          <Heart className="h-6 w-6 text-health-orange" />
+        </div>
+        <CardTitle className="group-hover:text-health-orange transition-colors">Personalized Plans</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <CardDescription>
+          Get tailored health plans that fit your budget, schedule, and specific wellness goals.
+        </CardDescription>
+        <Button variant="ghost" size="sm" className="mt-4 text-health-orange">
+          View Success Stories →
+        </Button>
+      </CardContent>
+    </Card>
   );
 };
