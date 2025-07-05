@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { generateAIHealthPlans } from '@/utils/aiPlanGenerator';
+import { generateAIHealthPlans } from '@/utils/planGenerator/aiPlanGenerator';
 import { HealthPlansService } from '@/services/health-plans-service';
 import { AIHealthPlan, UserCriteria } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -8,10 +8,10 @@ import { useToast } from '@/hooks/use-toast';
 export const useEnhancedAIPlansService = () => {
   const { toast } = useToast();
 
-  const generateAndSavePlans = async (criteria: UserCriteria): Promise<AIHealthPlan[]> => {
+  const generateAndSavePlans = async (userInput: string): Promise<AIHealthPlan[]> => {
     try {
-      // Generate plans using existing AI logic
-      const generatedPlans = generateAIHealthPlans(criteria);
+      // Generate plans using the AI plan generator with user input string
+      const generatedPlans = await generateAIHealthPlans(userInput);
       
       // Save each plan to the database
       const savedPlans = await Promise.all(

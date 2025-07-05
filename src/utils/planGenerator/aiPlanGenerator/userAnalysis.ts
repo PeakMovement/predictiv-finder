@@ -4,6 +4,7 @@ import { enhancedAnalyzeUserInput } from '../enhancedInputAnalyzer';
 import { detectComprehensiveSymptoms } from '../detectors/comprehensiveSymptomDetector';
 import { detectBudgetConstraints, applyBudgetAwareSelection } from '../detectors/budgetDetector';
 import { matchPractitionersToNeeds } from '../professionalRecommendation/matcher';
+import { ServiceCategory } from '../types';
 
 /**
  * Comprehensive user query analysis that leverages all existing enhanced analyzers
@@ -71,9 +72,12 @@ export function analyzeUserQuery(query: string): Partial<UserCriteria> & {
     criteria.location = enhancedAnalysis.location;
   }
   
-  // Extract service categories using existing matching system
+  // Extract service categories using existing matching system - with proper type casting
   if (enhancedAnalysis.suggestedCategories && enhancedAnalysis.suggestedCategories.length > 0) {
-    criteria.categories = enhancedAnalysis.suggestedCategories;
+    // Cast to ServiceCategory[] to ensure type safety
+    criteria.categories = enhancedAnalysis.suggestedCategories.map(category => 
+      category as ServiceCategory
+    );
     
     // Apply budget optimization if budget constrained
     if (criteria.budget?.monthly && enhancedAnalysis.isBudgetConstrained) {
@@ -81,7 +85,9 @@ export function analyzeUserQuery(query: string): Partial<UserCriteria> & {
         criteria.budget.monthly,
         enhancedAnalysis.suggestedCategories as any[]
       );
-      criteria.categories = budgetOptimized.prioritizedServices;
+      criteria.categories = budgetOptimized.prioritizedServices.map(service => 
+        service as ServiceCategory
+      );
       criteria.budgetOptimized = true;
     }
   }
