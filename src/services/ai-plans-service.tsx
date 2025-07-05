@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { generateAIPlan } from '@/utils/planGenerator/aiPlanGenerator';
+import { generateAIHealthPlans } from '@/utils/planGenerator/aiPlanGenerator';
 import { AIHealthPlan, ServiceCategory } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { PlanGenerationError, PlanGenerationErrorType } from '@/utils/planGenerator/errorHandling';
@@ -25,27 +25,27 @@ export function useAIPlansService() {
       setErrorDetails(null);
       
       // Log the incoming user query for debugging
-      console.log("Processing user query:", userInput);
+      console.log("Processing user query with comprehensive analysis:", userInput);
 
-      // Call the AI plan generator with the user input
-      const result = await generatePlan(userInput);
+      // Call the enhanced AI plan generator with comprehensive analysis
+      const result = await generateAIHealthPlans(userInput);
       
       // Log the generated plans for debugging
-      console.log("Generated AI plans:", result);
+      console.log("Generated comprehensive AI plans:", result);
       
       // Set the generated plans
       setAIPlans(Array.isArray(result) ? result : [result]);
       
       // Show success toast
       toast({
-        title: "Plans Generated",
-        description: `${Array.isArray(result) ? result.length : 1} custom health plans created for your needs.`,
+        title: "Intelligent Plans Generated",
+        description: `${Array.isArray(result) ? result.length : 1} personalized health plans created using comprehensive analysis of your needs.`,
       });
       
       return result;
     } catch (error: any) {
       // Log the error for debugging
-      console.error("Error generating AI plans:", error);
+      console.error("Error generating comprehensive AI plans:", error);
       
       // Store detailed error information for debugging
       setErrorDetails({
@@ -60,8 +60,8 @@ export function useAIPlansService() {
         // Show specific error toast
         toast({
           variant: "destructive",
-          title: "Failed to generate plans",
-          description: error.userMessage || "An unexpected error occurred. Please try again.",
+          title: "Failed to generate intelligent plans",
+          description: error.userMessage || "An unexpected error occurred. Please try again with more specific details.",
         });
         
         // Store the user-friendly error message
@@ -82,11 +82,11 @@ export function useAIPlansService() {
         toast({
           variant: "destructive",
           title: "Failed to generate plans",
-          description: error.message || "An unexpected error occurred. Please try again.",
+          description: error.message || "An unexpected error occurred. Please try again with more details about your health needs.",
         });
         
         // Store a generic error message
-        setError('Failed to generate AI health plans. Please try again.');
+        setError('Failed to generate AI health plans using comprehensive analysis. Please try again with more specific information.');
       }
         
       return [];
@@ -111,23 +111,23 @@ export function useAIPlansService() {
   };
 }
 
-// Replace Next.js specific code with browser-compatible equivalents
+// Enhanced plan generation function that uses comprehensive analysis
 export async function generatePlan(userInput: string) {
   try {
     // Log the incoming user query for debugging
-    console.log("Processing user query:", userInput);
+    console.log("Processing user query with comprehensive analysis:", userInput);
 
-    // Call the AI plan generator with the user input
-    const result = await generateAIPlan(userInput);
+    // Call the enhanced AI plan generator with all existing sophisticated tools
+    const result = await generateAIHealthPlans(userInput);
 
     // Log the generated plans for debugging
-    console.log("Generated AI plans:", result);
+    console.log("Generated comprehensive AI plans:", result);
 
-    // Return the generated plan
-    return result;
+    // Return the first generated plan
+    return result[0];
   } catch (error: any) {
     // Log the error for debugging
-    console.error("Error generating AI plans:", error);
+    console.error("Error generating comprehensive AI plans:", error);
 
     // Re-throw the error to be handled by the calling function
     throw error;

@@ -1,61 +1,105 @@
 
 import { UserCriteria } from '@/types';
+import { enhancedAnalyzeUserInput } from '../enhancedInputAnalyzer';
+import { detectComprehensiveSymptoms } from '../detectors/comprehensiveSymptomDetector';
+import { detectBudgetConstraints, applyBudgetAwareSelection } from '../detectors/budgetDetector';
+import { matchPractitionersToNeeds } from '../professionalRecommendation/matcher';
 
 /**
- * Analyzes a user query to extract criteria for health plan creation
+ * Comprehensive user query analysis that leverages all existing enhanced analyzers
  * 
  * @param query The user's input query
- * @returns Extracted user criteria for plan generation
+ * @returns Extracted user criteria for plan generation with comprehensive analysis
  */
-export function analyzeUserQuery(query: string): Partial<UserCriteria> {
-  // This is a simplified version for demonstration
-  const criteria: Partial<UserCriteria> = {};
+export function analyzeUserQuery(query: string): Partial<UserCriteria> & {
+  detectedSymptoms: string[];
+  severityScores: Record<string, number>;
+  suggestedServices: string[];
+  budgetOptimized: boolean;
+  complexityLevel: number;
+} {
+  console.log("Running comprehensive user query analysis:", query);
   
-  // Extract goal from query if present
-  if (query.toLowerCase().includes('weight loss')) {
-    criteria.goal = 'Weight loss';
-  } else if (query.toLowerCase().includes('fitness') || query.toLowerCase().includes('stronger')) {
-    criteria.goal = 'Improve fitness';
-  } else if (query.toLowerCase().includes('injury') || query.toLowerCase().includes('pain')) {
-    criteria.goal = 'Recover from injury';
-  } else if (query.toLowerCase().includes('performance')) {
-    criteria.goal = 'Improve performance';
+  // Use the enhanced input analyzer that connects all existing tools
+  const enhancedAnalysis = enhancedAnalyzeUserInput(query);
+  
+  // Use the comprehensive symptom detector
+  const symptomAnalysis = detectComprehensiveSymptoms(query);
+  
+  // Extract budget information using existing budget detector
+  const inputLower = query.toLowerCase();
+  const contraindications: any[] = [];
+  const detectedBudget = detectBudgetConstraints(inputLower, contraindications);
+  
+  // Build comprehensive criteria object
+  const criteria: Partial<UserCriteria> & {
+    detectedSymptoms: string[];
+    severityScores: Record<string, number>;
+    suggestedServices: string[];
+    budgetOptimized: boolean;
+    complexityLevel: number;
+  } = {
+    detectedSymptoms: symptomAnalysis.symptoms,
+    severityScores: symptomAnalysis.priorities,
+    suggestedServices: enhancedAnalysis.suggestedCategories,
+    budgetOptimized: false,
+    complexityLevel: enhancedAnalysis.complexity
+  };
+  
+  // Extract goal from enhanced analysis
+  if (enhancedAnalysis.primaryIssue) {
+    criteria.goal = enhancedAnalysis.primaryIssue;
   }
   
   // Extract budget information
-  const budgetMatch = query.match(/budget.*?(\d+)/i);
-  if (budgetMatch && budgetMatch[1]) {
-    const budgetAmount = parseInt(budgetMatch[1]);
+  if (enhancedAnalysis.budget) {
     criteria.budget = {
-      monthly: budgetAmount,
+      monthly: enhancedAnalysis.budget,
       preferredSetup: "monthly",
+      flexibleBudget: enhancedAnalysis.isBudgetConstrained
+    };
+  } else if (detectedBudget) {
+    criteria.budget = {
+      monthly: detectedBudget,
+      preferredSetup: "monthly", 
       flexibleBudget: true
     };
   }
   
-  // Extract location preference
-  if (query.toLowerCase().includes('cape town')) {
-    criteria.location = 'Cape Town';
-  } else if (query.toLowerCase().includes('johannesburg')) {
-    criteria.location = 'Johannesburg';
-  } else if (query.toLowerCase().includes('durban')) {
-    criteria.location = 'Durban';
-  } else if (query.toLowerCase().includes('pretoria')) {
-    criteria.location = 'Pretoria';
+  // Extract location information
+  if (enhancedAnalysis.location) {
+    criteria.location = enhancedAnalysis.location;
   }
   
-  // Extract service categories
-  if (query.toLowerCase().includes('dietician') || query.toLowerCase().includes('nutrition')) {
-    criteria.categories = ['dietician'];
-  } else if (query.toLowerCase().includes('physio') || query.toLowerCase().includes('therapy')) {
-    criteria.categories = ['physiotherapist'];
-  } else if (query.toLowerCase().includes('doctor') || query.toLowerCase().includes('gp')) {
-    criteria.categories = ['family-medicine'];
-  } else if (query.toLowerCase().includes('personal trainer') || query.toLowerCase().includes('fitness')) {
-    criteria.categories = ['personal-trainer'];
-  } else if (query.toLowerCase().includes('running') || query.toLowerCase().includes('marathon')) {
-    criteria.categories = ['run-coaching'];
+  // Extract service categories using existing matching system
+  if (enhancedAnalysis.suggestedCategories && enhancedAnalysis.suggestedCategories.length > 0) {
+    criteria.categories = enhancedAnalysis.suggestedCategories;
+    
+    // Apply budget optimization if budget constrained
+    if (criteria.budget?.monthly && enhancedAnalysis.isBudgetConstrained) {
+      const budgetOptimized = applyBudgetAwareSelection(
+        criteria.budget.monthly,
+        enhancedAnalysis.suggestedCategories as any[]
+      );
+      criteria.categories = budgetOptimized.prioritizedServices;
+      criteria.budgetOptimized = true;
+    }
   }
   
+  // Extract medical conditions from comprehensive analysis
+  if (enhancedAnalysis.medicalConditions && enhancedAnalysis.medicalConditions.length > 0) {
+    // Store medical conditions for reference
+    (criteria as any).medicalConditions = enhancedAnalysis.medicalConditions;
+  }
+  
+  console.log("Comprehensive analysis result:", criteria);
   return criteria;
+}
+
+/**
+ * Estimate complexity level based on comprehensive analysis
+ */
+export function estimateComplexityLevel(query: string): number {
+  const analysis = enhancedAnalyzeUserInput(query);
+  return analysis.complexity;
 }
