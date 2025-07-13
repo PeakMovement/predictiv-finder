@@ -11,6 +11,7 @@ import { BreadcrumbNavigation } from "@/components/ui/breadcrumb-navigation";
 import { MobileNavigationControls } from "@/components/homepage/MobileNavigationControls";
 import { ContextualErrorDisplay } from "@/components/ui/contextual-error-display";
 import { useAuth } from "@/context/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Import existing stage components with default imports
 import { HomeHero } from "@/components/homepage/HomeHero";
@@ -26,6 +27,7 @@ const AppContent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showDashboard, setShowDashboard] = useState(false);
   const { isAuthenticated } = useAuth();
+  const isMobile = useIsMobile();
   
   const {
     stage,
@@ -57,6 +59,7 @@ const AppContent: React.FC = () => {
 
   const handleStageNavigation = (newStage: any) => {
     clearError();
+    console.log('Navigating to stage:', newStage); // Debug log
     navigateToStage(newStage);
   };
 
@@ -66,7 +69,14 @@ const AppContent: React.FC = () => {
     setShowDashboard(false);
   };
 
+  const handleCategorySelection = () => {
+    console.log('Browse categories clicked'); // Debug log
+    handleStageNavigation('category-selector');
+  };
+
   const renderStageContent = () => {
+    console.log('Current stage:', stage); // Debug log
+    
     if (showDashboard) {
       return <EnhancedUserDashboard />;
     }
@@ -75,7 +85,7 @@ const AppContent: React.FC = () => {
       case 'home':
         return (
           <HomeHero 
-            onNavigateToCategories={() => handleStageNavigation('category-selector')}
+            onNavigateToCategories={handleCategorySelection}
             onNavigateToAI={() => handleStageNavigation('ai-input')}
             onShowDashboard={() => setShowDashboard(true)}
           />
@@ -134,7 +144,7 @@ const AppContent: React.FC = () => {
       default:
         return (
           <HomeHero 
-            onNavigateToCategories={() => handleStageNavigation('category-selector')}
+            onNavigateToCategories={handleCategorySelection}
             onNavigateToAI={() => handleStageNavigation('ai-input')}
             onShowDashboard={() => setShowDashboard(true)}
           />
@@ -146,62 +156,68 @@ const AppContent: React.FC = () => {
   const persistedState = getPersistedState();
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-health-blue-light via-health-teal-light to-health-purple-light">
-      {/* PWA and Offline Status */}
-      <PWAInstallPrompt />
-      <OfflineIndicator />
+    <div className="fixed inset-0 w-full h-full overflow-hidden">
+      {/* Full-screen gradient background - optimized for all screens including Mac */}
+      <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-health-blue-light via-health-teal-light to-health-purple-light" />
+      
+      {/* Scrollable content area */}
+      <div className="relative w-full h-full overflow-y-auto">
+        {/* PWA and Offline Status */}
+        <PWAInstallPrompt />
+        <OfflineIndicator />
 
-      {/* State Restoration Banner */}
-      {showRestorationBanner && persistedState && (
-        <StateRestorationBanner
-          onRestore={restorePersistedState}
-          onDismiss={dismissRestorationBanner}
-          persistedState={persistedState}
-        />
-      )}
-
-      {/* Breadcrumb Navigation */}
-      {!showDashboard && (
-        <BreadcrumbNavigation
-          currentStage={stage}
-          onNavigate={handleStageNavigation}
-          className="container mx-auto px-4 pt-4"
-        />
-      )}
-
-      {/* Error Display */}
-      {error && (
-        <div className="container mx-auto px-4 pt-4">
-          <ContextualErrorDisplay
-            error={error}
-            currentStage={stage}
-            onRetry={clearError}
-            onBack={handleBack}
-            onHome={handleGoHome}
-            onDismiss={clearError}
+        {/* State Restoration Banner */}
+        {showRestorationBanner && persistedState && (
+          <StateRestorationBanner
+            onRestore={restorePersistedState}
+            onDismiss={dismissRestorationBanner}
+            persistedState={persistedState}
           />
-        </div>
-      )}
+        )}
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 pb-24">
-        {renderStageContent()}
-      </main>
+        {/* Breadcrumb Navigation */}
+        {!showDashboard && (
+          <BreadcrumbNavigation
+            currentStage={stage}
+            onNavigate={handleStageNavigation}
+            className="container mx-auto px-4 pt-4"
+          />
+        )}
 
-      {/* Mobile Navigation */}
-      {!showDashboard && (
-        <MobileNavigationControls
-          stage={stage}
-          onBack={handleBack}
-          onStartOver={handleGoHome}
+        {/* Error Display */}
+        {error && (
+          <div className="container mx-auto px-4 pt-4">
+            <ContextualErrorDisplay
+              error={error}
+              currentStage={stage}
+              onRetry={clearError}
+              onBack={handleBack}
+              onHome={handleGoHome}
+              onDismiss={clearError}
+            />
+          </div>
+        )}
+
+        {/* Main Content */}
+        <main className={`container mx-auto px-4 py-8 ${isMobile ? 'pb-24' : 'pb-8'} min-h-screen`}>
+          {renderStageContent()}
+        </main>
+
+        {/* Mobile Navigation */}
+        {!showDashboard && isMobile && (
+          <MobileNavigationControls
+            stage={stage}
+            onBack={handleBack}
+            onStartOver={handleGoHome}
+          />
+        )}
+
+        {/* Login Modal */}
+        <LoginModal 
+          isOpen={isLoginModalOpen} 
+          onClose={() => setIsLoginModalOpen(false)} 
         />
-      )}
-
-      {/* Login Modal */}
-      <LoginModal 
-        isOpen={isLoginModalOpen} 
-        onClose={() => setIsLoginModalOpen(false)} 
-      />
+      </div>
     </div>
   );
 };
