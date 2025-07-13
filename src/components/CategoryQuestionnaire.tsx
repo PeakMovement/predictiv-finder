@@ -128,55 +128,63 @@ export const CategoryQuestionnaire = ({ categories: selectedCategories, onSubmit
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div 
-                className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}
+              <RadioGroup 
+                value={budgetPreference} 
+                onValueChange={(value: BudgetPreference) => setBudgetPreference(value)}
+                className="space-y-4"
               >
                 <div 
-                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                    budgetPreference === 'current-problem' 
-                      ? 'border-primary bg-primary/5' 
-                      : 'border-border hover:border-primary/50'
-                  }`}
-                  onClick={() => setBudgetPreference('current-problem')}
+                  className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}
                 >
-                  <div className="flex items-center space-x-3">
-                    <RadioGroupItem
-                      value="current-problem"
-                    />
-                    <div>
-                      <Label className="font-medium cursor-pointer">
-                        What I can afford for my current problem
-                      </Label>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        One-time payment to address your specific health concern
-                      </p>
+                  <div 
+                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                      budgetPreference === 'current-problem' 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => setBudgetPreference('current-problem')}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <RadioGroupItem
+                        value="current-problem"
+                        id="current-problem"
+                      />
+                      <div>
+                        <Label htmlFor="current-problem" className="font-medium cursor-pointer">
+                          What I can afford for my current problem
+                        </Label>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          One-time payment to address your specific health concern
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div 
+                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                      budgetPreference === 'monthly-ongoing' 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => setBudgetPreference('monthly-ongoing')}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <RadioGroupItem
+                        value="monthly-ongoing"
+                        id="monthly-ongoing"
+                      />
+                      <div>
+                        <Label htmlFor="monthly-ongoing" className="font-medium cursor-pointer">
+                          What I can afford to pay monthly
+                        </Label>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Ongoing monthly budget for continuous health support
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-                
-                <div 
-                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                    budgetPreference === 'monthly-ongoing' 
-                      ? 'border-primary bg-primary/5' 
-                      : 'border-border hover:border-primary/50'
-                  }`}
-                  onClick={() => setBudgetPreference('monthly-ongoing')}
-                >
-                  <div className="flex items-center space-x-3">
-                    <RadioGroupItem
-                      value="monthly-ongoing"
-                    />
-                    <div>
-                      <Label className="font-medium cursor-pointer">
-                        What I can afford to pay monthly
-                      </Label>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Ongoing monthly budget for continuous health support
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              </RadioGroup>
             </CardContent>
           </Card>
         );
@@ -218,7 +226,7 @@ export const CategoryQuestionnaire = ({ categories: selectedCategories, onSubmit
                   <Checkbox
                     id="flexible"
                     checked={isFlexibleBudget}
-                    onCheckedChange={() => setIsFlexibleBudget(!isFlexibleBudget)}
+                    onCheckedChange={(checked) => setIsFlexibleBudget(!!checked)}
                   />
                   <Label htmlFor="flexible" className="text-sm">
                     My budget is flexible - I'm open to slightly higher costs for better outcomes
@@ -289,6 +297,13 @@ export const CategoryQuestionnaire = ({ categories: selectedCategories, onSubmit
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         checked={selectedModes.includes(mode)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedModes(prev => [...prev, mode]);
+                          } else {
+                            setSelectedModes(prev => prev.filter(m => m !== mode));
+                          }
+                        }}
                       />
                       <div>
                         <Label className="font-medium cursor-pointer">
