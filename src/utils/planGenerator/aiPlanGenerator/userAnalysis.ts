@@ -56,13 +56,13 @@ export function analyzeUserQuery(query: string): Partial<UserCriteria> & {
   if (enhancedAnalysis.budget) {
     criteria.budget = {
       monthly: enhancedAnalysis.budget,
-      preferredSetup: "monthly",
+      preferredSetup: "monthly-ongoing",
       flexibleBudget: enhancedAnalysis.isBudgetConstrained
     };
   } else if (detectedBudget) {
     criteria.budget = {
       monthly: detectedBudget,
-      preferredSetup: "monthly", 
+      preferredSetup: "monthly-ongoing", 
       flexibleBudget: true
     };
   }

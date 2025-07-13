@@ -142,8 +142,6 @@ export const CategoryQuestionnaire = ({ categories: selectedCategories, onSubmit
                   <div className="flex items-center space-x-3">
                     <RadioGroupItem
                       value="current-problem"
-                      checked={budgetPreference === 'current-problem'}
-                      readOnly
                     />
                     <div>
                       <Label className="font-medium cursor-pointer">
@@ -167,8 +165,6 @@ export const CategoryQuestionnaire = ({ categories: selectedCategories, onSubmit
                   <div className="flex items-center space-x-3">
                     <RadioGroupItem
                       value="monthly-ongoing"
-                      checked={budgetPreference === 'monthly-ongoing'}
-                      readOnly
                     />
                     <div>
                       <Label className="font-medium cursor-pointer">
@@ -293,7 +289,6 @@ export const CategoryQuestionnaire = ({ categories: selectedCategories, onSubmit
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         checked={selectedModes.includes(mode)}
-                        readOnly
                       />
                       <div>
                         <Label className="font-medium cursor-pointer">
