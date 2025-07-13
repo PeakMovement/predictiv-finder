@@ -9,6 +9,9 @@ export type FitnessLevel = 'beginner' | 'intermediate' | 'advanced';
 
 export type GoalType = string;
 
+// Enhanced budget preference types
+export type BudgetPreference = 'current-problem' | 'monthly-ongoing' | 'not-sure';
+
 export interface Practitioner {
   id: string;
   name: string;
@@ -71,7 +74,7 @@ export interface UserCriteria {
   goal?: string;
   budget: {
     monthly: number;
-    preferredSetup: 'once-off' | 'monthly' | 'not-sure';
+    preferredSetup: BudgetPreference;
     flexibleBudget: boolean;
   };
   location?: string;
@@ -107,7 +110,7 @@ export interface DetailedUserCriteria {
   };
   budget: {
     monthly: number;
-    preferredSetup: 'once-off' | 'monthly' | 'not-sure';
+    preferredSetup: BudgetPreference;
     flexibleBudget: boolean;
   };
   location?: string;

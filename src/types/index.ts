@@ -7,6 +7,9 @@ export * from './index.d';
 import { ServiceCategory } from "../utils/planGenerator/types";
 export type { ServiceCategory };
 
+// Export the enhanced budget preference type
+export type BudgetPreference = 'current-problem' | 'monthly-ongoing' | 'not-sure';
+
 // Export common project-specific types
 export interface AIHealthPlan {
   id: string;
@@ -67,7 +70,7 @@ export interface UserCriteria {
   secondaryGoals?: string[];
   budget?: {
     monthly: number;
-    preferredSetup: 'monthly' | 'pay-as-you-go' | 'package' | 'not-sure' | 'once-off';
+    preferredSetup: BudgetPreference;
     flexibleBudget: boolean;
   };
   categories?: ServiceCategory[];
