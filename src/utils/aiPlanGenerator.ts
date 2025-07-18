@@ -1,30 +1,30 @@
 
-// Re-export everything from the CSV-based optimization approach only
-export * from './planGenerator/aiPlanGenerator/index';
+// Re-export everything from the new modular structure
+// Import specific exported types to avoid ambiguity
+import * as AIGenerator from './planGenerator/aiPlanGenerator';
 
-// Re-export the SessionAllocation type explicitly 
+// Re-export everything except SessionAllocation which we'll handle explicitly
+export * from './planGenerator/planStructure';
+export * from './planGenerator/professionalScoring';
+
+// Export matchPractitionersToNeeds with explicit name to avoid ambiguity
+import { matchPractitionersToNeeds as categoryMatchPractitionersToNeeds } from './planGenerator/categoryMatcher';
+export { categoryMatchPractitionersToNeeds };
+
+export * from './planGenerator/professionalRecommendation';
+export * from './planGenerator/inputAnalyzer';
+
+// Explicitly re-export the AIGenerator types and functions
+export {
+  generateAIHealthPlans,
+  generateAIPlan,
+  analyzeUserQuery,
+  estimateComplexityLevel
+} from './planGenerator/aiPlanGenerator';
+
+// Export the SessionAllocation type explicitly 
 import type { ServiceAllocation } from './planGenerator/types';
 export type { ServiceAllocation as AIGeneratorSessionAllocation };
 
-// Create the missing findAlternativeCategories function
-import { ServiceCategory } from './planGenerator/types';
-
-export function findAlternativeCategories(selectedCategories: ServiceCategory[]): ServiceCategory[] {
-  const allCategories: ServiceCategory[] = [
-    'physiotherapist',
-    'biokineticist',
-    'dietician',
-    'general-practitioner',
-    'sports-medicine',
-    'massage-therapy',
-    'strength-coaching',
-    'running-coaching',
-    'nutrition-coaching'
-  ];
-  
-  // Return categories not already selected
-  const alternatives = allCategories.filter(cat => !selectedCategories.includes(cat));
-  
-  // Return up to 3 alternatives
-  return alternatives.slice(0, 3);
-}
+// Export findAlternativeCategories
+export { findAlternativeCategories } from './planGenerator/multiProblemCoordination/alternativeCategories';

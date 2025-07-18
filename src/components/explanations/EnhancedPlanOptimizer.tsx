@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +8,8 @@ import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import UtilityModelExplanation from './UtilityModelExplanation';
-import { generateOptimizedTreatmentPlan } from '@/utils/planGenerator/optimizers/csvBasedOptimizer';
+import { generateUtilityBasedPlan } from '@/utils/planGenerator/planGenerator/utilityBasedPlanGenerator';
+import { ServiceCategory } from '@/utils/planGenerator/types';
 import { treatmentOptions } from '@/utils/planGenerator/data/treatmentOptions';
 
 const timeOfDayOptions = [
@@ -22,6 +24,7 @@ const dayOptions = [
   { value: 'wednesday', label: 'Wednesday' },
   { value: 'thursday', label: 'Thursday' },
   { value: 'friday', label: 'Friday' },
+  { value: 'weekend', label: 'Weekend' },
 ];
 
 // Get unique locations from the treatment data
@@ -62,12 +65,26 @@ export const EnhancedPlanOptimizer: React.FC = () => {
       setIsGenerating(true);
       setError(null);
       
-      // Use your new CSV-based optimization
-      const result = await generateOptimizedTreatmentPlan(
+      // Convert selected categories to service types
+      const serviceTypes = uniqueCategories.map(cat => {
+        // Find the first treatment option with this category to get its serviceType
+        const treatment = treatmentOptions.find(t => t.category === cat);
+        return treatment?.serviceType as ServiceCategory;
+      }).filter(Boolean);
+      
+      const result = generateUtilityBasedPlan({
+        medicalConditions: [medicalCondition || 'general health'],
+        serviceTypes,
         budget,
-        medicalCondition || 'Back pain',
-        `Goal: ${goal}. Urgency level: ${urgency}. Available time: ${timeAvailable} minutes/month.`
-      );
+        timeAvailability: timeAvailable,
+        goal,
+        urgency,
+        location,
+        preferOnline,
+        availableDays: selectedDays,
+        timeOfDay: timeOfDay as any,
+        useRealTreatmentData: true // Use the real treatment data
+      });
       
       console.log("Generated plan:", result);
       setPlan(result);
@@ -118,11 +135,11 @@ export const EnhancedPlanOptimizer: React.FC = () => {
                     <SelectValue placeholder="Select a condition" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Back pain">Back pain</SelectItem>
-                    <SelectItem value="Joint injuries">Joint injuries</SelectItem>
-                    <SelectItem value="Neck pain">Neck pain</SelectItem>
-                    <SelectItem value="Sports rehab">Sports rehab</SelectItem>
-                    <SelectItem value="Chronic pain">Chronic pain</SelectItem>
+                    {uniqueCategories.map(category => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -163,11 +180,22 @@ export const EnhancedPlanOptimizer: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <Label>Location</Label>
-                <Input 
-                  value={location}
-                  onChange={e => setLocation(e.target.value)}
-                  placeholder="Enter your location"
-                />
+                <Select 
+                  value={location} 
+                  onValueChange={setLocation}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Any location</SelectItem>
+                    {uniqueLocations.map(loc => (
+                      <SelectItem key={loc} value={loc}>
+                        {loc}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="flex items-center space-x-2">
@@ -187,18 +215,18 @@ export const EnhancedPlanOptimizer: React.FC = () => {
               <div>
                 <Label className="mb-2 block">Available Days</Label>
                 <div className="grid grid-cols-2 gap-2">
-                  {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'weekend'].map(day => (
-                    <div key={day} className="flex items-center space-x-2">
+                  {dayOptions.map(day => (
+                    <div key={day.value} className="flex items-center space-x-2">
                       <Checkbox 
-                        id={`day-${day}`} 
-                        checked={selectedDays.includes(day)} 
-                        onCheckedChange={() => handleDayToggle(day)} 
+                        id={`day-${day.value}`} 
+                        checked={selectedDays.includes(day.value)} 
+                        onCheckedChange={() => handleDayToggle(day.value)} 
                       />
                       <label
-                        htmlFor={`day-${day}`}
+                        htmlFor={`day-${day.value}`}
                         className="text-sm font-medium leading-none"
                       >
-                        {day.charAt(0).toUpperCase() + day.slice(1)}
+                        {day.label}
                       </label>
                     </div>
                   ))}
@@ -216,9 +244,11 @@ export const EnhancedPlanOptimizer: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="">Any time</SelectItem>
-                    <SelectItem value="morning">Morning</SelectItem>
-                    <SelectItem value="afternoon">Afternoon</SelectItem>
-                    <SelectItem value="evening">Evening</SelectItem>
+                    {timeOfDayOptions.map(time => (
+                      <SelectItem key={time.value} value={time.value}>
+                        {time.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -266,6 +296,12 @@ export const EnhancedPlanOptimizer: React.FC = () => {
                       <div className="text-sm text-gray-600">{service.description}</div>
                       <div className="text-sm mt-1">
                         <span className="text-green-600 font-medium">R{service.price} per session</span>
+                        {service.frequency && (
+                          <span className="mx-2 text-gray-400">|</span>
+                        )}
+                        {service.frequency && (
+                          <span className="text-blue-600">{service.frequency}</span>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -281,10 +317,64 @@ export const EnhancedPlanOptimizer: React.FC = () => {
                 </div>
                 
                 <div>
-                  <h4 className="text-sm text-gray-500">Timeline</h4>
-                  <p className="font-semibold">{plan.timeFrame}</p>
+                  <h4 className="text-sm text-gray-500">Time Required</h4>
+                  <p className="font-semibold">{(plan.timeRequiredMinutes / 60).toFixed(1)} hours/month</p>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm text-gray-500">Utility Score</h4>
+                  <p className="font-semibold">{plan.utilityScore?.toFixed(1) || 'N/A'}</p>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm text-gray-500">Expected Timeline</h4>
+                  <p className="font-semibold">{plan.expectedTimeToResults || plan.timeFrame}</p>
                 </div>
               </div>
+              
+              {plan.optimizationNotes && plan.optimizationNotes.length > 0 && (
+                <>
+                  <Separator />
+                  <div>
+                    <h3 className="font-medium mb-2">Notes</h3>
+                    <ul className="text-sm space-y-1">
+                      {plan.optimizationNotes.map((note: string, index: number) => (
+                        <li key={index} className="text-gray-600">• {note}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </>
+              )}
+              
+              {plan.availabilityNotes && plan.availabilityNotes.length > 0 && (
+                <div>
+                  <h3 className="font-medium mb-2">Availability Notes</h3>
+                  <ul className="text-sm space-y-1">
+                    {plan.availabilityNotes.map((note: string, index: number) => (
+                      <li key={index} className="text-amber-600">• {note}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {plan.sessionBreakdown && (
+                <>
+                  <Separator />
+                  <div>
+                    <h3 className="font-medium mb-2">Session Breakdown</h3>
+                    <div className="flex space-x-4">
+                      <div>
+                        <span className="text-sm text-gray-500">In-Person:</span> 
+                        <span className="ml-1 font-medium">{plan.sessionBreakdown.inPerson} sessions</span>
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-500">Remote:</span> 
+                        <span className="ml-1 font-medium">{plan.sessionBreakdown.remote} sessions</span>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </Card>
           ) : (
             <Card className="p-4 h-full flex items-center justify-center bg-gray-50">
