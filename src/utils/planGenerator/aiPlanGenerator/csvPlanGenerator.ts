@@ -22,12 +22,29 @@ export async function generateCSVBasedAIHealthPlans(userInput: string): Promise<
         let painCategory = 'Back pain'; // Default
         const inputLower = userInput.toLowerCase();
         
+        // Check for specific pain categories in user input
         for (const category of availablePainCategories) {
-            const categoryLower = category.toLowerCase();
-            if (inputLower.includes(categoryLower) || 
-                inputLower.includes(categoryLower.split(' ')[0])) {
+            const categoryWords = category.toLowerCase().split(' ');
+            if (categoryWords.some(word => inputLower.includes(word))) {
                 painCategory = category;
                 break;
+            }
+        }
+        
+        // If no specific pain category found, try to map general health concerns
+        if (painCategory === 'Back pain') {
+            if (inputLower.includes('joint') || inputLower.includes('knee') || inputLower.includes('shoulder')) {
+                painCategory = 'Joint injuries';
+            } else if (inputLower.includes('neck')) {
+                painCategory = 'Neck pain';
+            } else if (inputLower.includes('sport') || inputLower.includes('exercise')) {
+                painCategory = 'Sports rehab';
+            } else if (inputLower.includes('work') || inputLower.includes('office')) {
+                painCategory = 'Workplace-related injuries';
+            } else if (inputLower.includes('chronic') || inputLower.includes('long-term')) {
+                painCategory = 'Chronic pain';
+            } else if (inputLower.includes('surgery') || inputLower.includes('operation')) {
+                painCategory = 'Post-surgical recovery';
             }
         }
         
@@ -36,7 +53,7 @@ export async function generateCSVBasedAIHealthPlans(userInput: string): Promise<
         
         console.log(`Using pain category: ${painCategory}, budget: R${budget}`);
         
-        // Generate optimized plan
+        // Generate optimized plan using your CSV-based algorithm
         const optimizedPlan = await generateOptimizedTreatmentPlan(budget, painCategory, userInput);
         console.log("Generated optimized plan:", optimizedPlan);
         

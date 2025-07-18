@@ -10,7 +10,7 @@ export * from './locationFilter';
 export * from './aiPlanGenerator';
 export * from './enhancedInputAnalyzer';
 
-// Re-export from budgetConfig, but explicitly to avoid ambiguity
+// Re-export from budgetConfig
 import { 
   getBudgetTiers,
   calculateBudgetRange,
@@ -22,9 +22,6 @@ export {
   calculateBudgetRange,
   inferBudgetFromInput
 };
-
-// Re-export custom determineBudgetTier from enhancedBudgetOptimizer
-export { determineBudgetTier } from './budgetHandling/enhancedBudgetOptimizer';
 
 // Re-export type definitions explicitly to avoid ambiguity
 export type { 
