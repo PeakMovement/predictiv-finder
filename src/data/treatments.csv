@@ -1,0 +1,16 @@
+Treatment_Cat,Cost,Pain_Cat,Utility_Score
+Physiotherapy,400,Back pain,90
+Physiotherapy,500,Joint injuries,85
+Physiotherapy,600,Neck pain,80
+Physiotherapy,700,Joint injuries,85
+Physiotherapy,1000,Post-surgical recovery,90
+Biokinetics,400,Back pain,80
+Biokinetics,500,Joint injuries,70
+Biokinetics,600,Neck pain,85
+Biokinetics,700,Joint injuries,90
+Biokinetics,1000,Sports rehab,85
+Massage therapy,400,Back pain,75
+Massage therapy,500,Neck pain,80
+Massage therapy,600,Sports rehab,80
+Massage therapy,700,Chronic pain,70
+Massage therapy,1000,Workplace-related injuries,75
