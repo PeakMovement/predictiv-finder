@@ -62,7 +62,7 @@ export const EnhancedPlanOptimizer: React.FC = () => {
       setIsGenerating(true);
       setError(null);
       
-      // Use the new CSV-based optimization
+      // Use your new CSV-based optimization
       const result = await generateOptimizedTreatmentPlan(
         budget,
         medicalCondition || 'Back pain',

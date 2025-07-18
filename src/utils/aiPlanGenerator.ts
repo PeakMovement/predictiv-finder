@@ -15,11 +15,11 @@ export function findAlternativeCategories(selectedCategories: ServiceCategory[])
     'biokineticist',
     'dietician',
     'general-practitioner',
-    'sports-medicine-doctor',
+    'sports-medicine',
     'massage-therapy',
-    'strength-coach',
-    'running-coach',
-    'nutrition-coach'
+    'strength-coaching',
+    'running-coaching',
+    'nutrition-coaching'
   ];
   
   // Return categories not already selected

@@ -4,7 +4,7 @@ import solver from 'javascript-lp-solver';
 import { ServiceCategory } from "../types";
 import { AIHealthPlan } from '@/types';
 
-// Define treatment structure matching the CSV
+// Define treatment structure matching your code
 interface Treatment {
     Treatment_Cat: string;
     Pain_Cat: string;
@@ -13,7 +13,7 @@ interface Treatment {
     [key: string]: any;
 }
 
-// Load and parse CSV data
+// Load and parse CSV data (browser-compatible version of your code)
 async function loadTreatmentData(): Promise<Treatment[]> {
     try {
         // Fetch the CSV file from the public directory
@@ -26,7 +26,7 @@ async function loadTreatmentData(): Promise<Treatment[]> {
             skipEmptyLines: true
         });
         
-        // Clean the data
+        // Clean the data (exact same logic as your code)
         const cleanTreatments = parsed.data.filter(
             (t) => t.Pain_Cat && !isNaN(t.Cost) && !isNaN(t.Utility_Score)
         );
@@ -35,30 +35,23 @@ async function loadTreatmentData(): Promise<Treatment[]> {
         return cleanTreatments;
     } catch (error) {
         console.error('Error loading treatment data:', error);
-        // Fallback to hardcoded data if CSV loading fails
-        return [
-            { Treatment_Cat: 'Physiotherapy', Pain_Cat: 'Back pain', Cost: 400, Utility_Score: 90 },
-            { Treatment_Cat: 'Physiotherapy', Pain_Cat: 'Joint injuries', Cost: 500, Utility_Score: 85 },
-            { Treatment_Cat: 'Physiotherapy', Pain_Cat: 'Neck pain', Cost: 600, Utility_Score: 80 },
-            { Treatment_Cat: 'Biokinetics', Pain_Cat: 'Back pain', Cost: 400, Utility_Score: 80 },
-            { Treatment_Cat: 'Biokinetics', Pain_Cat: 'Joint injuries', Cost: 500, Utility_Score: 70 },
-            { Treatment_Cat: 'Massage therapy', Pain_Cat: 'Back pain', Cost: 400, Utility_Score: 75 },
-            { Treatment_Cat: 'Massage therapy', Pain_Cat: 'Neck pain', Cost: 500, Utility_Score: 80 }
-        ];
+        throw error;
     }
 }
 
-// Optimize treatment selection using linear programming
-export async function optimizeTreatmentSelection(budget: number, painCategory: string): Promise<number[] | string> {
+// Your exact optimize function adapted for browser
+export async function optimize(budget: number, painCat: string): Promise<number[] | string> {
     const treatments = await loadTreatmentData();
+    
+    // Get unique pain categories (exact same as your code)
     const painCats = Array.from(new Set(treatments.map(t => t.Pain_Cat)));
     
-    if (!painCats.includes(painCategory)) {
+    if (!painCats.includes(painCat)) {
         return 'Invalid pain category';
     }
 
-    const options = treatments.filter(t => t.Pain_Cat === painCategory);
-    console.log(`🧪 ${options.length} treatments found for '${painCategory}'`);
+    const options = treatments.filter(t => t.Pain_Cat === painCat);
+    console.log(`🧪 ${options.length} treatments found for '${painCat}'`);
 
     type Model = solver.Model;
     const model: Model = {
@@ -106,7 +99,7 @@ export async function generateOptimizedTreatmentPlan(
     const treatments = await loadTreatmentData();
     const options = treatments.filter(t => t.Pain_Cat === painCategory);
     
-    const selectionVector = await optimizeTreatmentSelection(budget, painCategory);
+    const selectionVector = await optimize(budget, painCategory);
     
     if (typeof selectionVector === 'string') {
         // Fallback plan if optimization fails
