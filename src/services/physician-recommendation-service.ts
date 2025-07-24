@@ -112,9 +112,10 @@ const analyzeHealthIssue = (issue: string): string[] => {
       'exercise prescription', 'injury prevention', 'fitness', 'conditioning', 'training',
       'performance', 'taping', 'sports', 'athlete'
     ],
-    'General Physician': [
-      'fever', 'cold', 'cough', 'infection', 'check-up', 'blood pressure', 'general health',
-      'diabetes', 'headache', 'digestive issues', 'fatigue', 'body pain', 'general'
+    'Dermatologist': [
+      'skin', 'acne', 'rash', 'eczema', 'psoriasis', 'dermatitis', 'moles', 'warts',
+      'skin cancer', 'pigmentation', 'wrinkles', 'hair loss', 'nail problems',
+      'skin condition', 'facial', 'skincare', 'blemishes', 'spots', 'blackheads'
     ],
     'Dietician': [
       'nutrition', 'diet', 'meal plan', 'weight loss', 'cholesterol', 'blood sugar',
@@ -124,6 +125,10 @@ const analyzeHealthIssue = (issue: string): string[] => {
     'Chiropractor': [
       'spine', 'back pain', 'alignment', 'neck pain', 'adjustment', 'posture', 'subluxation',
       'joint', 'manual therapy', 'vertebrae', 'musculoskeletal', 'headache', 'spinal'
+    ],
+    'General Physician': [
+      'fever', 'cold', 'cough', 'infection', 'check-up', 'blood pressure', 'general health',
+      'diabetes', 'headache', 'digestive issues', 'fatigue', 'body pain', 'general'
     ]
   };
   
@@ -134,11 +139,7 @@ const analyzeHealthIssue = (issue: string): string[] => {
     }
   });
   
-  // Default to General Physician if no specialty found
-  if (specialties.length === 0) {
-    specialties.push('General Physician');
-  }
-  
+  // Don't default to General Physician - let the filtering logic handle that
   return specialties;
 };
 
