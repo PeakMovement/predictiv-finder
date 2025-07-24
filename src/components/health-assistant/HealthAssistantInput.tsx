@@ -65,17 +65,18 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
 
   const extractLocation = (prompt: string): string | undefined => {
     const locationPatterns = [
-      /(?:in|at|near|around|from)\s+([A-Za-z\s]+)(?:\s|$|[,.])/i,
-      /(?:location|area|city|town).*?([A-Za-z\s]+)/i
+      /(?:in|at|near|around|from|location)\s+([A-Za-z\s]+)(?:\s|$|[,.])/i,
+      /(?:area|city|town|prefer)\s+([A-Za-z\s]+)/i,
+      /([A-Za-z\s]+?)\s+(?:area|location|city)/i
     ];
     
-    const knownCities = ['johannesburg', 'cape town', 'durban', 'pretoria', 'bloemfontein', 'port elizabeth', 'sandton', 'centurion'];
+    const knownCities = ['johannesburg', 'cape town', 'durban', 'pretoria', 'bloemfontein', 'port elizabeth', 'sandton', 'centurion', 'joburg', 'jozi'];
     
     for (const pattern of locationPatterns) {
       const match = prompt.match(pattern);
       if (match) {
         const location = match[1].trim().toLowerCase();
-        if (knownCities.some(city => location.includes(city))) {
+        if (knownCities.some(city => location.includes(city) || city.includes(location))) {
           return match[1].trim();
         }
       }
