@@ -24,33 +24,33 @@ const PhysicianCard: React.FC<PhysicianCardProps> = ({ physician, onSelect }) =>
   const initials = physician.Name.split(' ').map(n => n[0]).join('');
   
   return (
-    <Card className="group hover:shadow-xl transition-all duration-300 hover:scale-105 border-2 hover:border-primary/30 bg-gradient-to-br from-background to-muted/20 animate-fade-in">
+    <Card className="group hover:shadow-xl transition-all duration-300 hover:scale-105 border-2 hover:border-health-purple/30 bg-card/95 backdrop-blur-sm">
       <CardHeader className="pb-4">
         <div className="flex items-start gap-4">
-          <Avatar className="w-16 h-16 border-4 border-primary/20 group-hover:border-primary/40 transition-colors">
-            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/30 text-primary font-bold text-lg">
+          <Avatar className="w-16 h-16 border-4 border-health-purple/20 group-hover:border-health-purple/40 transition-colors">
+            <AvatarFallback className="bg-health-purple/10 text-health-purple font-bold text-lg">
               {initials}
             </AvatarFallback>
           </Avatar>
           
           <div className="flex-1 space-y-2">
             <div className="flex items-start justify-between">
-              <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">
+              <h3 className="font-bold text-lg text-gray-900 group-hover:text-health-purple transition-colors">
                 {physician.Name}
               </h3>
               <Badge 
                 variant={isAffordable ? "default" : "secondary"}
                 className={`${
                   isAffordable 
-                    ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200' 
-                    : 'bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200'
+                    ? 'bg-health-teal/10 text-health-teal border-health-teal/20 hover:bg-health-teal/20' 
+                    : 'bg-health-orange/10 text-health-orange border-health-orange/20 hover:bg-health-orange/20'
                 } transition-colors font-semibold`}
               >
                 {physician.affordability}
               </Badge>
             </div>
             
-            <div className="flex items-center gap-2 text-primary font-semibold">
+            <div className="flex items-center gap-2 text-health-purple font-semibold">
               <Stethoscope className="w-4 h-4" />
               <span className="text-sm">{physician.Title}</span>
             </div>
@@ -60,35 +60,35 @@ const PhysicianCard: React.FC<PhysicianCardProps> = ({ physician, onSelect }) =>
 
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Clock className="w-4 h-4 text-primary" />
+          <div className="flex items-center gap-2 text-gray-600">
+            <Clock className="w-4 h-4 text-health-purple" />
             <span className="text-sm">
-              <span className="font-semibold text-foreground">{physician.Experience}</span> years
+              <span className="font-semibold text-gray-900">{physician.Experience}</span> years
             </span>
           </div>
           
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <MapPin className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-foreground">{physician.Location}</span>
+          <div className="flex items-center gap-2 text-gray-600">
+            <MapPin className="w-4 h-4 text-health-purple" />
+            <span className="text-sm font-medium text-gray-900">{physician.Location}</span>
           </div>
         </div>
 
         <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
           <div className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-primary" />
-            <span className="text-sm text-muted-foreground">Monthly Fee</span>
+            <DollarSign className="w-5 h-5 text-health-purple" />
+            <span className="text-sm text-gray-600">Monthly Fee</span>
           </div>
-          <span className="text-xl font-bold text-primary">R{physician.Price}</span>
+          <span className="text-xl font-bold text-health-purple">R{physician.Price}</span>
         </div>
 
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+        <div className="flex items-center gap-2 text-gray-600">
+          <Star className="w-4 h-4 fill-health-orange text-health-orange" />
           <span className="text-sm">Highly rated specialist</span>
         </div>
 
         {physician.matchReason && (
-          <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
-            <p className="text-sm text-primary font-medium">
+          <div className="p-3 bg-health-purple/5 border border-health-purple/20 rounded-lg">
+            <p className="text-sm text-health-purple font-medium">
               ✓ {physician.matchReason}
             </p>
           </div>
@@ -98,7 +98,7 @@ const PhysicianCard: React.FC<PhysicianCardProps> = ({ physician, onSelect }) =>
       <CardFooter className="pt-4">
         <Button 
           onClick={() => onSelect(physician)}
-          className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg group-hover:shadow-xl"
+          className="w-full bg-health-purple hover:bg-health-purple-dark text-white hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg group-hover:shadow-xl"
           size="lg"
         >
           <Calendar className="w-4 h-4 mr-2" />

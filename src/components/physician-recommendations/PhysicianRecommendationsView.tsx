@@ -61,7 +61,7 @@ const PhysicianRecommendationsView: React.FC<PhysicianRecommendationsViewProps> 
         <Button 
           variant="ghost" 
           onClick={onBack} 
-          className="flex items-center gap-2 mb-8 hover:bg-primary/5 transition-colors"
+          className="flex items-center gap-2 mb-8 hover:bg-health-purple/5 transition-colors"
         >
           <ArrowLeft size={16} />
           Back to Search
@@ -69,22 +69,22 @@ const PhysicianRecommendationsView: React.FC<PhysicianRecommendationsViewProps> 
         
         <div className="text-center py-16">
           <div className="relative mb-8">
-            <div className="w-20 h-20 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto"></div>
+            <div className="w-20 h-20 border-4 border-health-purple/20 border-t-health-purple rounded-full animate-spin mx-auto"></div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <Users className="w-8 h-8 text-primary animate-pulse" />
+              <Users className="w-8 h-8 text-health-purple animate-pulse" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          <h2 className="text-2xl font-bold mb-3 text-gray-900">
             Finding Your Perfect Physician
           </h2>
-          <p className="text-lg text-muted-foreground max-w-md mx-auto">
+          <p className="text-lg text-gray-600 max-w-md mx-auto">
             Analyzing your health needs and matching with top specialists in your area...
           </p>
           <div className="flex justify-center gap-1 mt-6">
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
-                className="w-2 h-2 bg-primary rounded-full animate-pulse"
+                className="w-2 h-2 bg-health-purple rounded-full animate-pulse"
                 style={{ animationDelay: `${i * 0.2}s` }}
               />
             ))}
@@ -134,22 +134,22 @@ const PhysicianRecommendationsView: React.FC<PhysicianRecommendationsViewProps> 
       <Button 
         variant="ghost" 
         onClick={onBack} 
-        className="flex items-center gap-2 mb-8 hover:bg-primary/5 transition-colors text-lg"
+        className="flex items-center gap-2 mb-8 hover:bg-health-purple/5 transition-colors text-lg"
       >
         <ArrowLeft size={18} />
         Back to Search
       </Button>
       
       <div className="mb-10">
-        <h1 className="text-4xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+        <h1 className="text-4xl font-bold mb-6 text-gray-900">
           Recommended Physicians
         </h1>
-        <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-6 rounded-xl border border-primary/20">
-          <h3 className="font-semibold mb-3 text-lg flex items-center gap-2">
-            <Users className="w-5 h-5 text-primary" />
+        <div className="bg-card/95 backdrop-blur-sm p-6 rounded-xl border border-border">
+          <h3 className="font-semibold mb-3 text-lg flex items-center gap-2 text-gray-900">
+            <Users className="w-5 h-5 text-health-purple" />
             Your Search Query
           </h3>
-          <p className="text-muted-foreground leading-relaxed bg-background/50 p-4 rounded-lg border">
+          <p className="text-gray-600 leading-relaxed bg-background/50 p-4 rounded-lg border border-border">
             "{healthQuery.prompt}"
           </p>
         </div>
@@ -171,18 +171,18 @@ const PhysicianRecommendationsView: React.FC<PhysicianRecommendationsViewProps> 
       </div>
       
       {physicians.length > 0 && (
-        <div className="mt-12 p-6 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-xl border border-primary/20 animate-fade-in">
+        <div className="mt-12 p-6 bg-card/95 backdrop-blur-sm rounded-xl border border-border">
           <div className="text-center space-y-3">
             <div className="flex items-center justify-center gap-2 mb-4">
-              <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-              <span className="font-semibold text-primary">Results Summary</span>
-              <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+              <div className="w-2 h-2 bg-health-purple rounded-full animate-pulse"></div>
+              <span className="font-semibold text-health-purple">Results Summary</span>
+              <div className="w-2 h-2 bg-health-purple rounded-full animate-pulse"></div>
             </div>
-            <p className="text-muted-foreground text-lg">
-              Showing <span className="font-bold text-primary">{physicians.length}</span> top-rated physicians 
+            <p className="text-gray-600 text-lg">
+              Showing <span className="font-bold text-health-purple">{physicians.length}</span> top-rated physicians 
               matched to your specific needs
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-600">
               Results ranked by specialty match, budget compatibility, experience, and location preference
             </p>
           </div>

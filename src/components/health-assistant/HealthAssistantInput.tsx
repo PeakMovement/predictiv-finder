@@ -57,25 +57,25 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
 
   return (
     <div className="w-full max-w-4xl mx-auto p-6 animate-fade-in">
-      <Card className="shadow-lg border-0 bg-gradient-to-br from-background to-muted/30">
+      <Card className="shadow-lg border-0 bg-card/95 backdrop-blur-sm">
         <CardHeader className="text-center pb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 rounded-full bg-primary/10">
-              <Stethoscope className="w-8 h-8 text-primary" />
+            <div className="p-3 rounded-full bg-health-purple/10">
+              <Stethoscope className="w-8 h-8 text-health-purple" />
             </div>
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            <CardTitle className="text-3xl font-bold text-gray-900">
               AI Health Assistant
             </CardTitle>
           </div>
-          <CardDescription className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <CardDescription className="text-lg text-gray-600 max-w-2xl mx-auto">
             Find the perfect physician for your health needs. Just describe your symptoms, budget, and location in one message.
           </CardDescription>
         </CardHeader>
         
         <CardContent className="space-y-8">
           <div className="space-y-3">
-            <Label htmlFor="health-prompt" className="text-lg font-semibold flex items-center gap-2">
-              <User className="w-5 h-5 text-primary" />
+            <Label htmlFor="health-prompt" className="text-lg font-semibold flex items-center gap-2 text-gray-900">
+              <User className="w-5 h-5 text-health-purple" />
               Describe your health concern *
             </Label>
             <Textarea
@@ -83,10 +83,10 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
               placeholder="Example: I've been experiencing lower back pain for 3 weeks, especially when sitting. My budget is R1000 per month and I'd prefer a doctor in Johannesburg."
               value={query.prompt}
               onChange={(e) => setQuery({ prompt: e.target.value })}
-              className="min-h-[120px] text-base leading-relaxed border-2 focus:border-primary/50 transition-all duration-300"
+              className="min-h-[120px] text-base leading-relaxed border-2 border-input focus:border-health-purple/50 transition-all duration-300 bg-background"
               required
             />
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
               <DollarSign className="w-4 h-4" />
               <span>Include your budget (e.g., R1000)</span>
               <MapPin className="w-4 h-4 ml-4" />
@@ -99,7 +99,7 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
               onClick={handleSubmit}
               disabled={isLoading}
               size="lg"
-              className="px-8 py-6 text-lg font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
+              className="px-8 py-6 text-lg font-semibold bg-health-purple hover:bg-health-purple-dark text-white hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               {isLoading ? (
                 <>
@@ -115,25 +115,25 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
             </Button>
           </div>
 
-          <div className="border-t border-border/50 pt-8">
-            <h3 className="text-xl font-semibold mb-6 text-center flex items-center justify-center gap-2">
-              <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+          <div className="border-t border-border pt-8">
+            <h3 className="text-xl font-semibold mb-6 text-center flex items-center justify-center gap-2 text-gray-900">
+              <span className="w-2 h-2 bg-health-purple rounded-full animate-pulse"></span>
               Try these examples
-              <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+              <span className="w-2 h-2 bg-health-purple rounded-full animate-pulse"></span>
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {exampleQueries.map((example, index) => (
                 <Button
                   key={index}
                   variant="outline"
-                  className="text-left h-auto p-6 justify-start border-2 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 hover:scale-105 hover:shadow-md group"
+                  className="text-left h-auto p-6 justify-start border-2 border-border hover:border-health-purple/50 hover:bg-health-purple/5 transition-all duration-300 hover:scale-105 hover:shadow-md group bg-background"
                   onClick={() => handleExampleClick(example)}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                      <User className="w-4 h-4 text-primary" />
+                    <div className="p-2 rounded-full bg-health-purple/10 group-hover:bg-health-purple/20 transition-colors">
+                      <User className="w-4 h-4 text-health-purple" />
                     </div>
-                    <div className="text-sm leading-relaxed text-muted-foreground group-hover:text-foreground transition-colors">
+                    <div className="text-sm leading-relaxed text-gray-600 group-hover:text-gray-900 transition-colors">
                       {example}
                     </div>
                   </div>
