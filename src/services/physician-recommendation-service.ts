@@ -22,12 +22,22 @@ export interface HealthQuery {
  */
 const extractBudget = (prompt: string): number | undefined => {
   const budgetPatterns = [
-    /R\s*(\d+)/i,           // R1000
-    /budget.*?(\d+)/i,      // budget is 1000
-    /(\d+).*?budget/i,      // 1000 budget
-    /(\d+).*?month/i,       // 1000 per month
-    /(\d+).*?rand/i         // 1000 rands
-  ];
+  /R\s*(\d+)/i,                          // R1000
+  /budget.*?(\d+)/i,                    // budget is 1000
+  /(\d+).*?budget/i,                    // 1000 budget
+  /(\d+).*?month/i,                     // 1000 per month
+  /(\d+).*?rand/i,                      // 1000 rands
+  /(\d+)\s*(ZAR|zar)/i,                 // 1000 ZAR
+  /i have.*?(\d+)\s*(rands|rand|ZAR)/i,// I have 1000 rand
+  /can spend.*?(\d+)/i,                 // can spend 1000
+  /my budget.*?is.*?(\d+)/i,            // my budget is 1000
+  /I can afford.*?(\d+)/i,              // I can afford 1000
+  /around\s*R?\s*(\d+)/i,               // around R1000
+  /upto\s*R?\s*(\d+)/i,                 // upto R1000
+  /not more than\s*R?\s*(\d+)/i,        // not more than R1000
+  /maximum.*?R?\s*(\d+)/i,              // maximum R1000
+  /(\d+)\s*(per\s*visit|per\s*session)/i // 1000 per visit/session
+];
   
   for (const pattern of budgetPatterns) {
     const match = prompt.match(pattern);
