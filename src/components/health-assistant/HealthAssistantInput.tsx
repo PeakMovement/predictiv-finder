@@ -56,31 +56,42 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6">
-      <Card>
-        <CardHeader className="text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Stethoscope className="w-8 h-8 text-primary" />
-            <CardTitle className="text-2xl">AI Health Assistant</CardTitle>
+    <div className="w-full max-w-4xl mx-auto p-6 animate-fade-in">
+      <Card className="shadow-lg border-0 bg-gradient-to-br from-background to-muted/30">
+        <CardHeader className="text-center pb-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="p-3 rounded-full bg-primary/10">
+              <Stethoscope className="w-8 h-8 text-primary" />
+            </div>
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              AI Health Assistant
+            </CardTitle>
           </div>
-          <CardDescription>
-            Find the perfect physician for your health needs based on specialty, budget, and location
+          <CardDescription className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Find the perfect physician for your health needs. Just describe your symptoms, budget, and location in one message.
           </CardDescription>
         </CardHeader>
         
-        <CardContent className="space-y-6">
-          <div>
-            <Label htmlFor="health-prompt" className="text-base font-medium">
-              Describe your health concern, budget, and location *
+        <CardContent className="space-y-8">
+          <div className="space-y-3">
+            <Label htmlFor="health-prompt" className="text-lg font-semibold flex items-center gap-2">
+              <User className="w-5 h-5 text-primary" />
+              Describe your health concern *
             </Label>
             <Textarea
               id="health-prompt"
-              placeholder="Example: I've been experiencing lower back pain for 3 weeks. My budget is R1000 per month and I'd prefer a doctor in Johannesburg."
+              placeholder="Example: I've been experiencing lower back pain for 3 weeks, especially when sitting. My budget is R1000 per month and I'd prefer a doctor in Johannesburg."
               value={query.prompt}
               onChange={(e) => setQuery({ prompt: e.target.value })}
-              className="mt-2 h-32"
+              className="min-h-[120px] text-base leading-relaxed border-2 focus:border-primary/50 transition-all duration-300"
               required
             />
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <DollarSign className="w-4 h-4" />
+              <span>Include your budget (e.g., R1000)</span>
+              <MapPin className="w-4 h-4 ml-4" />
+              <span>Mention your preferred location</span>
+            </div>
           </div>
 
           <div className="flex justify-center">
@@ -88,34 +99,43 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
               onClick={handleSubmit}
               disabled={isLoading}
               size="lg"
-              className="w-full md:w-auto"
+              className="px-8 py-6 text-lg font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               {isLoading ? (
                 <>
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                  <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-3" />
                   Finding Physicians...
                 </>
               ) : (
                 <>
-                  <User className="w-4 h-4 mr-2" />
+                  <Stethoscope className="w-5 h-5 mr-3" />
                   Find My Physician
                 </>
               )}
             </Button>
           </div>
 
-          <div className="border-t pt-6">
-            <h3 className="font-medium mb-4 text-center">Try these examples:</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="border-t border-border/50 pt-8">
+            <h3 className="text-xl font-semibold mb-6 text-center flex items-center justify-center gap-2">
+              <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+              Try these examples
+              <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {exampleQueries.map((example, index) => (
                 <Button
                   key={index}
                   variant="outline"
-                  className="text-left h-auto p-4 justify-start"
+                  className="text-left h-auto p-6 justify-start border-2 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 hover:scale-105 hover:shadow-md group"
                   onClick={() => handleExampleClick(example)}
                 >
-                  <div className="font-medium text-sm">
-                    {example}
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                      <User className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="text-sm leading-relaxed text-muted-foreground group-hover:text-foreground transition-colors">
+                      {example}
+                    </div>
                   </div>
                 </Button>
               ))}
