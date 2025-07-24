@@ -46,7 +46,7 @@ const extractLocation = (prompt: string): string | undefined => {
   const locationPatterns = [
     /in\s+([a-zA-Z\s]+?)(?:\s|$|\.)/i,
     /location.*?([a-zA-Z\s]+?)(?:\s|$|\.)/i,
-    /(Johannesburg|Cape Town|Durban|Pretoria|Port Elizabeth)/i
+    /(johannesburg|cape town|durban|pretoria)/i
   ];
   
   for (const pattern of locationPatterns) {
@@ -68,61 +68,25 @@ const analyzeHealthIssue = (issue: string): string[] => {
   
   // Specialty mapping based on common health issues
   const specialtyMappings = {
-    'dermatologist': [
+    'Dermatologist': [
       'skin', 'acne', 'rash', 'eczema', 'psoriasis', 'mole', 'dermatitis', 
       'wrinkle', 'age spot', 'skin cancer', 'hair loss', 'nail'
     ],
-    'cardiologist': [
+    'Cardiologist': [
       'heart', 'chest pain', 'blood pressure', 'hypertension', 'palpitation', 
       'cardiac', 'cardiovascular', 'arrhythmia', 'cholesterol', 'heart attack'
     ],
-    'neurologist': [
+    'Neurologist': [
       'headache', 'migraine', 'seizure', 'epilepsy', 'stroke', 'memory', 
       'alzheimer', 'parkinson', 'nerve', 'neurological', 'brain', 'numbness'
     ],
-    'psychiatrist': [
+    'Psychiatrist': [
       'depression', 'anxiety', 'stress', 'mental health', 'panic', 'mood', 
       'bipolar', 'psychiatric', 'therapy', 'counseling', 'emotional'
     ],
-    'orthopedic surgeon': [
+    'Orthopedic Surgeon': [
       'bone', 'joint', 'back pain', 'knee pain', 'shoulder', 'hip', 'fracture', 
       'arthritis', 'sports injury', 'spine', 'orthopedic', 'muscle pain'
-    ],
-    'physiotherapist': [
-        'rehabilitation', 'mobility', 'injury recovery', 'post-surgery', 'exercise therapy',
-        'movement', 'physical therapy', 'pain management', 'stiffness', 'range of motion',
-        'swelling', 'muscle strength'
-    ],
-    'bioKineticist': [
-        'exercise', 'biomechanics', 'movement analysis', 'chronic disease', 'injury prevention',
-        'rehab', 'physical assessment', 'wellness', 'orthopedic condition', 'cardiac rehab',
-        'musculoskeletal', 'posture'
-    ],
-    'massage therapist': [
-        'massage', 'relaxation', 'stress relief', 'muscle tension', 'deep tissue', 'trigger point',
-        'soft tissue', 'therapeutic touch', 'circulation', 'pain relief', 'wellbeing', 'bodywork'
-    ],
-    'podiatrist': [
-        'foot', 'ankle', 'heel pain', 'bunions', 'plantar fasciitis', 'toenail', 'orthotics',
-        'gait', 'flat feet', 'diabetic foot', 'corns', 'blisters'
-    ],
-    'sports therapist': [
-        'sports injury', 'sprain', 'strain', 'rehabilitation', 'athlete recovery',
-        'exercise prescription', 'injury prevention', 'fitness', 'conditioning', 'training',
-        'performance', 'taping'
-    ],
-    'general physician': [
-        'fever', 'cold', 'cough', 'infection', 'check-up', 'blood pressure', 'general health',
-        'diabetes', 'headache', 'digestive issues', 'fatigue', 'body pain'
-    ],
-    'dietician': [
-        'nutrition', 'diet', 'meal plan', 'weight loss', 'cholesterol', 'blood sugar',
-        'balanced diet', 'eating habits', 'nutritional deficiency', 'diabetes', 'BMI',
-        'healthy eating'
-    ],
-    'chiropractor': [
-        'spine', 'back pain', 'alignment', 'neck pain', 'adjustment', 'posture', 'subluxation',
-        'joint', 'manual therapy', 'vertebrae', 'musculoskeletal', 'headache'
     ]
   };
   
