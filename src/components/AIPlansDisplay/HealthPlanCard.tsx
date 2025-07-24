@@ -42,7 +42,7 @@ const HealthPlanCard: React.FC<HealthPlanCardProps> = ({
           
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">Estimated Cost:</p>
-            <p className="font-medium">${plan.totalCost}/month</p>
+            <p className="font-medium">R{plan.totalCost}/month</p>
           </div>
         </div>
       </CardContent>
