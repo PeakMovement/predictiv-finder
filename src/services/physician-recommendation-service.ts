@@ -164,10 +164,7 @@ export const loadPhysicianData = async (): Promise<Physician[]> => {
  */
 export const findRecommendedPhysicians = async (query: HealthQuery): Promise<PhysicianRecommendation[]> => {
   const physicians = await loadPhysicianData();
-
-  if (physicians.length === 0) {
-    return [];
-  }
+  if (physicians.length === 0) return [];
 
   const budget = extractBudget(query.prompt);
   const location = extractLocation(query.prompt);
@@ -175,25 +172,21 @@ export const findRecommendedPhysicians = async (query: HealthQuery): Promise<Phy
 
   console.log('Detected specialties:', detectedSpecialties);
 
+  // Step 1: Filter by location if specified
   let locationFiltered: Physician[] = physicians;
-
-  // Step 1: Strict Location Filtering (if location is mentioned)
   if (location) {
     locationFiltered = physicians.filter(p =>
       p.Location.toLowerCase().includes(location.toLowerCase())
     );
 
     if (locationFiltered.length === 0) {
-      // No physicians at all in the given location
-      return [];
+      console.log('No physicians found in the specified location.');
+      return []; // Strictly enforce location presence
     }
   }
 
-  console.log('After strict location filter:', locationFiltered.length);
-
-  // Step 2: Specialty Filtering
+  // Step 2: Try to find relevant specialists in that location
   let specialtyFiltered: Physician[] = [];
-
   for (const specialty of detectedSpecialties) {
     const matches = locationFiltered.filter(p => p.Title === specialty);
     if (matches.length > 0) {
@@ -201,27 +194,25 @@ export const findRecommendedPhysicians = async (query: HealthQuery): Promise<Phy
     }
   }
 
-  // Fallback to General Physician ONLY IF location is specified and specialty not found
+  // Step 3: Fallback to General Physician in the same location if no match
   if (specialtyFiltered.length === 0) {
     const generalPhysicians = locationFiltered.filter(p => p.Title === 'General Physician');
     if (generalPhysicians.length > 0) {
       specialtyFiltered = generalPhysicians;
+      console.log('Fallback to General Physician in location');
     } else {
-      return []; // No relevant specialist or GP found in the location
+      console.log('No General Physicians in the location either.');
+      return []; // No specialists or GPs in location
     }
   }
 
   let filteredPhysicians = specialtyFiltered;
 
-  console.log('After specialty filter:', filteredPhysicians.length);
+  // Step 4: Sort by price (desc), then experience (desc)
+  filteredPhysicians = filteredPhysicians
+    .sort((a, b) => b.Price - a.Price || b.Experience - a.Experience);
 
-  // Step 3: Sort by Price (high to low)
-  filteredPhysicians.sort((a, b) => b.Price - a.Price);
-
-  // Step 4: Sort by Experience (high to low)
-  filteredPhysicians.sort((a, b) => b.Experience - a.Experience);
-
-  // Step 5: Budget Filter and Fallback
+  // Step 5: Budget-aware filtering
   let withinBudget: Physician[] = [];
   let aboveBudget: Physician[] = [];
 
