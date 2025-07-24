@@ -68,25 +68,41 @@ const analyzeHealthIssue = (issue: string): string[] => {
   
   // Specialty mapping based on common health issues
   const specialtyMappings = {
-    'Dermatologist': [
-      'skin', 'acne', 'rash', 'eczema', 'psoriasis', 'mole', 'dermatitis', 
-      'wrinkle', 'age spot', 'skin cancer', 'hair loss', 'nail'
+    'Physiotherapist': [
+      'rehabilitation', 'mobility', 'injury recovery', 'post-surgery', 'exercise therapy',
+      'movement', 'physical therapy', 'pain management', 'stiffness', 'range of motion',
+      'swelling', 'muscle strength', 'back pain', 'knee pain', 'shoulder', 'hip'
     ],
-    'Cardiologist': [
-      'heart', 'chest pain', 'blood pressure', 'hypertension', 'palpitation', 
-      'cardiac', 'cardiovascular', 'arrhythmia', 'cholesterol', 'heart attack'
+    'BioKineticist': [
+      'exercise', 'biomechanics', 'movement analysis', 'chronic disease', 'injury prevention',
+      'rehab', 'physical assessment', 'wellness', 'orthopedic condition', 'cardiac rehab',
+      'musculoskeletal', 'posture', 'fitness', 'training'
     ],
-    'Neurologist': [
-      'headache', 'migraine', 'seizure', 'epilepsy', 'stroke', 'memory', 
-      'alzheimer', 'parkinson', 'nerve', 'neurological', 'brain', 'numbness'
+    'Massage Therapist': [
+      'massage', 'relaxation', 'stress relief', 'muscle tension', 'deep tissue', 'trigger point',
+      'soft tissue', 'therapeutic touch', 'circulation', 'pain relief', 'wellbeing', 'bodywork'
     ],
-    'Psychiatrist': [
-      'depression', 'anxiety', 'stress', 'mental health', 'panic', 'mood', 
-      'bipolar', 'psychiatric', 'therapy', 'counseling', 'emotional'
+    'Podiatrist': [
+      'foot', 'ankle', 'heel pain', 'bunions', 'plantar fasciitis', 'toenail', 'orthotics',
+      'gait', 'flat feet', 'diabetic foot', 'corns', 'blisters'
     ],
-    'Orthopedic Surgeon': [
-      'bone', 'joint', 'back pain', 'knee pain', 'shoulder', 'hip', 'fracture', 
-      'arthritis', 'sports injury', 'spine', 'orthopedic', 'muscle pain'
+    'Sports Therapist': [
+      'sports injury', 'sprain', 'strain', 'rehabilitation', 'athlete recovery',
+      'exercise prescription', 'injury prevention', 'fitness', 'conditioning', 'training',
+      'performance', 'taping', 'sports', 'athlete'
+    ],
+    'General Physician': [
+      'fever', 'cold', 'cough', 'infection', 'check-up', 'blood pressure', 'general health',
+      'diabetes', 'headache', 'digestive issues', 'fatigue', 'body pain', 'general'
+    ],
+    'Dietician': [
+      'nutrition', 'diet', 'meal plan', 'weight loss', 'cholesterol', 'blood sugar',
+      'balanced diet', 'eating habits', 'nutritional deficiency', 'diabetes', 'BMI',
+      'healthy eating', 'food', 'weight'
+    ],
+    'Chiropractor': [
+      'spine', 'back pain', 'alignment', 'neck pain', 'adjustment', 'posture', 'subluxation',
+      'joint', 'manual therapy', 'vertebrae', 'musculoskeletal', 'headache', 'spinal'
     ]
   };
   
@@ -173,10 +189,10 @@ export const findRecommendedPhysicians = async (query: HealthQuery): Promise<Phy
     const minPrice = Math.min(...filteredPhysicians.map(p => p.Price));
     
     if (budget < minPrice) {
-      // Return three cheapest doctors (sorted by price ascending, then take last 3)
+      // Return three cheapest doctors (sorted by price ascending, then take first 3)
       filteredPhysicians = filteredPhysicians
         .sort((a, b) => a.Price - b.Price)
-        .slice(-3);
+        .slice(0, 3);
     } else {
       // Keep only within budget, sort by price high to low
       filteredPhysicians = filteredPhysicians
