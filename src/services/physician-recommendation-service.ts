@@ -26,17 +26,7 @@ const extractBudget = (prompt: string): number | undefined => {
     /budget.*?(\d+)/i,      // budget is 1000
     /(\d+).*?budget/i,      // 1000 budget
     /(\d+).*?month/i,       // 1000 per month
-    /(\d+).*?rand/i,         // 1000 rands
-    /(\d+)\s*(ZAR|zar)/i,                 // 1000 ZAR
-    /i have.*?(\d+)\s*(rands|rand|ZAR)/i,// I have 1000 rand
-    /can spend.*?(\d+)/i,                 // can spend 1000
-    /my budget.*?is.*?(\d+)/i,            // my budget is 1000
-    /I can afford.*?(\d+)/i,              // I can afford 1000
-    /around\s*R?\s*(\d+)/i,               // around R1000
-    /upto\s*R?\s*(\d+)/i,                 // upto R1000
-    /not more than\s*R?\s*(\d+)/i,        // not more than R1000
-    /maximum.*?R?\s*(\d+)/i,              // maximum R1000
-    /(\d+)\s*(per\s*visit|per\s*session)/i // 1000 per visit/session
+    /(\d+).*?rand/i         // 1000 rands
   ];
   
   for (const pattern of budgetPatterns) {
@@ -78,6 +68,26 @@ const analyzeHealthIssue = (issue: string): string[] => {
   
   // Specialty mapping based on common health issues
   const specialtyMappings = {
+    'Dermatologist': [
+      'skin', 'acne', 'rash', 'eczema', 'psoriasis', 'mole', 'dermatitis', 
+      'wrinkle', 'age spot', 'skin cancer', 'hair loss', 'nail'
+    ],
+    'Cardiologist': [
+      'heart', 'chest pain', 'blood pressure', 'hypertension', 'palpitation', 
+      'cardiac', 'cardiovascular', 'arrhythmia', 'cholesterol', 'heart attack'
+    ],
+    'Neurologist': [
+      'headache', 'migraine', 'seizure', 'epilepsy', 'stroke', 'memory', 
+      'alzheimer', 'parkinson', 'nerve', 'neurological', 'brain', 'numbness'
+    ],
+    'Psychiatrist': [
+      'depression', 'anxiety', 'stress', 'mental health', 'panic', 'mood', 
+      'bipolar', 'psychiatric', 'therapy', 'counseling', 'emotional'
+    ],
+    'Orthopedic Surgeon': [
+      'bone', 'joint', 'back pain', 'knee pain', 'shoulder', 'hip', 'fracture', 
+      'arthritis', 'sports injury', 'spine', 'orthopedic', 'muscle pain'
+    ],
     'Physiotherapist': [
         'rehabilitation', 'mobility', 'injury recovery', 'post-surgery', 'exercise therapy',
         'movement', 'physical therapy', 'pain management', 'stiffness', 'range of motion',
