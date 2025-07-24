@@ -170,93 +170,89 @@ export const findRecommendedPhysicians = async (query: HealthQuery): Promise<Phy
   const location = extractLocation(query.prompt);
   const detectedSpecialties = analyzeHealthIssue(query.prompt);
 
-  console.log('Detected specialties:', detectedSpecialties);
+  console.log('Query analysis:', { budget, location, detectedSpecialties });
 
-  // Step 1: Filter by location first (mandatory if location is provided)
-  let locationFiltered: Physician[] = physicians;
+  // STEP 1: Filter by location first (mandatory if location provided)
+  let availablePhysicians = physicians;
   if (location) {
-    locationFiltered = physicians.filter(p =>
+    availablePhysicians = physicians.filter(p =>
       p.Location.toLowerCase().includes(location.toLowerCase())
     );
-
-    console.log(`Found ${locationFiltered.length} physicians in location: ${location}`);
-    if (locationFiltered.length === 0) {
-      console.log('No physicians found in the specified location.');
-      return []; // Strictly enforce location presence
+    
+    console.log(`Found ${availablePhysicians.length} physicians in ${location}`);
+    if (availablePhysicians.length === 0) {
+      return []; // No physicians in specified location
     }
   }
 
-  // Step 2: Filter by type of doctor (specialty)
-  let specialtyFiltered: Physician[] = [];
+  // STEP 2: Find relevant specialty within the location
+  let candidatePhysicians: Physician[] = [];
+  
+  // Try to match detected specialties
   for (const specialty of detectedSpecialties) {
-    const matches = locationFiltered.filter(p => p.Title === specialty);
-    console.log(`Found ${matches.length} ${specialty} in location`);
-    if (matches.length > 0) {
-      specialtyFiltered.push(...matches);
+    const specialtyMatches = availablePhysicians.filter(p => p.Title === specialty);
+    if (specialtyMatches.length > 0) {
+      candidatePhysicians.push(...specialtyMatches);
+      console.log(`Found ${specialtyMatches.length} ${specialty}(s)`);
     }
   }
 
-  // Step 3: Fallback to General Physician in the same location if no specialty match
-  if (specialtyFiltered.length === 0) {
-    console.log('No specialist found, looking for General Physician...');
-    const generalPhysicians = locationFiltered.filter(p => p.Title === 'General Physician');
-    console.log(`Found ${generalPhysicians.length} General Physicians in location`);
-    console.log('Available titles in location:', [...new Set(locationFiltered.map(p => p.Title))]);
+  // STEP 3: Fallback to General Physician if no specialty found
+  if (candidatePhysicians.length === 0) {
+    console.log('No specialists found, looking for General Physicians...');
+    const generalPhysicians = availablePhysicians.filter(p => 
+      p.Title === 'General Physician' || 
+      p.Title.toLowerCase().includes('general physician')
+    );
     
     if (generalPhysicians.length > 0) {
-      specialtyFiltered = generalPhysicians;
-      console.log('Fallback to General Physician in location');
+      candidatePhysicians = generalPhysicians;
+      console.log(`Using ${generalPhysicians.length} General Physician(s) as fallback`);
     } else {
-      // Try alternative titles for general physician
-      const alternativeGP = locationFiltered.filter(p => 
-        p.Title.toLowerCase().includes('general') || 
-        p.Title.toLowerCase().includes('physician') ||
-        p.Title.toLowerCase() === 'gp'
-      );
-      if (alternativeGP.length > 0) {
-        specialtyFiltered = alternativeGP;
-        console.log('Found alternative General Physician titles');
-      } else {
-        console.log('No General Physicians in the location either.');
-        return []; // No specialists or GPs in location
-      }
+      console.log('Available specialties in location:', [...new Set(availablePhysicians.map(p => p.Title))]);
+      return []; // No suitable physicians found
     }
   }
 
-  // Step 4: Sort by price (high to low), then by experience (high to low)
-  specialtyFiltered = specialtyFiltered
-    .sort((a, b) => b.Price - a.Price || b.Experience - a.Experience);
+  // Remove duplicates
+  candidatePhysicians = candidatePhysicians.filter((physician, index, self) =>
+    index === self.findIndex(p => p.Name === physician.Name)
+  );
 
-  // Step 5: Budget-aware selection
+  // STEP 4: Price filtering and budget-aware categorization
   let withinBudget: Physician[] = [];
   let aboveBudget: Physician[] = [];
 
   if (budget !== undefined) {
-    withinBudget = specialtyFiltered.filter(p => p.Price <= budget);
-    aboveBudget = specialtyFiltered.filter(p => p.Price > budget);
-    
-    // Sort within budget by experience (high to low)
-    withinBudget = withinBudget.sort((a, b) => b.Experience - a.Experience);
+    withinBudget = candidatePhysicians.filter(p => p.Price <= budget);
+    aboveBudget = candidatePhysicians.filter(p => p.Price > budget);
+    console.log(`Budget analysis: ${withinBudget.length} within budget, ${aboveBudget.length} above budget`);
   } else {
-    withinBudget = specialtyFiltered;
+    withinBudget = candidatePhysicians;
   }
 
-  // Step 6: Select final results - prioritize within budget, fill with above budget if needed
+  // STEP 5: Sort by experience (high to low) within each budget category
+  withinBudget.sort((a, b) => b.Experience - a.Experience);
+  aboveBudget.sort((a, b) => b.Experience - a.Experience);
+
+  // STEP 6: Build final selection - prioritize within budget, then above budget
   const finalSelection: Physician[] = [];
   
-  // Add up to 3 within budget physicians
+  // Add up to 3 within budget physicians (sorted by experience)
   finalSelection.push(...withinBudget.slice(0, 3));
   
-  // If we have less than 3 within budget, add above budget ones
+  // If we need more results, add above budget ones
   if (finalSelection.length < 3 && aboveBudget.length > 0) {
     const remainingSlots = 3 - finalSelection.length;
     finalSelection.push(...aboveBudget.slice(0, remainingSlots));
   }
 
+  console.log(`Final selection: ${finalSelection.length} physicians`);
+
   return finalSelection.map(physician => ({
     ...physician,
     affordability: budget !== undefined && physician.Price <= budget ? 'Within budget' : 'Above budget',
-    matchReason: `Matched for ${physician.Title} with ${physician.Experience} years experience`
+    matchReason: `${physician.Title} with ${physician.Experience} years experience in ${physician.Location}`
   }));
 };
 
