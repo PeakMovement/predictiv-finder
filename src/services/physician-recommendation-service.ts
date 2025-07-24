@@ -1,3 +1,4 @@
+
 import Papa from 'papaparse';
 
 export interface Physician {
@@ -89,40 +90,40 @@ const analyzeHealthIssue = (issue: string): string[] => {
       'arthritis', 'sports injury', 'spine', 'orthopedic', 'muscle pain'
     ],
     'Physiotherapist': [
-        'rehabilitation', 'mobility', 'injury recovery', 'post-surgery', 'exercise therapy',
-        'movement', 'physical therapy', 'pain management', 'stiffness', 'range of motion',
-        'swelling', 'muscle strength'
+      'rehabilitation', 'mobility', 'injury recovery', 'post-surgery', 'exercise therapy',
+      'movement', 'physical therapy', 'pain management', 'stiffness', 'range of motion',
+      'swelling', 'muscle strength'
     ],
     'BioKineticist': [
-        'exercise', 'biomechanics', 'movement analysis', 'chronic disease', 'injury prevention',
-        'rehab', 'physical assessment', 'wellness', 'orthopedic condition', 'cardiac rehab',
-        'musculoskeletal', 'posture'
+      'exercise', 'biomechanics', 'movement analysis', 'chronic disease', 'injury prevention',
+      'rehab', 'physical assessment', 'wellness', 'orthopedic condition', 'cardiac rehab',
+      'musculoskeletal', 'posture'
     ],
     'Massage Therapist': [
-        'massage', 'relaxation', 'stress relief', 'muscle tension', 'deep tissue', 'trigger point',
-        'soft tissue', 'therapeutic touch', 'circulation', 'pain relief', 'wellbeing', 'bodywork'
+      'massage', 'relaxation', 'stress relief', 'muscle tension', 'deep tissue', 'trigger point',
+      'soft tissue', 'therapeutic touch', 'circulation', 'pain relief', 'wellbeing', 'bodywork'
     ],
     'Podiatrist': [
-        'foot', 'ankle', 'heel pain', 'bunions', 'plantar fasciitis', 'toenail', 'orthotics',
-        'gait', 'flat feet', 'diabetic foot', 'corns', 'blisters'
+      'foot', 'ankle', 'heel pain', 'bunions', 'plantar fasciitis', 'toenail', 'orthotics',
+      'gait', 'flat feet', 'diabetic foot', 'corns', 'blisters'
     ],
     'Sports Therapist': [
-        'sports injury', 'sprain', 'strain', 'rehabilitation', 'athlete recovery',
-        'exercise prescription', 'injury prevention', 'fitness', 'conditioning', 'training',
-        'performance', 'taping'
+      'sports injury', 'sprain', 'strain', 'rehabilitation', 'athlete recovery',
+      'exercise prescription', 'injury prevention', 'fitness', 'conditioning', 'training',
+      'performance', 'taping'
     ],
     'General Physician': [
-        'fever', 'cold', 'cough', 'infection', 'check-up', 'blood pressure', 'general health',
-        'diabetes', 'headache', 'digestive issues', 'fatigue', 'body pain'
+      'fever', 'cold', 'cough', 'infection', 'check-up', 'blood pressure', 'general health',
+      'diabetes', 'headache', 'digestive issues', 'fatigue', 'body pain'
     ],
     'Dietician': [
-        'nutrition', 'diet', 'meal plan', 'weight loss', 'cholesterol', 'blood sugar',
-        'balanced diet', 'eating habits', 'nutritional deficiency', 'diabetes', 'BMI',
-        'healthy eating'
+      'nutrition', 'diet', 'meal plan', 'weight loss', 'cholesterol', 'blood sugar',
+      'balanced diet', 'eating habits', 'nutritional deficiency', 'diabetes', 'BMI',
+      'healthy eating'
     ],
     'Chiropractor': [
-        'spine', 'back pain', 'alignment', 'neck pain', 'adjustment', 'posture', 'subluxation',
-        'joint', 'manual therapy', 'vertebrae', 'musculoskeletal', 'headache'
+      'spine', 'back pain', 'alignment', 'neck pain', 'adjustment', 'posture', 'subluxation',
+      'joint', 'manual therapy', 'vertebrae', 'musculoskeletal', 'headache'
     ]
   };
   
