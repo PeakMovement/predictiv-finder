@@ -175,38 +175,43 @@ export const findRecommendedPhysicians = async (query: HealthQuery): Promise<Phy
 
   console.log('Detected specialties:', detectedSpecialties);
 
-  let filteredPhysicians: Physician[] = physicians;
+  let locationFiltered: Physician[] = physicians;
 
-  // Step 1: Strict Location filtering (must match if location is mentioned)
+  // Step 1: Strict Location Filtering (if location is mentioned)
   if (location) {
-    filteredPhysicians = physicians.filter(p =>
+    locationFiltered = physicians.filter(p =>
       p.Location.toLowerCase().includes(location.toLowerCase())
     );
 
-    // If no physicians in specified location, return empty result
-    if (filteredPhysicians.length === 0) {
+    if (locationFiltered.length === 0) {
+      // No physicians at all in the given location
       return [];
     }
   }
 
-  console.log('After strict location filter:', filteredPhysicians.length);
+  console.log('After strict location filter:', locationFiltered.length);
 
-  // Step 2: Specialty filtering
+  // Step 2: Specialty Filtering
   let specialtyFiltered: Physician[] = [];
 
   for (const specialty of detectedSpecialties) {
-    const matches = filteredPhysicians.filter(p => p.Title === specialty);
+    const matches = locationFiltered.filter(p => p.Title === specialty);
     if (matches.length > 0) {
       specialtyFiltered.push(...matches);
     }
   }
 
-  // Fallback to General Physician if no match
+  // Fallback to General Physician ONLY IF location is specified and specialty not found
   if (specialtyFiltered.length === 0) {
-    specialtyFiltered = filteredPhysicians.filter(p => p.Title === 'General Physician');
+    const generalPhysicians = locationFiltered.filter(p => p.Title === 'General Physician');
+    if (generalPhysicians.length > 0) {
+      specialtyFiltered = generalPhysicians;
+    } else {
+      return []; // No relevant specialist or GP found in the location
+    }
   }
 
-  filteredPhysicians = specialtyFiltered;
+  let filteredPhysicians = specialtyFiltered;
 
   console.log('After specialty filter:', filteredPhysicians.length);
 
@@ -216,9 +221,7 @@ export const findRecommendedPhysicians = async (query: HealthQuery): Promise<Phy
   // Step 4: Sort by Experience (high to low)
   filteredPhysicians.sort((a, b) => b.Experience - a.Experience);
 
-  console.log('After sorting by price and experience:', filteredPhysicians.length);
-
-  // Step 5: Budget Filtering
+  // Step 5: Budget Filter and Fallback
   let withinBudget: Physician[] = [];
   let aboveBudget: Physician[] = [];
 
