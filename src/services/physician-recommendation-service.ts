@@ -179,6 +179,7 @@ export const findRecommendedPhysicians = async (query: HealthQuery): Promise<Phy
       p.Location.toLowerCase().includes(location.toLowerCase())
     );
 
+    console.log(`Found ${locationFiltered.length} physicians in location: ${location}`);
     if (locationFiltered.length === 0) {
       console.log('No physicians found in the specified location.');
       return []; // Strictly enforce location presence
@@ -189,6 +190,7 @@ export const findRecommendedPhysicians = async (query: HealthQuery): Promise<Phy
   let specialtyFiltered: Physician[] = [];
   for (const specialty of detectedSpecialties) {
     const matches = locationFiltered.filter(p => p.Title === specialty);
+    console.log(`Found ${matches.length} ${specialty} in location`);
     if (matches.length > 0) {
       specialtyFiltered.push(...matches);
     }
@@ -196,13 +198,28 @@ export const findRecommendedPhysicians = async (query: HealthQuery): Promise<Phy
 
   // Step 3: Fallback to General Physician in the same location if no specialty match
   if (specialtyFiltered.length === 0) {
+    console.log('No specialist found, looking for General Physician...');
     const generalPhysicians = locationFiltered.filter(p => p.Title === 'General Physician');
+    console.log(`Found ${generalPhysicians.length} General Physicians in location`);
+    console.log('Available titles in location:', [...new Set(locationFiltered.map(p => p.Title))]);
+    
     if (generalPhysicians.length > 0) {
       specialtyFiltered = generalPhysicians;
       console.log('Fallback to General Physician in location');
     } else {
-      console.log('No General Physicians in the location either.');
-      return []; // No specialists or GPs in location
+      // Try alternative titles for general physician
+      const alternativeGP = locationFiltered.filter(p => 
+        p.Title.toLowerCase().includes('general') || 
+        p.Title.toLowerCase().includes('physician') ||
+        p.Title.toLowerCase() === 'gp'
+      );
+      if (alternativeGP.length > 0) {
+        specialtyFiltered = alternativeGP;
+        console.log('Found alternative General Physician titles');
+      } else {
+        console.log('No General Physicians in the location either.');
+        return []; // No specialists or GPs in location
+      }
     }
   }
 
