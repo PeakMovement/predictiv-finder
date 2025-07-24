@@ -22,27 +22,32 @@ export interface HealthQuery {
  */
 const extractBudget = (prompt: string): number | undefined => {
   const budgetPatterns = [
-  /R\s*(\d+)/i,                          // R1000
-  /budget.*?(\d+)/i,                    // budget is 1000
-  /(\d+).*?budget/i,                    // 1000 budget
-  /(\d+).*?month/i,                     // 1000 per month
-  /(\d+).*?rand/i,                      // 1000 rands
-  /(\d+)\s*(ZAR|zar)/i,                 // 1000 ZAR
-  /i have.*?(\d+)\s*(rands|rand|ZAR)/i,// I have 1000 rand
-  /can spend.*?(\d+)/i,                 // can spend 1000
-  /my budget.*?is.*?(\d+)/i,            // my budget is 1000
-  /I can afford.*?(\d+)/i,              // I can afford 1000
-  /around\s*R?\s*(\d+)/i,               // around R1000
-  /upto\s*R?\s*(\d+)/i,                 // upto R1000
-  /not more than\s*R?\s*(\d+)/i,        // not more than R1000
-  /maximum.*?R?\s*(\d+)/i,              // maximum R1000
-  /(\d+)\s*(per\s*visit|per\s*session)/i // 1000 per visit/session
-];
+    /R\s*(\d+)/i,                          // R1000
+    /budget.*?R?\s*(\d+)/i,               // budget is R1000 or budget is 1000
+    /(\d+).*?per\s*month/i,               // 1000 per month
+    /(\d+).*?monthly/i,                   // 1000 monthly
+    /(\d+).*?budget/i,                    // 1000 budget
+    /(\d+).*?rand/i,                      // 1000 rands
+    /(\d+)\s*(ZAR|zar)/i,                 // 1000 ZAR
+    /i have.*?(\d+)\s*(rands|rand|ZAR)/i,// I have 1000 rand
+    /can spend.*?(\d+)/i,                 // can spend 1000
+    /my budget.*?is.*?(\d+)/i,            // my budget is 1000
+    /I can afford.*?(\d+)/i,              // I can afford 1000
+    /around\s*R?\s*(\d+)/i,               // around R1000
+    /upto\s*R?\s*(\d+)/i,                 // upto R1000
+    /not more than\s*R?\s*(\d+)/i,        // not more than R1000
+    /maximum.*?R?\s*(\d+)/i,              // maximum R1000
+    /(\d+)\s*(per\s*visit|per\s*session)/i // 1000 per visit/session
+  ];
   
   for (const pattern of budgetPatterns) {
     const match = prompt.match(pattern);
     if (match) {
-      return parseInt(match[1]);
+      const amount = parseInt(match[1]);
+      // Only accept reasonable budget amounts (100-50000)
+      if (amount >= 100 && amount <= 50000) {
+        return amount;
+      }
     }
   }
   
@@ -54,15 +59,21 @@ const extractBudget = (prompt: string): number | undefined => {
  */
 const extractLocation = (prompt: string): string | undefined => {
   const locationPatterns = [
-    /in\s+([a-zA-Z\s]+?)(?:\s|$|\.)/i,
-    /location.*?([a-zA-Z\s]+?)(?:\s|$|\.)/i,
-    /(Johannesburg|Cape town|Durban|Pretoria|Port Elizabeth)/i
+    /(Johannesburg|Cape town|Durban|Pretoria|Port Elizabeth)/i, // Specific cities first
+    /\bin\s+([a-zA-Z]+(?:\s+[a-zA-Z]+)*?)(?:\s+and|\s+or|\.|$)/i, // in Johannesburg
+    /location.*?([a-zA-Z]+(?:\s+[a-zA-Z]+)*?)(?:\s+and|\s+or|\.|$)/i,
+    /prefer.*?([a-zA-Z]+(?:\s+[a-zA-Z]+)*?)(?:\s+location|\.|$)/i // prefer Johannesburg location
   ];
   
   for (const pattern of locationPatterns) {
     const match = prompt.match(pattern);
     if (match) {
-      return match[1].trim();
+      const location = match[1].trim();
+      // Filter out common non-location words
+      const nonLocationWords = ['issues', 'and', 'or', 'the', 'for', 'with', 'my', 'budget', 'per', 'month'];
+      if (!nonLocationWords.includes(location.toLowerCase()) && location.length > 2) {
+        return location;
+      }
     }
   }
   
