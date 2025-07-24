@@ -64,19 +64,26 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
   };
 
   const extractLocation = (prompt: string): string | undefined => {
+    const knownCities = ['johannesburg', 'cape town', 'durban', 'pretoria', 'bloemfontein', 'port elizabeth', 'sandton', 'centurion', 'joburg', 'jozi'];
+    
+    // First try direct city name matching
+    for (const city of knownCities) {
+      if (prompt.toLowerCase().includes(city)) {
+        return city.charAt(0).toUpperCase() + city.slice(1);
+      }
+    }
+    
+    // Then try pattern matching with known cities
     const locationPatterns = [
-      /(?:in|at|near|around|from|location|prefer|area)\s+([A-Za-z\s]+?)(?:\s|$|[,.])/i,
-      /([A-Za-z\s]+?)\s+(?:area|location|city)/i,
-      /(johannesburg|cape town|durban|pretoria|bloemfontein|port elizabeth|sandton|centurion|joburg|jozi)/i
+      /(?:in|at|near|around|from|location|prefer|area)\s+(johannesburg|cape town|durban|pretoria|bloemfontein|port elizabeth|sandton|centurion|joburg|jozi)/i,
+      /(johannesburg|cape town|durban|pretoria|bloemfontein|port elizabeth|sandton|centurion|joburg|jozi)\s+(?:area|location|city)/i
     ];
     
     for (const pattern of locationPatterns) {
       const match = prompt.match(pattern);
       if (match) {
-        const location = match[1] || match[0];
-        if (location && location.trim().length > 0) {
-          return location.trim();
-        }
+        const location = match[1];
+        return location.charAt(0).toUpperCase() + location.slice(1);
       }
     }
     return undefined;
@@ -97,16 +104,29 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
     return concerns.length > 0 ? concerns : ['General health consultation'];
   };
 
+  const getRecommendedDoctor = (concerns: string[]): string => {
+    if (concerns.includes('Pain management')) return 'Orthopedic Doctor';
+    if (concerns.includes('Cardiovascular health')) return 'Cardiologist';
+    if (concerns.includes('Mental health')) return 'Psychiatrist';
+    if (concerns.includes('Dermatology')) return 'Dermatologist';
+    if (concerns.includes('Neurology')) return 'Neurologist';
+    if (concerns.includes('Weight management')) return 'Endocrinologist';
+    if (concerns.includes('Diabetes management')) return 'Endocrinologist';
+    return 'General Practitioner';
+  };
+
   // Analysis only (no auto-recommendations)
   const debouncedAnalysis = useCallback(
     debounce(async (searchPrompt: string) => {
       if (searchPrompt.trim().length >= 10) {
         try {
           // Generate analysis for display (no physician search)
+          const primaryConcerns = extractHealthConcerns(searchPrompt);
           const analysis = {
-            primaryConcerns: extractHealthConcerns(searchPrompt),
+            primaryConcerns,
             budget: extractBudget(searchPrompt),
             location: extractLocation(searchPrompt),
+            recommendedDoctor: getRecommendedDoctor(primaryConcerns),
             hasEnoughInfo: searchPrompt.trim().length > 30 && (extractBudget(searchPrompt) !== undefined || extractLocation(searchPrompt) !== undefined)
           };
           setAnalysisResult(analysis);
@@ -244,8 +264,14 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                             <span className="font-medium text-muted-foreground">Location:</span>
                             <span>{analysisResult.location}</span>
                           </div>
-                        )}
-                        <div className="flex items-center gap-2 pt-2 border-t">
+                         )}
+                         {analysisResult.recommendedDoctor && (
+                           <div className="flex items-start gap-2">
+                             <span className="font-medium text-muted-foreground">Recommended doctor:</span>
+                             <span>{analysisResult.recommendedDoctor}</span>
+                           </div>
+                         )}
+                         <div className="flex items-center gap-2 pt-2 border-t">
                           {analysisResult.hasEnoughInfo ? (
                             <>
                               <CheckCircle className="w-4 h-4 text-green-600" />
