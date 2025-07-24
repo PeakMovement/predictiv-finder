@@ -213,6 +213,72 @@ export type Database = {
         }
         Relationships: []
       }
+      search_history: {
+        Row: {
+          budget: number | null
+          created_at: string
+          health_issue: string
+          id: string
+          location: string | null
+          results_count: number
+          user_id: string
+        }
+        Insert: {
+          budget?: number | null
+          created_at?: string
+          health_issue: string
+          id?: string
+          location?: string | null
+          results_count?: number
+          user_id: string
+        }
+        Update: {
+          budget?: number | null
+          created_at?: string
+          health_issue?: string
+          id?: string
+          location?: string | null
+          results_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_physician_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          last_selected_at: string
+          physician_location: string
+          physician_name: string
+          physician_title: string
+          selection_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_selected_at?: string
+          physician_location: string
+          physician_name: string
+          physician_title: string
+          selection_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_selected_at?: string
+          physician_location?: string
+          physician_name?: string
+          physician_title?: string
+          selection_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_preferences: {
         Row: {
           budget_range: string | null

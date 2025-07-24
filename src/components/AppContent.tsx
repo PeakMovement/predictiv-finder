@@ -21,6 +21,7 @@ import { PractitionerList } from "@/components/PractitionerList";
 import AIInputStage from "@/components/app-stages/AIInputStage";
 import AIPlanStage from "@/components/app-stages/AIPlanStage";
 import PlanDetailsStage from "@/components/app-stages/PlanDetailsStage";
+import HealthAssistantFlow from "@/components/health-assistant/HealthAssistantFlow";
 
 const AppContent: React.FC = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -119,12 +120,7 @@ const AppContent: React.FC = () => {
           />
         );
       case 'ai-input':
-        return (
-          <AIInputStage
-            onSubmit={handleAIInputSubmit}
-            onError={handleError}
-          />
-        );
+        return <HealthAssistantFlow />;
       case 'ai-plans':
         return (
           <AIPlanStage
