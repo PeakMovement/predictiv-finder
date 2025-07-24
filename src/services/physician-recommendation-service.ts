@@ -208,20 +208,27 @@ export const findRecommendedPhysicians = async (query: HealthQuery): Promise<Phy
     }
   }
 
-  // STEP 3: Fallback to General Physician if no specialty found
+  // STEP 3: Fallback to General Physician only if location was specified
   if (candidatePhysicians.length === 0) {
-    console.log('No specialists found, looking for General Physicians...');
-    const generalPhysicians = availablePhysicians.filter(p => 
-      p.Title === 'General Physician' || 
-      p.Title.toLowerCase().includes('general physician')
-    );
-    
-    if (generalPhysicians.length > 0) {
-      candidatePhysicians = generalPhysicians;
-      console.log(`Using ${generalPhysicians.length} General Physician(s) as fallback`);
+    if (location) {
+      // Only fallback to General Physician when location is specified
+      console.log('No specialists found in specified location, looking for General Physicians...');
+      const generalPhysicians = availablePhysicians.filter(p => 
+        p.Title === 'General Physician' || 
+        p.Title.toLowerCase().includes('general physician')
+      );
+      
+      if (generalPhysicians.length > 0) {
+        candidatePhysicians = generalPhysicians;
+        console.log(`Using ${generalPhysicians.length} General Physician(s) as fallback in ${location}`);
+      } else {
+        console.log('Available specialties in location:', [...new Set(availablePhysicians.map(p => p.Title))]);
+        return []; // No suitable physicians found in specified location
+      }
     } else {
-      console.log('Available specialties in location:', [...new Set(availablePhysicians.map(p => p.Title))]);
-      return []; // No suitable physicians found
+      // No location specified and no specialists found - return empty
+      console.log('No location specified and no relevant specialists found');
+      return [];
     }
   }
 
