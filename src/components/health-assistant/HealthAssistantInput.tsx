@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { HealthQuery, PhysicianRecommendation, findRecommendedPhysicians } from '@/services/physician-recommendation-service';
 import PhysicianCard from '@/components/physician-recommendations/PhysicianCard';
 import { User, MapPin, DollarSign, Stethoscope, CheckCircle, AlertCircle } from 'lucide-react';
+import { analyzeHealthQuery, AnalysisResult } from '@/utils/health-analysis-shared';
 
 interface HealthAssistantInputProps {
   onSubmit: (query: HealthQuery) => void;
@@ -42,7 +43,7 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
   });
   const [autoRecommendations, setAutoRecommendations] = useState<PhysicianRecommendation[]>([]);
   const [isAutoSearching, setIsAutoSearching] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const { toast } = useToast();
 
   // Helper functions for analysis
@@ -124,21 +125,17 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
     return [...new Set(doctors)].slice(0, 3);
   };
 
-  // Analysis only (no auto-recommendations)
+  // Analysis using shared utility
   const debouncedAnalysis = useCallback(
     debounce(async (searchPrompt: string) => {
       if (searchPrompt.trim().length >= 10) {
         try {
-          // Generate analysis for display (no physician search)
-          const primaryConcerns = extractHealthConcerns(searchPrompt);
-          const analysis = {
-            primaryConcerns,
-            budget: extractBudget(searchPrompt),
-            location: extractLocation(searchPrompt),
-            recommendedDoctor: getRecommendedDoctor(primaryConcerns),
-            hasEnoughInfo: searchPrompt.trim().length > 30 && (extractBudget(searchPrompt) !== undefined || extractLocation(searchPrompt) !== undefined)
-          };
-          setAnalysisResult(analysis);
+          const analysis = analyzeHealthQuery(searchPrompt);
+          const hasEnoughInfo = searchPrompt.trim().length > 30 && (analysis.budget !== undefined || analysis.location !== undefined);
+          setAnalysisResult({
+            ...analysis,
+            hasEnoughInfo
+          });
         } catch (error) {
           console.error('Analysis error:', error);
           setAnalysisResult(null);
@@ -146,7 +143,7 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
       } else {
         setAnalysisResult(null);
       }
-    }, 500), // 0.5 second delay for analysis only
+    }, 500),
     []
   );
 
@@ -279,9 +276,9 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                              <span className="font-medium text-muted-foreground">Recommended doctors:</span>
                              <span>{analysisResult.recommendedDoctor.join(', ')}</span>
                            </div>
-                         )}
-                         <div className="flex items-center gap-2 pt-2 border-t">
-                          {analysisResult.hasEnoughInfo ? (
+                          )}
+                          <div className="flex items-center gap-2 pt-2 border-t">
+                           {(analysisResult as any).hasEnoughInfo ? (
                             <>
                               <CheckCircle className="w-4 h-4 text-green-600" />
                               <span className="text-green-600 text-xs">Good information for recommendations</span>

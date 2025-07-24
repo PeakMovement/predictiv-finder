@@ -1,26 +1,19 @@
-import Papa from 'papaparse';
+/**
+ * Shared health analysis utilities used by both quick analysis and physician recommendations
+ */
 
-export interface Physician {
-  Name: string;
-  Title: string;
-  Location: string;
-  Experience: number;
-  Price: number;
-}
-
-export interface PhysicianRecommendation extends Physician {
-  affordability: 'Within budget' | 'Above budget';
-  matchReason?: string;
-}
-
-export interface HealthQuery {
-  prompt: string;
+export interface AnalysisResult {
+  primaryConcerns: string[];
+  budget?: number;
+  location?: string;
+  recommendedDoctor: string[];
+  hasEnoughInfo?: boolean;
 }
 
 /**
  * Extracts budget from prompt text (looks for R amount or amount patterns)
  */
-const extractBudget = (prompt: string): number | undefined => {
+export const extractBudgetFromText = (prompt: string): number | undefined => {
   const budgetPatterns = [
     /R\s*(\d+)/i,                          // R1000
     /budget.*?R?\s*(\d+)/i,               // budget is R1000 or budget is 1000
@@ -57,7 +50,7 @@ const extractBudget = (prompt: string): number | undefined => {
 /**
  * Extracts location from prompt text
  */
-const extractLocation = (prompt: string): string | undefined => {
+export const extractLocationFromText = (prompt: string): string | undefined => {
   const locationPatterns = [
     /(Johannesburg|Cape town|Durban|Pretoria|Port Elizabeth)/i, // Specific cities first
     /\bin\s+([a-zA-Z]+(?:\s+[a-zA-Z]+)*?)(?:\s+and|\s+or|\.|$)/i, // in Johannesburg
@@ -81,9 +74,9 @@ const extractLocation = (prompt: string): string | undefined => {
 };
 
 /**
- * Analyzes health issue text to extract medical specialties
+ * Analyzes health issue text to extract medical specialties - shared with physician service
  */
-const analyzeHealthIssue = (issue: string): string[] => {
+export const analyzeHealthIssueForSpecialties = (issue: string): string[] => {
   const issueLower = issue.toLowerCase();
   const specialties: string[] = [];
   
@@ -203,9 +196,6 @@ const analyzeHealthIssue = (issue: string): string[] => {
     ]
   };
   
-  // Specialty fallback mapping - these aren't needed now since we have all specialists
-  const specialtyFallbacks: Record<string, string[]> = {};
-  
   // Check for specialty matches
   Object.entries(specialtyMappings).forEach(([specialty, keywords]) => {
     if (keywords.some(keyword => issueLower.includes(keyword))) {
@@ -213,165 +203,61 @@ const analyzeHealthIssue = (issue: string): string[] => {
     }
   });
   
-  // If no specialist found, check fallbacks for specific conditions
-  if (specialties.length === 0) {
-    Object.entries(specialtyFallbacks).forEach(([condition, fallbackSpecialties]) => {
-      if (issueLower.includes(condition)) {
-        specialties.push(...fallbackSpecialties);
-      }
-    });
-  }
-  
-  console.log('Detected specialties for issue:', issueLower, '→', specialties);
   return [...new Set(specialties)]; // Remove duplicates
 };
 
 /**
- * Loads physician data from CSV file
+ * Extracts primary health concerns from text
  */
-export const loadPhysicianData = async (): Promise<Physician[]> => {
-  try {
-    const response = await fetch('/physicians.csv');
-    const csvText = await response.text();
-    
-    return new Promise((resolve, reject) => {
-      Papa.parse<Physician>(csvText, {
-        header: true,
-        dynamicTyping: true,
-        skipEmptyLines: true,
-        complete: (results) => {
-          if (results.errors.length > 0) {
-            console.error('CSV parsing errors:', results.errors);
-          }
-          resolve(results.data.filter(row => row.Name && row.Title));
-        },
-        error: (error) => reject(error)
-      });
-    });
-  } catch (error) {
-    console.error('Error loading physician data:', error);
-    return [];
-  }
-};
-
-/**
- * Implements the filtering and ranking logic as specified
- */
-export const findRecommendedPhysicians = async (query: HealthQuery): Promise<PhysicianRecommendation[]> => {
-  const physicians = await loadPhysicianData();
-  if (physicians.length === 0) return [];
-
-  const budget = extractBudget(query.prompt);
-  const location = extractLocation(query.prompt);
-  const detectedSpecialties = analyzeHealthIssue(query.prompt);
-
-  console.log('Query analysis:', { budget, location, detectedSpecialties });
-  console.log('Available physician titles:', [...new Set(physicians.map(p => p.Title))]);
-
-  // STEP 1: Filter by location first (mandatory if location provided)
-  let availablePhysicians = physicians;
-  if (location) {
-    availablePhysicians = physicians.filter(p =>
-      p.Location.toLowerCase().includes(location.toLowerCase())
-    );
-    
-    console.log(`Found ${availablePhysicians.length} physicians in ${location}`);
-    if (availablePhysicians.length === 0) {
-      return []; // No physicians in specified location
-    }
-  }
-
-  // STEP 2: Find relevant specialty within the location
-  let candidatePhysicians: Physician[] = [];
+export const extractPrimaryConcerns = (text: string): string[] => {
+  const concerns: string[] = [];
+  const textLower = text.toLowerCase();
   
-  // Try to match detected specialties
-  for (const specialty of detectedSpecialties) {
-    const specialtyMatches = availablePhysicians.filter(p => p.Title === specialty);
-    if (specialtyMatches.length > 0) {
-      candidatePhysicians.push(...specialtyMatches);
-      console.log(`Found ${specialtyMatches.length} ${specialty}(s)`);
-    }
-  }
-
-  // STEP 3: Fallback to General Physician only if location was specified
-  if (candidatePhysicians.length === 0) {
-    if (location) {
-      // Only fallback to General Physician when location is specified
-      console.log('No specialists found in specified location, looking for General Physicians...');
-      const generalPhysicians = availablePhysicians.filter(p => 
-        p.Title === 'General Physician' || 
-        p.Title.toLowerCase().includes('general physician')
-      );
-      
-      if (generalPhysicians.length > 0) {
-        candidatePhysicians = generalPhysicians;
-        console.log(`Using ${generalPhysicians.length} General Physician(s) as fallback in ${location}`);
-      } else {
-        console.log('Available specialties in location:', [...new Set(availablePhysicians.map(p => p.Title))]);
-        return []; // No suitable physicians found in specified location
+  // Common health concern patterns
+  const concernPatterns = [
+    'pain', 'ache', 'hurt', 'sore', 'injury', 'problem', 'issue', 'condition',
+    'trouble', 'difficulty', 'discomfort', 'swelling', 'inflammation', 'infection',
+    'disease', 'syndrome', 'disorder', 'symptoms', 'fever', 'nausea', 'headache'
+  ];
+  
+  concernPatterns.forEach(pattern => {
+    if (textLower.includes(pattern)) {
+      // Extract context around the concern
+      const regex = new RegExp(`([a-zA-Z\\s]*${pattern}[a-zA-Z\\s]*)`, 'gi');
+      const matches = text.match(regex);
+      if (matches) {
+        concerns.push(...matches.map(match => match.trim()));
       }
-    } else {
-      // No location specified and no specialists found - return empty
-      console.log('No location specified and no relevant specialists found');
-      return [];
+    }
+  });
+  
+  // If no specific concerns found, extract general health mentions
+  if (concerns.length === 0) {
+    const words = text.split(/\s+/);
+    const healthWords = words.filter(word => 
+      ['health', 'medical', 'doctor', 'treatment', 'therapy', 'consultation'].includes(word.toLowerCase())
+    );
+    if (healthWords.length > 0) {
+      concerns.push('General health consultation');
     }
   }
-
-  // Remove duplicates
-  candidatePhysicians = candidatePhysicians.filter((physician, index, self) =>
-    index === self.findIndex(p => p.Name === physician.Name)
-  );
-
-  // STEP 4: Price filtering and budget-aware categorization
-  let withinBudget: Physician[] = [];
-  let aboveBudget: Physician[] = [];
-
-  if (budget !== undefined) {
-    withinBudget = candidatePhysicians.filter(p => p.Price <= budget);
-    aboveBudget = candidatePhysicians.filter(p => p.Price > budget);
-    console.log(`Budget analysis: ${withinBudget.length} within budget, ${aboveBudget.length} above budget`);
-  } else {
-    withinBudget = candidatePhysicians;
-  }
-
-  // STEP 5: Sort by experience (high to low) within each budget category
-  withinBudget.sort((a, b) => b.Experience - a.Experience);
-  aboveBudget.sort((a, b) => b.Experience - a.Experience);
-
-  // STEP 6: Build final selection - prioritize within budget, then above budget
-  const finalSelection: Physician[] = [];
   
-  // Add up to 3 within budget physicians (sorted by experience)
-  finalSelection.push(...withinBudget.slice(0, 3));
-  
-  // If we need more results, add above budget ones
-  if (finalSelection.length < 3 && aboveBudget.length > 0) {
-    const remainingSlots = 3 - finalSelection.length;
-    finalSelection.push(...aboveBudget.slice(0, remainingSlots));
-  }
-
-  console.log(`Final selection: ${finalSelection.length} physicians`);
-
-  return finalSelection.map(physician => ({
-    ...physician,
-    affordability: budget !== undefined && physician.Price <= budget ? 'Within budget' : 'Above budget',
-    matchReason: `${physician.Title} with ${physician.Experience} years experience in ${physician.Location}`
-  }));
-};
-
-
-/**
- * Get all unique specialties from the data
- */
-export const getAvailableSpecialties = async (): Promise<string[]> => {
-  const physicians = await loadPhysicianData();
-  return [...new Set(physicians.map(p => p.Title))].sort();
+  return [...new Set(concerns)].slice(0, 3); // Return max 3 unique concerns
 };
 
 /**
- * Get all unique locations from the data
+ * Complete analysis function used by both components
  */
-export const getAvailableLocations = async (): Promise<string[]> => {
-  const physicians = await loadPhysicianData();
-  return [...new Set(physicians.map(p => p.Location))].sort();
+export const analyzeHealthQuery = (query: string): AnalysisResult => {
+  const budget = extractBudgetFromText(query);
+  const location = extractLocationFromText(query);
+  const recommendedDoctor = analyzeHealthIssueForSpecialties(query);
+  const primaryConcerns = extractPrimaryConcerns(query);
+  
+  return {
+    primaryConcerns,
+    budget,
+    location,
+    recommendedDoctor
+  };
 };
