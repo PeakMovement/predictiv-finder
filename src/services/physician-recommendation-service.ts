@@ -87,7 +87,7 @@ const analyzeHealthIssue = (issue: string): string[] => {
   const issueLower = issue.toLowerCase();
   const specialties: string[] = [];
   
-  // Comprehensive specialty mapping based on common health issues
+  // Map health issues to ACTUAL physician titles from CSV data
   const specialtyMappings = {
     'Physiotherapist': [
       'rehabilitation', 'mobility', 'injury recovery', 'post-surgery', 'exercise therapy',
@@ -124,14 +124,6 @@ const analyzeHealthIssue = (issue: string): string[] => {
       'exercise injury', 'sports performance', 'athletic performance', 'competition prep',
       'return to sport', 'sports medicine'
     ],
-    'Dermatologist': [
-      'skin', 'acne', 'rash', 'eczema', 'psoriasis', 'dermatitis', 'moles', 'warts',
-      'skin cancer', 'pigmentation', 'wrinkles', 'hair loss', 'nail problems',
-      'skin condition', 'facial', 'skincare', 'blemishes', 'spots', 'blackheads',
-      'dry skin', 'oily skin', 'itchy skin', 'skin irritation', 'pimples', 'breakouts',
-      'skin allergy', 'hives', 'skin lesions', 'birthmarks', 'age spots', 'skin tags',
-      'fungal infection', 'skin inflammation', 'sensitive skin', 'face'
-    ],
     'Dietician': [
       'nutrition', 'diet', 'meal plan', 'weight loss', 'cholesterol', 'blood sugar',
       'balanced diet', 'eating habits', 'nutritional deficiency', 'diabetes', 'BMI',
@@ -146,29 +138,6 @@ const analyzeHealthIssue = (issue: string): string[] => {
       'chiropractic', 'spinal adjustment', 'back alignment', 'posture problems',
       'spinal manipulation', 'joint manipulation', 'vertebral', 'disc problems'
     ],
-    'Psychologist': [
-      'anxiety', 'depression', 'stress', 'mental health', 'therapy', 'counseling',
-      'panic attacks', 'mood', 'emotional', 'psychological', 'behavioral', 'trauma',
-      'PTSD', 'grief', 'relationship issues', 'self-esteem', 'confidence', 'fear',
-      'phobia', 'addiction', 'substance abuse', 'eating disorder', 'sleep disorders',
-      'insomnia', 'mental wellness', 'emotional support', 'coping', 'mindfulness'
-    ],
-    'Cardiologist': [
-      'heart', 'chest pain', 'heart attack', 'cardiac', 'cardiovascular', 'blood pressure',
-      'hypertension', 'heart disease', 'arrhythmia', 'palpitations', 'heart rate',
-      'coronary', 'angina', 'heart failure', 'heart murmur', 'circulation problems',
-      'heart rhythm', 'cardiac rehabilitation'
-    ],
-    'Gynecologist': [
-      'women health', 'gynecological', 'menstrual', 'period', 'pregnancy', 'contraception',
-      'pap smear', 'reproductive health', 'fertility', 'ovarian', 'uterine', 'cervical',
-      'menopause', 'hormonal', 'pelvic pain', 'vaginal', 'breast', 'PCOS'
-    ],
-    'Urologist': [
-      'urinary', 'kidney', 'bladder', 'prostate', 'urination', 'urine', 'UTI',
-      'kidney stones', 'incontinence', 'erectile dysfunction', 'male health',
-      'urological', 'kidney problems', 'bladder problems'
-    ],
     'General Physician': [
       'fever', 'cold', 'cough', 'infection', 'check-up', 'blood pressure', 'general health',
       'diabetes', 'headache', 'digestive issues', 'fatigue', 'body pain', 'general',
@@ -177,8 +146,28 @@ const analyzeHealthIssue = (issue: string): string[] => {
       'indigestion', 'acid reflux', 'heartburn', 'medical check', 'health screening',
       'routine check', 'annual exam', 'physical exam', 'medical consultation',
       'health concerns', 'feeling unwell', 'sick', 'illness', 'symptoms',
-      'medical advice', 'health check', 'general consultation'
+      'medical advice', 'health check', 'general consultation',
+      // Fallback conditions when specialist not available
+      'chest pain', 'heart', 'cardiac', 'skin', 'acne', 'rash', 'anxiety', 'depression',
+      'mental health', 'women health', 'urinary', 'kidney'
     ]
+  };
+
+  // Specialty fallback mapping for conditions not covered by available specialists
+  const specialtyFallbacks = {
+    'chest pain': ['General Physician', 'Physiotherapist'], // No cardiologist available
+    'heart': ['General Physician'],
+    'cardiac': ['General Physician'], 
+    'skin': ['General Physician'], // No dermatologist available
+    'acne': ['General Physician'],
+    'rash': ['General Physician'],
+    'anxiety': ['General Physician'], // No psychologist available
+    'depression': ['General Physician'],
+    'mental health': ['General Physician'],
+    'stress': ['General Physician', 'Massage Therapist'],
+    'women health': ['General Physician'], // No gynecologist available
+    'urinary': ['General Physician'], // No urologist available
+    'kidney': ['General Physician']
   };
   
   // Check for specialty matches
@@ -188,8 +177,17 @@ const analyzeHealthIssue = (issue: string): string[] => {
     }
   });
   
-  // Don't default to General Physician - let the filtering logic handle that
-  return specialties;
+  // If no specialist found, check fallbacks for specific conditions
+  if (specialties.length === 0) {
+    Object.entries(specialtyFallbacks).forEach(([condition, fallbackSpecialties]) => {
+      if (issueLower.includes(condition)) {
+        specialties.push(...fallbackSpecialties);
+      }
+    });
+  }
+  
+  console.log('Detected specialties for issue:', issueLower, '→', specialties);
+  return [...new Set(specialties)]; // Remove duplicates
 };
 
 /**
@@ -232,6 +230,7 @@ export const findRecommendedPhysicians = async (query: HealthQuery): Promise<Phy
   const detectedSpecialties = analyzeHealthIssue(query.prompt);
 
   console.log('Query analysis:', { budget, location, detectedSpecialties });
+  console.log('Available physician titles:', [...new Set(physicians.map(p => p.Title))]);
 
   // STEP 1: Filter by location first (mandatory if location provided)
   let availablePhysicians = physicians;
