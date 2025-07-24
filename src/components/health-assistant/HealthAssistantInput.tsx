@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { HealthQuery, PhysicianRecommendation, findRecommendedPhysicians } from '@/services/physician-recommendation-service';
 import PhysicianCard from '@/components/physician-recommendations/PhysicianCard';
-import { User, MapPin, DollarSign, Stethoscope } from 'lucide-react';
+import { User, MapPin, DollarSign, Stethoscope, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface HealthAssistantInputProps {
   onSubmit: (query: HealthQuery) => void;
@@ -30,7 +30,61 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
   });
   const [autoRecommendations, setAutoRecommendations] = useState<PhysicianRecommendation[]>([]);
   const [isAutoSearching, setIsAutoSearching] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<any>(null);
   const { toast } = useToast();
+
+  // Helper functions for analysis
+  const extractBudget = (prompt: string): number | undefined => {
+    const budgetPatterns = [
+      /(?:budget|afford|spend|cost|price).*?R?(\d+(?:,\d{3})*(?:\.\d{2})?)/i,
+      /R\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/i,
+      /(\d+(?:,\d{3})*(?:\.\d{2})?)\s*(?:rand|rands)/i
+    ];
+    
+    for (const pattern of budgetPatterns) {
+      const match = prompt.match(pattern);
+      if (match) {
+        const amount = parseFloat(match[1].replace(/,/g, ''));
+        if (!isNaN(amount) && amount > 0) return amount;
+      }
+    }
+    return undefined;
+  };
+
+  const extractLocation = (prompt: string): string | undefined => {
+    const locationPatterns = [
+      /(?:in|at|near|around|from)\s+([A-Za-z\s]+)(?:\s|$|[,.])/i,
+      /(?:location|area|city|town).*?([A-Za-z\s]+)/i
+    ];
+    
+    const knownCities = ['johannesburg', 'cape town', 'durban', 'pretoria', 'bloemfontein', 'port elizabeth', 'sandton', 'centurion'];
+    
+    for (const pattern of locationPatterns) {
+      const match = prompt.match(pattern);
+      if (match) {
+        const location = match[1].trim().toLowerCase();
+        if (knownCities.some(city => location.includes(city))) {
+          return match[1].trim();
+        }
+      }
+    }
+    return undefined;
+  };
+
+  const extractHealthConcerns = (prompt: string): string[] => {
+    const concerns: string[] = [];
+    const lowerPrompt = prompt.toLowerCase();
+    
+    if (lowerPrompt.includes('pain') || lowerPrompt.includes('hurt') || lowerPrompt.includes('ache')) concerns.push('Pain management');
+    if (lowerPrompt.includes('weight') || lowerPrompt.includes('diet') || lowerPrompt.includes('obesity')) concerns.push('Weight management');
+    if (lowerPrompt.includes('mental') || lowerPrompt.includes('stress') || lowerPrompt.includes('anxiety') || lowerPrompt.includes('depression')) concerns.push('Mental health');
+    if (lowerPrompt.includes('heart') || lowerPrompt.includes('cardio') || lowerPrompt.includes('chest pain')) concerns.push('Cardiovascular health');
+    if (lowerPrompt.includes('diabetes') || lowerPrompt.includes('blood sugar')) concerns.push('Diabetes management');
+    if (lowerPrompt.includes('skin') || lowerPrompt.includes('acne') || lowerPrompt.includes('rash')) concerns.push('Dermatology');
+    if (lowerPrompt.includes('headache') || lowerPrompt.includes('migraine') || lowerPrompt.includes('memory')) concerns.push('Neurology');
+    
+    return concerns.length > 0 ? concerns : ['General health consultation'];
+  };
 
   // Debounced search for auto-recommendations
   const debouncedSearch = useCallback(
@@ -40,14 +94,26 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
         try {
           const recommendations = await findRecommendedPhysicians({ prompt: searchPrompt });
           setAutoRecommendations(recommendations.slice(0, 3)); // Show top 3
+          
+          // Generate analysis for display
+          const analysis = {
+            primaryConcerns: extractHealthConcerns(searchPrompt),
+            budget: extractBudget(searchPrompt),
+            location: extractLocation(searchPrompt),
+            recommendedSpecialties: recommendations.map(r => r.Title).filter((v, i, a) => a.indexOf(v) === i),
+            hasEnoughInfo: searchPrompt.trim().length > 30 && (extractBudget(searchPrompt) !== undefined || extractLocation(searchPrompt) !== undefined)
+          };
+          setAnalysisResult(analysis);
         } catch (error) {
           console.error('Auto-search error:', error);
           setAutoRecommendations([]);
+          setAnalysisResult(null);
         } finally {
           setIsAutoSearching(false);
         }
       } else {
         setAutoRecommendations([]);
+        setAnalysisResult(null);
       }
     }, 1000), // 1 second delay
     []
@@ -103,8 +169,9 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-6 animate-fade-in">
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+    <div className="min-h-screen w-full px-4 py-6 animate-fade-in">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         {/* Left side - Input Form */}
         <Card className="shadow-lg border-0 bg-card/95 backdrop-blur-sm">
           <CardHeader className="text-center pb-8">
@@ -132,12 +199,15 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                   </Label>
                   <Textarea
                     id="health-prompt"
-                    placeholder="Example: I've been experiencing lower back pain for 3 weeks, especially when sitting. My budget is R1000 per month and I'd prefer a doctor in Johannesburg."
+                    placeholder="Describe your health concern, budget, and preferred location..."
                     value={query.prompt}
                     onChange={(e) => setQuery({ prompt: e.target.value })}
                     className="min-h-[160px] text-base leading-relaxed border-2 border-input focus:border-health-purple/50 transition-all duration-300 bg-background resize-none"
                     required
                   />
+                  <p className="text-sm text-muted-foreground">
+                    * Please try to mention the budget, issue, type of doctor and location if possible
+                  </p>
                   <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
                       <DollarSign className="w-4 h-4" />
@@ -155,6 +225,57 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                     </div>
                   )}
                 </div>
+
+                {/* Analysis Display */}
+                {analysisResult && (
+                  <Card className="bg-muted/50 border-dashed">
+                    <CardContent className="pt-4">
+                      <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        Quick Analysis
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        {analysisResult.primaryConcerns.length > 0 && (
+                          <div className="flex items-start gap-2">
+                            <span className="font-medium text-muted-foreground">Issues:</span>
+                            <span>{analysisResult.primaryConcerns.join(', ')}</span>
+                          </div>
+                        )}
+                        {analysisResult.budget && (
+                          <div className="flex items-start gap-2">
+                            <span className="font-medium text-muted-foreground">Budget:</span>
+                            <span>R{analysisResult.budget.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {analysisResult.location && (
+                          <div className="flex items-start gap-2">
+                            <span className="font-medium text-muted-foreground">Location:</span>
+                            <span>{analysisResult.location}</span>
+                          </div>
+                        )}
+                        {analysisResult.recommendedSpecialties.length > 0 && (
+                          <div className="flex items-start gap-2">
+                            <span className="font-medium text-muted-foreground">Recommended doctors:</span>
+                            <span>{analysisResult.recommendedSpecialties.slice(0, 3).join(', ')}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 pt-2 border-t">
+                          {analysisResult.hasEnoughInfo ? (
+                            <>
+                              <CheckCircle className="w-4 h-4 text-green-600" />
+                              <span className="text-green-600 text-xs">Good information for recommendations</span>
+                            </>
+                          ) : (
+                            <>
+                              <AlertCircle className="w-4 h-4 text-amber-600" />
+                              <span className="text-amber-600 text-xs">Try adding budget or location for better results</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 <div className="flex justify-center lg:justify-start">
                   <Button 
@@ -251,6 +372,7 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
             </CardContent>
           </Card>
         )}
+      </div>
       </div>
     </div>
   );
