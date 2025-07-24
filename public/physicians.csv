@@ -1,41 +1,201 @@
 Name,Title,Location,Experience,Price
-Dr. A. Khan,Dermatologist,Johannesburg,12,800
-Dr. B. Smith,Cardiologist,Cape Town,15,1200
-Dr. C. Patel,General Physician,Durban,8,600
-Dr. D. Johnson,Neurologist,Johannesburg,20,1500
-Dr. E. Williams,Dermatologist,Cape Town,10,900
-Dr. F. Brown,Cardiologist,Pretoria,18,1100
-Dr. G. Davis,General Physician,Johannesburg,5,500
-Dr. H. Miller,Psychiatrist,Cape Town,12,1000
-Dr. I. Wilson,Orthopedic Surgeon,Durban,14,1300
-Dr. J. Moore,General Physician,Pretoria,7,550
-Dr. K. Taylor,Dermatologist,Johannesburg,16,950
-Dr. L. Anderson,Cardiologist,Cape Town,22,1400
-Dr. M. Thomas,Neurologist,Durban,11,1250
-Dr. N. Jackson,General Physician,Johannesburg,6,480
-Dr. O. White,Psychiatrist,Pretoria,9,850
-Dr. P. Harris,Orthopedic Surgeon,Cape Town,17,1350
-Dr. Q. Martin,Dermatologist,Durban,13,880
-Dr. R. Thompson,Cardiologist,Johannesburg,19,1180
-Dr. S. Garcia,General Physician,Cape Town,4,520
-Dr. T. Martinez,Neurologist,Pretoria,25,1600
-Dr. U. Robinson,Psychiatrist,Johannesburg,8,920
-Dr. V. Clark,Orthopedic Surgeon,Durban,21,1420
-Dr. W. Rodriguez,Dermatologist,Cape Town,14,870
-Dr. X. Lewis,General Physician,Pretoria,10,580
-Dr. Y. Lee,Cardiologist,Johannesburg,16,1120
-Dr. Z. Walker,Neurologist,Cape Town,13,1280
-Dr. AA. Hall,Psychiatrist,Durban,11,980
-Dr. BB. Allen,Orthopedic Surgeon,Johannesburg,18,1380
-Dr. CC. Young,General Physician,Cape Town,9,540
-Dr. DD. Hernandez,Dermatologist,Pretoria,12,920
-Dr. EE. King,Cardiologist,Durban,20,1220
-Dr. FF. Wright,Neurologist,Johannesburg,15,1320
-Dr. GG. Lopez,Psychiatrist,Cape Town,7,890
-Dr. HH. Hill,Orthopedic Surgeon,Pretoria,19,1400
-Dr. II. Scott,General Physician,Durban,6,490
-Dr. JJ. Green,Dermatologist,Johannesburg,17,940
-Dr. KK. Adams,Cardiologist,Cape Town,24,1450
-Dr. LL. Baker,Neurologist,Durban,10,1200
-Dr. MM. Gonzalez,Psychiatrist,Pretoria,14,950
-Dr. NN. Nelson,Orthopedic Surgeon,Johannesburg,16,1360
+Nosipho Pillay,Physiotherapist,Port Elizabeth,19,970
+Andile Coetzee,Chiropractor,Durban,9,970
+Nandi De Beer,Podiatrist,Cape Town,10,1150
+Thabo Swanepoel,Chiropractor,Durban,8,940
+Nosipho Van der Merwe,Podiatrist,Durban,2,760
+Thabo De Beer,Chiropractor,Pretoria,5,850
+Jabulani Van der Merwe,Sports Therapist,Durban,16,880
+Thuli Dlamini,Chiropractor,Cape Town,4,970
+Nandi Jacobs,BioKineticist,Port Elizabeth,9,670
+Thabo Mokoena,Sports Therapist,Cape Town,18,1090
+Thembi Mahlangu,Massage Therapist,Cape Town,16,1030
+Nosipho Visser,Physiotherapist,Cape Town,5,700
+Jabulani Jacobs,Dietician,Johannesburg,14,970
+Ayanda Pillay,BioKineticist,Johannesburg,7,760
+Thuli Pillay,Chiropractor,Port Elizabeth,2,760
+Jabulani De Beer,General Physician,Cape Town,13,1240
+Naledi Du Plessis,Chiropractor,Durban,8,940
+Bongani Jacobs,BioKineticist,Pretoria,10,700
+Lebogang Joubert,General Physician,Port Elizabeth,3,790
+Thembi Nkosi,General Physician,Johannesburg,6,1030
+Tshepo Mahlangu,BioKineticist,Durban,12,760
+Thabo Khumalo,BioKineticist,Pretoria,2,460
+Thembi Coetzee,BioKineticist,Pretoria,12,760
+Mbali Nkosi,Chiropractor,Pretoria,11,1030
+Thuli Joubert,Podiatrist,Port Elizabeth,16,1180
+Tumelo Steyn,General Physician,Pretoria,18,1240
+Naledi Botha,BioKineticist,Durban,1,430
+Bongani Visser,BioKineticist,Port Elizabeth,13,790
+Ntombi Botha,Dietician,Port Elizabeth,3,490
+Gugu Dlamini,Chiropractor,Port Elizabeth,2,760
+Zanele Jacobs,BioKineticist,Cape Town,2,610
+Kagiso Ngcobo,Massage Therapist,Johannesburg,15,1000
+Siyabonga Steyn,Physiotherapist,Port Elizabeth,16,880
+Ayanda Naidoo,Physiotherapist,Cape Town,13,940
+Mbali Swanepoel,BioKineticist,Pretoria,10,700
+Tshepo Ngcobo,Chiropractor,Johannesburg,12,1210
+Tshepo Kruger,Massage Therapist,Cape Town,3,640
+Sipho Visser,Chiropractor,Port Elizabeth,17,1210
+Zanele Nkosi,BioKineticist,Cape Town,9,820
+Zanele Kruger,Podiatrist,Cape Town,2,910
+Naledi Mokoena,Physiotherapist,Durban,7,610
+Ayanda Visser,Sports Therapist,Pretoria,4,520
+Ntombi De Beer,Massage Therapist,Pretoria,18,940
+Lerato Van der Merwe,Physiotherapist,Durban,3,490
+Lebogang De Beer,Podiatrist,Port Elizabeth,8,940
+Lebogang Steyn,BioKineticist,Pretoria,17,910
+Sibusiso Visser,Physiotherapist,Johannesburg,11,880
+Sibusiso Jacobs,Sports Therapist,Cape Town,13,940
+Nandi Mokoena,Sports Therapist,Pretoria,4,520
+Mbali Mahlangu,Physiotherapist,Cape Town,15,1000
+Andile Dlamini,Chiropractor,Port Elizabeth,4,820
+Sibusiso De Beer,BioKineticist,Johannesburg,18,1090
+Nomsa Ngcobo,Chiropractor,Johannesburg,8,1090
+Sipho Du Plessis,Podiatrist,Durban,1,730
+Naledi Swanepoel,Chiropractor,Johannesburg,13,1240
+Ayanda Pretorius,Chiropractor,Cape Town,16,1330
+Tshepo Botha,Sports Therapist,Johannesburg,11,880
+Nosipho Ngcobo,Sports Therapist,Johannesburg,17,1060
+Siyabonga Dlamini,Podiatrist,Durban,13,1090
+Gugu Steyn,Chiropractor,Durban,15,1150
+Thabo Coetzee,Physiotherapist,Port Elizabeth,9,670
+Tshepo Visser,Sports Therapist,Durban,19,970
+Ayanda Kruger,Massage Therapist,Port Elizabeth,16,880
+Nomsa Pretorius,Physiotherapist,Cape Town,2,610
+Jabulani Dlamini,BioKineticist,Port Elizabeth,12,760
+Nomsa Mokoena,Physiotherapist,Durban,14,820
+Ayanda Van der Merwe,BioKineticist,Port Elizabeth,16,880
+Lerato Mahlangu,BioKineticist,Cape Town,7,760
+Lebogang Coetzee,Sports Therapist,Port Elizabeth,10,700
+Kagiso Du Plessis,Dietician,Durban,20,1000
+Thuli Jacobs,Physiotherapist,Cape Town,9,820
+Ntombi Pretorius,Sports Therapist,Durban,5,550
+Ntombi Pillay,Sports Therapist,Johannesburg,12,910
+Sipho Jacobs,BioKineticist,Cape Town,12,910
+Thembi Swanepoel,BioKineticist,Port Elizabeth,16,880
+Thuli Ngcobo,Dietician,Durban,17,910
+Ayanda Mokoena,Sports Therapist,Pretoria,9,670
+Mpho Naidoo,Physiotherapist,Durban,5,550
+Bongani Steyn,Chiropractor,Johannesburg,8,1090
+Ayanda Mahlangu,General Physician,Port Elizabeth,18,1240
+Thembi Pillay,BioKineticist,Port Elizabeth,4,520
+Tumelo Mahlangu,Sports Therapist,Johannesburg,1,580
+Nosipho Naidoo,Physiotherapist,Port Elizabeth,12,760
+Jabulani Joubert,Physiotherapist,Port Elizabeth,2,460
+Lerato Nkosi,Dietician,Durban,4,520
+Thembi Joubert,Chiropractor,Durban,18,1240
+Gugu Naidoo,Chiropractor,Port Elizabeth,19,1270
+Lerato Joubert,Chiropractor,Johannesburg,13,1240
+Lerato Du Plessis,General Physician,Johannesburg,17,1360
+Thembi Jacobs,Physiotherapist,Pretoria,8,640
+Lindiwe Van der Merwe,BioKineticist,Port Elizabeth,16,880
+Nosipho Jacobs,Dietician,Durban,4,520
+Mbali Joubert,Dietician,Pretoria,8,640
+Andile Naidoo,Massage Therapist,Johannesburg,11,880
+Naledi Van der Merwe,Chiropractor,Pretoria,3,790
+Sibusiso Ngcobo,BioKineticist,Pretoria,15,850
+Mpho Kruger,Chiropractor,Cape Town,13,1240
+Tshepo Pretorius,Dietician,Durban,17,910
+Gugu Kruger,Sports Therapist,Pretoria,15,850
+Ntombi Ngcobo,BioKineticist,Durban,17,910
+Mpho Mokoena,General Physician,Johannesburg,17,1360
+Gugu Du Plessis,Physiotherapist,Pretoria,20,1000
+Nomsa Swanepoel,Massage Therapist,Cape Town,4,670
+Naledi Joubert,Chiropractor,Johannesburg,2,910
+Thabo Steyn,Chiropractor,Durban,10,1000
+Xolani Ngcobo,Dietician,Cape Town,2,610
+Lindiwe Du Plessis,Dietician,Cape Town,10,850
+Tumelo Khumalo,Massage Therapist,Durban,13,790
+Kagiso Mahlangu,Chiropractor,Durban,7,910
+Tumelo Pillay,Dietician,Durban,8,640
+Zanele Swanepoel,General Physician,Durban,2,760
+Bongani Mahlangu,Massage Therapist,Port Elizabeth,19,970
+Mbali Botha,Chiropractor,Cape Town,10,1150
+Sibusiso Dlamini,Dietician,Durban,18,940
+Gugu Jacobs,Podiatrist,Cape Town,1,880
+Nandi Pretorius,Sports Therapist,Durban,20,1000
+Andile Visser,General Physician,Durban,20,1300
+Nandi Swanepoel,Dietician,Cape Town,12,910
+Sipho De Beer,General Physician,Durban,11,1030
+Nosipho Coetzee,Massage Therapist,Pretoria,17,910
+Sipho Naidoo,Physiotherapist,Port Elizabeth,18,940
+Naledi Steyn,General Physician,Durban,3,790
+Nomsa De Beer,Chiropractor,Durban,15,1150
+Lerato Kruger,General Physician,Johannesburg,19,1420
+Mpho Swanepoel,Chiropractor,Johannesburg,11,1180
+Mbali Pillay,Chiropractor,Durban,20,1300
+Zanele Joubert,Massage Therapist,Pretoria,19,970
+Xolani Nkosi,Physiotherapist,Pretoria,11,730
+Andile Kruger,Physiotherapist,Johannesburg,9,820
+Tumelo Pretorius,Chiropractor,Durban,5,850
+Ntombi Nkosi,Massage Therapist,Durban,14,820
+Lerato Dlamini,General Physician,Pretoria,3,790
+Nomsa Du Plessis,Dietician,Durban,3,490
+Siyabonga Du Plessis,General Physician,Johannesburg,13,1240
+Sipho Mahlangu,Podiatrist,Port Elizabeth,2,760
+Lerato Khumalo,Podiatrist,Cape Town,14,1270
+Mbali Visser,Dietician,Durban,15,850
+Lerato Steyn,General Physician,Pretoria,19,1270
+Tumelo Mokoena,Physiotherapist,Durban,8,640
+Thuli Visser,Massage Therapist,Durban,16,880
+Lindiwe Botha,Chiropractor,Johannesburg,9,1120
+Nandi Van der Merwe,Sports Therapist,Port Elizabeth,9,670
+Bongani Coetzee,BioKineticist,Cape Town,5,700
+Tshepo Mokoena,Chiropractor,Cape Town,14,1270
+Thuli Swanepoel,BioKineticist,Pretoria,4,520
+Bongani Dlamini,Dietician,Pretoria,6,580
+Andile De Beer,Podiatrist,Durban,4,820
+Kagiso Coetzee,Chiropractor,Port Elizabeth,11,1030
+Nosipho Du Plessis,Physiotherapist,Port Elizabeth,13,790
+Nomsa Coetzee,Podiatrist,Cape Town,11,1180
+Gugu Visser,Dietician,Pretoria,3,490
+Thuli Mokoena,BioKineticist,Pretoria,3,490
+Nosipho Pretorius,Sports Therapist,Durban,11,730
+Lindiwe Swanepoel,Massage Therapist,Johannesburg,5,700
+Sipho Nkosi,Sports Therapist,Durban,19,970
+Sibusiso Nkosi,BioKineticist,Port Elizabeth,19,970
+Bongani Du Plessis,Chiropractor,Pretoria,4,820
+Nosipho Mokoena,General Physician,Johannesburg,5,1000
+Tshepo Van der Merwe,Dietician,Durban,3,490
+Tshepo Coetzee,Podiatrist,Cape Town,18,1390
+Tshepo Khumalo,Dietician,Durban,20,1000
+Zanele Naidoo,Dietician,Johannesburg,17,1060
+Kagiso Botha,Sports Therapist,Cape Town,14,970
+Bongani Swanepoel,Massage Therapist,Durban,1,430
+Andile Nkosi,Massage Therapist,Cape Town,13,940
+Ayanda Coetzee,Sports Therapist,Johannesburg,6,730
+Jabulani Pretorius,Sports Therapist,Cape Town,2,610
+Andile Swanepoel,General Physician,Durban,3,790
+Lindiwe Pretorius,Dietician,Johannesburg,13,940
+Naledi De Beer,Chiropractor,Cape Town,9,1120
+Xolani Khumalo,Chiropractor,Pretoria,17,1210
+Thabo Pretorius,Massage Therapist,Cape Town,5,700
+Bongani Van der Merwe,BioKineticist,Pretoria,16,880
+Bongani Naidoo,Physiotherapist,Cape Town,15,1000
+Jabulani Naidoo,Physiotherapist,Durban,10,700
+Gugu Botha,Physiotherapist,Pretoria,7,610
+Nomsa Jacobs,Chiropractor,Durban,12,1060
+Nandi Naidoo,Podiatrist,Pretoria,3,790
+Mbali Coetzee,Massage Therapist,Pretoria,4,520
+Jabulani Khumalo,BioKineticist,Cape Town,4,670
+Lebogang Pillay,Dietician,Pretoria,13,790
+Lebogang Dlamini,Chiropractor,Durban,7,910
+Gugu Pillay,BioKineticist,Cape Town,15,1000
+Thuli Du Plessis,Massage Therapist,Port Elizabeth,7,610
+Ntombi Mahlangu,Physiotherapist,Pretoria,5,550
+Siyabonga Naidoo,Chiropractor,Port Elizabeth,6,880
+Sibusiso Coetzee,Massage Therapist,Cape Town,8,790
+Jabulani Visser,Podiatrist,Port Elizabeth,19,1270
+Nandi Khumalo,General Physician,Durban,5,850
+Nomsa Kruger,General Physician,Johannesburg,7,1060
+Sipho Ngcobo,Sports Therapist,Pretoria,16,880
+Zanele Dlamini,Physiotherapist,Port Elizabeth,4,520
+Lindiwe Dlamini,Podiatrist,Pretoria,13,1090
+Mpho Visser,Dietician,Port Elizabeth,14,820
+Sipho Khumalo,Dietician,Port Elizabeth,4,520
+Ayanda Botha,Podiatrist,Johannesburg,20,1450
+Xolani Du Plessis,BioKineticist,Pretoria,6,580
+Lebogang Ngcobo,Chiropractor,Port Elizabeth,2,760
+Lerato Pretorius,Chiropractor,Port Elizabeth,20,1300
+Siyabonga Mahlangu,Sports Therapist,Pretoria,12,760
