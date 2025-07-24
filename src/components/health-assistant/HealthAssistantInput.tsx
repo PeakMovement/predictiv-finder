@@ -93,26 +93,35 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
     const concerns: string[] = [];
     const lowerPrompt = prompt.toLowerCase();
     
-    if (lowerPrompt.includes('pain') || lowerPrompt.includes('hurt') || lowerPrompt.includes('ache')) concerns.push('Pain management');
+    // Check specific conditions first (more specific matches)
+    if (lowerPrompt.includes('heart') || lowerPrompt.includes('cardio') || lowerPrompt.includes('chest pain') || lowerPrompt.includes('palpitation')) concerns.push('Cardiovascular health');
+    if (lowerPrompt.includes('headache') || lowerPrompt.includes('migraine') || lowerPrompt.includes('memory') || lowerPrompt.includes('neurolog')) concerns.push('Neurology');
+    if (lowerPrompt.includes('skin') || lowerPrompt.includes('acne') || lowerPrompt.includes('rash') || lowerPrompt.includes('dermat')) concerns.push('Dermatology');
+    if (lowerPrompt.includes('diabetes') || lowerPrompt.includes('blood sugar') || lowerPrompt.includes('endocrin')) concerns.push('Diabetes management');
     if (lowerPrompt.includes('weight') || lowerPrompt.includes('diet') || lowerPrompt.includes('obesity')) concerns.push('Weight management');
-    if (lowerPrompt.includes('mental') || lowerPrompt.includes('stress') || lowerPrompt.includes('anxiety') || lowerPrompt.includes('depression')) concerns.push('Mental health');
-    if (lowerPrompt.includes('heart') || lowerPrompt.includes('cardio') || lowerPrompt.includes('chest pain')) concerns.push('Cardiovascular health');
-    if (lowerPrompt.includes('diabetes') || lowerPrompt.includes('blood sugar')) concerns.push('Diabetes management');
-    if (lowerPrompt.includes('skin') || lowerPrompt.includes('acne') || lowerPrompt.includes('rash')) concerns.push('Dermatology');
-    if (lowerPrompt.includes('headache') || lowerPrompt.includes('migraine') || lowerPrompt.includes('memory')) concerns.push('Neurology');
+    if (lowerPrompt.includes('mental') || lowerPrompt.includes('stress') || lowerPrompt.includes('anxiety') || lowerPrompt.includes('depression') || lowerPrompt.includes('psychiatr')) concerns.push('Mental health');
+    
+    // General pain management (checked last to avoid overriding specific conditions)
+    if ((lowerPrompt.includes('pain') || lowerPrompt.includes('hurt') || lowerPrompt.includes('ache')) && 
+        !concerns.includes('Cardiovascular health')) concerns.push('Pain management');
     
     return concerns.length > 0 ? concerns : ['General health consultation'];
   };
 
-  const getRecommendedDoctor = (concerns: string[]): string => {
-    if (concerns.includes('Pain management')) return 'Orthopedic Doctor';
-    if (concerns.includes('Cardiovascular health')) return 'Cardiologist';
-    if (concerns.includes('Mental health')) return 'Psychiatrist';
-    if (concerns.includes('Dermatology')) return 'Dermatologist';
-    if (concerns.includes('Neurology')) return 'Neurologist';
-    if (concerns.includes('Weight management')) return 'Endocrinologist';
-    if (concerns.includes('Diabetes management')) return 'Endocrinologist';
-    return 'General Practitioner';
+  const getRecommendedDoctor = (concerns: string[]): string[] => {
+    const doctors: string[] = [];
+    
+    if (concerns.includes('Cardiovascular health')) doctors.push('Cardiologist');
+    if (concerns.includes('Neurology')) doctors.push('Neurologist');
+    if (concerns.includes('Dermatology')) doctors.push('Dermatologist');
+    if (concerns.includes('Diabetes management')) doctors.push('Endocrinologist');
+    if (concerns.includes('Weight management')) doctors.push('Dietician', 'Endocrinologist');
+    if (concerns.includes('Mental health')) doctors.push('Psychiatrist', 'Psychologist');
+    if (concerns.includes('Pain management')) doctors.push('Orthopedic Doctor', 'Physiotherapist');
+    if (concerns.includes('General health consultation')) doctors.push('General Practitioner');
+    
+    // Remove duplicates and limit to 3 doctors
+    return [...new Set(doctors)].slice(0, 3);
   };
 
   // Analysis only (no auto-recommendations)
@@ -265,10 +274,10 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                             <span>{analysisResult.location}</span>
                           </div>
                          )}
-                         {analysisResult.recommendedDoctor && (
+                         {analysisResult.recommendedDoctor && analysisResult.recommendedDoctor.length > 0 && (
                            <div className="flex items-start gap-2">
-                             <span className="font-medium text-muted-foreground">Recommended doctor:</span>
-                             <span>{analysisResult.recommendedDoctor}</span>
+                             <span className="font-medium text-muted-foreground">Recommended doctors:</span>
+                             <span>{analysisResult.recommendedDoctor.join(', ')}</span>
                            </div>
                          )}
                          <div className="flex items-center gap-2 pt-2 border-t">
