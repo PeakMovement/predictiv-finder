@@ -68,59 +68,59 @@ const analyzeHealthIssue = (issue: string): string[] => {
   
   // Specialty mapping based on common health issues
   const specialtyMappings = {
-    'Dermatologist': [
+    'dermatologist': [
       'skin', 'acne', 'rash', 'eczema', 'psoriasis', 'mole', 'dermatitis', 
       'wrinkle', 'age spot', 'skin cancer', 'hair loss', 'nail'
     ],
-    'Cardiologist': [
+    'cardiologist': [
       'heart', 'chest pain', 'blood pressure', 'hypertension', 'palpitation', 
       'cardiac', 'cardiovascular', 'arrhythmia', 'cholesterol', 'heart attack'
     ],
-    'Neurologist': [
+    'neurologist': [
       'headache', 'migraine', 'seizure', 'epilepsy', 'stroke', 'memory', 
       'alzheimer', 'parkinson', 'nerve', 'neurological', 'brain', 'numbness'
     ],
-    'Psychiatrist': [
+    'psychiatrist': [
       'depression', 'anxiety', 'stress', 'mental health', 'panic', 'mood', 
       'bipolar', 'psychiatric', 'therapy', 'counseling', 'emotional'
     ],
-    'Orthopedic Surgeon': [
+    'orthopedic surgeon': [
       'bone', 'joint', 'back pain', 'knee pain', 'shoulder', 'hip', 'fracture', 
       'arthritis', 'sports injury', 'spine', 'orthopedic', 'muscle pain'
     ],
-    'Physiotherapist': [
+    'physiotherapist': [
         'rehabilitation', 'mobility', 'injury recovery', 'post-surgery', 'exercise therapy',
         'movement', 'physical therapy', 'pain management', 'stiffness', 'range of motion',
         'swelling', 'muscle strength'
     ],
-    'BioKineticist': [
+    'bioKineticist': [
         'exercise', 'biomechanics', 'movement analysis', 'chronic disease', 'injury prevention',
         'rehab', 'physical assessment', 'wellness', 'orthopedic condition', 'cardiac rehab',
         'musculoskeletal', 'posture'
     ],
-    'Massage Therapist': [
+    'massage therapist': [
         'massage', 'relaxation', 'stress relief', 'muscle tension', 'deep tissue', 'trigger point',
         'soft tissue', 'therapeutic touch', 'circulation', 'pain relief', 'wellbeing', 'bodywork'
     ],
-    'Podiatrist': [
+    'podiatrist': [
         'foot', 'ankle', 'heel pain', 'bunions', 'plantar fasciitis', 'toenail', 'orthotics',
         'gait', 'flat feet', 'diabetic foot', 'corns', 'blisters'
     ],
-    'Sports Therapist': [
+    'sports therapist': [
         'sports injury', 'sprain', 'strain', 'rehabilitation', 'athlete recovery',
         'exercise prescription', 'injury prevention', 'fitness', 'conditioning', 'training',
         'performance', 'taping'
     ],
-    'General Physician': [
+    'general physician': [
         'fever', 'cold', 'cough', 'infection', 'check-up', 'blood pressure', 'general health',
         'diabetes', 'headache', 'digestive issues', 'fatigue', 'body pain'
     ],
-    'Dietician': [
+    'dietician': [
         'nutrition', 'diet', 'meal plan', 'weight loss', 'cholesterol', 'blood sugar',
         'balanced diet', 'eating habits', 'nutritional deficiency', 'diabetes', 'BMI',
         'healthy eating'
     ],
-    'Chiropractor': [
+    'chiropractor': [
         'spine', 'back pain', 'alignment', 'neck pain', 'adjustment', 'posture', 'subluxation',
         'joint', 'manual therapy', 'vertebrae', 'musculoskeletal', 'headache'
     ]
