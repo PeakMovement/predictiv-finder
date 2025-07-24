@@ -15,10 +15,22 @@ interface HealthAssistantInputProps {
 }
 
 const exampleQueries = [
-  "I've been experiencing lower back pain for 3 weeks, especially when sitting. My budget is R1000 per month and I'd prefer a doctor in Johannesburg.",
-  "Having skin issues - acne and rash on my face. Budget is R800 and location Cape Town.",
-  "Chest pain and heart palpitations, need specialist consultation. My budget is R1200 per month in Durban.",
-  "Frequent headaches and memory issues. Budget R1500, prefer Pretoria location."
+  { 
+    short: "Lower back pain, R1000, Johannesburg",
+    full: "I've been experiencing lower back pain for 3 weeks, especially when sitting. My budget is R1000 per month and I'd prefer a doctor in Johannesburg."
+  },
+  { 
+    short: "Skin issues - acne, R800, Cape Town",
+    full: "Having skin issues - acne and rash on my face. Budget is R800 and location Cape Town."
+  },
+  { 
+    short: "Chest pain, specialist needed, R1200, Durban",
+    full: "Chest pain and heart palpitations, need specialist consultation. My budget is R1200 per month in Durban."
+  },
+  { 
+    short: "Headaches and memory issues, R1500, Pretoria",
+    full: "Frequent headaches and memory issues. Budget R1500, prefer Pretoria location."
+  }
 ];
 
 export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
@@ -157,8 +169,8 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
     onSubmit(query);
   };
 
-  const handleExampleClick = (example: string) => {
-    setQuery({ prompt: example });
+  const handleExampleClick = (example: { short: string; full: string }) => {
+    setQuery({ prompt: example.full });
   };
 
   const handleAutoRecommendationSelect = (physician: PhysicianRecommendation) => {
@@ -169,8 +181,8 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
   };
 
   return (
-    <div className="min-h-screen w-full px-4 py-6 animate-fade-in">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen w-full animate-fade-in">
+      <div className="w-full h-full px-4 py-6">
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         {/* Left side - Input Form */}
         <Card className="shadow-lg border-0 bg-card/95 backdrop-blur-sm">
@@ -205,19 +217,9 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                     className="min-h-[160px] text-base leading-relaxed border-2 border-input focus:border-health-purple/50 transition-all duration-300 bg-background resize-none"
                     required
                   />
-                  <p className="text-sm text-muted-foreground">
-                    * Please try to mention the budget, issue, type of doctor and location if possible
-                  </p>
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4" />
-                      <span>Include your budget (e.g., R1000)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4" />
-                      <span>Mention your preferred location</span>
-                    </div>
-                  </div>
+                   <p className="text-sm text-muted-foreground">
+                     * Please try to mention the budget, issue and location if possible
+                   </p>
                   {isAutoSearching && (
                     <div className="flex items-center gap-2 text-sm text-health-purple">
                       <div className="animate-spin w-4 h-4 border-2 border-health-purple border-t-transparent rounded-full" />
@@ -317,9 +319,9 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                         <div className="p-2 rounded-full bg-health-purple/10 group-hover:bg-health-purple/20 transition-colors flex-shrink-0">
                           <User className="w-4 h-4 text-health-purple" />
                         </div>
-                        <div className="text-sm leading-relaxed text-gray-600 group-hover:text-gray-900 transition-colors text-left break-words">
-                          {example}
-                        </div>
+                         <div className="text-sm leading-relaxed text-gray-600 group-hover:text-gray-900 transition-colors text-left break-words">
+                           {example.short}
+                         </div>
                       </div>
                     </Button>
                   ))}
