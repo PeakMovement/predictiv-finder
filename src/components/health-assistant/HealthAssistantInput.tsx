@@ -65,19 +65,17 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
 
   const extractLocation = (prompt: string): string | undefined => {
     const locationPatterns = [
-      /(?:in|at|near|around|from|location)\s+([A-Za-z\s]+)(?:\s|$|[,.])/i,
-      /(?:area|city|town|prefer)\s+([A-Za-z\s]+)/i,
-      /([A-Za-z\s]+?)\s+(?:area|location|city)/i
+      /(?:in|at|near|around|from|location|prefer|area)\s+([A-Za-z\s]+?)(?:\s|$|[,.])/i,
+      /([A-Za-z\s]+?)\s+(?:area|location|city)/i,
+      /(johannesburg|cape town|durban|pretoria|bloemfontein|port elizabeth|sandton|centurion|joburg|jozi)/i
     ];
-    
-    const knownCities = ['johannesburg', 'cape town', 'durban', 'pretoria', 'bloemfontein', 'port elizabeth', 'sandton', 'centurion', 'joburg', 'jozi'];
     
     for (const pattern of locationPatterns) {
       const match = prompt.match(pattern);
       if (match) {
-        const location = match[1].trim().toLowerCase();
-        if (knownCities.some(city => location.includes(city) || city.includes(location))) {
-          return match[1].trim();
+        const location = match[1] || match[0];
+        if (location && location.trim().length > 0) {
+          return location.trim();
         }
       }
     }
@@ -99,36 +97,27 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
     return concerns.length > 0 ? concerns : ['General health consultation'];
   };
 
-  // Debounced search for auto-recommendations
-  const debouncedSearch = useCallback(
+  // Analysis only (no auto-recommendations)
+  const debouncedAnalysis = useCallback(
     debounce(async (searchPrompt: string) => {
-      if (searchPrompt.trim().length >= 15) { // Only search if prompt is substantial
-        setIsAutoSearching(true);
+      if (searchPrompt.trim().length >= 10) {
         try {
-          const recommendations = await findRecommendedPhysicians({ prompt: searchPrompt });
-          setAutoRecommendations(recommendations.slice(0, 3)); // Show top 3
-          
-          // Generate analysis for display
+          // Generate analysis for display (no physician search)
           const analysis = {
             primaryConcerns: extractHealthConcerns(searchPrompt),
             budget: extractBudget(searchPrompt),
             location: extractLocation(searchPrompt),
-            recommendedSpecialties: recommendations.map(r => r.Title).filter((v, i, a) => a.indexOf(v) === i),
             hasEnoughInfo: searchPrompt.trim().length > 30 && (extractBudget(searchPrompt) !== undefined || extractLocation(searchPrompt) !== undefined)
           };
           setAnalysisResult(analysis);
         } catch (error) {
-          console.error('Auto-search error:', error);
-          setAutoRecommendations([]);
+          console.error('Analysis error:', error);
           setAnalysisResult(null);
-        } finally {
-          setIsAutoSearching(false);
         }
       } else {
-        setAutoRecommendations([]);
         setAnalysisResult(null);
       }
-    }, 1000), // 1 second delay
+    }, 500), // 0.5 second delay for analysis only
     []
   );
 
@@ -145,8 +134,8 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
   }
 
   useEffect(() => {
-    debouncedSearch(query.prompt);
-  }, [query.prompt, debouncedSearch]);
+    debouncedAnalysis(query.prompt);
+  }, [query.prompt, debouncedAnalysis]);
 
   const handleSubmit = () => {
     if (!query.prompt.trim()) {
@@ -182,9 +171,9 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
   };
 
   return (
-    <div className="min-h-screen w-full animate-fade-in">
-      <div className="w-full h-full px-4 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+    <div className="min-h-screen w-screen overflow-x-hidden animate-fade-in">
+      <div className="w-full px-4 py-6">
+        <div className="w-full max-w-6xl mx-auto">
         {/* Left side - Input Form */}
         <Card className="shadow-lg border-0 bg-card/95 backdrop-blur-sm">
           <CardHeader className="text-center pb-8">
@@ -254,12 +243,6 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                           <div className="flex items-start gap-2">
                             <span className="font-medium text-muted-foreground">Location:</span>
                             <span>{analysisResult.location}</span>
-                          </div>
-                        )}
-                        {analysisResult.recommendedSpecialties.length > 0 && (
-                          <div className="flex items-start gap-2">
-                            <span className="font-medium text-muted-foreground">Recommended doctors:</span>
-                            <span>{analysisResult.recommendedSpecialties.slice(0, 3).join(', ')}</span>
                           </div>
                         )}
                         <div className="flex items-center gap-2 pt-2 border-t">
@@ -335,46 +318,6 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
           </CardContent>
         </Card>
 
-        {/* Right side - Auto Recommendations */}
-        {(autoRecommendations.length > 0 || isAutoSearching) && (
-          <Card className="shadow-lg border-0 bg-card/95 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <Stethoscope className="w-5 h-5 text-health-purple" />
-                Live Recommendations
-              </CardTitle>
-              <CardDescription className="text-gray-600">
-                Based on your current description
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isAutoSearching ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin w-8 h-8 border-4 border-health-purple/20 border-t-health-purple rounded-full"></div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {autoRecommendations.map((physician, index) => (
-                    <div 
-                      key={`auto-${physician.Name}-${index}`}
-                      className="transform scale-95"
-                    >
-                      <PhysicianCard 
-                        physician={physician}
-                        onSelect={handleAutoRecommendationSelect}
-                      />
-                    </div>
-                  ))}
-                  {autoRecommendations.length > 0 && (
-                    <p className="text-xs text-gray-500 text-center pt-4 border-t">
-                      Live preview • Click "Find My Physician" for complete results
-                    </p>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
       </div>
       </div>
     </div>
