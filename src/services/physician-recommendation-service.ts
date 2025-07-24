@@ -46,7 +46,7 @@ const extractLocation = (prompt: string): string | undefined => {
   const locationPatterns = [
     /in\s+([a-zA-Z\s]+?)(?:\s|$|\.)/i,
     /location.*?([a-zA-Z\s]+?)(?:\s|$|\.)/i,
-    /(johannesburg|cape town|durban|pretoria)/i
+    /(Johannesburg|Cape town|Durban|Pretoria|Port Elizabeth)/i
   ];
   
   for (const pattern of locationPatterns) {
