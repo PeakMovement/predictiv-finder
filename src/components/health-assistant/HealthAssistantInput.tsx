@@ -134,14 +134,14 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                   <Button
                     key={index}
                     variant="outline"
-                    className="w-full text-left h-auto p-4 justify-start border-2 border-border hover:border-health-purple/50 hover:bg-health-purple/5 transition-all duration-300 hover:scale-105 hover:shadow-md group bg-background"
+                    className="w-full text-left h-auto p-4 justify-start border-2 border-border hover:border-health-purple/50 hover:bg-health-purple/5 transition-all duration-300 hover:scale-105 hover:shadow-md group bg-background whitespace-normal"
                     onClick={() => handleExampleClick(example)}
                   >
                     <div className="flex items-start gap-3 w-full">
                       <div className="p-2 rounded-full bg-health-purple/10 group-hover:bg-health-purple/20 transition-colors flex-shrink-0">
                         <User className="w-4 h-4 text-health-purple" />
                       </div>
-                      <div className="text-sm leading-relaxed text-gray-600 group-hover:text-gray-900 transition-colors text-left">
+                      <div className="text-sm leading-relaxed text-gray-600 group-hover:text-gray-900 transition-colors text-left break-words">
                         {example}
                       </div>
                     </div>
