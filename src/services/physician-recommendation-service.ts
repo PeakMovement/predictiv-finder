@@ -87,48 +87,97 @@ const analyzeHealthIssue = (issue: string): string[] => {
   const issueLower = issue.toLowerCase();
   const specialties: string[] = [];
   
-  // Specialty mapping based on common health issues
+  // Comprehensive specialty mapping based on common health issues
   const specialtyMappings = {
     'Physiotherapist': [
       'rehabilitation', 'mobility', 'injury recovery', 'post-surgery', 'exercise therapy',
       'movement', 'physical therapy', 'pain management', 'stiffness', 'range of motion',
-      'swelling', 'muscle strength', 'back pain', 'knee pain', 'shoulder', 'hip'
+      'swelling', 'muscle strength', 'back pain', 'knee pain', 'shoulder', 'hip', 'neck',
+      'spine', 'joint pain', 'muscle pain', 'injury', 'hurt', 'ache', 'sore', 'tight',
+      'lower back', 'upper back', 'leg pain', 'arm pain', 'ankle', 'wrist', 'elbow',
+      'mobility issues', 'walking problems', 'movement difficulty', 'strain', 'sprain',
+      'arthritis', 'joint stiffness', 'muscle weakness', 'balance problems'
     ],
     'BioKineticist': [
       'exercise', 'biomechanics', 'movement analysis', 'chronic disease', 'injury prevention',
       'rehab', 'physical assessment', 'wellness', 'orthopedic condition', 'cardiac rehab',
-      'musculoskeletal', 'posture', 'fitness', 'training'
+      'musculoskeletal', 'posture', 'fitness', 'training', 'exercise prescription',
+      'movement dysfunction', 'corrective exercise', 'functional movement', 'strength training',
+      'conditioning', 'performance optimization', 'chronic pain management'
     ],
     'Massage Therapist': [
       'massage', 'relaxation', 'stress relief', 'muscle tension', 'deep tissue', 'trigger point',
-      'soft tissue', 'therapeutic touch', 'circulation', 'pain relief', 'wellbeing', 'bodywork'
+      'soft tissue', 'therapeutic touch', 'circulation', 'pain relief', 'wellbeing', 'bodywork',
+      'muscle knots', 'tight muscles', 'stress', 'relaxation therapy', 'therapeutic massage',
+      'muscle release', 'tension relief', 'sports massage'
     ],
     'Podiatrist': [
       'foot', 'ankle', 'heel pain', 'bunions', 'plantar fasciitis', 'toenail', 'orthotics',
-      'gait', 'flat feet', 'diabetic foot', 'corns', 'blisters'
+      'gait', 'flat feet', 'diabetic foot', 'corns', 'blisters', 'foot pain', 'toe',
+      'arch pain', 'heel', 'sole', 'walking pain', 'foot problems', 'ingrown toenail',
+      'calluses', 'foot injury', 'ankle pain', 'foot swelling'
     ],
     'Sports Therapist': [
       'sports injury', 'sprain', 'strain', 'rehabilitation', 'athlete recovery',
       'exercise prescription', 'injury prevention', 'fitness', 'conditioning', 'training',
-      'performance', 'taping', 'sports', 'athlete'
+      'performance', 'taping', 'sports', 'athlete', 'running injury', 'gym injury',
+      'exercise injury', 'sports performance', 'athletic performance', 'competition prep',
+      'return to sport', 'sports medicine'
     ],
     'Dermatologist': [
       'skin', 'acne', 'rash', 'eczema', 'psoriasis', 'dermatitis', 'moles', 'warts',
       'skin cancer', 'pigmentation', 'wrinkles', 'hair loss', 'nail problems',
-      'skin condition', 'facial', 'skincare', 'blemishes', 'spots', 'blackheads'
+      'skin condition', 'facial', 'skincare', 'blemishes', 'spots', 'blackheads',
+      'dry skin', 'oily skin', 'itchy skin', 'skin irritation', 'pimples', 'breakouts',
+      'skin allergy', 'hives', 'skin lesions', 'birthmarks', 'age spots', 'skin tags',
+      'fungal infection', 'skin inflammation', 'sensitive skin', 'face'
     ],
     'Dietician': [
       'nutrition', 'diet', 'meal plan', 'weight loss', 'cholesterol', 'blood sugar',
       'balanced diet', 'eating habits', 'nutritional deficiency', 'diabetes', 'BMI',
-      'healthy eating', 'food', 'weight'
+      'healthy eating', 'food', 'weight', 'obesity', 'underweight', 'meal planning',
+      'nutritional advice', 'food allergies', 'eating disorder', 'weight management',
+      'dietary advice', 'nutrition counseling', 'food intolerance', 'metabolic health',
+      'weight gain', 'lose weight', 'gain weight', 'eating plan', 'food plan'
     ],
     'Chiropractor': [
       'spine', 'back pain', 'alignment', 'neck pain', 'adjustment', 'posture', 'subluxation',
-      'joint', 'manual therapy', 'vertebrae', 'musculoskeletal', 'headache', 'spinal'
+      'joint', 'manual therapy', 'vertebrae', 'musculoskeletal', 'headache', 'spinal',
+      'chiropractic', 'spinal adjustment', 'back alignment', 'posture problems',
+      'spinal manipulation', 'joint manipulation', 'vertebral', 'disc problems'
+    ],
+    'Psychologist': [
+      'anxiety', 'depression', 'stress', 'mental health', 'therapy', 'counseling',
+      'panic attacks', 'mood', 'emotional', 'psychological', 'behavioral', 'trauma',
+      'PTSD', 'grief', 'relationship issues', 'self-esteem', 'confidence', 'fear',
+      'phobia', 'addiction', 'substance abuse', 'eating disorder', 'sleep disorders',
+      'insomnia', 'mental wellness', 'emotional support', 'coping', 'mindfulness'
+    ],
+    'Cardiologist': [
+      'heart', 'chest pain', 'heart attack', 'cardiac', 'cardiovascular', 'blood pressure',
+      'hypertension', 'heart disease', 'arrhythmia', 'palpitations', 'heart rate',
+      'coronary', 'angina', 'heart failure', 'heart murmur', 'circulation problems',
+      'heart rhythm', 'cardiac rehabilitation'
+    ],
+    'Gynecologist': [
+      'women health', 'gynecological', 'menstrual', 'period', 'pregnancy', 'contraception',
+      'pap smear', 'reproductive health', 'fertility', 'ovarian', 'uterine', 'cervical',
+      'menopause', 'hormonal', 'pelvic pain', 'vaginal', 'breast', 'PCOS'
+    ],
+    'Urologist': [
+      'urinary', 'kidney', 'bladder', 'prostate', 'urination', 'urine', 'UTI',
+      'kidney stones', 'incontinence', 'erectile dysfunction', 'male health',
+      'urological', 'kidney problems', 'bladder problems'
     ],
     'General Physician': [
       'fever', 'cold', 'cough', 'infection', 'check-up', 'blood pressure', 'general health',
-      'diabetes', 'headache', 'digestive issues', 'fatigue', 'body pain', 'general'
+      'diabetes', 'headache', 'digestive issues', 'fatigue', 'body pain', 'general',
+      'flu', 'sore throat', 'runny nose', 'congestion', 'nausea', 'vomiting',
+      'diarrhea', 'constipation', 'stomach pain', 'abdominal pain', 'bloating',
+      'indigestion', 'acid reflux', 'heartburn', 'medical check', 'health screening',
+      'routine check', 'annual exam', 'physical exam', 'medical consultation',
+      'health concerns', 'feeling unwell', 'sick', 'illness', 'symptoms',
+      'medical advice', 'health check', 'general consultation'
     ]
   };
   
