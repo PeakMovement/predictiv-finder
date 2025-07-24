@@ -23,9 +23,7 @@ export const testCases = [
     name: 'Basic specialty matching - Dermatologist',
     description: 'Should find dermatologists for skin issues',
     query: {
-      issue: "I have acne and skin rash on my face",
-      budget: 1000,
-      location: "Johannesburg"
+      prompt: "I have acne and skin rash on my face, budget R1000 in Johannesburg"
     },
     expectedConditions: [
       'results.length > 0',
@@ -38,9 +36,7 @@ export const testCases = [
     name: 'Budget filtering - within budget',
     description: 'Should return physicians within budget',
     query: {
-      issue: "heart palpitations and chest pain",
-      budget: 1200,
-      location: "Cape Town"
+      prompt: "heart palpitations and chest pain, budget R1200 in Cape Town"
     },
     expectedConditions: [
       'results.every(r => r.Price <= 1200)',
@@ -53,9 +49,7 @@ export const testCases = [
     name: 'Budget filtering - below minimum price',
     description: 'Should return cheapest physicians when budget below minimum',
     query: {
-      issue: "general health checkup",
-      budget: 400,
-      location: "Johannesburg"
+      prompt: "general health checkup, budget R400 in Johannesburg"
     },
     expectedConditions: [
       'results.length <= 3',
@@ -67,9 +61,7 @@ export const testCases = [
     name: 'Experience sorting',
     description: 'Should sort by experience (highest first)',
     query: {
-      issue: "heart problems need experienced cardiologist",
-      budget: 2000,
-      location: "Cape Town"
+      prompt: "heart problems need experienced cardiologist, budget R2000 in Cape Town"
     },
     expectedConditions: [
       'results.length > 1',
@@ -82,9 +74,7 @@ export const testCases = [
     name: 'Location filtering - exact match',
     description: 'Should filter by exact location match',
     query: {
-      issue: "need orthopedic surgeon for knee pain",
-      budget: 1500,
-      location: "Durban"
+      prompt: "need orthopedic surgeon for knee pain, budget R1500 in Durban"
     },
     expectedConditions: [
       'results.every(r => r.Location === "Durban")',
@@ -96,9 +86,7 @@ export const testCases = [
     name: 'Location filtering - non-existent location',
     description: 'Should skip location filter for non-existent location',
     query: {
-      issue: "anxiety and depression issues",
-      budget: 1000,
-      location: "NonExistentCity"
+      prompt: "anxiety and depression issues, budget R1000 in NonExistentCity"
     },
     expectedConditions: [
       'results.length > 0',
@@ -110,9 +98,7 @@ export const testCases = [
     name: 'Multiple specialty detection',
     description: 'Should handle multiple specialty keywords',
     query: {
-      issue: "back pain and joint issues, sports injury",
-      budget: 1400,
-      location: "Johannesburg"
+      prompt: "back pain and joint issues, sports injury, budget R1400 in Johannesburg"
     },
     expectedConditions: [
       'results.every(r => r.Title === "Orthopedic Surgeon")',
@@ -124,9 +110,7 @@ export const testCases = [
     name: 'Default to General Physician',
     description: 'Should default to General Physician for unknown issues',
     query: {
-      issue: "general health concerns and wellness check",
-      budget: 600,
-      location: "Pretoria"
+      prompt: "general health concerns and wellness check, budget R600 in Pretoria"
     },
     expectedConditions: [
       'results.every(r => r.Title === "General Physician")',
@@ -138,9 +122,7 @@ export const testCases = [
     name: 'Neurologist for brain-related issues',
     description: 'Should find neurologists for brain/nerve issues',
     query: {
-      issue: "severe headaches and memory problems",
-      budget: 1300,
-      location: "Cape Town"
+      prompt: "severe headaches and memory problems, budget R1300 in Cape Town"
     },
     expectedConditions: [
       'results.every(r => r.Title === "Neurologist")',
@@ -152,9 +134,7 @@ export const testCases = [
     name: 'Price sorting within budget',
     description: 'Should sort by price (high to low) within budget',
     query: {
-      issue: "skin problems and acne treatment",
-      budget: 1000,
-      location: "Johannesburg"
+      prompt: "skin problems and acne treatment, budget R1000 in Johannesburg"
     },
     expectedConditions: [
       'results sorted by price (high to low)',
@@ -166,9 +146,7 @@ export const testCases = [
     name: 'Maximum 3 results',
     description: 'Should return maximum 3 physicians',
     query: {
-      issue: "general physician consultation",
-      budget: 2000,
-      location: undefined
+      prompt: "general physician consultation, budget R2000"
     },
     expectedConditions: [
       'results.length <= 3',
@@ -180,8 +158,7 @@ export const testCases = [
     name: 'No budget specified',
     description: 'Should work without budget constraint',
     query: {
-      issue: "heart palpitations need cardiologist",
-      location: "Johannesburg"
+      prompt: "heart palpitations need cardiologist in Johannesburg"
     },
     expectedConditions: [
       'results.length > 0',
@@ -194,8 +171,7 @@ export const testCases = [
     name: 'No location specified',
     description: 'Should work without location constraint',
     query: {
-      issue: "mental health support for anxiety",
-      budget: 900
+      prompt: "mental health support for anxiety, budget R900"
     },
     expectedConditions: [
       'results.length > 0',
@@ -208,9 +184,7 @@ export const testCases = [
     name: 'Case insensitive location matching',
     description: 'Should handle case insensitive location matching',
     query: {
-      issue: "bone fracture need orthopedic surgeon",
-      budget: 1400,
-      location: "CAPE TOWN"
+      prompt: "bone fracture need orthopedic surgeon, budget R1400 in CAPE TOWN"
     },
     expectedConditions: [
       'results.every(r => r.Location.toLowerCase().includes("cape town"))',
@@ -222,9 +196,7 @@ export const testCases = [
     name: 'Complex query with all parameters',
     description: 'Should handle complex query with all filtering criteria',
     query: {
-      issue: "chronic back pain from sports injury, need experienced orthopedic surgeon",
-      budget: 1350,
-      location: "Johannesburg"
+      prompt: "chronic back pain from sports injury, need experienced orthopedic surgeon, budget R1350 in Johannesburg"
     },
     expectedConditions: [
       'results.every(r => r.Title === "Orthopedic Surgeon")',
@@ -279,11 +251,9 @@ export const manualTestCases = [
     name: 'Physician card display',
     description: 'Test physician card display with all information',
     steps: [
-      '1. Enter "skin problems and acne" as health issue',
-      '2. Set budget to R900',
-      '3. Set location to "Johannesburg"',
-      '4. Click "Find My Physician"',
-      '5. Verify physician cards show: Name, Title, Experience, Location, Monthly Fee, Affordability badge'
+      '1. Enter "skin problems and acne, budget R900 in Johannesburg"',
+      '2. Click "Find My Physician"',
+      '3. Verify physician cards show: Name, Title, Experience, Location, Monthly Fee, Affordability badge'
     ],
     expected: 'All physician cards display complete information with proper formatting'
   },
@@ -292,10 +262,9 @@ export const manualTestCases = [
     name: 'Budget affordability indicators',
     description: 'Test budget affordability indicators',
     steps: [
-      '1. Enter "heart palpitations" as health issue',
-      '2. Set very low budget (R500)',
-      '3. Click "Find My Physician"',
-      '4. Check affordability badges on returned physicians'
+      '1. Enter "heart palpitations, budget R500"',
+      '2. Click "Find My Physician"',
+      '3. Check affordability badges on returned physicians'
     ],
     expected: 'Physicians above budget show "Above budget" badge in orange, within budget show "Within budget" in green'
   },
@@ -316,10 +285,8 @@ export const manualTestCases = [
     name: 'Error handling - no results',
     description: 'Test error handling when no physicians match criteria',
     steps: [
-      '1. Enter very specific health issue with rare specialty',
-      '2. Set extremely low budget (R100)',
-      '3. Set non-existent location',
-      '4. Click "Find My Physician"'
+      '1. Enter very specific rare condition with extremely low budget',
+      '2. Click "Find My Physician"'
     ],
     expected: 'Application shows appropriate error message and suggests adjusting criteria'
   },
@@ -328,9 +295,9 @@ export const manualTestCases = [
     name: 'Form validation',
     description: 'Test form validation for required fields',
     steps: [
-      '1. Leave health issue field empty',
+      '1. Leave prompt field empty',
       '2. Click "Find My Physician"',
-      '3. Enter very short health issue (< 10 characters)',
+      '3. Enter very short prompt (< 10 characters)',
       '4. Click "Find My Physician"'
     ],
     expected: 'Appropriate validation messages are displayed for empty and too-short inputs'
@@ -355,7 +322,7 @@ export const executeTestCases = async () => {
       
       // Log results for manual verification
       console.log(`Results for ${testCase.id}:`, {
-        queryIssue: query.issue,
+        queryPrompt: query.prompt,
         resultCount: physicians.length,
         specialties: [...new Set(physicians.map(p => p.Title))],
         locations: [...new Set(physicians.map(p => p.Location))],

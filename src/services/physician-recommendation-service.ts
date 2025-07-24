@@ -14,10 +14,50 @@ export interface PhysicianRecommendation extends Physician {
 }
 
 export interface HealthQuery {
-  issue: string;
-  budget?: number;
-  location?: string;
+  prompt: string;
 }
+
+/**
+ * Extracts budget from prompt text (looks for R amount or amount patterns)
+ */
+const extractBudget = (prompt: string): number | undefined => {
+  const budgetPatterns = [
+    /R\s*(\d+)/i,           // R1000
+    /budget.*?(\d+)/i,      // budget is 1000
+    /(\d+).*?budget/i,      // 1000 budget
+    /(\d+).*?month/i,       // 1000 per month
+    /(\d+).*?rand/i         // 1000 rands
+  ];
+  
+  for (const pattern of budgetPatterns) {
+    const match = prompt.match(pattern);
+    if (match) {
+      return parseInt(match[1]);
+    }
+  }
+  
+  return undefined;
+};
+
+/**
+ * Extracts location from prompt text
+ */
+const extractLocation = (prompt: string): string | undefined => {
+  const locationPatterns = [
+    /in\s+([a-zA-Z\s]+?)(?:\s|$|\.)/i,
+    /location.*?([a-zA-Z\s]+?)(?:\s|$|\.)/i,
+    /(johannesburg|cape town|durban|pretoria)/i
+  ];
+  
+  for (const pattern of locationPatterns) {
+    const match = prompt.match(pattern);
+    if (match) {
+      return match[1].trim();
+    }
+  }
+  
+  return undefined;
+};
 
 /**
  * Analyzes health issue text to extract medical specialties
@@ -103,8 +143,12 @@ export const findRecommendedPhysicians = async (query: HealthQuery): Promise<Phy
     return [];
   }
   
+  // Extract information from the prompt
+  const budget = extractBudget(query.prompt);
+  const location = extractLocation(query.prompt);
+  
   // Step 1: Specialty/Title filtering
-  const detectedSpecialties = analyzeHealthIssue(query.issue);
+  const detectedSpecialties = analyzeHealthIssue(query.prompt);
   console.log('Detected specialties:', detectedSpecialties);
   
   let filteredPhysicians: Physician[] = [];
@@ -125,10 +169,10 @@ export const findRecommendedPhysicians = async (query: HealthQuery): Promise<Phy
   console.log('After specialty filter:', filteredPhysicians.length);
   
   // Step 2: Price filtering
-  if (query.budget) {
+  if (budget) {
     const minPrice = Math.min(...filteredPhysicians.map(p => p.Price));
     
-    if (query.budget < minPrice) {
+    if (budget < minPrice) {
       // Return three cheapest doctors (sorted by price ascending, then take last 3)
       filteredPhysicians = filteredPhysicians
         .sort((a, b) => a.Price - b.Price)
@@ -136,7 +180,7 @@ export const findRecommendedPhysicians = async (query: HealthQuery): Promise<Phy
     } else {
       // Keep only within budget, sort by price high to low
       filteredPhysicians = filteredPhysicians
-        .filter(p => p.Price <= query.budget)
+        .filter(p => p.Price <= budget)
         .sort((a, b) => b.Price - a.Price);
     }
   }
@@ -147,9 +191,9 @@ export const findRecommendedPhysicians = async (query: HealthQuery): Promise<Phy
   filteredPhysicians.sort((a, b) => b.Experience - a.Experience);
   
   // Step 4: Location filtering
-  if (query.location) {
+  if (location) {
     const locationMatches = filteredPhysicians.filter(p => 
-      p.Location.toLowerCase().includes(query.location!.toLowerCase())
+      p.Location.toLowerCase().includes(location.toLowerCase())
     );
     
     if (locationMatches.length > 0) {
@@ -166,7 +210,7 @@ export const findRecommendedPhysicians = async (query: HealthQuery): Promise<Phy
   // Add affordability information
   return finalSelection.map(physician => ({
     ...physician,
-    affordability: (query.budget && physician.Price <= query.budget) ? 'Within budget' : 'Above budget',
+    affordability: (budget && physician.Price <= budget) ? 'Within budget' : 'Above budget',
     matchReason: `Matched for ${physician.Title} with ${physician.Experience} years experience`
   }));
 };

@@ -14,26 +14,10 @@ interface HealthAssistantInputProps {
 }
 
 const exampleQueries = [
-  {
-    issue: "I've been experiencing lower back pain for 3 weeks, especially when sitting",
-    budget: 1000,
-    location: "Johannesburg"
-  },
-  {
-    issue: "Having skin issues - acne and rash on my face",
-    budget: 800,
-    location: "Cape Town"
-  },
-  {
-    issue: "Chest pain and heart palpitations, need specialist consultation",
-    budget: 1200,
-    location: "Durban"
-  },
-  {
-    issue: "Frequent headaches and memory issues",
-    budget: 1500,
-    location: "Pretoria"
-  }
+  "I've been experiencing lower back pain for 3 weeks, especially when sitting. My budget is R1000 per month and I'd prefer a doctor in Johannesburg.",
+  "Having skin issues - acne and rash on my face. Budget is R800 and location Cape Town.",
+  "Chest pain and heart palpitations, need specialist consultation. My budget is R1200 per month in Durban.",
+  "Frequent headaches and memory issues. Budget R1500, prefer Pretoria location."
 ];
 
 export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
@@ -41,23 +25,21 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
   isLoading = false
 }) => {
   const [query, setQuery] = useState<HealthQuery>({
-    issue: '',
-    budget: undefined,
-    location: ''
+    prompt: ''
   });
   const { toast } = useToast();
 
   const handleSubmit = () => {
-    if (!query.issue.trim()) {
+    if (!query.prompt.trim()) {
       toast({
-        title: "Health issue required",
-        description: "Please describe your health concern or issue",
+        title: "Health prompt required",
+        description: "Please describe your health concern, budget, and location",
         variant: "destructive",
       });
       return;
     }
 
-    if (query.issue.trim().length < 10) {
+    if (query.prompt.trim().length < 10) {
       toast({
         title: "Please provide more details",
         description: "Your description should be at least 10 characters long",
@@ -69,12 +51,8 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
     onSubmit(query);
   };
 
-  const handleExampleClick = (example: typeof exampleQueries[0]) => {
-    setQuery({
-      issue: example.issue,
-      budget: example.budget,
-      location: example.location
-    });
+  const handleExampleClick = (example: string) => {
+    setQuery({ prompt: example });
   };
 
   return (
@@ -92,51 +70,17 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
         
         <CardContent className="space-y-6">
           <div>
-            <Label htmlFor="health-issue" className="text-base font-medium">
-              What health issue are you experiencing? *
+            <Label htmlFor="health-prompt" className="text-base font-medium">
+              Describe your health concern, budget, and location *
             </Label>
             <Textarea
-              id="health-issue"
-              placeholder="Describe your symptoms, pain, or health concerns in detail..."
-              value={query.issue}
-              onChange={(e) => setQuery(prev => ({ ...prev, issue: e.target.value }))}
+              id="health-prompt"
+              placeholder="Example: I've been experiencing lower back pain for 3 weeks. My budget is R1000 per month and I'd prefer a doctor in Johannesburg."
+              value={query.prompt}
+              onChange={(e) => setQuery({ prompt: e.target.value })}
               className="mt-2 h-32"
               required
             />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="budget" className="text-base font-medium flex items-center gap-2">
-                <DollarSign className="w-4 h-4" />
-                Monthly Budget (Rands)
-              </Label>
-              <Input
-                id="budget"
-                type="number"
-                placeholder="e.g., 1000"
-                value={query.budget || ''}
-                onChange={(e) => setQuery(prev => ({ 
-                  ...prev, 
-                  budget: e.target.value ? parseInt(e.target.value) : undefined 
-                }))}
-                className="mt-2"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="location" className="text-base font-medium flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                Preferred Location
-              </Label>
-              <Input
-                id="location"
-                placeholder="e.g., Johannesburg, Cape Town"
-                value={query.location || ''}
-                onChange={(e) => setQuery(prev => ({ ...prev, location: e.target.value }))}
-                className="mt-2"
-              />
-            </div>
           </div>
 
           <div className="flex justify-center">
@@ -170,13 +114,8 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                   className="text-left h-auto p-4 justify-start"
                   onClick={() => handleExampleClick(example)}
                 >
-                  <div>
-                    <div className="font-medium text-sm mb-1">
-                      {example.issue}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Budget: R{example.budget} • Location: {example.location}
-                    </div>
+                  <div className="font-medium text-sm">
+                    {example}
                   </div>
                 </Button>
               ))}

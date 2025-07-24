@@ -114,25 +114,8 @@ const PhysicianRecommendationsView: React.FC<PhysicianRecommendationsViewProps> 
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-4">Recommended Physicians</h1>
         <div className="bg-muted p-4 rounded-lg">
-          <h3 className="font-semibold mb-2">Your Search Criteria:</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div>
-              <span className="text-muted-foreground">Health Issue:</span>
-              <p className="font-medium">{healthQuery.issue}</p>
-            </div>
-            {healthQuery.budget && (
-              <div>
-                <span className="text-muted-foreground">Budget:</span>
-                <p className="font-medium">R{healthQuery.budget}/month</p>
-              </div>
-            )}
-            {healthQuery.location && (
-              <div>
-                <span className="text-muted-foreground">Preferred Location:</span>
-                <p className="font-medium">{healthQuery.location}</p>
-              </div>
-            )}
-          </div>
+          <h3 className="font-semibold mb-2">Your Search Query:</h3>
+          <p className="text-sm text-muted-foreground">{healthQuery.prompt}</p>
         </div>
       </div>
       

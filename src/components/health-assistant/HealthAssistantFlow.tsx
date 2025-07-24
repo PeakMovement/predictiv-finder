@@ -19,7 +19,7 @@ export const HealthAssistantFlow: React.FC = () => {
     setCurrentQuery(query);
     
     // Save search to history
-    await saveSearchHistory(query.issue, query.budget, query.location);
+    await saveSearchHistory(query.prompt, undefined, undefined);
     
     setCurrentView('recommendations');
     setIsLoading(false);
