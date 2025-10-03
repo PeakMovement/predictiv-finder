@@ -1,10 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
-  User, 
   MapPin, 
   Clock, 
   DollarSign, 
@@ -20,57 +19,49 @@ interface PhysicianCardProps {
 }
 
 const CALENDLY_SCRIPT_SRC = 'https://assets.calendly.com/assets/external/widget.js';
+const CALENDLY_STYLE_SRC = 'https://assets.calendly.com/assets/external/widget.css';
 
 const PhysicianCard: React.FC<PhysicianCardProps> = ({ physician, onSelect }) => {
-  const isAffordable = physician.affordability === 'Within budget';
   const initials = physician.Name.split(' ').map(n => n[0]).join('');
 
-  // NEW: local state + ref for inline Calendly
-  const [showCalendly, setShowCalendly] = useState(false);
-  const calendlyRef = useRef<HTMLDivElement | null>(null);
+  const handleScheduleClick = () => {
+    onSelect?.(physician);
 
-  // NEW: load Calendly script once and (re)initialize when we show the widget
-  useEffect(() => {
-    if (!showCalendly) return;
+    if (!document.querySelector(`link[href="${CALENDLY_STYLE_SRC}"]`)) {
+      const link = document.createElement('link');
+      link.href = CALENDLY_STYLE_SRC;
+      link.rel = 'stylesheet';
+      document.head.appendChild(link);
+    }
 
-    const initialize = () => {
-      // If Calendly global is available, init (re)render the inline widget
-      (window as any).Calendly?.initInlineWidget?.({
-        url: physician.Calendarlink,                 // <- dynamic per physician
-        parentElement: calendlyRef.current!,
-        prefill: {},
-        utm: {}
-      });
-    };
-
-    const existing = document.querySelector<HTMLScriptElement>(`script[src="${CALENDLY_SCRIPT_SRC}"]`);
-    if (existing) {
-      // Script already present (loaded earlier)
+    const existingScript = document.querySelector(`script[src="${CALENDLY_SCRIPT_SRC}"]`);
+    if (existingScript) {
       if ((window as any).Calendly) {
-        initialize();
-      } else {
-        // If script tag exists but not loaded yet, attach onload
-        existing.addEventListener('load', initialize, { once: true });
+        (window as any).Calendly.initBadgeWidget({
+          url: physician.Calendarlink,
+          text: 'Schedule Appointment',
+          color: '#af52de',
+          textColor: '#ffffff',
+          branding: true
+        });
       }
     } else {
-      // Inject Calendly script
-      const s = document.createElement('script');
-      s.src = CALENDLY_SCRIPT_SRC;
-      s.async = true;
-      s.addEventListener('load', initialize, { once: true });
-      document.body.appendChild(s);
+      const script = document.createElement('script');
+      script.src = CALENDLY_SCRIPT_SRC;
+      script.async = true;
+      script.onload = () => {
+        (window as any).Calendly.initBadgeWidget({
+          url: physician.Calendarlink,
+          text: 'Schedule Appointment',
+          color: '#af52de',
+          textColor: '#ffffff',
+          branding: true
+        });
+      };
+      document.body.appendChild(script);
     }
-  }, [showCalendly, physician.Calendarlink]);
-
-  const handleScheduleClick = () => {
-    // keep existing parent behavior if any
-    onSelect?.(physician);
-    setShowCalendly(true);
-    // Optionally scroll the widget into view
-    setTimeout(() => calendlyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
 
-  
   return (
     <Card className="group hover:shadow-xl transition-all duration-300 hover:scale-105 border-2 hover:border-health-purple/30 bg-card/95 backdrop-blur-sm">
       <CardHeader className="pb-4">
@@ -80,24 +71,15 @@ const PhysicianCard: React.FC<PhysicianCardProps> = ({ physician, onSelect }) =>
               {initials}
             </AvatarFallback>
           </Avatar>
-          
           <div className="flex-1 space-y-2">
             <div className="flex items-start justify-between">
               <h3 className="font-bold text-lg text-gray-900 group-hover:text-health-purple transition-colors">
                 {physician.Name}
               </h3>
-              <Badge 
-                variant={isAffordable ? "default" : "secondary"}
-                className={`${
-                  isAffordable 
-                    ? 'bg-health-teal/10 text-health-teal border-health-teal/20 hover:bg-health-teal/20' 
-                    : 'bg-health-orange/10 text-health-orange border-health-orange/20 hover:bg-health-orange/20'
-                } transition-colors font-semibold`}
-              >
+              <Badge className="bg-health-teal/10 text-health-teal border-health-teal/20 hover:bg-health-teal/20 transition-colors font-semibold">
                 {physician.affordability}
               </Badge>
             </div>
-            
             <div className="flex items-center gap-2 text-health-purple font-semibold">
               <Stethoscope className="w-4 h-4" />
               <span className="text-sm">{physician.Title}</span>
@@ -114,13 +96,11 @@ const PhysicianCard: React.FC<PhysicianCardProps> = ({ physician, onSelect }) =>
               <span className="font-semibold text-gray-900">{physician.Experience}</span> years
             </span>
           </div>
-          
           <div className="flex items-center gap-2 text-gray-600">
             <MapPin className="w-4 h-4 text-health-purple" />
             <span className="text-sm font-medium text-gray-900">{physician.Location}</span>
           </div>
         </div>
-
         <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
           <div className="flex items-center gap-2">
             <DollarSign className="w-5 h-5 text-health-purple" />
@@ -128,30 +108,13 @@ const PhysicianCard: React.FC<PhysicianCardProps> = ({ physician, onSelect }) =>
           </div>
           <span className="text-xl font-bold text-health-purple">R{physician.Price}</span>
         </div>
-
         <div className="flex items-center gap-2 text-gray-600">
           <Star className="w-4 h-4 fill-health-orange text-health-orange" />
           <span className="text-sm">Highly rated specialist</span>
         </div>
-
         {physician.matchReason && (
           <div className="p-3 bg-health-purple/5 border border-health-purple/20 rounded-lg">
-            <p className="text-sm text-health-purple font-medium">
-              ✓ {physician.matchReason}
-            </p>
-          </div>
-        )}
-
-        {/* NEW: Inline Calendly mount point (shown after click) */}
-        {showCalendly && (
-          <div className="mt-4">
-            <div
-              ref={calendlyRef}
-              className="calendly-inline-widget"
-              data-url={physician.Calendarlink}  // fallback if Calendly scans attributes
-              style={{ minWidth: '320px', height: '700px' }}
-              aria-label={`Calendly scheduling for ${physician.Name}`}
-            />
+            <p className="text-sm text-health-purple font-medium">✓ {physician.matchReason}</p>
           </div>
         )}
       </CardContent>
