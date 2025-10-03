@@ -18,7 +18,12 @@ import { PhysicianRecommendation } from '@/services/physician-recommendation-ser
 declare global {
   interface Window {
     Calendly?: {
-      initPopupWidget: (opts: { url: string }) => void;
+      initPopupWidget: (opts: { 
+        url: string;
+        prefill?: {
+          customAnswers?: Record<string, string>;
+        };
+      }) => void;
     };
   }
 }
