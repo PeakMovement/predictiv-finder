@@ -58,7 +58,7 @@ const ensureCalendlyAssets = (): Promise<void> => {
   });
 };
 
-const PhysicianCard: React.FC<PhysicianCardProps> = ({ physician, onSelect }) => {
+const PhysicianCard: React.FC<PhysicianCardProps> = ({ physician, onSelect, healthQueryPrompt}) => {
   const isAffordable = physician.affordability === 'Within budget';
   const initials = physician.Name.split(' ').map(n => n[0]).join('');
 
