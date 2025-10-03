@@ -26,6 +26,7 @@ declare global {
 interface PhysicianCardProps {
   physician: PhysicianRecommendation & { Calendarlink?: string }; // ensure field exists
   onSelect: (physician: PhysicianRecommendation) => void;
+  healthQueryPrompt?: string;
 }
 
 // (B) Load Calendly assets once if they’re not present
@@ -67,13 +68,15 @@ const PhysicianCard: React.FC<PhysicianCardProps> = ({ physician, onSelect }) =>
     onSelect(physician);
 
     const url = physician.Calendarlink || 'https://calendly.com/madhur-yadav7/new-meeting'; // fallback
+    const notes = (healthQueryPrompt ?? '')
     await ensureCalendlyAssets();
-    if (window.Calendly) {
-      window.Calendly.initPopupWidget({ url });
-    } else {
-      console.error('Calendly failed to load.');
+    window.Calendly?.initPopupWidget({
+    url,
+    prefill: {
+      customAnswers: { a1: notes }
     }
-  }, [physician, onSelect]);
+  });
+}, [physician, onSelect, healthQueryPrompt]);
 
   return (
     <Card className="group hover:shadow-xl transition-all duration-300 hover:scale-105 border-2 hover:border-health-purple/30 bg-card/95 backdrop-blur-sm">
