@@ -67,7 +67,7 @@ const PhysicianCard: React.FC<PhysicianCardProps> = ({ physician, onSelect, heal
     // optional: keep your existing onSelect side-effect
     onSelect(physician);
 
-    const url = physician.Calendarlink || 'https://calendly.com/madhur-yadav7/new-meeting'; // fallback
+    const url = physician.Calendarlink 
     const notes = (healthQueryPrompt ?? '')
     await ensureCalendlyAssets();
     window.Calendly?.initPopupWidget({
