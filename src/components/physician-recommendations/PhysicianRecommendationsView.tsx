@@ -165,6 +165,7 @@ const PhysicianRecommendationsView: React.FC<PhysicianRecommendationsViewProps> 
             <PhysicianCard 
               physician={physician}
               onSelect={handleSelectPhysician}
+              healthQueryPrompt={healthQuery.prompt}
             />
           </div>
         ))}
