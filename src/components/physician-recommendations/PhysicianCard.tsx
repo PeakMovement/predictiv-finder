@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,9 +19,57 @@ interface PhysicianCardProps {
   onSelect: (physician: PhysicianRecommendation) => void;
 }
 
+const CALENDLY_SCRIPT_SRC = 'https://assets.calendly.com/assets/external/widget.js';
+
 const PhysicianCard: React.FC<PhysicianCardProps> = ({ physician, onSelect }) => {
   const isAffordable = physician.affordability === 'Within budget';
   const initials = physician.Name.split(' ').map(n => n[0]).join('');
+
+  // NEW: local state + ref for inline Calendly
+  const [showCalendly, setShowCalendly] = useState(false);
+  const calendlyRef = useRef<HTMLDivElement | null>(null);
+
+  // NEW: load Calendly script once and (re)initialize when we show the widget
+  useEffect(() => {
+    if (!showCalendly) return;
+
+    const initialize = () => {
+      // If Calendly global is available, init (re)render the inline widget
+      (window as any).Calendly?.initInlineWidget?.({
+        url: physician.Calendarlink,                 // <- dynamic per physician
+        parentElement: calendlyRef.current!,
+        prefill: {},
+        utm: {}
+      });
+    };
+
+    const existing = document.querySelector<HTMLScriptElement>(`script[src="${CALENDLY_SCRIPT_SRC}"]`);
+    if (existing) {
+      // Script already present (loaded earlier)
+      if ((window as any).Calendly) {
+        initialize();
+      } else {
+        // If script tag exists but not loaded yet, attach onload
+        existing.addEventListener('load', initialize, { once: true });
+      }
+    } else {
+      // Inject Calendly script
+      const s = document.createElement('script');
+      s.src = CALENDLY_SCRIPT_SRC;
+      s.async = true;
+      s.addEventListener('load', initialize, { once: true });
+      document.body.appendChild(s);
+    }
+  }, [showCalendly, physician.Calendarlink]);
+
+  const handleScheduleClick = () => {
+    // keep existing parent behavior if any
+    onSelect?.(physician);
+    setShowCalendly(true);
+    // Optionally scroll the widget into view
+    setTimeout(() => calendlyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  };
+
   
   return (
     <Card className="group hover:shadow-xl transition-all duration-300 hover:scale-105 border-2 hover:border-health-purple/30 bg-card/95 backdrop-blur-sm">
@@ -93,11 +141,24 @@ const PhysicianCard: React.FC<PhysicianCardProps> = ({ physician, onSelect }) =>
             </p>
           </div>
         )}
+
+        {/* NEW: Inline Calendly mount point (shown after click) */}
+        {showCalendly && (
+          <div className="mt-4">
+            <div
+              ref={calendlyRef}
+              className="calendly-inline-widget"
+              data-url={physician.Calendarlink}  // fallback if Calendly scans attributes
+              style={{ minWidth: '320px', height: '700px' }}
+              aria-label={`Calendly scheduling for ${physician.Name}`}
+            />
+          </div>
+        )}
       </CardContent>
 
       <CardFooter className="pt-4">
         <Button 
-          onClick={() => onSelect(physician)}
+          onClick={handleScheduleClick}
           className="w-full bg-health-purple hover:bg-health-purple-dark text-white hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg group-hover:shadow-xl"
           size="lg"
         >
