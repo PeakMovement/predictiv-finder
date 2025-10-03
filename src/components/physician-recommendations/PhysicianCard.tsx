@@ -102,7 +102,7 @@ const PhysicianCard: React.FC<PhysicianCardProps> = ({ physician, onSelect }) =>
           size="lg"
         >
           <Calendar className="w-4 h-4 mr-2" />
-          Select Physician
+          Schedule Appointment
         </Button>
       </CardFooter>
     </Card>
