@@ -24,7 +24,7 @@ function App() {
 
       // ✅ Navigate directly to the AI Health Assistant (Services) page
       if (event.data?.action === "goToAIHealthAssistant") {
-        navigate("/services"); // You can change this path if needed
+        navigate("/how-it-works"); // You can change this path if needed
       }
     };
 
