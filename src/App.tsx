@@ -19,12 +19,16 @@ function App() {
   // 🎯 Handle incoming messages from Predictiv
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      // ✅ Only accept messages from the main Predictiv app
-      if (!event.origin.includes("predictivfinalux.lovable.app")) return;
+      // ✅ Verify origin (Predictiv main app)
+      if (!event.origin.includes("predictivfinalux.lovable.app") && !event.origin.includes("localhost")) return;
 
-      // ✅ Navigate directly to the AI Health Assistant (Services) page
+      // ✅ Directly navigate to AI Health Assistant page
       if (event.data?.action === "goToAIHealthAssistant") {
-        navigate("/how-it-works"); // You can change this path if needed
+        // Jump straight to the assistant page instead of index/services
+        navigate("/services", { replace: true });
+
+        // Optional: scroll to top for cleaner view
+        setTimeout(() => window.scrollTo(0, 0), 200);
       }
     };
 
