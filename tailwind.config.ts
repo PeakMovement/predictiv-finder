@@ -25,8 +25,9 @@ export default {
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
+				// Primary uses CSS var for dynamic theme sync
 				primary: {
-					DEFAULT: 'hsl(var(--primary))',
+					DEFAULT: 'hsl(var(--primary, 262 83% 58%))',
 					foreground: 'hsl(var(--primary-foreground))'
 				},
 				secondary: {

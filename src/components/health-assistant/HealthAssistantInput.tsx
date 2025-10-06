@@ -201,17 +201,17 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
       <div className="w-full px-4 py-6">
         <div className="w-full max-w-6xl mx-auto">
         {/* Left side - Input Form */}
-        <Card className="shadow-lg border-0 bg-card/95 backdrop-blur-sm">
-          <CardHeader className="text-center pb-8">
+        <Card className="shadow-glass border border-glass-border bg-glass backdrop-blur-xl card-hover">
+          <CardHeader className="text-center pb-8 glow-purple-radial">
             <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="p-3 rounded-full bg-health-purple/10">
-                <Stethoscope className="w-8 h-8 text-health-purple" />
+              <div className="p-3 rounded-full bg-primary/10 border border-primary/20">
+                <Stethoscope className="w-8 h-8 text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
               </div>
-              <CardTitle className="text-3xl font-bold text-gray-900">
+              <CardTitle className="text-3xl font-bold text-foreground">
                 AI Health Assistant
               </CardTitle>
             </div>
-            <CardDescription className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <CardDescription className="text-lg text-subtext max-w-2xl mx-auto">
               Find the perfect physician for your health needs. Just describe your symptoms, budget, and location in one message.
             </CardDescription>
           </CardHeader>
@@ -221,8 +221,8 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
               {/* Left side - Main prompt input */}
               <div className="lg:col-span-2 space-y-6">
                 <div className="space-y-3">
-                  <Label htmlFor="health-prompt" className="text-lg font-semibold flex items-center gap-2 text-gray-900">
-                    <User className="w-5 h-5 text-health-purple" />
+                  <Label htmlFor="health-prompt" className="text-lg font-semibold flex items-center gap-2 text-foreground">
+                    <User className="w-5 h-5 text-primary" />
                     Describe your health concern *
                   </Label>
                   <Textarea
@@ -230,7 +230,7 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                     placeholder="Describe your health concern, budget, and preferred location..."
                     value={query.prompt}
                     onChange={(e) => setQuery({ prompt: e.target.value })}
-                    className="min-h-[160px] text-base leading-relaxed border-2 border-input focus:border-health-purple/50 transition-all duration-300 bg-background resize-none"
+                    className="min-h-[160px] text-base leading-relaxed border border-glass-border focus:border-primary/50 transition-all duration-300 bg-glass backdrop-blur-lg resize-none shadow-glass"
                     required
                   />
                    <p className="text-sm text-muted-foreground">
@@ -300,7 +300,7 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                     onClick={handleSubmit}
                     disabled={isLoading}
                     size="lg"
-                    className="px-8 py-6 text-lg font-semibold bg-health-purple hover:bg-health-purple-dark text-white hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
+                    className="px-8 py-6 text-lg font-semibold btn-primary-glow text-white hover:scale-105 transition-all duration-300"
                   >
                     {isLoading ? (
                       <>
@@ -319,8 +319,8 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
 
               {/* Right side - Examples */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-health-purple rounded-full animate-pulse"></span>
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  <span className="w-2 h-2 bg-primary rounded-full animate-pulse drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]"></span>
                   Try these examples
                 </h3>
                 <div className="space-y-3">
@@ -328,14 +328,14 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                     <Button
                       key={index}
                       variant="outline"
-                      className="w-full text-left h-auto p-4 justify-start border-2 border-border hover:border-health-purple/50 hover:bg-health-purple/5 transition-all duration-300 hover:scale-105 hover:shadow-md group bg-background whitespace-normal"
+                      className="w-full text-left h-auto p-4 justify-start border border-glass-border bg-glass backdrop-blur-lg hover:border-primary/50 hover:bg-glass-highlight transition-all duration-300 hover:scale-105 hover:shadow-glass group whitespace-normal"
                       onClick={() => handleExampleClick(example)}
                     >
                       <div className="flex items-start gap-3 w-full">
-                        <div className="p-2 rounded-full bg-health-purple/10 group-hover:bg-health-purple/20 transition-colors flex-shrink-0">
-                          <User className="w-4 h-4 text-health-purple" />
+                        <div className="p-2 rounded-full bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-colors flex-shrink-0">
+                          <User className="w-4 h-4 text-primary" />
                         </div>
-                         <div className="text-sm leading-relaxed text-gray-600 group-hover:text-gray-900 transition-colors text-left break-words">
+                         <div className="text-sm leading-relaxed text-subtext group-hover:text-foreground transition-colors text-left break-words">
                            {example.short}
                          </div>
                       </div>

@@ -33,6 +33,30 @@ export function ThemeProvider({
     root.classList.add(theme);
   }, [theme]);
 
+  // Listen for theme sync from parent app (Predictiv Final)
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const root = window.document.documentElement;
+      
+      // Sync theme from parent
+      if (event.data?.theme) {
+        const newTheme = event.data.theme as Theme;
+        root.classList.remove("light", "dark");
+        root.classList.add(newTheme);
+        setTheme(newTheme);
+        localStorage.setItem(storageKey, newTheme);
+      }
+      
+      // Sync primary color from color wheel
+      if (event.data?.primaryColor) {
+        document.documentElement.style.setProperty("--primary", event.data.primaryColor);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [storageKey]);
+
   const value = {
     theme,
     setTheme: (theme: Theme) => {

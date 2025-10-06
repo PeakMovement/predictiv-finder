@@ -9,7 +9,7 @@ import { OfflineIndicator } from "@/components/mobile/OfflineIndicator";
  */
 const AIHealthAssistant: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0A0A0A] to-[#151528]">
+    <div className="min-h-screen bg-health-gradient">
       <PWAInstallPrompt />
       <OfflineIndicator />
       

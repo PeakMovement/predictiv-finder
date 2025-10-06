@@ -29,25 +29,39 @@
   }
  
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
+    /* Dark gradient background colors */
+    --background: 240 10% 4%;
+    --foreground: 0 0% 100%;
+    
+    /* Text colors - refined palette */
+    --heading-color: 0 0% 100%;
+    --subtext-color: 270 30% 85%;
+    --body-color: 240 10% 73%;
+    
+    /* Component colors */
+    --muted: 240 5% 10%;
+    --muted-foreground: 270 30% 85%;
+    --popover: 240 10% 5%;
+    --popover-foreground: 0 0% 100%;
+    --card: 240 10% 5%;
+    --card-foreground: 0 0% 100%;
+    --border: 270 20% 20%;
+    --input: 240 10% 8%;
+    
+    /* Primary purple accent - can be overridden by parent app */
     --primary: 262 83% 58%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Secondary colors */
+    --secondary: 240 5% 12%;
+    --secondary-foreground: 0 0% 100%;
+    --accent: 270 70% 50%;
+    --accent-foreground: 0 0% 100%;
+    
+    /* Destructive */
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --ring: 240 4.9% 83.9%;
+    --ring: 262 83% 58%;
   }
 }
 
@@ -64,21 +78,78 @@
     @apply bg-gradient-to-r from-system-blue to-system-purple bg-clip-text text-transparent;
   }
   
+  /* Glassmorphism styles */
   .bg-glass {
     background-color: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
   
   .shadow-glass {
-    box-shadow: 0 0 25px rgba(139, 92, 246, 0.3);
+    box-shadow: 0 0 25px rgba(139, 92, 246, 0.3), 0 8px 32px rgba(0, 0, 0, 0.4);
   }
   
   .bg-glass-highlight {
     background-color: rgba(255, 255, 255, 0.08);
   }
   
+  /* Refined dark gradient with radial glow */
   .bg-health-gradient {
-    background: linear-gradient(135deg, #0a0a0a 0%, #1a1528 40%, #3c1450 100%);
+    background: radial-gradient(circle at 50% 10%, rgba(60, 20, 80, 0.3), transparent 70%),
+                linear-gradient(to bottom, #0A0A0A 0%, #0E0E11 100%);
+  }
+  
+  /* Purple radial glow for headers */
+  .glow-purple-radial {
+    position: relative;
+  }
+  
+  .glow-purple-radial::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(157, 78, 221, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: -1;
+  }
+  
+  /* Card hover effects */
+  .card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .card-hover:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(157, 78, 221, 0.4), 0 12px 40px rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Button gradient with glow */
+  .btn-primary-glow {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+    box-shadow: 0 4px 20px hsla(var(--primary), 0.4);
+    transition: all 0.3s ease;
+  }
+  
+  .btn-primary-glow:hover {
+    box-shadow: 0 6px 30px hsla(var(--primary), 0.6);
+    transform: translateY(-2px);
+  }
+  
+  /* Heading colors in dark mode */
+  .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+    color: hsl(var(--heading-color, var(--foreground)));
+  }
+  
+  .dark .text-subtext {
+    color: hsl(var(--subtext-color, var(--muted-foreground)));
+  }
+  
+  .dark .text-body {
+    color: hsl(var(--body-color, var(--foreground)));
   }
 }
