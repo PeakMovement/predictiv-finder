@@ -17,13 +17,13 @@ const HealthPlanCard: React.FC<HealthPlanCardProps> = ({
   onSelect
 }) => {
   return (
-    <Card className="h-full flex flex-col transition-all hover:shadow-lg">
-      <CardContent className="p-5 flex-grow">
-        <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
+    <Card className="h-full flex flex-col transition-all hover:predictiv-card-shadow">
+      <CardContent className="p-6 flex-grow">
+        <h3 className="text-xl font-bold mb-2 text-foreground">{plan.name}</h3>
         
         {plan.planType && (
           <div className="mb-4 flex gap-2 flex-wrap">
-            <Badge variant="secondary" className="bg-health-blue-light text-health-blue">
+            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
               {plan.planType}
             </Badge>
           </div>
@@ -31,26 +31,26 @@ const HealthPlanCard: React.FC<HealthPlanCardProps> = ({
         
         <div className="space-y-3">
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Description:</p>
-            <p className="line-clamp-2">{plan.description}</p>
+            <p className="text-sm text-muted-foreground">Description:</p>
+            <p className="line-clamp-2 text-foreground">{plan.description}</p>
           </div>
           
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Timeline:</p>
-            <p className="font-medium">{plan.timeFrame}</p>
+            <p className="text-sm text-muted-foreground">Timeline:</p>
+            <p className="font-medium text-foreground">{plan.timeFrame}</p>
           </div>
           
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Estimated Cost:</p>
-            <p className="font-medium">R{plan.totalCost}/month</p>
+            <p className="text-sm text-muted-foreground">Estimated Cost:</p>
+            <p className="font-medium text-foreground">R{plan.totalCost}/month</p>
           </div>
         </div>
       </CardContent>
       
-      <CardFooter className="border-t pt-4 pb-5 px-5">
+      <CardFooter className="border-t border-border pt-4 pb-5 px-6">
         <Button 
           onClick={onSelect} 
-          className="w-full bg-health-purple hover:bg-health-purple-dark"
+          className="w-full"
         >
           View Plan Details
         </Button>

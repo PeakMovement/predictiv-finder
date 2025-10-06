@@ -9,7 +9,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
  */
 const Index: React.FC = () => {
   return (
-    <div className="min-h-screen bg-health-blue-light dark:bg-gray-900">
+    <div className="min-h-screen">
       <ErrorBoundary>
         <AppContent />
       </ErrorBoundary>
