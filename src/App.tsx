@@ -12,6 +12,8 @@ import { EnhancedErrorBoundary } from "./components/enhanced-error-handling";
 import { PlanGenerationErrorFallbackAdapter } from "./components/enhanced-error-handling";
 import { ToastProvider } from "./components/ui/toast-provider";
 import { Toaster } from "./components/ui/toaster";
+import { ThemeProvider } from "./components/ThemeProvider";
+import { ThemeToggle } from "./components/ThemeToggle";
 
 function App() {
   const [errorKey, setErrorKey] = useState("initial");
@@ -40,22 +42,25 @@ function App() {
   const resetKeys = () => setErrorKey(`reset-${Date.now()}`);
 
   return (
-    <ToastProvider>
-      <div className="app min-h-screen bg-gray-50 dark:bg-gray-900">
-        <EnhancedErrorBoundary key={errorKey} resetKeys={[resetKeys]} fallback={PlanGenerationErrorFallbackAdapter}>
-          <Routes>
-            <Route path="/" element={<AIHealthAssistant />} /> {/* 👈 AI Health Assistant - Default Landing Page */}
-            <Route path="/explore" element={<Index />} /> {/* Old homepage moved here */}
-            <Route path="/how-it-works" element={<HowItWorks />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/professionals" element={<Professionals />} />
-            <Route path="/success-stories" element={<SuccessStories />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </EnhancedErrorBoundary>
-        <Toaster />
-      </div>
-    </ToastProvider>
+    <ThemeProvider defaultTheme="dark">
+      <ToastProvider>
+        <div className="app min-h-screen bg-background">
+          <ThemeToggle />
+          <EnhancedErrorBoundary key={errorKey} resetKeys={[resetKeys]} fallback={PlanGenerationErrorFallbackAdapter}>
+            <Routes>
+              <Route path="/" element={<AIHealthAssistant />} /> {/* 👈 AI Health Assistant - Default Landing Page */}
+              <Route path="/explore" element={<Index />} /> {/* Old homepage moved here */}
+              <Route path="/how-it-works" element={<HowItWorks />} />
+              <Route path="/services" element={<Services />} />
+              <Route path="/professionals" element={<Professionals />} />
+              <Route path="/success-stories" element={<SuccessStories />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </EnhancedErrorBoundary>
+          <Toaster />
+        </div>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }
 

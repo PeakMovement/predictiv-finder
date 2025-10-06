@@ -63,7 +63,13 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// New system colors
+				// Glass morphism colors
+				'glass-border': 'rgba(255, 255, 255, 0.1)',
+				'glass-highlight': 'rgba(255, 255, 255, 0.07)',
+				// Health app colors
+				'health-blue-light': '#E0F2FE',
+				'health-purple': '#9D4EDD',
+				// System colors
 				system: {
 					blue: '#007AFF',
 					green: '#34C759',
@@ -75,7 +81,7 @@ export default {
 					lightGray: '#F2F2F7',
 					darkGray: '#1C1C1E',
 				},
-				// Custom health app colors - updated with the new color scheme
+				// Custom health app colors
 				health: {
 					teal: {
 						light: '#7ADEEA',
@@ -98,6 +104,9 @@ export default {
 						dark: '#1C1C1E'
 					}
 				}
+			},
+			boxShadow: {
+				glass: '0 0 25px rgba(139, 92, 246, 0.2)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -136,13 +145,24 @@ export default {
 					'50%': {
 						transform: 'translateY(-10px)'
 					}
+				},
+				'fadeIn': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(5px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'pulse-soft': 'pulse-soft 3s ease-in-out infinite',
-				'float-soft': 'float-soft 6s ease-in-out infinite'
+				'float-soft': 'float-soft 6s ease-in-out infinite',
+				'fade-in': 'fadeIn 0.5s ease-out'
 			}
 		}
 	},

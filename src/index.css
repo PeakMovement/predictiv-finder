@@ -16,7 +16,7 @@
     --card-foreground: 240 10% 3.9%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --primary: 210 100% 50%;
+    --primary: 262 83% 58%;
     --primary-foreground: 0 0% 100%;
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
@@ -24,7 +24,7 @@
     --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --ring: 210 100% 50%;
+    --ring: 262 83% 58%;
     --radius: 0.5rem;
   }
  
@@ -39,7 +39,7 @@
     --card-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --primary: 210 100% 50%;
+    --primary: 262 83% 58%;
     --primary-foreground: 0 0% 98%;
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
@@ -62,5 +62,23 @@
   
   .text-gradient {
     @apply bg-gradient-to-r from-system-blue to-system-purple bg-clip-text text-transparent;
+  }
+  
+  .bg-glass {
+    background-color: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .shadow-glass {
+    box-shadow: 0 0 25px rgba(139, 92, 246, 0.3);
+  }
+  
+  .bg-glass-highlight {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+  
+  .bg-health-gradient {
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1528 40%, #3c1450 100%);
   }
 }
