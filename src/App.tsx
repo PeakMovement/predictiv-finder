@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 import { Routes, Route, useNavigate } from "react-router-dom";
+import AIHealthAssistant from "./pages/AIHealthAssistant";
 import Index from "./pages/Index";
 import HowItWorks from "./pages/HowItWorks";
 import Services from "./pages/Services";
@@ -24,8 +25,8 @@ function App() {
 
       // ✅ Directly navigate to AI Health Assistant page
       if (event.data?.action === "goToAIHealthAssistant") {
-        // Jump straight to the assistant page instead of index/services
-        navigate("/services", { replace: true });
+        // Jump straight to the assistant page (now at root)
+        navigate("/", { replace: true });
 
         // Optional: scroll to top for cleaner view
         setTimeout(() => window.scrollTo(0, 0), 200);
@@ -43,9 +44,10 @@ function App() {
       <div className="app min-h-screen bg-gray-50 dark:bg-gray-900">
         <EnhancedErrorBoundary key={errorKey} resetKeys={[resetKeys]} fallback={PlanGenerationErrorFallbackAdapter}>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<AIHealthAssistant />} /> {/* 👈 AI Health Assistant - Default Landing Page */}
+            <Route path="/explore" element={<Index />} /> {/* Old homepage moved here */}
             <Route path="/how-it-works" element={<HowItWorks />} />
-            <Route path="/services" element={<Services />} /> {/* 👈 AI Health Assistant Page */}
+            <Route path="/services" element={<Services />} />
             <Route path="/professionals" element={<Professionals />} />
             <Route path="/success-stories" element={<SuccessStories />} />
             <Route path="*" element={<NotFound />} />
