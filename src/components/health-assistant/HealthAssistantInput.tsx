@@ -216,10 +216,10 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
             </CardDescription>
           </CardHeader>
           
-          <CardContent className="p-6 md:p-10">
-            <div className="flex flex-col lg:flex-row items-start justify-center gap-6 lg:gap-10 w-full">
+          <CardContent className="px-5 py-6 md:p-8 lg:p-10">
+            <div className="flex flex-col lg:flex-row items-start justify-center gap-5 md:gap-6 lg:gap-12 w-full max-w-7xl mx-auto">
               {/* Left side - Main prompt input */}
-              <div className="w-full lg:flex-[3] space-y-4">
+              <div className="w-full lg:flex-[55] space-y-3">
                 <div>
                   <Label htmlFor="health-prompt" className="text-base md:text-lg font-semibold flex items-center gap-2 text-foreground mb-2">
                     <User className="w-5 h-5 text-primary" />
@@ -230,7 +230,7 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                     placeholder="Describe your health concern, budget, and preferred location..."
                     value={query.prompt}
                     onChange={(e) => setQuery({ prompt: e.target.value })}
-                    className="min-h-[140px] md:min-h-[160px] text-base leading-relaxed border border-glass-border focus:border-primary/50 transition-all duration-300 bg-glass backdrop-blur-lg resize-none shadow-glass mb-4"
+                    className="min-h-[140px] md:min-h-[160px] text-base leading-relaxed border border-glass-border focus:border-primary/50 transition-all duration-300 bg-glass backdrop-blur-lg resize-none shadow-glass mb-2"
                     required
                   />
                    <p className="text-xs md:text-sm text-muted-foreground">
@@ -246,7 +246,7 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
 
                 {/* Analysis Display */}
                 {analysisResult && (
-                  <Card className="bg-muted/50 border-dashed">
+                  <Card className="bg-muted/50 border-dashed my-3">
                     <CardContent className="p-3 md:pt-4">
                       <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-green-600" />
@@ -295,12 +295,12 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                   </Card>
                 )}
 
-                <div className="flex justify-center lg:justify-start mt-2">
+                <div className="flex justify-start mt-4">
                   <Button 
                     onClick={handleSubmit}
                     disabled={isLoading}
                     size="lg"
-                    className="w-full lg:w-auto px-8 py-5 md:py-6 text-base md:text-lg font-semibold btn-primary-glow text-white hover:scale-105 transition-all duration-300"
+                    className="w-full lg:w-auto px-8 py-4 md:py-5 text-base md:text-lg font-semibold btn-primary-glow text-white hover:scale-105 transition-all duration-300"
                   >
                     {isLoading ? (
                       <>
@@ -318,24 +318,24 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
               </div>
 
               {/* Right side - Examples */}
-              <div className="w-full lg:flex-[2] space-y-3 md:space-y-4">
+              <div className="w-full lg:flex-[45] space-y-2.5 lg:pt-[52px]">
                 <h3 className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
                   <span className="w-2 h-2 bg-primary rounded-full animate-pulse drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]"></span>
                   Try these examples
                 </h3>
-                <div className="space-y-2 md:space-y-3">
+                <div className="space-y-2">
                   {exampleQueries.map((example, index) => (
                     <Button
                       key={index}
                       variant="outline"
-                      className="w-full text-left h-auto p-3 md:p-4 justify-start border border-glass-border bg-glass backdrop-blur-lg hover:border-primary/50 hover:bg-glass-highlight transition-all duration-300 hover:scale-105 hover:shadow-glass group whitespace-normal"
+                      className="w-full text-left h-auto p-3 justify-start border border-glass-border bg-glass backdrop-blur-lg hover:border-primary/50 hover:bg-glass-highlight transition-all duration-300 hover:scale-105 hover:shadow-glass group whitespace-normal"
                       onClick={() => handleExampleClick(example)}
                     >
-                      <div className="flex items-start gap-2 md:gap-3 w-full">
-                        <div className="p-1.5 md:p-2 rounded-full bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-colors flex-shrink-0">
-                          <User className="w-3.5 h-3.5 md:w-4 md:h-4 text-primary" />
+                      <div className="flex items-start gap-2 w-full">
+                        <div className="p-1.5 rounded-full bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-colors flex-shrink-0">
+                          <User className="w-4 h-4 text-primary" />
                         </div>
-                         <div className="text-xs md:text-sm leading-relaxed text-subtext group-hover:text-foreground transition-colors text-left break-words">
+                         <div className="text-sm leading-relaxed text-subtext group-hover:text-foreground transition-colors text-left break-words">
                            {example.short}
                          </div>
                       </div>
