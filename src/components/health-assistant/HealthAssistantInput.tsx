@@ -198,30 +198,30 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
 
   return (
     <div className="min-h-screen w-screen overflow-x-hidden animate-fade-in">
-      <div className="w-full px-4 py-6">
+      <div className="w-full px-4 md:px-6 py-4 md:py-8">
         <div className="w-full max-w-6xl mx-auto">
-        {/* Left side - Input Form */}
+        {/* Input Form */}
         <Card className="shadow-glass border border-glass-border bg-glass backdrop-blur-xl card-hover">
-          <CardHeader className="text-center pb-8 glow-purple-radial">
+          <CardHeader className="text-center pb-6 md:pb-8 glow-purple-radial">
             <div className="flex items-center justify-center gap-3 mb-4">
               <div className="p-3 rounded-full bg-primary/10 border border-primary/20">
                 <Stethoscope className="w-8 h-8 text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
               </div>
-              <CardTitle className="text-3xl font-bold text-foreground">
+              <CardTitle className="text-2xl md:text-3xl font-bold text-foreground">
                 AI Health Assistant
               </CardTitle>
             </div>
-            <CardDescription className="text-lg text-subtext max-w-2xl mx-auto">
+            <CardDescription className="text-base md:text-lg text-subtext max-w-2xl mx-auto px-4">
               Find the perfect physician for your health needs. Just describe your symptoms, budget, and location in one message.
             </CardDescription>
           </CardHeader>
           
-          <CardContent className="space-y-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <CardContent className="p-4 md:p-6 lg:p-8">
+            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 lg:items-start">
               {/* Left side - Main prompt input */}
-              <div className="lg:col-span-2 space-y-6">
-                <div className="space-y-3">
-                  <Label htmlFor="health-prompt" className="text-lg font-semibold flex items-center gap-2 text-foreground">
+              <div className="flex-1 lg:flex-[2] space-y-4 md:space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="health-prompt" className="text-base md:text-lg font-semibold flex items-center gap-2 text-foreground">
                     <User className="w-5 h-5 text-primary" />
                     Describe your health concern *
                   </Label>
@@ -230,10 +230,10 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                     placeholder="Describe your health concern, budget, and preferred location..."
                     value={query.prompt}
                     onChange={(e) => setQuery({ prompt: e.target.value })}
-                    className="min-h-[160px] text-base leading-relaxed border border-glass-border focus:border-primary/50 transition-all duration-300 bg-glass backdrop-blur-lg resize-none shadow-glass"
+                    className="min-h-[140px] md:min-h-[160px] text-base leading-relaxed border border-glass-border focus:border-primary/50 transition-all duration-300 bg-glass backdrop-blur-lg resize-none shadow-glass"
                     required
                   />
-                   <p className="text-sm text-muted-foreground">
+                   <p className="text-xs md:text-sm text-muted-foreground">
                      * Please try to mention the budget, issue and location if possible
                    </p>
                   {isAutoSearching && (
@@ -247,7 +247,7 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                 {/* Analysis Display */}
                 {analysisResult && (
                   <Card className="bg-muted/50 border-dashed">
-                    <CardContent className="pt-4">
+                    <CardContent className="p-3 md:pt-4">
                       <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-green-600" />
                         Quick Analysis
@@ -295,12 +295,12 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                   </Card>
                 )}
 
-                <div className="flex justify-center lg:justify-start">
+                <div className="flex justify-center lg:justify-start pt-2">
                   <Button 
                     onClick={handleSubmit}
                     disabled={isLoading}
                     size="lg"
-                    className="px-8 py-6 text-lg font-semibold btn-primary-glow text-white hover:scale-105 transition-all duration-300"
+                    className="w-full md:w-auto px-8 py-5 md:py-6 text-base md:text-lg font-semibold btn-primary-glow text-white hover:scale-105 transition-all duration-300"
                   >
                     {isLoading ? (
                       <>
@@ -318,31 +318,31 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
               </div>
 
               {/* Right side - Examples */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <div className="flex-1 space-y-3 md:space-y-4 w-full lg:max-w-sm">
+                <h3 className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
                   <span className="w-2 h-2 bg-primary rounded-full animate-pulse drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]"></span>
                   Try these examples
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-2 md:space-y-3">
                   {exampleQueries.map((example, index) => (
                     <Button
                       key={index}
                       variant="outline"
-                      className="w-full text-left h-auto p-4 justify-start border border-glass-border bg-glass backdrop-blur-lg hover:border-primary/50 hover:bg-glass-highlight transition-all duration-300 hover:scale-105 hover:shadow-glass group whitespace-normal"
+                      className="w-full text-left h-auto p-3 md:p-4 justify-start border border-glass-border bg-glass backdrop-blur-lg hover:border-primary/50 hover:bg-glass-highlight transition-all duration-300 hover:scale-105 hover:shadow-glass group whitespace-normal"
                       onClick={() => handleExampleClick(example)}
                     >
-                      <div className="flex items-start gap-3 w-full">
-                        <div className="p-2 rounded-full bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-colors flex-shrink-0">
-                          <User className="w-4 h-4 text-primary" />
+                      <div className="flex items-start gap-2 md:gap-3 w-full">
+                        <div className="p-1.5 md:p-2 rounded-full bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-colors flex-shrink-0">
+                          <User className="w-3.5 h-3.5 md:w-4 md:h-4 text-primary" />
                         </div>
-                         <div className="text-sm leading-relaxed text-subtext group-hover:text-foreground transition-colors text-left break-words">
+                         <div className="text-xs md:text-sm leading-relaxed text-subtext group-hover:text-foreground transition-colors text-left break-words">
                            {example.short}
                          </div>
                       </div>
                     </Button>
                   ))}
                 </div>
-                <p className="text-xs text-gray-500 text-center">
+                <p className="text-xs text-gray-500 text-center lg:text-left">
                   Click any example to use it as your prompt
                 </p>
               </div>
