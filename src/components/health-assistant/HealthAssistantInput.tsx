@@ -216,12 +216,12 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
             </CardDescription>
           </CardHeader>
           
-          <CardContent className="p-4 md:p-6 lg:p-8">
-            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 lg:items-start">
+          <CardContent className="p-6 md:p-10">
+            <div className="flex flex-col lg:flex-row items-start justify-center gap-6 lg:gap-10 w-full">
               {/* Left side - Main prompt input */}
-              <div className="flex-1 lg:flex-[2] space-y-4 md:space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="health-prompt" className="text-base md:text-lg font-semibold flex items-center gap-2 text-foreground">
+              <div className="w-full lg:flex-[3] space-y-4">
+                <div>
+                  <Label htmlFor="health-prompt" className="text-base md:text-lg font-semibold flex items-center gap-2 text-foreground mb-2">
                     <User className="w-5 h-5 text-primary" />
                     Describe your health concern *
                   </Label>
@@ -230,7 +230,7 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                     placeholder="Describe your health concern, budget, and preferred location..."
                     value={query.prompt}
                     onChange={(e) => setQuery({ prompt: e.target.value })}
-                    className="min-h-[140px] md:min-h-[160px] text-base leading-relaxed border border-glass-border focus:border-primary/50 transition-all duration-300 bg-glass backdrop-blur-lg resize-none shadow-glass"
+                    className="min-h-[140px] md:min-h-[160px] text-base leading-relaxed border border-glass-border focus:border-primary/50 transition-all duration-300 bg-glass backdrop-blur-lg resize-none shadow-glass mb-4"
                     required
                   />
                    <p className="text-xs md:text-sm text-muted-foreground">
@@ -295,12 +295,12 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                   </Card>
                 )}
 
-                <div className="flex justify-center lg:justify-start pt-2">
+                <div className="flex justify-center lg:justify-start mt-2">
                   <Button 
                     onClick={handleSubmit}
                     disabled={isLoading}
                     size="lg"
-                    className="w-full md:w-auto px-8 py-5 md:py-6 text-base md:text-lg font-semibold btn-primary-glow text-white hover:scale-105 transition-all duration-300"
+                    className="w-full lg:w-auto px-8 py-5 md:py-6 text-base md:text-lg font-semibold btn-primary-glow text-white hover:scale-105 transition-all duration-300"
                   >
                     {isLoading ? (
                       <>
@@ -318,7 +318,7 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
               </div>
 
               {/* Right side - Examples */}
-              <div className="flex-1 space-y-3 md:space-y-4 w-full lg:max-w-sm">
+              <div className="w-full lg:flex-[2] space-y-3 md:space-y-4">
                 <h3 className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
                   <span className="w-2 h-2 bg-primary rounded-full animate-pulse drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]"></span>
                   Try these examples
