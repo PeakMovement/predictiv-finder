@@ -44,7 +44,7 @@ function App() {
   return (
     <ThemeProvider defaultTheme="dark">
       <ToastProvider>
-        <div className="app min-h-screen bg-background">
+        <div className="app min-h-screen bg-background overflow-x-hidden">
           <ThemeToggle />
           <EnhancedErrorBoundary key={errorKey} resetKeys={[resetKeys]} fallback={PlanGenerationErrorFallbackAdapter}>
             <Routes>

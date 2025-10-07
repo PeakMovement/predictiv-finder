@@ -24,7 +24,7 @@ export default function AIHealthAssistant() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      <div className="container mx-auto py-8">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-8">
         {!healthQuery ? (
           <HealthAssistantInput onSubmit={handleSubmit} isLoading={isLoading} />
         ) : (

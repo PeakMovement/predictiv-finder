@@ -197,7 +197,7 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
   };
 
   return (
-    <div className="min-h-screen w-screen overflow-x-hidden animate-fade-in">
+    <div className="min-h-screen w-full overflow-x-hidden animate-fade-in">
       <div className="w-full px-4 md:px-6 py-4 md:py-8">
         <div className="w-full max-w-6xl mx-auto">
         {/* Input Form */}
