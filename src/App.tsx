@@ -8,6 +8,9 @@ import Services from "./pages/Services";
 import Professionals from "./pages/Professionals";
 import SuccessStories from "./pages/SuccessStories";
 import NotFound from "./pages/NotFound";
+import ProfessionalSignup from "./pages/ProfessionalSignup";
+import ProfessionalLogin from "./pages/ProfessionalLogin";
+import ProfessionalDashboard from "./pages/ProfessionalDashboard";
 import { EnhancedErrorBoundary } from "./components/enhanced-error-handling";
 import { PlanGenerationErrorFallbackAdapter } from "./components/enhanced-error-handling";
 import { ToastProvider } from "./components/ui/toast-provider";
@@ -48,12 +51,15 @@ function App() {
           <ThemeToggle />
           <EnhancedErrorBoundary key={errorKey} resetKeys={[resetKeys]} fallback={PlanGenerationErrorFallbackAdapter}>
             <Routes>
-              <Route path="/" element={<AIHealthAssistant />} /> {/* 👈 AI Health Assistant - Default Landing Page */}
-              <Route path="/explore" element={<Index />} /> {/* Old homepage moved here */}
+              <Route path="/" element={<AIHealthAssistant />} />
+              <Route path="/explore" element={<Index />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
               <Route path="/services" element={<Services />} />
               <Route path="/professionals" element={<Professionals />} />
               <Route path="/success-stories" element={<SuccessStories />} />
+              <Route path="/professional-signup" element={<ProfessionalSignup />} />
+              <Route path="/pro-login" element={<ProfessionalLogin />} />
+              <Route path="/professional-dashboard" element={<ProfessionalDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </EnhancedErrorBoundary>

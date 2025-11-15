@@ -54,6 +54,11 @@ export const Header = () => {
       </nav>
       
       <div className="flex items-center space-x-2">
+        <Link to="/pro-login">
+          <Button variant="outline" size="sm">
+            Professional Login
+          </Button>
+        </Link>
         <UserProfileMenu openLoginModal={openLoginModal} />
       </div>
 
