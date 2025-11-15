@@ -186,6 +186,57 @@ export type Database = {
         }
         Relationships: []
       }
+      professionals: {
+        Row: {
+          calendly_url: string
+          created_at: string
+          google_reviews_url: string | null
+          id: string
+          is_approved: boolean
+          location: string | null
+          name: string
+          photo_url: string | null
+          price_max: number | null
+          price_min: number | null
+          profession: string
+          specialities: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calendly_url: string
+          created_at?: string
+          google_reviews_url?: string | null
+          id?: string
+          is_approved?: boolean
+          location?: string | null
+          name: string
+          photo_url?: string | null
+          price_max?: number | null
+          price_min?: number | null
+          profession: string
+          specialities?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calendly_url?: string
+          created_at?: string
+          google_reviews_url?: string | null
+          id?: string
+          is_approved?: boolean
+          location?: string | null
+          name?: string
+          photo_url?: string | null
+          price_max?: number | null
+          price_min?: number | null
+          profession?: string
+          specialities?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
