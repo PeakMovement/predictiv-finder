@@ -2,18 +2,26 @@ import { SymptomIntakeForm } from '@/components/symptom-intake';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Code } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ArrowLeft, Code, ArrowRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useSeverity } from '@/context/SeverityContext';
 import type { SeverityEvaluationResponse } from '@/services/symptom-severity-service';
 
 export default function TestSymptomIntake() {
   const { isAuthenticated, currentUser } = useAuth();
+  const { setEvaluationResult } = useSeverity();
   const [lastResult, setLastResult] = useState<SeverityEvaluationResponse | null>(null);
+  const navigate = useNavigate();
 
   const handleEvaluationComplete = (result: SeverityEvaluationResponse) => {
     console.log('[TestSymptomIntake] Evaluation complete:', result);
     setLastResult(result);
+    setEvaluationResult(result); // Store in global context
+  };
+
+  const handleContinueToAssistant = () => {
+    navigate('/');
   };
 
   return (
@@ -51,6 +59,18 @@ export default function TestSymptomIntake() {
 
         {/* Symptom Intake Form */}
         <SymptomIntakeForm onEvaluationComplete={handleEvaluationComplete} />
+
+        {/* Continue to Assistant Button */}
+        {lastResult && (
+          <Button 
+            onClick={handleContinueToAssistant}
+            className="w-full"
+            size="lg"
+          >
+            Continue to Health Assistant
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        )}
 
         {/* Raw JSON Output */}
         {lastResult && (
