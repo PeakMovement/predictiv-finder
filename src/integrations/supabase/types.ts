@@ -321,6 +321,245 @@ export type Database = {
         }
         Relationships: []
       }
+      symptom_checks: {
+        Row: {
+          associated_symptoms: string[] | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          interpretation_ready: boolean | null
+          medical_history_flags: string[] | null
+          overall_severity:
+            | Database["public"]["Enums"]["symptom_severity"]
+            | null
+          primary_complaint: string | null
+          red_flag_reasons: string[] | null
+          red_flag_status: Database["public"]["Enums"]["red_flag_status"] | null
+          session_status: string
+          symptom_duration_hours: number | null
+          symptom_onset: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          associated_symptoms?: string[] | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          interpretation_ready?: boolean | null
+          medical_history_flags?: string[] | null
+          overall_severity?:
+            | Database["public"]["Enums"]["symptom_severity"]
+            | null
+          primary_complaint?: string | null
+          red_flag_reasons?: string[] | null
+          red_flag_status?:
+            | Database["public"]["Enums"]["red_flag_status"]
+            | null
+          session_status?: string
+          symptom_duration_hours?: number | null
+          symptom_onset?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          associated_symptoms?: string[] | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          interpretation_ready?: boolean | null
+          medical_history_flags?: string[] | null
+          overall_severity?:
+            | Database["public"]["Enums"]["symptom_severity"]
+            | null
+          primary_complaint?: string | null
+          red_flag_reasons?: string[] | null
+          red_flag_status?:
+            | Database["public"]["Enums"]["red_flag_status"]
+            | null
+          session_status?: string
+          symptom_duration_hours?: number | null
+          symptom_onset?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      symptom_entries: {
+        Row: {
+          associated_symptoms: string[] | null
+          body_region: string | null
+          created_at: string | null
+          duration_hours: number | null
+          frequency: string | null
+          id: string
+          is_primary: boolean | null
+          matched_rule_id: string | null
+          relieving_factors: string[] | null
+          severity: Database["public"]["Enums"]["symptom_severity"]
+          severity_score: number | null
+          symptom_check_id: string
+          symptom_text: string
+          triggers: string[] | null
+          user_id: string
+        }
+        Insert: {
+          associated_symptoms?: string[] | null
+          body_region?: string | null
+          created_at?: string | null
+          duration_hours?: number | null
+          frequency?: string | null
+          id?: string
+          is_primary?: boolean | null
+          matched_rule_id?: string | null
+          relieving_factors?: string[] | null
+          severity?: Database["public"]["Enums"]["symptom_severity"]
+          severity_score?: number | null
+          symptom_check_id: string
+          symptom_text: string
+          triggers?: string[] | null
+          user_id: string
+        }
+        Update: {
+          associated_symptoms?: string[] | null
+          body_region?: string | null
+          created_at?: string | null
+          duration_hours?: number | null
+          frequency?: string | null
+          id?: string
+          is_primary?: boolean | null
+          matched_rule_id?: string | null
+          relieving_factors?: string[] | null
+          severity?: Database["public"]["Enums"]["symptom_severity"]
+          severity_score?: number | null
+          symptom_check_id?: string
+          symptom_text?: string
+          triggers?: string[] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "symptom_entries_matched_rule_id_fkey"
+            columns: ["matched_rule_id"]
+            isOneToOne: false
+            referencedRelation: "symptom_severity_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "symptom_entries_symptom_check_id_fkey"
+            columns: ["symptom_check_id"]
+            isOneToOne: false
+            referencedRelation: "symptom_checks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      symptom_red_flags: {
+        Row: {
+          created_at: string | null
+          flag_reason: string
+          flag_type: string
+          id: string
+          recommendation: string | null
+          severity_level: Database["public"]["Enums"]["red_flag_status"]
+          symptom_check_id: string
+          triggered_by_rule_id: string | null
+          triggered_by_symptom_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          flag_reason: string
+          flag_type: string
+          id?: string
+          recommendation?: string | null
+          severity_level: Database["public"]["Enums"]["red_flag_status"]
+          symptom_check_id: string
+          triggered_by_rule_id?: string | null
+          triggered_by_symptom_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          flag_reason?: string
+          flag_type?: string
+          id?: string
+          recommendation?: string | null
+          severity_level?: Database["public"]["Enums"]["red_flag_status"]
+          symptom_check_id?: string
+          triggered_by_rule_id?: string | null
+          triggered_by_symptom_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "symptom_red_flags_symptom_check_id_fkey"
+            columns: ["symptom_check_id"]
+            isOneToOne: false
+            referencedRelation: "symptom_checks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "symptom_red_flags_triggered_by_rule_id_fkey"
+            columns: ["triggered_by_rule_id"]
+            isOneToOne: false
+            referencedRelation: "symptom_severity_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "symptom_red_flags_triggered_by_symptom_id_fkey"
+            columns: ["triggered_by_symptom_id"]
+            isOneToOne: false
+            referencedRelation: "symptom_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      symptom_severity_rules: {
+        Row: {
+          base_severity: Database["public"]["Enums"]["symptom_severity"]
+          body_region: string | null
+          created_at: string | null
+          duration_hours_threshold: number | null
+          escalation_severity:
+            | Database["public"]["Enums"]["symptom_severity"]
+            | null
+          id: string
+          is_active: boolean | null
+          red_flag_triggers: string[] | null
+          symptom_keyword: string
+          updated_at: string | null
+        }
+        Insert: {
+          base_severity?: Database["public"]["Enums"]["symptom_severity"]
+          body_region?: string | null
+          created_at?: string | null
+          duration_hours_threshold?: number | null
+          escalation_severity?:
+            | Database["public"]["Enums"]["symptom_severity"]
+            | null
+          id?: string
+          is_active?: boolean | null
+          red_flag_triggers?: string[] | null
+          symptom_keyword: string
+          updated_at?: string | null
+        }
+        Update: {
+          base_severity?: Database["public"]["Enums"]["symptom_severity"]
+          body_region?: string | null
+          created_at?: string | null
+          duration_hours_threshold?: number | null
+          escalation_severity?:
+            | Database["public"]["Enums"]["symptom_severity"]
+            | null
+          id?: string
+          is_active?: boolean | null
+          red_flag_triggers?: string[] | null
+          symptom_keyword?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_physician_preferences: {
         Row: {
           created_at: string
@@ -396,9 +635,18 @@ export type Database = {
     }
     Functions: {
       is_owner: { Args: { _user_id: string }; Returns: boolean }
+      max_severity: {
+        Args: { severities: Database["public"]["Enums"]["symptom_severity"][] }
+        Returns: Database["public"]["Enums"]["symptom_severity"]
+      }
+      score_to_severity: {
+        Args: { score: number }
+        Returns: Database["public"]["Enums"]["symptom_severity"]
+      }
     }
     Enums: {
-      [_ in never]: never
+      red_flag_status: "none" | "monitor" | "urgent" | "emergency"
+      symptom_severity: "mild" | "moderate" | "severe" | "critical"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -525,6 +773,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      red_flag_status: ["none", "monitor", "urgent", "emergency"],
+      symptom_severity: ["mild", "moderate", "severe", "critical"],
+    },
   },
 } as const
