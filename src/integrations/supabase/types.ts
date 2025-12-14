@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_interactions: {
+        Row: {
+          ai_response: string
+          context: Json | null
+          created_at: string | null
+          id: string
+          user_id: string
+          user_message: string
+        }
+        Insert: {
+          ai_response: string
+          context?: Json | null
+          created_at?: string | null
+          id?: string
+          user_id: string
+          user_message: string
+        }
+        Update: {
+          ai_response?: string
+          context?: Json | null
+          created_at?: string | null
+          id?: string
+          user_id?: string
+          user_message?: string
+        }
+        Relationships: []
+      }
       availability_slots: {
         Row: {
           calendar_integration_id: string | null
@@ -368,7 +395,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_owner: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
