@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import ProfessionalSignup from "./pages/ProfessionalSignup";
 import ProfessionalLogin from "./pages/ProfessionalLogin";
 import ProfessionalDashboard from "./pages/ProfessionalDashboard";
+import TestSymptomIntake from "./pages/TestSymptomIntake";
 import { EnhancedErrorBoundary } from "./components/enhanced-error-handling";
 import { PlanGenerationErrorFallbackAdapter } from "./components/enhanced-error-handling";
 import { ToastProvider } from "./components/ui/toast-provider";
@@ -60,6 +61,7 @@ function App() {
               <Route path="/professional-signup" element={<ProfessionalSignup />} />
               <Route path="/pro-login" element={<ProfessionalLogin />} />
               <Route path="/professional-dashboard" element={<ProfessionalDashboard />} />
+              <Route path="/test/symptom-intake" element={<TestSymptomIntake />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </EnhancedErrorBoundary>
