@@ -1,1 +1,10 @@
 project_id = "zpddlphtoeluytrejioj"
+
+[functions.ai-health-assistant]
+verify_jwt = true
+
+[functions.sync-calendar-availability]
+verify_jwt = true
+
+[functions.symptom-severity-evaluator]
+verify_jwt = true
