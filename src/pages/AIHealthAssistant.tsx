@@ -30,9 +30,13 @@ export default function AIHealthAssistant() {
   };
 
   const handleBack = () => {
+    console.log('[AIHealthAssistant] Navigating back to input', {
+      previousSeverity: evaluationResult?.overall_severity,
+      timestamp: new Date().toISOString(),
+    });
     setHealthQuery(null);
-    // Optionally clear evaluation when going back
-    // clearEvaluation();
+    // Keep evaluation state when going back - user might want to find different doctors
+    // Evaluation is cleared when a new one is performed
   };
 
   // Log escalation state for QA observability

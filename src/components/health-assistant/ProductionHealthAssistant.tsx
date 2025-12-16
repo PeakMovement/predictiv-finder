@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { HealthAssistantInput } from './HealthAssistantInput';
+import { QuickHealthInput } from './QuickHealthInput';
 import { SymptomIntakeForm } from '@/components/symptom-intake';
 import { EmergencyBanner } from './EmergencyBanner';
 import { EscalationOverlay } from './EscalationOverlay';
@@ -65,10 +65,12 @@ export function ProductionHealthAssistant({
     console.log('[ProductionHealthAssistant] Symptom evaluation complete:', {
       severity: result.overall_severity,
       redFlags: result.red_flags,
+      resultsCount: result.results.length,
       timestamp: new Date().toISOString(),
     });
     
     // Store in context - this triggers escalation via useEscalation hook
+    // Note: Setting a new evaluation automatically clears the previous acknowledgment
     setEvaluationResult(result);
     setHasCompletedEvaluation(true);
   }, [setEvaluationResult]);
@@ -132,7 +134,15 @@ export function ProductionHealthAssistant({
             </CardHeader>
             
             <CardContent className="px-4 md:px-8">
-              <Tabs value={mode} onValueChange={(v) => setMode(v as AssistantMode)} className="w-full">
+              <Tabs value={mode} onValueChange={(v) => {
+                const newMode = v as AssistantMode;
+                console.log('[ProductionHealthAssistant] Mode changed:', { from: mode, to: newMode });
+                setMode(newMode);
+                // Reset completion state when switching to detailed tab
+                if (newMode === 'detailed') {
+                  setHasCompletedEvaluation(false);
+                }
+              }} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="quick" className="flex items-center gap-2">
                     <Stethoscope className="w-4 h-4" />
@@ -145,7 +155,7 @@ export function ProductionHealthAssistant({
                 </TabsList>
                 
                 <TabsContent value="quick" className="mt-0">
-                  <HealthAssistantInput 
+                  <QuickHealthInput 
                     onSubmit={handleQuickSubmit} 
                     isLoading={isLoading} 
                   />
