@@ -1,8 +1,15 @@
+/**
+ * DEV-ONLY: Test page for symptom intake and escalation system
+ * Production flow uses ProductionHealthAssistant component at /
+ * This route exists for isolated testing and QA observability
+ */
 import { SymptomIntakeForm } from '@/components/symptom-intake';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Code, ArrowRight, AlertTriangle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ArrowLeft, Code, ArrowRight, AlertTriangle, Bug } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useSeverity } from '@/context/SeverityContext';
@@ -34,9 +41,18 @@ export default function TestSymptomIntake() {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       {/* Escalation Overlay - blocks until acknowledged */}
-      <EscalationOverlay onContinue={handleContinueToAssistant} />
+      <EscalationOverlay />
       
       <div className="max-w-2xl mx-auto space-y-6">
+        {/* DEV-ONLY Banner */}
+        <Alert className="border-amber-500/50 bg-amber-500/10">
+          <Bug className="w-4 h-4 text-amber-500" />
+          <AlertDescription className="text-amber-200">
+            <strong>DEV-ONLY:</strong> This test route exists for QA and development testing. 
+            Production users enter symptoms via the main assistant at <code className="bg-background/50 px-1 rounded">/</code>
+          </AlertDescription>
+        </Alert>
+
         {/* Header */}
         <div className="flex items-center gap-4">
           <Link to="/">
@@ -45,8 +61,11 @@ export default function TestSymptomIntake() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold">Symptom Intake Test</h1>
-            <p className="text-sm text-muted-foreground">Phase 2.4 - End-to-end testing</p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold">Symptom Intake Test</h1>
+              <Badge variant="outline" className="text-amber-500 border-amber-500/50">DEV</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">Phase 3.3 - Production integration testing</p>
           </div>
         </div>
 
@@ -86,7 +105,7 @@ export default function TestSymptomIntake() {
                   escalationLevel === 'caution' ? 'text-yellow-500' :
                   'text-muted-foreground'
                 }`} />
-                Escalation Status
+                Escalation Status (QA Observability)
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
