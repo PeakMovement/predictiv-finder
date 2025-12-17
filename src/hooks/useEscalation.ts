@@ -9,9 +9,14 @@ export interface EscalationActions {
   recommendedAction: 'none' | 'monitor' | 'schedule_soon' | 'seek_care_today' | 'emergency';
 }
 
+// Session storage key to track if toasts were already shown this session
+const TOAST_SHOWN_KEY = 'severity_toast_shown_key';
+
 /**
  * Hook that handles escalation SIDE EFFECTS only.
  * All trigger logic is in SeverityContext - this hook only fires toasts and logs.
+ * 
+ * PHASE 2.2: Now prevents re-triggering toasts on navigation/refresh for same evaluation.
  * 
  * IMPORTANT: Do NOT add trigger logic here. Use useSeverity() directly for conditions.
  */
@@ -23,12 +28,14 @@ export function useEscalation(): EscalationActions {
     hasRedFlags,
     escalationLevel,
     shouldBlockInteraction,
+    isEscalationAcknowledged,
   } = useSeverity();
   
-  // Ref to prevent duplicate triggers for same evaluation
+  // Ref to prevent duplicate triggers within same render cycle
   const lastTriggeredKey = useRef<string | null>(null);
 
   // SIDE EFFECT: Fire notifications when severity changes
+  // Skips if evaluation was already acknowledged (re-entry protection)
   useEffect(() => {
     if (!evaluationResult) {
       lastTriggeredKey.current = null;
@@ -38,11 +45,28 @@ export function useEscalation(): EscalationActions {
     // Create deterministic key from evaluation
     const evalKey = `${evaluationResult.overall_severity}:${evaluationResult.red_flags.sort().join(',')}:${evaluationResult.evaluated_at}`;
     
-    // Prevent duplicate triggers
+    // Prevent duplicate triggers within same component lifecycle
     if (lastTriggeredKey.current === evalKey) {
       return;
     }
+    
+    // PHASE 2.2: Check sessionStorage to prevent re-triggering on refresh
+    const previouslyShownKey = sessionStorage.getItem(TOAST_SHOWN_KEY);
+    if (previouslyShownKey === evalKey) {
+      console.log('[useEscalation] Toast already shown for this evaluation, skipping');
+      lastTriggeredKey.current = evalKey;
+      return;
+    }
+    
+    // PHASE 2.2: Skip toasts if already acknowledged (prevents re-trigger on navigation)
+    if (isEscalationAcknowledged) {
+      console.log('[useEscalation] Evaluation already acknowledged, skipping toasts');
+      lastTriggeredKey.current = evalKey;
+      return;
+    }
+    
     lastTriggeredKey.current = evalKey;
+    sessionStorage.setItem(TOAST_SHOWN_KEY, evalKey);
 
     console.log('[useEscalation] Triggering notifications for:', {
       severity: evaluationResult.overall_severity,
@@ -74,7 +98,7 @@ export function useEscalation(): EscalationActions {
       });
       console.info('[ESCALATION] RED FLAGS - Monitor mode');
     }
-  }, [evaluationResult, isEmergency, isSevere, hasRedFlags, escalationLevel]);
+  }, [evaluationResult, isEmergency, isSevere, hasRedFlags, escalationLevel, isEscalationAcknowledged]);
 
   // Return actions derived from context (single source of truth)
   return {
@@ -109,4 +133,12 @@ export function getEscalationMessage(actions: EscalationActions): string | null 
     default:
       return null;
   }
+}
+
+/**
+ * Clear all escalation session data (use on logout or explicit reset)
+ */
+export function clearEscalationSession(): void {
+  sessionStorage.removeItem(TOAST_SHOWN_KEY);
+  console.log('[useEscalation] Session data cleared');
 }
