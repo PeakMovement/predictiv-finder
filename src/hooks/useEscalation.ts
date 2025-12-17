@@ -10,16 +10,75 @@ export interface EscalationActions {
 }
 
 /**
- * Hook that automatically triggers escalation behaviors when severity crosses thresholds.
- * This runs side effects when severity evaluation results change.
+ * Hook that handles escalation SIDE EFFECTS only.
+ * All trigger logic is in SeverityContext - this hook only fires toasts and logs.
+ * 
+ * IMPORTANT: Do NOT add trigger logic here. Use useSeverity() directly for conditions.
  */
 export function useEscalation(): EscalationActions {
-  const { evaluationResult, isEmergency, isSevere, hasRedFlags } = useSeverity();
-  const hasTriggeredRef = useRef<string | null>(null);
+  const { 
+    evaluationResult, 
+    isEmergency, 
+    isSevere, 
+    hasRedFlags,
+    escalationLevel,
+    shouldBlockInteraction,
+  } = useSeverity();
+  
+  // Ref to prevent duplicate triggers for same evaluation
+  const lastTriggeredKey = useRef<string | null>(null);
 
-  // Determine escalation actions based on current severity
-  const actions: EscalationActions = {
-    blockCasualInteraction: isEmergency,
+  // SIDE EFFECT: Fire notifications when severity changes
+  useEffect(() => {
+    if (!evaluationResult) {
+      lastTriggeredKey.current = null;
+      return;
+    }
+
+    // Create deterministic key from evaluation
+    const evalKey = `${evaluationResult.overall_severity}:${evaluationResult.red_flags.sort().join(',')}:${evaluationResult.evaluated_at}`;
+    
+    // Prevent duplicate triggers
+    if (lastTriggeredKey.current === evalKey) {
+      return;
+    }
+    lastTriggeredKey.current = evalKey;
+
+    console.log('[useEscalation] Triggering notifications for:', {
+      severity: evaluationResult.overall_severity,
+      escalationLevel,
+      evalKey,
+    });
+
+    // Fire appropriate notification based on severity
+    if (isEmergency) {
+      toast.error('Critical Health Alert', {
+        description: 'Your symptoms may require immediate medical attention. Please seek emergency care.',
+        duration: Infinity,
+        action: {
+          label: 'Call 10177',
+          onClick: () => window.open('tel:10177', '_self'),
+        },
+      });
+      console.warn('[ESCALATION] CRITICAL - Emergency mode activated');
+    } else if (isSevere) {
+      toast.warning('Urgent Medical Attention Recommended', {
+        description: 'Based on your symptoms, you should seek medical care soon - ideally today.',
+        duration: 15000,
+      });
+      console.warn('[ESCALATION] SEVERE - Urgent mode activated');
+    } else if (hasRedFlags) {
+      toast.info('Symptoms to Monitor', {
+        description: 'Some symptoms warrant attention. If they worsen, seek medical care promptly.',
+        duration: 8000,
+      });
+      console.info('[ESCALATION] RED FLAGS - Monitor mode');
+    }
+  }, [evaluationResult, isEmergency, isSevere, hasRedFlags, escalationLevel]);
+
+  // Return actions derived from context (single source of truth)
+  return {
+    blockCasualInteraction: shouldBlockInteraction,
     forceEmergencyGuidance: isEmergency || isSevere,
     showImmediateAlert: isEmergency || isSevere,
     recommendedAction: isEmergency 
@@ -32,58 +91,6 @@ export function useEscalation(): EscalationActions {
             ? 'monitor' 
             : 'none',
   };
-
-  // Auto-trigger notifications when severity changes
-  useEffect(() => {
-    if (!evaluationResult) return;
-
-    // Create a unique key for this evaluation to prevent duplicate triggers
-    const evalKey = `${evaluationResult.overall_severity}-${evaluationResult.red_flags.join(',')}`;
-    
-    // Don't re-trigger for the same evaluation
-    if (hasTriggeredRef.current === evalKey) return;
-    hasTriggeredRef.current = evalKey;
-
-    // Automatic escalation based on severity
-    if (isEmergency) {
-      // Critical severity - immediate action required
-      toast.error('Critical Health Alert', {
-        description: 'Your symptoms may require immediate medical attention. Please seek emergency care.',
-        duration: Infinity, // Don't auto-dismiss critical alerts
-        action: {
-          label: 'Call 10177',
-          onClick: () => window.open('tel:10177', '_self'),
-        },
-      });
-      
-      // Log escalation event
-      console.warn('[ESCALATION] Critical severity detected - emergency mode activated', {
-        severity: evaluationResult.overall_severity,
-        redFlags: evaluationResult.red_flags,
-        timestamp: new Date().toISOString(),
-      });
-    } else if (isSevere) {
-      // Severe severity - urgent attention needed
-      toast.warning('Urgent Medical Attention Recommended', {
-        description: 'Based on your symptoms, you should seek medical care soon - ideally today.',
-        duration: 15000,
-      });
-      
-      console.warn('[ESCALATION] Severe severity detected - urgent mode activated', {
-        severity: evaluationResult.overall_severity,
-        redFlags: evaluationResult.red_flags,
-        timestamp: new Date().toISOString(),
-      });
-    } else if (hasRedFlags) {
-      // Red flags present but not severe - monitor
-      toast.info('Symptoms to Monitor', {
-        description: 'Some symptoms warrant attention. If they worsen, seek medical care promptly.',
-        duration: 8000,
-      });
-    }
-  }, [evaluationResult, isEmergency, isSevere, hasRedFlags]);
-
-  return actions;
 }
 
 /**

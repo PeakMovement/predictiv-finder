@@ -16,12 +16,12 @@ export function EscalationOverlay({ onContinue }: EscalationOverlayProps) {
     evaluationResult, 
     isEmergency, 
     isSevere, 
+    shouldShowOverlay,  // Single source of truth for visibility
     acknowledgeEscalation,
-    isEscalationAcknowledged 
   } = useSeverity();
 
-  // Only show for severe/critical and not yet acknowledged
-  if (!evaluationResult || isEscalationAcknowledged || (!isEmergency && !isSevere)) {
+  // LOCKED RULE: Visibility controlled by SeverityContext
+  if (!shouldShowOverlay || !evaluationResult) {
     return null;
   }
 
