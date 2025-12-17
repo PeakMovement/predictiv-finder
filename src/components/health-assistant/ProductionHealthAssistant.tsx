@@ -31,11 +31,12 @@ export function ProductionHealthAssistant({
     setEvaluationResult, 
     evaluationResult, 
     escalationLevel,
-    isEscalationAcknowledged 
+    shouldBlockInteraction,  // Single source of truth
+    isEscalationAcknowledged,
   } = useSeverity();
   
-  // Automatically triggers escalation behaviors when severity changes
-  const escalationActions = useEscalation();
+  // Side effects only - trigger logic is in context
+  useEscalation();
 
   // Handle quick query submission
   const handleQuickSubmit = useCallback((query: HealthQuery) => {
@@ -50,15 +51,15 @@ export function ProductionHealthAssistant({
       return;
     }
     
-    // If escalation requires acknowledgment and not acknowledged, store query
-    if (escalationActions.blockCasualInteraction && !isEscalationAcknowledged) {
+    // LOCKED RULE: Block only if context says so
+    if (shouldBlockInteraction) {
       setPendingQuery(query);
       console.log('[ProductionHealthAssistant] Query blocked - escalation acknowledgment required');
       return;
     }
     
     onProceedToRecommendations(query);
-  }, [evaluationResult, escalationActions, isEscalationAcknowledged, escalationLevel, onProceedToRecommendations]);
+  }, [evaluationResult, shouldBlockInteraction, escalationLevel, onProceedToRecommendations]);
 
   // Handle detailed symptom evaluation completion
   const handleEvaluationComplete = useCallback((result: SeverityEvaluationResponse) => {
@@ -77,8 +78,8 @@ export function ProductionHealthAssistant({
 
   // Handle proceeding after evaluation
   const handleProceedAfterEvaluation = useCallback(() => {
-    // Check if escalation blocks progression
-    if (escalationActions.blockCasualInteraction && !isEscalationAcknowledged) {
+    // LOCKED RULE: Check context for blocking
+    if (shouldBlockInteraction) {
       console.log('[ProductionHealthAssistant] Progression blocked - acknowledge escalation first');
       return;
     }
@@ -93,7 +94,7 @@ export function ProductionHealthAssistant({
     };
     
     onProceedToRecommendations(query);
-  }, [evaluationResult, escalationActions, isEscalationAcknowledged, onProceedToRecommendations]);
+  }, [evaluationResult, shouldBlockInteraction, onProceedToRecommendations]);
 
   // Process pending query when escalation is acknowledged
   React.useEffect(() => {
@@ -104,8 +105,8 @@ export function ProductionHealthAssistant({
     }
   }, [pendingQuery, isEscalationAcknowledged, onProceedToRecommendations]);
 
-  // Determine if user can proceed
-  const canProceed = !escalationActions.blockCasualInteraction || isEscalationAcknowledged;
+  // LOCKED RULE: canProceed derived from single source of truth
+  const canProceed = !shouldBlockInteraction;
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden overflow-y-auto animate-fade-in">
