@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { clearEscalationSession } from '@/hooks/useEscalation';
 
 type AuthContextType = {
   currentUser: User | null;
@@ -79,8 +80,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) throw error;
   };
 
-  // Sign out
+  // Sign out - also clears severity/escalation session data
   const logout = async () => {
+    // PHASE 2.2: Clear escalation session data on logout
+    clearEscalationSession();
+    
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };
