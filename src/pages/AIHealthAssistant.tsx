@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ProductionHealthAssistant } from '@/components/health-assistant/ProductionHealthAssistant';
 import PhysicianRecommendationsView from '@/components/physician-recommendations/PhysicianRecommendationsView';
 import { useSeverity } from '@/context/SeverityContext';
@@ -8,7 +9,13 @@ import type { HealthQuery } from '@/services/physician-recommendation-service';
 export default function AIHealthAssistant() {
   const [healthQuery, setHealthQuery] = useState<HealthQuery | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchParams] = useSearchParams();
   const { evaluationResult, escalationLevel, clearEvaluation } = useSeverity();
+  
+  // Extract symptoms from URL parameter
+  const initialSymptoms = searchParams.get('symptoms') 
+    ? decodeURIComponent(searchParams.get('symptoms')!) 
+    : undefined;
   
   // Hook that triggers automatic escalation behaviors (toasts, logging)
   const escalationActions = useEscalation();
@@ -57,7 +64,8 @@ export default function AIHealthAssistant() {
       {!healthQuery ? (
         <ProductionHealthAssistant 
           onProceedToRecommendations={handleProceedToRecommendations} 
-          isLoading={isLoading} 
+          isLoading={isLoading}
+          initialSymptoms={initialSymptoms}
         />
       ) : (
         <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-8">

@@ -11,6 +11,7 @@ import { analyzeHealthQuery, AnalysisResult } from '@/utils/health-analysis-shar
 interface QuickHealthInputProps {
   onSubmit: (query: HealthQuery) => void;
   isLoading?: boolean;
+  initialSymptoms?: string;
 }
 
 const exampleQueries = [
@@ -44,8 +45,8 @@ function debounce<T extends (...args: any[]) => any>(
   };
 }
 
-export function QuickHealthInput({ onSubmit, isLoading = false }: QuickHealthInputProps) {
-  const [query, setQuery] = useState<HealthQuery>({ prompt: '' });
+export function QuickHealthInput({ onSubmit, isLoading = false, initialSymptoms }: QuickHealthInputProps) {
+  const [query, setQuery] = useState<HealthQuery>({ prompt: initialSymptoms || '' });
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const { toast } = useToast();
 
