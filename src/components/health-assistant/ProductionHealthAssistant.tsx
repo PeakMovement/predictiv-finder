@@ -15,13 +15,15 @@ import type { SeverityEvaluationResponse } from '@/services/symptom-severity-ser
 interface ProductionHealthAssistantProps {
   onProceedToRecommendations: (query: HealthQuery) => void;
   isLoading?: boolean;
+  initialSymptoms?: string;
 }
 
 type AssistantMode = 'quick' | 'detailed';
 
 export function ProductionHealthAssistant({ 
   onProceedToRecommendations, 
-  isLoading = false 
+  isLoading = false,
+  initialSymptoms
 }: ProductionHealthAssistantProps) {
   const [mode, setMode] = useState<AssistantMode>('quick');
   const [hasCompletedEvaluation, setHasCompletedEvaluation] = useState(false);
@@ -158,7 +160,8 @@ export function ProductionHealthAssistant({
                 <TabsContent value="quick" className="mt-0">
                   <QuickHealthInput 
                     onSubmit={handleQuickSubmit} 
-                    isLoading={isLoading} 
+                    isLoading={isLoading}
+                    initialSymptoms={initialSymptoms}
                   />
                 </TabsContent>
                 
