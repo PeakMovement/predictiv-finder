@@ -210,15 +210,28 @@ export default function PractitionerPortal() {
     setLoading(true);
 
     try {
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
+      const supabaseUrl = "https://zpddlphtoeluytrejioj.supabase.co";
+      const anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZGRscGh0b2VsdXl0cmVqaW9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNzMzMzMsImV4cCI6MjA2Mzk0OTMzM30.jwTdmEafWDvL-k54o9-q-hpeeqvTJPUZDI_Pp2g3nlU";
+
+      const createRes = await fetch(`${supabaseUrl}/functions/v1/create-practitioner`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${anonKey}`,
+        },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (signUpError) throw signUpError;
+      const createData = await createRes.json();
+      if (!createRes.ok) throw new Error(createData.error || 'Failed to create account');
 
-      const user = signUpData.user;
-      if (!user) throw new Error('Authentication failed. Please try again.');
+      const userId = createData.userId;
+      if (!userId) throw new Error('Authentication failed. Please try again.');
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) throw signInError;
+
+      const user = { id: userId };
 
       let photoUrl: string | null = null;
       if (photoFile) {
