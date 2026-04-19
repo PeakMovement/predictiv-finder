@@ -8,8 +8,8 @@ import Services from "./pages/Services";
 import Professionals from "./pages/Professionals";
 import SuccessStories from "./pages/SuccessStories";
 import NotFound from "./pages/NotFound";
-import ProfessionalSignup from "./pages/ProfessionalSignup";
 import ProfessionalLogin from "./pages/ProfessionalLogin";
+import PractitionerPortal from "./pages/PractitionerPortal";
 import ProfessionalDashboard from "./pages/ProfessionalDashboard";
 import TestSymptomIntake from "./pages/TestSymptomIntake";
 import { EnhancedErrorBoundary } from "./components/enhanced-error-handling";
@@ -58,7 +58,8 @@ function App() {
               <Route path="/services" element={<Services />} />
               <Route path="/professionals" element={<Professionals />} />
               <Route path="/success-stories" element={<SuccessStories />} />
-              <Route path="/professional-signup" element={<ProfessionalSignup />} />
+              <Route path="/join/predictiv-practitioners" element={<PractitionerPortal />} />
+              <Route path="/professional-signup" element={<NotFound />} />
               <Route path="/pro-login" element={<ProfessionalLogin />} />
               <Route path="/professional-dashboard" element={<ProfessionalDashboard />} />
               <Route path="/test/symptom-intake" element={<TestSymptomIntake />} />
