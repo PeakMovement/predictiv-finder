@@ -6,19 +6,16 @@ body,
   width: 100%;
   margin: 0;
   padding: 0;
-  background: black; /* fallback behind gradient */
+  background: hsl(222, 20%, 9%);
   overflow-x: hidden;
 }
 
-/* ENSURE THE APP TAKES FULL VIEWPORT */
 #root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
-  background: linear-gradient(135deg, #0a0118 0%, #120024 50%, #1c0038 100%);
-  color: #fff;
 }
 
 /* LOGO STYLES (KEPT FROM ORIGINAL) */
@@ -30,7 +27,7 @@ body,
 }
 
 .logo:hover {
-  filter: drop-shadow(0 0 2em rgba(139, 92, 246, 0.6));
+  filter: drop-shadow(0 0 2em rgba(59, 130, 246, 0.5));
 }
 
 .logo.react:hover {

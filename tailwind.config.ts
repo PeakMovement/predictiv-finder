@@ -21,6 +21,9 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["Inter", "system-ui", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -109,7 +112,7 @@ export default {
         },
       },
       boxShadow: {
-        glass: "0 0 25px rgba(139, 92, 246, 0.2)",
+        glass: "0 4px 24px rgba(0, 100, 220, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06)",
       },
       borderRadius: {
         lg: "var(--radius)",
