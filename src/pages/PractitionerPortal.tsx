@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ProfessionalService } from '@/services/professional-service';
 import { Button } from '@/components/ui/button';
@@ -111,7 +110,6 @@ const STEPS: { id: Step; label: string; icon: React.ComponentType<{ className?: 
 
 export default function PractitionerPortal() {
   const navigate = useNavigate();
-  const { signUp } = useAuth();
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<Step>(1);
 
@@ -212,10 +210,14 @@ export default function PractitionerPortal() {
     setLoading(true);
 
     try {
-      await signUp(email, password);
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
 
-      const { data: { user } } = await supabase.auth.getUser();
+      if (signUpError) throw signUpError;
+
+      const user = signUpData.user;
       if (!user) throw new Error('Authentication failed. Please try again.');
 
       let photoUrl: string | null = null;
@@ -239,11 +241,6 @@ export default function PractitionerPortal() {
         calendly_url: calendlyUrl,
         photo_url: photoUrl,
         is_approved: false,
-      });
-
-      if (insertError) throw insertError;
-
-      await supabase.from('professionals').update({
         registration_number: registrationNumber,
         governing_body: governingBody,
         years_experience: yearsExperience ? parseInt(yearsExperience) : null,
@@ -255,7 +252,9 @@ export default function PractitionerPortal() {
         consultation_type: consultationType,
         languages,
         expertise_areas: expertiseAreas,
-      } as Record<string, unknown>).eq('user_id', user.id);
+      } as Record<string, unknown>);
+
+      if (insertError) throw insertError;
 
       toast.success('Application submitted! Your profile is under review.');
       navigate('/professional-dashboard');
