@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { HealthQuery, PhysicianRecommendation, findRecommendedPhysicians } from '@/services/physician-recommendation-service';
 import PhysicianCard from '@/components/physician-recommendations/PhysicianCard';
-import { User, MapPin, DollarSign, Stethoscope, CheckCircle, AlertCircle } from 'lucide-react';
+import { User, MapPin, DollarSign, Stethoscope, CircleCheck as CheckCircle, CircleAlert as AlertCircle } from 'lucide-react';
 import { analyzeHealthQuery, AnalysisResult } from '@/utils/health-analysis-shared';
 
 interface HealthAssistantInputProps {
@@ -208,7 +208,7 @@ export const HealthAssistantInput: React.FC<HealthAssistantInputProps> = ({
                 <Stethoscope className="w-8 h-8 text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
               </div>
               <CardTitle className="text-2xl md:text-3xl font-bold text-foreground">
-                AI Health Assistant
+                Predictiv
               </CardTitle>
             </div>
             <CardDescription className="text-base md:text-lg text-subtext max-w-2xl mx-auto px-4">

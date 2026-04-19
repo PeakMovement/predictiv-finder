@@ -8,7 +8,7 @@ import { EmergencyBanner } from './EmergencyBanner';
 import { EscalationOverlay } from './EscalationOverlay';
 import { useSeverity } from '@/context/SeverityContext';
 import { useEscalation } from '@/hooks/useEscalation';
-import { Stethoscope, ClipboardList, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Stethoscope, ClipboardList, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle } from 'lucide-react';
 import type { HealthQuery } from '@/services/physician-recommendation-service';
 import type { SeverityEvaluationResponse } from '@/services/symptom-severity-service';
 
@@ -128,7 +128,7 @@ export function ProductionHealthAssistant({
                   <Stethoscope className="w-8 h-8 text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
                 </div>
                 <CardTitle className="text-2xl md:text-3xl font-bold text-foreground">
-                  AI Health Assistant
+                  Predictiv
                 </CardTitle>
               </div>
               <CardDescription className="text-base text-muted-foreground max-w-2xl mx-auto">

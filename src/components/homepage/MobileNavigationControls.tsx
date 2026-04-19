@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ArrowLeft, Home, Menu } from 'lucide-react';
+import { ArrowLeft, Chrome as Home, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AppStage } from '@/types/app';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -25,7 +25,7 @@ const stageLabels: Record<AppStage, string> = {
   'category-selector': 'Select Categories',
   'category-questionnaire': 'Health Questionnaire',
   'practitioner-list': 'Find Practitioners',
-  'ai-input': 'AI Health Assistant',
+  'ai-input': 'Predictiv',
   'ai-plans': 'Your Health Plans',
   'plan-details': 'Plan Details'
 };

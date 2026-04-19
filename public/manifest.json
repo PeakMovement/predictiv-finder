@@ -39,8 +39,8 @@
   "categories": ["health", "medical", "lifestyle"],
   "shortcuts": [
     {
-      "name": "AI Health Assistant",
-      "short_name": "AI Assistant",
+      "name": "Predictiv",
+      "short_name": "Predictiv",
       "description": "Get instant health recommendations",
       "url": "/?ai=true",
       "icons": [

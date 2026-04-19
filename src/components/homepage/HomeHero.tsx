@@ -65,7 +65,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
             className="bg-health-purple hover:bg-health-purple-dark text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
           >
             <Brain className="h-5 w-5" />
-            AI Health Assistant
+            Predictiv
           </Button>
           <Button 
             size="lg" 
