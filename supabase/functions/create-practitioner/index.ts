@@ -4,12 +4,16 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey, apikey",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, apikey, Apikey",
 };
 
 Deno.serve(async (req: Request) => {
+  // 1. Handle Preflight Request
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 200, headers: corsHeaders });
+    return new Response("ok", { 
+      status: 200, 
+      headers: corsHeaders 
+    });
   }
 
   try {
@@ -18,37 +22,60 @@ Deno.serve(async (req: Request) => {
     if (!email || !password) {
       return new Response(
         JSON.stringify({ error: "Email and password are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
       );
     }
 
+    // Initialize Admin Client
     const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { auth: { autoRefreshToken: false, persistSession: false } }
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
     );
 
-    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+    // 2. Create User via Admin Auth
+    const { data, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true,
+      email_confirm: true, // Auto-confirm so they can sign in immediately
     });
 
-    if (error) {
+    if (createError) {
       return new Response(
-        JSON.stringify({ error: error.message }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: createError.message }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
       );
     }
 
+    // 3. Success Response
     return new Response(
       JSON.stringify({ userId: data.user.id }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { 
+        status: 200, 
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      }
     );
+
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ 
+        error: err instanceof Error ? err.message : "An unexpected server error occurred" 
+      }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      }
     );
   }
 });
