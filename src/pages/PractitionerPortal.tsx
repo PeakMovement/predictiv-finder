@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '@/integrations/supabase/client';
 import { ProfessionalService } from '@/services/professional-service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -210,14 +210,12 @@ export default function PractitionerPortal() {
     setLoading(true);
 
     try {
-      const supabaseUrl = "https://zpddlphtoeluytrejioj.supabase.co";
-      const anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZGRscGh0b2VsdXl0cmVqaW9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNzMzMzMsImV4cCI6MjA2Mzk0OTMzM30.jwTdmEafWDvL-k54o9-q-hpeeqvTJPUZDI_Pp2g3nlU";
-
-      const createRes = await fetch(`${supabaseUrl}/functions/v1/create-practitioner`, {
+      const createRes = await fetch(`${SUPABASE_URL}/functions/v1/create-practitioner`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${anonKey}`,
+          'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+          'apikey': SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({ email, password }),
       });
