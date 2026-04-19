@@ -48,7 +48,7 @@ function App() {
   return (
     <ThemeProvider defaultTheme="dark">
       <ToastProvider>
-        <div className="app fixed inset-0 z-0 flex flex-col overflow-hidden bg-background text-foreground transition-colors duration-300">
+        <div className="app fixed inset-0 z-0 flex flex-col overflow-y-auto bg-background text-foreground transition-colors duration-300">
           <ThemeToggle />
           <EnhancedErrorBoundary key={errorKey} resetKeys={[resetKeys]} fallback={PlanGenerationErrorFallbackAdapter}>
             <Routes>

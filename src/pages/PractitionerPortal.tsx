@@ -268,7 +268,7 @@ export default function PractitionerPortal() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0f1a] flex flex-col">
+    <div className="min-h-screen bg-[#0a0f1a] flex flex-col overflow-y-auto">
       {/* Header */}
       <div className="border-b border-white/10 bg-[#0d1321]/80 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-6 py-5 flex items-center justify-between">
@@ -421,7 +421,7 @@ export default function PractitionerPortal() {
                       />
                     </div>
                     <div>
-                      <Label className="text-white/70 text-sm">Contact number *</Label>
+                      <Label className="text-white/70 text-sm">Business Number *</Label>
                       <Input
                         value={contactNumber}
                         onChange={(e) => setContactNumber(e.target.value)}
