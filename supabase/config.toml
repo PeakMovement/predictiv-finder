@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.symptom-severity-evaluator]
 verify_jwt = true
+
+[functions.create-practitioner]
+verify_jwt = false
