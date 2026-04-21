@@ -215,52 +215,85 @@ export type Database = {
       }
       professionals: {
         Row: {
+          bio: string | null
           calendly_url: string
+          consultation_type: string | null
+          contact_number: string | null
           created_at: string
+          expertise_areas: string[]
           google_reviews_url: string | null
+          governing_body: string | null
           id: string
+          institution: string | null
           is_approved: boolean
+          languages: string[]
           location: string | null
           name: string
           photo_url: string | null
+          practice_name: string | null
           price_max: number | null
           price_min: number | null
           profession: string
+          qualification: string | null
+          registration_number: string | null
           specialities: string[]
           updated_at: string
           user_id: string
+          years_experience: number | null
         }
         Insert: {
+          bio?: string | null
           calendly_url: string
+          consultation_type?: string | null
+          contact_number?: string | null
           created_at?: string
+          expertise_areas?: string[]
           google_reviews_url?: string | null
+          governing_body?: string | null
           id?: string
+          institution?: string | null
           is_approved?: boolean
+          languages?: string[]
           location?: string | null
           name: string
           photo_url?: string | null
+          practice_name?: string | null
           price_max?: number | null
           price_min?: number | null
           profession: string
+          qualification?: string | null
+          registration_number?: string | null
           specialities?: string[]
           updated_at?: string
           user_id: string
+          years_experience?: number | null
         }
         Update: {
+          bio?: string | null
           calendly_url?: string
+          consultation_type?: string | null
+          contact_number?: string | null
           created_at?: string
+          expertise_areas?: string[]
           google_reviews_url?: string | null
+          governing_body?: string | null
           id?: string
+          institution?: string | null
           is_approved?: boolean
+          languages?: string[]
           location?: string | null
           name?: string
           photo_url?: string | null
+          practice_name?: string | null
           price_max?: number | null
           price_min?: number | null
           profession?: string
+          qualification?: string | null
+          registration_number?: string | null
           specialities?: string[]
           updated_at?: string
           user_id?: string
+          years_experience?: number | null
         }
         Relationships: []
       }
