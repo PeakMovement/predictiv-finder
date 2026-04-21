@@ -631,7 +631,57 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      practitioners: {
+        Row: {
+          calendly_url: string | null
+          created_at: string | null
+          google_reviews_url: string | null
+          id: string | null
+          is_approved: boolean | null
+          location: string | null
+          name: string | null
+          photo_url: string | null
+          price_max: number | null
+          price_min: number | null
+          profession: string | null
+          specialities: string[] | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          calendly_url?: string | null
+          created_at?: string | null
+          google_reviews_url?: string | null
+          id?: string | null
+          is_approved?: boolean | null
+          location?: string | null
+          name?: string | null
+          photo_url?: string | null
+          price_max?: number | null
+          price_min?: number | null
+          profession?: string | null
+          specialities?: string[] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          calendly_url?: string | null
+          created_at?: string | null
+          google_reviews_url?: string | null
+          id?: string | null
+          is_approved?: boolean | null
+          location?: string | null
+          name?: string | null
+          photo_url?: string | null
+          price_max?: number | null
+          price_min?: number | null
+          profession?: string | null
+          specialities?: string[] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       is_owner: { Args: { _user_id: string }; Returns: boolean }
