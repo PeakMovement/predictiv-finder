@@ -76,6 +76,10 @@ export default function Landing() {
             <span>Purpose-built for South Africa</span>
             <span className="w-1 h-1 rounded-full bg-border" />
             <span>Localized Guidance</span>
+            <span className="w-1 h-1 rounded-full bg-border" />
+            <Link to="/privacy" className="hover:text-foreground underline-offset-4 hover:underline">
+              Privacy
+            </Link>
           </div>
         </div>
       </div>
