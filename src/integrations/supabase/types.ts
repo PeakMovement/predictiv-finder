@@ -213,6 +213,33 @@ export type Database = {
         }
         Relationships: []
       }
+      popia_consents: {
+        Row: {
+          consent_version: string
+          granted_at: string
+          id: string
+          ip_hash: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          consent_version: string
+          granted_at?: string
+          id?: string
+          ip_hash?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          consent_version?: string
+          granted_at?: string
+          id?: string
+          ip_hash?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       professionals: {
         Row: {
           bio: string | null
