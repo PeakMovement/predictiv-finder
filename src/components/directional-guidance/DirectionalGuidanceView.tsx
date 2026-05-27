@@ -153,10 +153,12 @@ export const DirectionalGuidanceView = ({
                   </h3>
                 </div>
                 <p className="text-2xl font-bold text-foreground">
-                  {priceEstimate?.formatted ?? 'Not enough data'}
+                  {aiPriceLabel ?? priceEstimate?.formatted ?? 'Not enough data'}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {priceEstimate
+                  {aiPriceLabel
+                    ? `Typical SA private rate for ${primarySpecialty?.toLowerCase() ?? 'this specialty'}.`
+                    : priceEstimate
                     ? `Based on ${priceEstimate.sampleSize} listed practitioner${
                         priceEstimate.sampleSize === 1 ? '' : 's'
                       }${primarySpecialty ? ` (${primarySpecialty})` : ''}.`
