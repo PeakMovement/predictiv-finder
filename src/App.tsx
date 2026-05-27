@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import "./App.css";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import AIHealthAssistant from "./pages/AIHealthAssistant";
 import Index from "./pages/Index";
 import HowItWorks from "./pages/HowItWorks";
@@ -18,6 +18,7 @@ import { ToastProvider } from "./components/ui/toast-provider";
 import { Toaster } from "./components/ui/toaster";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { ThemeToggle } from "./components/ThemeToggle";
+import { PUBLIC_LAUNCH_MODE } from "./config/launchMode";
 
 function App() {
   const [errorKey, setErrorKey] = useState("initial");
@@ -26,24 +27,21 @@ function App() {
   // 🎯 Handle incoming messages from Predictiv
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      // ✅ Verify origin (Predictiv main app)
       if (!event.origin.includes("predictivfinalux.lovable.app") && !event.origin.includes("localhost")) return;
-
-      // ✅ Directly navigate to AI Health Assistant page
       if (event.data?.action === "goToAIHealthAssistant") {
-        // Jump straight to the assistant page (now at root)
         navigate("/", { replace: true });
-
-        // Optional: scroll to top for cleaner view
         setTimeout(() => window.scrollTo(0, 0), 200);
       }
     };
-
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, [navigate]);
 
   const resetKeys = () => setErrorKey(`reset-${Date.now()}`);
+
+  // In public launch mode, hidden routes redirect to the assistant.
+  const Hidden = () => <Navigate to="/" replace />;
+  const gate = (el: JSX.Element) => (PUBLIC_LAUNCH_MODE ? <Hidden /> : el);
 
   return (
     <ThemeProvider defaultTheme="dark">
@@ -53,15 +51,15 @@ function App() {
           <EnhancedErrorBoundary key={errorKey} resetKeys={[resetKeys]} fallback={PlanGenerationErrorFallbackAdapter}>
             <Routes>
               <Route path="/" element={<AIHealthAssistant />} />
-              <Route path="/explore" element={<Index />} />
-              <Route path="/how-it-works" element={<HowItWorks />} />
-              <Route path="/services" element={<Services />} />
-              <Route path="/professionals" element={<Professionals />} />
-              <Route path="/success-stories" element={<SuccessStories />} />
-              <Route path="/join/predictiv-practitioners" element={<PractitionerPortal />} />
+              <Route path="/explore" element={gate(<Index />)} />
+              <Route path="/how-it-works" element={gate(<HowItWorks />)} />
+              <Route path="/services" element={gate(<Services />)} />
+              <Route path="/professionals" element={gate(<Professionals />)} />
+              <Route path="/success-stories" element={gate(<SuccessStories />)} />
+              <Route path="/join/predictiv-practitioners" element={gate(<PractitionerPortal />)} />
               <Route path="/professional-signup" element={<NotFound />} />
-              <Route path="/pro-login" element={<ProfessionalLogin />} />
-              <Route path="/professional-dashboard" element={<ProfessionalDashboard />} />
+              <Route path="/pro-login" element={gate(<ProfessionalLogin />)} />
+              <Route path="/professional-dashboard" element={gate(<ProfessionalDashboard />)} />
               <Route path="/test/symptom-intake" element={<TestSymptomIntake />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

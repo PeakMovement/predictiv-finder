@@ -83,7 +83,7 @@ const extractLocation = (prompt: string): string | undefined => {
 /**
  * Analyzes health issue text to extract medical specialties
  */
-const analyzeHealthIssue = (issue: string): string[] => {
+export const analyzeHealthIssue = (issue: string): string[] => {
   const issueLower = issue.toLowerCase();
   const specialties: string[] = [];
   
