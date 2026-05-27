@@ -16,21 +16,21 @@ interface HealthAssistantInputProps {
 }
 
 const exampleQueries = [
-  { 
-    short: "Lower back pain, R1000, Johannesburg",
-    full: "I've been experiencing lower back pain for 3 weeks, especially when sitting. My budget is R1000 per month and I'd prefer a doctor in Johannesburg."
+  {
+    short: "Lower back pain when sitting at my desk — Johannesburg",
+    full: "I've been getting lower back pain for the past three weeks, mostly when I sit at my desk for long stretches. I'm based in Johannesburg."
   },
-  { 
-    short: "Skin issues - acne, R800, Cape Town",
-    full: "Having skin issues - acne and rash on my face. Budget is R800 and location Cape Town."
+  {
+    short: "Persistent acne on my jawline — Cape Town",
+    full: "I've had stubborn acne along my jawline for a few months and over-the-counter products aren't helping. I'm in Cape Town."
   },
-  { 
-    short: "Chest pain, specialist needed, R1200, Durban",
-    full: "Chest pain and heart palpitations, need specialist consultation. My budget is R1200 per month in Durban."
+  {
+    short: "Tightness in my chest when I exercise — Durban",
+    full: "I sometimes get a tight feeling in my chest when I jog or climb stairs. I'd like to understand who I should see. I'm in Durban."
   },
-  { 
-    short: "Headaches and memory issues, R1500, Pretoria",
-    full: "Frequent headaches and memory issues. Budget R1500, prefer Pretoria location."
+  {
+    short: "Frequent headaches and trouble focusing — Pretoria",
+    full: "I've been having frequent headaches and finding it hard to focus at work. Based in Pretoria."
   }
 ];
 
