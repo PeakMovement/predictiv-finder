@@ -11,6 +11,9 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
+  h1, h2, h3 {
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  }
 
   :root {
     /* Light mode — clean, airy, warm-neutral */
