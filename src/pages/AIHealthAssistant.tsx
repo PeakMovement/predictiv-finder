@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ProductionHealthAssistant } from '@/components/health-assistant/ProductionHealthAssistant';
 import PhysicianRecommendationsView from '@/components/physician-recommendations/PhysicianRecommendationsView';
+import DirectionalGuidanceView from '@/components/directional-guidance/DirectionalGuidanceView';
 import { useSeverity } from '@/context/SeverityContext';
 import { useEscalation } from '@/hooks/useEscalation';
+import { PUBLIC_LAUNCH_MODE } from '@/config/launchMode';
 import type { HealthQuery } from '@/services/physician-recommendation-service';
 
 export default function AIHealthAssistant() {
@@ -69,10 +71,17 @@ export default function AIHealthAssistant() {
         />
       ) : (
         <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-8">
-          <PhysicianRecommendationsView 
-            healthQuery={healthQuery} 
-            onBack={handleBack}
-          />
+          {PUBLIC_LAUNCH_MODE ? (
+            <DirectionalGuidanceView
+              healthQuery={healthQuery}
+              onBack={handleBack}
+            />
+          ) : (
+            <PhysicianRecommendationsView
+              healthQuery={healthQuery}
+              onBack={handleBack}
+            />
+          )}
         </div>
       )}
     </div>
