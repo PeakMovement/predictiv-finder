@@ -62,7 +62,11 @@ export default function AIHealthAssistant() {
   }, [escalationLevel, escalationActions, evaluationResult]);
 
   return (
-    <div className="min-h-screen overflow-y-auto bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="relative min-h-screen overflow-y-auto bg-background">
+      <div
+        aria-hidden
+        className="pointer-events-none fixed top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 blur-[120px] rounded-full -z-0"
+      />
       {!healthQuery ? (
         <ProductionHealthAssistant 
           onProceedToRecommendations={handleProceedToRecommendations} 

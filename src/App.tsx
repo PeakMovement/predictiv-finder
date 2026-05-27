@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import "./App.css";
 import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import AIHealthAssistant from "./pages/AIHealthAssistant";
+import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import HowItWorks from "./pages/HowItWorks";
 import Services from "./pages/Services";
@@ -50,7 +51,7 @@ function App() {
           <ThemeToggle />
           <EnhancedErrorBoundary key={errorKey} resetKeys={[resetKeys]} fallback={PlanGenerationErrorFallbackAdapter}>
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Landing />} />
               <Route path="/assistant" element={<AIHealthAssistant />} />
               <Route path="/explore" element={<Navigate to="/" replace />} />
               <Route path="/how-it-works" element={gate(<HowItWorks />)} />
