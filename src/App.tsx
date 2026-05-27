@@ -13,6 +13,7 @@ import ProfessionalLogin from "./pages/ProfessionalLogin";
 import PractitionerPortal from "./pages/PractitionerPortal";
 import ProfessionalDashboard from "./pages/ProfessionalDashboard";
 import TestSymptomIntake from "./pages/TestSymptomIntake";
+import Privacy from "./pages/Privacy";
 import { EnhancedErrorBoundary } from "./components/enhanced-error-handling";
 import { PlanGenerationErrorFallbackAdapter } from "./components/enhanced-error-handling";
 import { ToastProvider } from "./components/ui/toast-provider";
@@ -53,6 +54,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/assistant" element={<AIHealthAssistant />} />
+              <Route path="/privacy" element={<Privacy />} />
               <Route path="/explore" element={<Navigate to="/" replace />} />
               <Route path="/how-it-works" element={gate(<HowItWorks />)} />
               <Route path="/services" element={gate(<Services />)} />
