@@ -50,8 +50,9 @@ function App() {
           <ThemeToggle />
           <EnhancedErrorBoundary key={errorKey} resetKeys={[resetKeys]} fallback={PlanGenerationErrorFallbackAdapter}>
             <Routes>
-              <Route path="/" element={<AIHealthAssistant />} />
-              <Route path="/explore" element={gate(<Index />)} />
+              <Route path="/" element={<Index />} />
+              <Route path="/assistant" element={<AIHealthAssistant />} />
+              <Route path="/explore" element={<Navigate to="/" replace />} />
               <Route path="/how-it-works" element={gate(<HowItWorks />)} />
               <Route path="/services" element={gate(<Services />)} />
               <Route path="/professionals" element={gate(<Professionals />)} />
