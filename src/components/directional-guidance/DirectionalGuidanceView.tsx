@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Stethoscope, Wallet, ListChecks, Loader2 } from 'lucide-react';
+import { ArrowLeft, Stethoscope, Wallet, ListChecks, Loader2, Sparkles } from 'lucide-react';
 import { DisclaimerBanner } from './DisclaimerBanner';
 import {
   analyzeHealthIssue,
   type HealthQuery,
 } from '@/services/physician-recommendation-service';
 import { estimatePriceRange, type PriceEstimate } from '@/services/price-estimate-service';
+import type { AiAnalysis } from '@/types/ai-analysis';
 
 interface DirectionalGuidanceViewProps {
   healthQuery: HealthQuery;
   onBack: () => void;
+  aiAnalysis?: AiAnalysis | null;
 }
 
 /**
@@ -46,6 +48,7 @@ const summariseConcern = (prompt: string): string => {
 export const DirectionalGuidanceView = ({
   healthQuery,
   onBack,
+  aiAnalysis,
 }: DirectionalGuidanceViewProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [specialties, setSpecialties] = useState<string[]>([]);
