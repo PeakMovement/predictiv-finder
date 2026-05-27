@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.create-practitioner]
 verify_jwt = false
+
+[functions.analyze-health-concern]
+verify_jwt = false
