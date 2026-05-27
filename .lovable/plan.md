@@ -1,38 +1,46 @@
 
 ## Goal
-Swap the primary landing page so visitors first see the marketing/HomeHero page (currently at `/explore`) instead of the AI Health Assistant. The assistant moves to `/assistant`.
+Implement the chosen "Editorial Glass" direction at `/` and make every reachable page (`/` and `/assistant`, plus the 404) share the same visual language: deep dark background, single blue primary `hsl(210 90% 56%)`, soft radial blue glow, glassmorphic cards (`bg-card/50 border-border backdrop-blur-md rounded-2xl`), Plus Jakarta Sans display + Inter body, disclaimer chip styling.
 
 ## Changes
 
-### 1. Routing (`src/App.tsx`)
-- `/` → `Index` (the HomeHero page).
-- `/assistant` → `AIHealthAssistant`.
-- `/explore` → redirect to `/` (was the HomeHero route).
-- Keep all other `gate()`-protected routes unchanged (still redirected to `/` in launch mode).
-- Update the `Hidden` redirect target so launch-mode gated routes still send users to `/` (now the landing).
+### 1. New `src/pages/Landing.tsx`
+Build the selected prototype using semantic tokens (no hard-coded HSL):
+- Disclaimer chip (`bg-primary/10 border border-primary/20`, pulsing dot)
+- Hero: "Navigate Your Health / With Certainty." — `text-foreground` + `text-primary` accent
+- Expanded warm subhead (3–4 sentences covering plain-language summary, Rand pricing, and which specialist to see)
+- 3-card glass trio: The Summary / SA Pricing / The Expert
+- Primary CTA → `/assistant` with blue glow on hover
+- Trust line: "Purpose-built for South Africa · Localized Guidance"
+- Radial primary glow behind hero (`bg-primary/10 blur-[120px]`)
 
-### 2. HomeHero CTAs (`src/components/homepage/HomeHero.tsx` and `src/components/AppContent.tsx` if it wires nav)
-- "Predictiv" / AI button → navigate to `/assistant` instead of internal stage switch.
-- In `PUBLIC_LAUNCH_MODE`, hide the launch-gated CTAs/cards that link to `/professionals`, `/success-stories`, "Browse Categories", dashboard, and stats block — leaving a clean landing with a single primary CTA: "Start with Predictiv" → `/assistant`.
-- Replace remaining `text-health-purple` / `bg-health-purple` classes with semantic tokens (`text-primary`, `bg-primary`) to comply with the brand memory.
+### 2. Route `/` to `Landing` (`src/App.tsx`)
+Replace `<Route path="/" element={<Index />} />` with `<Route path="/" element={<Landing />} />`. `Index`/`AppContent` stay in the codebase (launch-mode hidden) but no longer render their teal→purple gradient on `/`.
 
-### 3. Header (`src/components/Header.tsx`)
-- Logo link target stays `/` (now landing). No nav changes needed; launch mode already hides links.
+### 3. Align `/assistant` (`src/pages/AIHealthAssistant.tsx`)
+- Wrap content in the same dark background (`bg-background`) and add the radial glow accent behind the page header so it visually matches the landing.
+- Reuse the disclaimer chip styling at the top of the assistant view (the existing `DisclaimerBanner` already covers content; we'll restyle it to match the chip — uppercase tracked label, primary/10 background, pulsing dot).
 
-### 4. `index.html`
-- Update `<title>` and meta description to reflect the landing page (marketing-first) rather than the assistant.
+### 4. Align `DisclaimerBanner` (`src/components/directional-guidance/DisclaimerBanner.tsx`)
+Restyle to the chip pattern from the prototype so it reads as the same system element on both pages.
 
-### 5. Memory update
-- Update `mem://index.md` Core routing rule: `/` = landing (HomeHero, launch-safe), `/assistant` = directional assistant, gated routes still redirect to `/`.
-- Update `mem://navigation/default-landing-page` and `mem://features/public-launch-mode` to reflect the new entry point.
+### 5. Align `NotFound` (`src/pages/NotFound.tsx`)
+Same dark surface, same hero treatment, link back to `/` styled like the primary CTA.
+
+### 6. Typography (`src/index.css`)
+Add `@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');` and set headings (`h1, h2, h3`) to Plus Jakarta Sans via a base layer rule; body stays Inter.
+
+### 7. Memory
+Append a memory file `mem://design/editorial-glass-system` capturing the locked design system (Plus Jakarta headings, radial primary glow, glass card pattern, chip pattern) and reference it from the index.
 
 ## Out of scope
-- No backend, edge function, DB, or assistant-logic changes.
-- No redesign of HomeHero beyond removing hidden-feature CTAs and swapping purple → primary tokens.
-- Disclaimer banner, severity logic, and price/specialty output on `/assistant` remain exactly as-is.
+- No new copy beyond hero/cards/disclaimer/trust line.
+- No changes to gated routes (still redirect to `/`).
+- No backend, RLS, or edge-function changes.
+- No changes to the assistant's underlying logic — just surface styling.
 
 ## Acceptance
-- Visiting `/` shows the HomeHero landing with one prominent CTA to the assistant.
-- Visiting `/assistant` shows the current Directional Guidance experience unchanged.
-- `/explore` and other gated routes redirect to `/`.
-- No purple/legacy tokens left in HomeHero.
+- `/` renders the Editorial Glass landing, no teal or purple anywhere.
+- `/assistant` shares the same background, glow, chip pattern, card styling, and typography as `/`.
+- `NotFound` matches the system.
+- Light mode still works (tokens, not raw HSL).
