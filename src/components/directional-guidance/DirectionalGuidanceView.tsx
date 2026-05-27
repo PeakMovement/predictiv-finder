@@ -74,9 +74,22 @@ export const DirectionalGuidanceView = ({
     };
   }, [healthQuery]);
 
-  const primarySpecialty = specialties[0] ?? null;
-  const planSteps = buildPlanSteps(primarySpecialty);
-  const summary = summariseConcern(healthQuery.prompt);
+  const primarySpecialty = aiAnalysis?.suggested_specialty ?? specialties[0] ?? null;
+  const planSteps =
+    aiAnalysis?.next_steps && aiAnalysis.next_steps.length > 0
+      ? aiAnalysis.next_steps
+      : buildPlanSteps(specialties[0] ?? null);
+  const summary = aiAnalysis?.concern_summary ?? summariseConcern(healthQuery.prompt);
+  const aiPriceLabel = aiAnalysis
+    ? `R${aiAnalysis.price_range_zar.min.toLocaleString()} – R${aiAnalysis.price_range_zar.max.toLocaleString()}`
+    : null;
+  const understoodChips = aiAnalysis
+    ? [
+        ...aiAnalysis.symptoms.slice(0, 4),
+        aiAnalysis.duration ?? null,
+        aiAnalysis.body_region ?? null,
+      ].filter(Boolean) as string[]
+    : [];
 
   return (
     <div className="w-full max-w-3xl mx-auto py-6 animate-fade-in space-y-6">
@@ -102,11 +115,30 @@ export const DirectionalGuidanceView = ({
         <>
           {/* Concern summary */}
           <Card className="shadow-glass border border-glass-border bg-glass backdrop-blur-xl">
-            <CardContent className="p-6 space-y-2">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                Your concern
-              </h2>
+            <CardContent className="p-6 space-y-3">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  Your concern
+                </h2>
+                {aiAnalysis && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-primary">
+                    <Sparkles className="h-3 w-3" /> AI understood
+                  </span>
+                )}
+              </div>
               <p className="text-base text-foreground leading-relaxed">{summary}</p>
+              {understoodChips.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {understoodChips.map((chip) => (
+                    <span
+                      key={chip}
+                      className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary"
+                    >
+                      {chip}
+                    </span>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
