@@ -33,8 +33,9 @@ export default defineConfig(({ mode }) => ({
           // Split vendor chunks for better caching
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'ui-vendor': ['lucide-react'],
-          // Fix: Reference only existing utility files
-          'utils-lib': ['/src/utils/cache.ts'] // Removed reference to non-existent formatters.ts
+          // Note: a 'utils-lib' entry used to live here pointing at
+          // '/src/utils/cache.ts'. Rollup never matched that id, so it only
+          // ever produced an empty 0 kB chunk and a build warning. Removed.
         }
       }
     },
