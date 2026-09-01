@@ -43,7 +43,7 @@ export function useEscalation(): EscalationActions {
     }
 
     // Create deterministic key from evaluation
-    const evalKey = `${evaluationResult.overall_severity}:${evaluationResult.red_flags.sort().join(',')}:${evaluationResult.evaluated_at}`;
+    const evalKey = `${evaluationResult.overall_severity}:${[...evaluationResult.red_flags].sort().join(',')}:${evaluationResult.evaluated_at}`;
     
     // Prevent duplicate triggers within same component lifecycle
     if (lastTriggeredKey.current === evalKey) {
