@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getApprovedProfessionals } from "@/lib/supabase";
 import { PractitionerCard } from "@/components/PractitionerCard";
-import { SITE_URL, itemListJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/seo";
+import { SITE_URL, itemListJsonLd, breadcrumbJsonLd, faqJsonLd, safeJsonLd } from "@/lib/seo";
 
 // Pilot suburb list. Rondebosch is the launch target; add the next suburb
 // here once it has real, approved practitioners in the professionals table.
@@ -86,9 +86,9 @@ export default async function SuburbProfessionPage({
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-16">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(itemListLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(faqLd) }} />
 
       <nav className="text-sm text-marble/50">
         <Link href="/">Home</Link> / <Link href="/find-a-practitioner">Find a Practitioner</Link> /{" "}

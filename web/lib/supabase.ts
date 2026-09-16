@@ -45,13 +45,18 @@ export async function getApprovedProfessionals(filters?: {
   return (data ?? []) as Professional[];
 }
 
-export async function getProfessionalBySlug(slug: string) {
-  const { data, error } = await supabase
-    .from("professionals")
-    .select("*")
-    .eq("slug", slug)
-    .eq("is_approved", true)
-    .maybeSingle();
+// Cards and the sitemap link to `/practitioner/${slug ?? id}`, since most
+// rows don't have a slug set yet. Accept either here so that fallback
+// actually resolves instead of 404ing.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export async function getProfessionalBySlug(slugOrId: string) {
+  const query = supabase.from("professionals").select("*").eq("is_approved", true);
+  const { data, error } = await (
+    UUID_RE.test(slugOrId)
+      ? query.or(`slug.eq.${slugOrId},id.eq.${slugOrId}`)
+      : query.eq("slug", slugOrId)
+  ).maybeSingle();
   if (error) throw error;
   return data as Professional | null;
 }

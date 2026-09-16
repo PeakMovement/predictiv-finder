@@ -76,3 +76,11 @@ export function faqJsonLd(pairs: { question: string; answer: string }[]) {
     })),
   };
 }
+
+// Practitioner bios/names are practitioner-supplied text that flows straight
+// into JSON-LD <script> tags. JSON.stringify alone doesn't escape "</", so a
+// bio containing "</script><script>..." could break out of the tag and
+// execute. Escape it before ever handing JSON-LD to dangerouslySetInnerHTML.
+export function safeJsonLd(data: unknown): string {
+  return JSON.stringify(data).replace(/</g, "\\u003c");
+}

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getProfessionalBySlug } from "@/lib/supabase";
-import { localBusinessJsonLd, breadcrumbJsonLd, SITE_URL } from "@/lib/seo";
+import { localBusinessJsonLd, breadcrumbJsonLd, SITE_URL, safeJsonLd } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -51,8 +51,8 @@ export default async function PractitionerProfilePage({
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbLd) }} />
 
       <h1 className="text-3xl font-serif font-medium">{p.name}</h1>
       <p className="mt-1 text-marble/70">
