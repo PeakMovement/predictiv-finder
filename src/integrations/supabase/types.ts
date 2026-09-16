@@ -253,8 +253,11 @@ export type Database = {
           id: string
           institution: string | null
           is_approved: boolean
+          is_featured: boolean
           languages: string[]
+          latitude: number | null
           location: string | null
+          longitude: number | null
           name: string
           photo_url: string | null
           practice_name: string | null
@@ -262,8 +265,12 @@ export type Database = {
           price_min: number | null
           profession: string
           qualification: string | null
+          rating: number | null
           registration_number: string | null
+          review_count: number | null
+          slug: string | null
           specialities: string[]
+          suburb: string | null
           updated_at: string
           user_id: string
           years_experience: number | null
@@ -280,8 +287,11 @@ export type Database = {
           id?: string
           institution?: string | null
           is_approved?: boolean
+          is_featured?: boolean
           languages?: string[]
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           name: string
           photo_url?: string | null
           practice_name?: string | null
@@ -289,8 +299,12 @@ export type Database = {
           price_min?: number | null
           profession: string
           qualification?: string | null
+          rating?: number | null
           registration_number?: string | null
+          review_count?: number | null
+          slug?: string | null
           specialities?: string[]
+          suburb?: string | null
           updated_at?: string
           user_id: string
           years_experience?: number | null
@@ -307,8 +321,11 @@ export type Database = {
           id?: string
           institution?: string | null
           is_approved?: boolean
+          is_featured?: boolean
           languages?: string[]
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           name?: string
           photo_url?: string | null
           practice_name?: string | null
@@ -316,8 +333,12 @@ export type Database = {
           price_min?: number | null
           profession?: string
           qualification?: string | null
+          rating?: number | null
           registration_number?: string | null
+          review_count?: number | null
+          slug?: string | null
           specialities?: string[]
+          suburb?: string | null
           updated_at?: string
           user_id?: string
           years_experience?: number | null
