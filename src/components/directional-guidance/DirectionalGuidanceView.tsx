@@ -83,6 +83,14 @@ export const DirectionalGuidanceView = ({
   const aiPriceLabel = aiAnalysis
     ? `R${aiAnalysis.price_range_zar.min.toLocaleString()} – R${aiAnalysis.price_range_zar.max.toLocaleString()}`
     : null;
+  // The AI price is a Gemini-generated guess with no real data behind it
+  // (see supabase/functions/analyze-health-concern). Real, CSV-backed
+  // pricing from actual listed practitioners is more trustworthy whenever
+  // there's enough of a sample to say something meaningful, so it takes
+  // priority; the AI figure is only shown, and only as a clearly-labeled
+  // estimate, when there isn't enough real data.
+  const realPriceLabel =
+    priceEstimate && priceEstimate.sampleSize >= 2 ? priceEstimate.formatted : null;
   const understoodChips = aiAnalysis
     ? [
         ...aiAnalysis.symptoms.slice(0, 4),
@@ -153,15 +161,15 @@ export const DirectionalGuidanceView = ({
                   </h3>
                 </div>
                 <p className="text-2xl font-bold text-foreground">
-                  {aiPriceLabel ?? priceEstimate?.formatted ?? 'Not enough data'}
+                  {realPriceLabel ?? aiPriceLabel ?? 'Not enough data'}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {aiPriceLabel
-                    ? `Typical SA private rate for ${primarySpecialty?.toLowerCase() ?? 'this specialty'}.`
-                    : priceEstimate
-                    ? `Based on ${priceEstimate.sampleSize} listed practitioner${
-                        priceEstimate.sampleSize === 1 ? '' : 's'
+                  {realPriceLabel
+                    ? `Based on ${priceEstimate!.sampleSize} listed practitioner${
+                        priceEstimate!.sampleSize === 1 ? '' : 's'
                       }${primarySpecialty ? ` (${primarySpecialty})` : ''}.`
+                    : aiPriceLabel
+                    ? `AI-estimated range for ${primarySpecialty?.toLowerCase() ?? 'this specialty'} -- not based on real listed prices, treat as a rough guide only.`
                     : 'Try describing the concern in more detail for a tighter estimate.'}
                 </p>
               </CardContent>
