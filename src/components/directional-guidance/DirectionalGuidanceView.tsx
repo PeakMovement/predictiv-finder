@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Stethoscope, Wallet, ListChecks, Loader2, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Stethoscope, Wallet, ListChecks, Loader2, Sparkles } from 'lucide-react';
 import { DisclaimerBanner } from './DisclaimerBanner';
 import {
   analyzeHealthIssue,
@@ -38,6 +38,10 @@ const buildPlanSteps = (specialty: string | null): string[] => {
     'Bring your notes and any prior scans, scripts, or test results to the appointment.',
   ];
 };
+
+const FINDER_BASE_URL =
+  (import.meta.env.VITE_FINDER_URL as string | undefined) ??
+  'https://predictiv.co.za/find-a-practitioner';
 
 const summariseConcern = (prompt: string): string => {
   const trimmed = prompt.trim().replace(/\s+/g, ' ');
@@ -203,6 +207,35 @@ export const DirectionalGuidanceView = ({
               </CardContent>
             </Card>
           </div>
+
+          {/* Find my therapist CTA */}
+          <Card className="shadow-glass border border-primary/30 bg-primary/5 backdrop-blur-xl">
+            <CardContent className="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h3 className="text-base font-semibold text-foreground">
+                  Ready to find someone?
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {primarySpecialty
+                    ? `We'll take you straight to ${primarySpecialty.toLowerCase()}s near you, reviewed and ranked.`
+                    : "We'll take you straight to practitioners near you, reviewed and ranked."}
+                </p>
+              </div>
+              <Button
+                asChild
+                className="shrink-0 gap-2"
+              >
+                <a
+                  href={`${FINDER_BASE_URL}?profession=${encodeURIComponent(
+                    primarySpecialty ?? 'General Practitioner'
+                  )}`}
+                >
+                  Find my {primarySpecialty ?? 'therapist'}
+                  <ArrowRight size={16} />
+                </a>
+              </Button>
+            </CardContent>
+          </Card>
 
           {/* Proposed plan */}
           <Card className="shadow-glass border border-glass-border bg-glass backdrop-blur-xl">
