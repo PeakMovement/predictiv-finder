@@ -1,16 +1,16 @@
 import React, { useState, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { QuickHealthInput } from './QuickHealthInput';
-import { SymptomIntakeForm } from '@/components/symptom-intake';
+import { FindPractitionerTab } from './FindPractitionerTab';
 import { EmergencyBanner } from './EmergencyBanner';
 import { EscalationOverlay } from './EscalationOverlay';
 import { useSeverity } from '@/context/SeverityContext';
 import { useEscalation } from '@/hooks/useEscalation';
-import { Stethoscope, ClipboardList, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle } from 'lucide-react';
+import { Stethoscope, MapPin, Home } from 'lucide-react';
 import type { HealthQuery } from '@/services/physician-recommendation-service';
-import type { SeverityEvaluationResponse } from '@/services/symptom-severity-service';
 
 interface ProductionHealthAssistantProps {
   onProceedToRecommendations: (query: HealthQuery) => void;
@@ -20,23 +20,21 @@ interface ProductionHealthAssistantProps {
 
 type AssistantMode = 'quick' | 'detailed';
 
-export function ProductionHealthAssistant({ 
-  onProceedToRecommendations, 
+export function ProductionHealthAssistant({
+  onProceedToRecommendations,
   isLoading = false,
   initialSymptoms
 }: ProductionHealthAssistantProps) {
   const [mode, setMode] = useState<AssistantMode>('quick');
-  const [hasCompletedEvaluation, setHasCompletedEvaluation] = useState(false);
   const [pendingQuery, setPendingQuery] = useState<HealthQuery | null>(null);
-  
-  const { 
-    setEvaluationResult, 
-    evaluationResult, 
+
+  const {
+    evaluationResult,
     escalationLevel,
     shouldBlockInteraction,  // Single source of truth
     isEscalationAcknowledged,
   } = useSeverity();
-  
+
   // Side effects only - trigger logic is in context
   useEscalation();
 
@@ -46,57 +44,22 @@ export function ProductionHealthAssistant({
       prompt: query.prompt.substring(0, 50) + '...',
       escalationLevel,
     });
-    
+
     // If no severity evaluation, proceed directly
     if (!evaluationResult) {
       onProceedToRecommendations(query);
       return;
     }
-    
+
     // LOCKED RULE: Block only if context says so
     if (shouldBlockInteraction) {
       setPendingQuery(query);
       console.log('[ProductionHealthAssistant] Query blocked - escalation acknowledgment required');
       return;
     }
-    
+
     onProceedToRecommendations(query);
   }, [evaluationResult, shouldBlockInteraction, escalationLevel, onProceedToRecommendations]);
-
-  // Handle detailed symptom evaluation completion
-  const handleEvaluationComplete = useCallback((result: SeverityEvaluationResponse) => {
-    console.log('[ProductionHealthAssistant] Symptom evaluation complete:', {
-      severity: result.overall_severity,
-      redFlags: result.red_flags,
-      resultsCount: result.results.length,
-      timestamp: new Date().toISOString(),
-    });
-    
-    // Store in context - this triggers escalation via useEscalation hook
-    // Note: Setting a new evaluation automatically clears the previous acknowledgment
-    setEvaluationResult(result);
-    setHasCompletedEvaluation(true);
-  }, [setEvaluationResult]);
-
-  // Handle proceeding after evaluation
-  const handleProceedAfterEvaluation = useCallback(() => {
-    // LOCKED RULE: Check context for blocking
-    if (shouldBlockInteraction) {
-      console.log('[ProductionHealthAssistant] Progression blocked - acknowledge escalation first');
-      return;
-    }
-    
-    // Build query from evaluation context
-    const symptomsDescription = evaluationResult?.results
-      .map(r => r.reasoning)
-      .join('; ') || 'General health concern';
-    
-    const query: HealthQuery = {
-      prompt: `Health evaluation: ${symptomsDescription}. Severity: ${evaluationResult?.overall_severity || 'unknown'}.`,
-    };
-    
-    onProceedToRecommendations(query);
-  }, [evaluationResult, shouldBlockInteraction, onProceedToRecommendations]);
 
   // Process pending query when escalation is acknowledged
   React.useEffect(() => {
@@ -107,19 +70,24 @@ export function ProductionHealthAssistant({
     }
   }, [pendingQuery, isEscalationAcknowledged, onProceedToRecommendations]);
 
-  // LOCKED RULE: canProceed derived from single source of truth
-  const canProceed = !shouldBlockInteraction;
-
   return (
     <div className="min-h-screen w-full overflow-x-hidden overflow-y-auto animate-fade-in">
       {/* Escalation overlay - blocks interaction until acknowledged */}
       <EscalationOverlay />
-      
+
       <div className="w-full px-4 md:px-6 py-4 md:py-8">
         <div className="w-full max-w-6xl mx-auto space-y-6">
+          {/* Return to main menu */}
+          <Button variant="ghost" size="sm" asChild className="gap-2 -ml-2">
+            <Link to="/">
+              <Home className="w-4 h-4" />
+              Main Menu
+            </Link>
+          </Button>
+
           {/* Emergency/Severity Banner - persistent reminder */}
           <EmergencyBanner className="mb-2" />
-          
+
           {/* Mode Selector */}
           <Card className="shadow-glass border border-glass-border bg-glass backdrop-blur-xl">
             <CardHeader className="text-center pb-4">
@@ -135,16 +103,12 @@ export function ProductionHealthAssistant({
                 Find the right physician for your health needs
               </CardDescription>
             </CardHeader>
-            
+
             <CardContent className="px-4 md:px-8">
               <Tabs value={mode} onValueChange={(v) => {
                 const newMode = v as AssistantMode;
                 console.log('[ProductionHealthAssistant] Mode changed:', { from: mode, to: newMode });
                 setMode(newMode);
-                // Reset completion state when switching to detailed tab
-                if (newMode === 'detailed') {
-                  setHasCompletedEvaluation(false);
-                }
               }} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="quick" className="flex items-center gap-2">
@@ -152,62 +116,27 @@ export function ProductionHealthAssistant({
                     Quick Search
                   </TabsTrigger>
                   <TabsTrigger value="detailed" className="flex items-center gap-2">
-                    <ClipboardList className="w-4 h-4" />
-                    Detailed Assessment
+                    <MapPin className="w-4 h-4" />
+                    Find a Practitioner
                   </TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="quick" className="mt-0">
-                  <QuickHealthInput 
-                    onSubmit={handleQuickSubmit} 
+                  <QuickHealthInput
+                    onSubmit={handleQuickSubmit}
                     isLoading={isLoading}
                     initialSymptoms={initialSymptoms}
                   />
                 </TabsContent>
-                
+
                 <TabsContent value="detailed" className="mt-0 space-y-6">
                   <div className="text-center mb-4">
                     <p className="text-sm text-muted-foreground">
-                      Provide detailed symptom information for a comprehensive severity assessment
+                      Use your location to browse practitioners near you, ranked by rating and distance
                     </p>
                   </div>
-                  
-                  <SymptomIntakeForm onEvaluationComplete={handleEvaluationComplete} />
-                  
-                  {/* Post-evaluation action */}
-                  {hasCompletedEvaluation && evaluationResult && (
-                    <Card className="border-primary/30 bg-primary/5">
-                      <CardContent className="p-4">
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                          <div className="flex items-center gap-3">
-                            {canProceed ? (
-                              <CheckCircle className="w-5 h-5 text-green-500" />
-                            ) : (
-                              <AlertTriangle className="w-5 h-5 text-amber-500" />
-                            )}
-                            <div>
-                              <p className="font-medium">
-                                Evaluation Complete - {evaluationResult.overall_severity.toUpperCase()} severity
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {canProceed 
-                                  ? 'Ready to find recommended physicians' 
-                                  : 'Please acknowledge the health alert before continuing'}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <Button 
-                            onClick={handleProceedAfterEvaluation}
-                            disabled={!canProceed || isLoading}
-                            className="w-full md:w-auto"
-                          >
-                            {isLoading ? 'Finding Physicians...' : 'Find Physicians'}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
+
+                  <FindPractitionerTab />
                 </TabsContent>
               </Tabs>
             </CardContent>
