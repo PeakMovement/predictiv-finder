@@ -42,3 +42,9 @@ npm run dev
 - `/join` (practitioner sign-up CTA linked from empty listing pages) is not
   built yet in this app; it exists in the old app at
   `../src/pages/PractitionerPortal.tsx` behind `PUBLIC_LAUNCH_MODE`.
+- The old app's assistant flow (`../src/components/directional-guidance/DirectionalGuidanceView.tsx`)
+  links here with a "Find my therapist" CTA, `?profession=X` pre-filled.
+  That link is built from `VITE_FINDER_URL` (defaults to
+  `https://predictiv.co.za/find-a-practitioner`) in the old app's own env --
+  update that once this app actually has a real deploy URL, or the CTA
+  points nowhere real.
