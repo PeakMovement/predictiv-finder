@@ -11,6 +11,8 @@ const PROFESSIONS = [
   "Biokineticist",
   "Dietician",
   "Sports Medicine",
+  "Chiropractor",
+  "General Practitioner",
 ];
 
 export default function FindAPractitionerPage() {

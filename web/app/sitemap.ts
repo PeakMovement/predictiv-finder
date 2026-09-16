@@ -4,7 +4,7 @@ import { posts } from "@/lib/posts";
 import { supabase } from "@/lib/supabase";
 
 const LAUNCH_SUBURBS = ["rondebosch"];
-const LAUNCH_PROFESSIONS = ["physiotherapist", "biokineticist", "dietician"];
+const LAUNCH_PROFESSIONS = ["physiotherapist", "biokineticist", "dietician", "chiropractor", "general-practitioner"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [

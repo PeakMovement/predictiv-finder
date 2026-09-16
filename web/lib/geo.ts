@@ -23,6 +23,9 @@ export const SUBURB_COORDS: Record<string, { lat: number; lng: number }> = {
   "cape-town-cbd": { lat: -33.9249, lng: 18.4241 },
   claremont: { lat: -33.9814, lng: 18.4642 },
   newlands: { lat: -33.9736, lng: 18.4589 },
+  mowbray: { lat: -33.9483, lng: 18.4685 },
+  observatory: { lat: -33.9394, lng: 18.4696 },
+  pinelands: { lat: -33.9309, lng: 18.5119 },
 };
 
 // Ranking score for the listing: real review signal weighted highest,

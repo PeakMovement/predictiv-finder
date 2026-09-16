@@ -11,6 +11,8 @@ const LAUNCH_PROFESSIONS = [
   "physiotherapist",
   "biokineticist",
   "dietician",
+  "chiropractor",
+  "general-practitioner",
 ];
 
 export function generateStaticParams() {
