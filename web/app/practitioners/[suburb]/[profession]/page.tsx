@@ -10,7 +10,6 @@ const LAUNCH_SUBURBS = ["rondebosch"];
 const LAUNCH_PROFESSIONS = [
   "physiotherapist",
   "biokineticist",
-  "dietician",
   "chiropractor",
   "general-practitioner",
 ];

@@ -43,13 +43,20 @@ function stripIdentifiers(text: string): string {
     .replace(/\b\d{10,}\b/g, '[NUM]');
 }
 
-const SYSTEM_PROMPT = `You are a directional triage assistant for South African users. You DO NOT diagnose or treat. Given a free-text health concern, you extract structured information and suggest which type of medical specialist they should consider seeing.
+const ALLOWED_SPECIALTIES = [
+  'General Practitioner',
+  'Physiotherapist',
+  'Chiropractor',
+  'Biokineticist',
+];
+
+const SYSTEM_PROMPT = `You are a directional triage assistant for South African users. You DO NOT diagnose or treat. Given a free-text health concern, you extract structured information and suggest which type of practitioner they should consider seeing.
 
 Hard rules:
 - Output ONLY via the provided tool. Never produce free-form text.
-- Currency is South African Rand (ZAR). Price ranges should reflect typical SA private specialist consultation fees.
-- Suggested specialty must be a real medical specialty (e.g. "General Practitioner", "Dermatologist", "Cardiologist", "Orthopaedic Surgeon", "Physiotherapist", "Psychologist", "ENT Specialist", "Gynaecologist").
-- If the description suggests any red-flag emergency (chest pain with exertion, stroke signs, severe bleeding, suicidal ideation, anaphylaxis, etc.), set severity_hint to "critical" and list red_flags.
+- Currency is South African Rand (ZAR). Price ranges should reflect typical SA private consultation fees.
+- suggested_specialty MUST be exactly one of these four values, nothing else: "General Practitioner", "Physiotherapist", "Chiropractor", "Biokineticist". This platform only lists these four practitioner types — do not suggest a dermatologist, cardiologist, psychologist, or any other specialty, even if it would normally be the best fit. For anything outside musculoskeletal/movement/general-health scope (skin, mental health, cardiac, digestive, eye, urinary, women's health, etc.), suggest "General Practitioner" — a GP can triage and refer onward.
+- If the description suggests any red-flag emergency (chest pain with exertion, stroke signs, severe bleeding, suicidal ideation, anaphylaxis, etc.), set severity_hint to "critical", list red_flags, and make next_steps clearly say to call emergency services or go to the nearest ER immediately — still return one of the four allowed values for suggested_specialty (use "General Practitioner"), since the urgency lives in severity_hint/red_flags/next_steps, not in the specialty label.
 - next_steps must be loose, plain-language bullets — never dosages, never prescriptions.
 - concern_summary: one or two sentences in the user's own framing, sanitised.`;
 
@@ -177,6 +184,15 @@ Deno.serve(async (req) => {
     analysis = JSON.parse(argsStr);
   } catch {
     return json(502, { error: 'ai_invalid_tool_args' });
+  }
+
+  // Defensive clamp: the model is instructed to only return one of the four
+  // listed practitioner types, but never trust an LLM's structured output
+  // blindly -- if it drifts, fall back to General Practitioner rather than
+  // surfacing a specialty this platform doesn't actually list.
+  if (!ALLOWED_SPECIALTIES.includes(analysis?.suggested_specialty)) {
+    console.warn('suggested_specialty outside allowed set, clamping:', analysis?.suggested_specialty);
+    analysis.suggested_specialty = 'General Practitioner';
   }
 
   return json(200, { analysis });

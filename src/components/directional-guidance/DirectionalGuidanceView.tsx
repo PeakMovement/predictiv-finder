@@ -7,7 +7,7 @@ import {
   analyzeHealthIssue,
   type HealthQuery,
 } from '@/services/physician-recommendation-service';
-import { estimatePriceRange, type PriceEstimate } from '@/services/price-estimate-service';
+import { getRealPriceEstimate, type RealPriceEstimate } from '@/services/real-price-estimate-service';
 import type { AiAnalysis } from '@/types/ai-analysis';
 
 interface DirectionalGuidanceViewProps {
@@ -56,7 +56,9 @@ export const DirectionalGuidanceView = ({
 }: DirectionalGuidanceViewProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [specialties, setSpecialties] = useState<string[]>([]);
-  const [priceEstimate, setPriceEstimate] = useState<PriceEstimate | null>(null);
+  const [priceEstimate, setPriceEstimate] = useState<RealPriceEstimate | null>(null);
+
+  const primarySpecialty = aiAnalysis?.suggested_specialty ?? specialties[0] ?? null;
 
   useEffect(() => {
     let cancelled = false;
@@ -64,9 +66,16 @@ export const DirectionalGuidanceView = ({
       setIsLoading(true);
       try {
         const detected = analyzeHealthIssue(healthQuery.prompt);
-        const estimate = await estimatePriceRange(detected);
         if (cancelled) return;
         setSpecialties(detected);
+        // Real pricing comes from the live, approved practitioners in
+        // Supabase -- never from mock/sample data. If there's no real price
+        // data yet for this profession, priceEstimate stays null and the UI
+        // falls back to the clearly-labelled AI estimate instead.
+        const estimate = await getRealPriceEstimate(
+          aiAnalysis?.suggested_specialty ?? detected[0] ?? null
+        );
+        if (cancelled) return;
         setPriceEstimate(estimate);
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -76,9 +85,7 @@ export const DirectionalGuidanceView = ({
     return () => {
       cancelled = true;
     };
-  }, [healthQuery]);
-
-  const primarySpecialty = aiAnalysis?.suggested_specialty ?? specialties[0] ?? null;
+  }, [healthQuery, aiAnalysis]);
   const planSteps =
     aiAnalysis?.next_steps && aiAnalysis.next_steps.length > 0
       ? aiAnalysis.next_steps

@@ -10,8 +10,6 @@ const PROFESSIONS = [
   "All",
   "Physiotherapist",
   "Biokineticist",
-  "Dietician",
-  "Sports Medicine",
   "Chiropractor",
   "General Practitioner",
 ];
@@ -29,7 +27,6 @@ function resolveProfessionParam(raw: string | null): string {
     "general physician": "General Practitioner",
     physio: "Physiotherapist",
     biokinetics: "Biokineticist",
-    dietitian: "Dietician",
   };
   if (alias[norm]) return alias[norm];
   const match = PROFESSIONS.find((p) => p.toLowerCase() === norm);

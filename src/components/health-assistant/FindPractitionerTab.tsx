@@ -13,8 +13,6 @@ const PROFESSIONS = [
   'All',
   'Physiotherapist',
   'Biokineticist',
-  'Dietician',
-  'Sports Medicine',
   'Chiropractor',
   'General Practitioner',
 ];

@@ -52,14 +52,9 @@ const SYMPTOM_MAP: { keywords: string[]; professions: string[]; summary: string 
   },
   {
     keywords: ["sports injury", "sprain", "strain", "pulled muscle"],
-    professions: ["Physiotherapist", "Sports Medicine"],
+    professions: ["Physiotherapist"],
     summary:
-      "A recent sprain or strain is best assessed early by a physiotherapist or sports medicine practitioner to guide safe loading and return to activity.",
-  },
-  {
-    keywords: ["weight loss", "diet", "nutrition", "eating plan"],
-    professions: ["Dietician"],
-    summary: "A registered dietician can build a sustainable, individualised eating plan for this.",
+      "A recent sprain or strain is best assessed early by a physiotherapist to guide safe loading and return to activity.",
   },
   {
     keywords: ["post surgery", "post-surgery", "rehab", "recovering from surgery"],
