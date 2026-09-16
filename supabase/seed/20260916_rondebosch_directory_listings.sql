@@ -1,9 +1,8 @@
--- STAGED, NOT APPLIED. This file was blocked from running automatically by
--- this session's own safety guardrail (writing real production rows is
--- treated differently from a schema migration). Justin needs to review and
--- run this himself (Supabase SQL editor, or ask Claude again with explicit
--- go-ahead) before these 19 real, non-consenting local practices go live
--- on Predictiv.
+-- APPLIED LIVE on 2026-09-16 after Justin's explicit go-ahead in chat. Kept here
+-- for history/reproducibility. (Originally blocked from running automatically by
+-- this session's own safety guardrail, which treats writing real production
+-- rows differently from a schema migration -- it required his explicit
+-- confirmation in chat before running.)
 --
 -- Real practitioners found within ~5km of Rondebosch via public web search,
 -- 2026-09-16. Sourced from each practice's own website/directory listing --
