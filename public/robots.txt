@@ -1,20 +1,8 @@
-
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /pro-login
+Disallow: /professional-dashboard
+Disallow: /test/
 
-# Sitemap and specific paths
 Sitemap: https://predictiv.co.za/sitemap.xml
-
-# Allow all bots to index the site
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
