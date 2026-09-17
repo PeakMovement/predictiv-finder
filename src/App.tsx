@@ -1,19 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import "./App.css";
 import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
-import AIHealthAssistant from "./pages/AIHealthAssistant";
 import Landing from "./pages/Landing";
-import Index from "./pages/Index";
-import HowItWorks from "./pages/HowItWorks";
-import Services from "./pages/Services";
-import Professionals from "./pages/Professionals";
-import SuccessStories from "./pages/SuccessStories";
 import NotFound from "./pages/NotFound";
-import ProfessionalLogin from "./pages/ProfessionalLogin";
-import PractitionerPortal from "./pages/PractitionerPortal";
-import ProfessionalDashboard from "./pages/ProfessionalDashboard";
-import TestSymptomIntake from "./pages/TestSymptomIntake";
-import Privacy from "./pages/Privacy";
 import { EnhancedErrorBoundary } from "./components/enhanced-error-handling";
 import { PlanGenerationErrorFallbackAdapter } from "./components/enhanced-error-handling";
 import { ToastProvider } from "./components/ui/toast-provider";
@@ -21,15 +10,28 @@ import { Toaster } from "./components/ui/toaster";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { PUBLIC_LAUNCH_MODE } from "./config/launchMode";
-import PractitionersIndex from "./pages/site/PractitionersIndex";
-import ProfessionPage from "./pages/site/ProfessionPage";
-import DirectoryPage from "./pages/site/DirectoryPage";
-import BlogIndex from "./pages/site/BlogIndex";
-import BlogPostPage from "./pages/site/BlogPostPage";
-import BlogAdmin from "./pages/site/BlogAdmin";
-import About from "./pages/site/About";
 import { Seo } from "./lib/seo";
 import { routeSeo } from "./seo/site";
+
+// Route-level code splitting: only the homepage ships in the first bundle.
+const AIHealthAssistant = lazy(() => import("./pages/AIHealthAssistant"));
+const Index = lazy(() => import("./pages/Index"));
+const HowItWorks = lazy(() => import("./pages/HowItWorks"));
+const Services = lazy(() => import("./pages/Services"));
+const Professionals = lazy(() => import("./pages/Professionals"));
+const SuccessStories = lazy(() => import("./pages/SuccessStories"));
+const ProfessionalLogin = lazy(() => import("./pages/ProfessionalLogin"));
+const PractitionerPortal = lazy(() => import("./pages/PractitionerPortal"));
+const ProfessionalDashboard = lazy(() => import("./pages/ProfessionalDashboard"));
+const TestSymptomIntake = lazy(() => import("./pages/TestSymptomIntake"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const PractitionersIndex = lazy(() => import("./pages/site/PractitionersIndex"));
+const ProfessionPage = lazy(() => import("./pages/site/ProfessionPage"));
+const DirectoryPage = lazy(() => import("./pages/site/DirectoryPage"));
+const BlogIndex = lazy(() => import("./pages/site/BlogIndex"));
+const BlogPostPage = lazy(() => import("./pages/site/BlogPostPage"));
+const BlogAdmin = lazy(() => import("./pages/site/BlogAdmin"));
+const About = lazy(() => import("./pages/site/About"));
 
 const assistantSeo = routeSeo("/assistant")!;
 const privacySeo = routeSeo("/privacy")!;
@@ -63,6 +65,7 @@ function App() {
         <div className="app fixed inset-0 z-0 flex flex-col overflow-y-auto bg-background text-foreground transition-colors duration-300">
           <ThemeToggle />
           <EnhancedErrorBoundary key={errorKey} resetKeys={[resetKeys]} fallback={PlanGenerationErrorFallbackAdapter}>
+            <Suspense fallback={<div className="min-h-screen" aria-busy="true" />}>
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/assistant" element={<><Seo title={assistantSeo.title} description={assistantSeo.description} path="/assistant" /><AIHealthAssistant /></>} />
@@ -87,6 +90,7 @@ function App() {
               <Route path="/test/symptom-intake" element={<><Seo title="Test | Predictiv" description="" path="/test/symptom-intake" noindex /><TestSymptomIntake /></>} />
               <Route path="*" element={<><Seo title="Page not found | Predictiv" description="This page could not be found." path="/404" noindex /><NotFound /></>} />
             </Routes>
+            </Suspense>
           </EnhancedErrorBoundary>
           <Toaster />
         </div>
