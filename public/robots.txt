@@ -1,3 +1,4 @@
+# Predictiv robots.txt
 User-agent: *
 Allow: /
 Disallow: /admin/
@@ -5,4 +6,32 @@ Disallow: /pro-login
 Disallow: /professional-dashboard
 Disallow: /test/
 
+# AI search and answer engines are welcome to read and cite public pages
+User-agent: GPTBot
+Allow: /
+Disallow: /admin/
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /admin/
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
 Sitemap: https://predictiv.co.za/sitemap.xml
+Sitemap: https://zpddlphtoeluytrejioj.supabase.co/functions/v1/blog-sitemap

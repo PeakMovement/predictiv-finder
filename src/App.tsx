@@ -21,6 +21,18 @@ import { Toaster } from "./components/ui/toaster";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { PUBLIC_LAUNCH_MODE } from "./config/launchMode";
+import PractitionersIndex from "./pages/site/PractitionersIndex";
+import ProfessionPage from "./pages/site/ProfessionPage";
+import DirectoryPage from "./pages/site/DirectoryPage";
+import BlogIndex from "./pages/site/BlogIndex";
+import BlogPostPage from "./pages/site/BlogPostPage";
+import BlogAdmin from "./pages/site/BlogAdmin";
+import About from "./pages/site/About";
+import { Seo } from "./lib/seo";
+import { routeSeo } from "./seo/site";
+
+const assistantSeo = routeSeo("/assistant")!;
+const privacySeo = routeSeo("/privacy")!;
 
 function App() {
   const [errorKey, setErrorKey] = useState("initial");
@@ -53,8 +65,16 @@ function App() {
           <EnhancedErrorBoundary key={errorKey} resetKeys={[resetKeys]} fallback={PlanGenerationErrorFallbackAdapter}>
             <Routes>
               <Route path="/" element={<Landing />} />
-              <Route path="/assistant" element={<AIHealthAssistant />} />
-              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/assistant" element={<><Seo title={assistantSeo.title} description={assistantSeo.description} path="/assistant" /><AIHealthAssistant /></>} />
+              <Route path="/privacy" element={<><Seo title={privacySeo.title} description={privacySeo.description} path="/privacy" /><Privacy /></>} />
+              <Route path="/practitioners" element={<PractitionersIndex />} />
+              <Route path="/practitioners/:profession" element={<ProfessionPage />} />
+              <Route path="/practitioners/:profession/:suburb" element={<DirectoryPage />} />
+              <Route path="/blog" element={<BlogIndex />} />
+              <Route path="/blog/:slug" element={<BlogPostPage />} />
+              <Route path="/admin/blog" element={<BlogAdmin />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/find-a-practitioner" element={<Navigate to="/practitioners" replace />} />
               <Route path="/explore" element={<Navigate to="/" replace />} />
               <Route path="/how-it-works" element={gate(<HowItWorks />)} />
               <Route path="/services" element={gate(<Services />)} />
@@ -64,8 +84,8 @@ function App() {
               <Route path="/professional-signup" element={<NotFound />} />
               <Route path="/pro-login" element={gate(<ProfessionalLogin />)} />
               <Route path="/professional-dashboard" element={gate(<ProfessionalDashboard />)} />
-              <Route path="/test/symptom-intake" element={<TestSymptomIntake />} />
-              <Route path="*" element={<NotFound />} />
+              <Route path="/test/symptom-intake" element={<><Seo title="Test | Predictiv" description="" path="/test/symptom-intake" noindex /><TestSymptomIntake /></>} />
+              <Route path="*" element={<><Seo title="Page not found | Predictiv" description="This page could not be found." path="/404" noindex /><NotFound /></>} />
             </Routes>
           </EnhancedErrorBoundary>
           <Toaster />

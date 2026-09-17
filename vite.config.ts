@@ -3,12 +3,14 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { componentTagger } from 'lovable-tagger';
+import { seoPrerender } from './vite-plugins/seo-prerender';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === 'development' && componentTagger(),
+    seoPrerender(),
   ].filter(Boolean),
   resolve: {
     alias: {
