@@ -63,6 +63,9 @@ export function useSeo(opts: SeoOptions) {
     setMeta('name', 'twitter:image', image);
     setCanonical(url);
 
+    // The build prerenders static JSON-LD for the first page load; once React
+    // takes over, this hook owns structured data, so drop those to avoid duplicates.
+    document.querySelectorAll('script[data-prerendered]').forEach((el) => el.remove());
     const id = 'page-jsonld';
     document.getElementById(id)?.remove();
     if (opts.jsonLd) {

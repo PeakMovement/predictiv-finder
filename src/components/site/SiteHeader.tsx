@@ -10,7 +10,7 @@ const nav = [
 export function SiteHeader() {
   return (
     <header className="w-full border-b border-border/60 bg-background/80 backdrop-blur-md">
-      <div className="max-w-6xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between gap-4">
+      <div className="max-w-6xl mx-auto pl-4 pr-16 md:pl-6 xl:pr-6 h-16 flex items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-2 shrink-0" aria-label="Predictiv home">
           <img src="/icon-192.png" alt="" width={28} height={28} className="rounded-md" />
           <span className="font-bold text-lg tracking-tight">Predictiv.</span>

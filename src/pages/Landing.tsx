@@ -3,7 +3,7 @@ import { ArrowRight, MapPin, MessageSquareText } from 'lucide-react';
 import { PublicLayout } from '@/components/site/PublicLayout';
 import { FaqSection } from '@/components/site/FaqSection';
 import { useSeo } from '@/lib/seo';
-import { HOME_FAQS, PROFESSIONS, faqJsonLd, organizationJsonLd, routeSeo, SITE_URL } from '@/seo/site';
+import { HOME_FAQS, PROFESSIONS, faqJsonLd, routeSeo } from '@/seo/site';
 
 const route = routeSeo('/')!;
 
@@ -12,18 +12,8 @@ export default function Landing() {
     title: route.title,
     description: route.description,
     path: '/',
-    jsonLd: [
-      organizationJsonLd(),
-      {
-        '@context': 'https://schema.org',
-        '@type': 'WebSite',
-        '@id': `${SITE_URL}/#website`,
-        url: `${SITE_URL}/`,
-        name: 'Predictiv',
-        inLanguage: 'en-ZA',
-      },
-      faqJsonLd(HOME_FAQS),
-    ],
+    // Organization and WebSite are declared once, statically, in index.html.
+    jsonLd: faqJsonLd(HOME_FAQS),
   });
 
   return (
