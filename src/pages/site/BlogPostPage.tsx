@@ -4,8 +4,8 @@ import { PublicLayout } from '@/components/site/PublicLayout';
 import { useSeo } from '@/lib/seo';
 import { renderMarkdown } from '@/lib/markdown';
 import { blogTable, formatDate, readingMinutes, type BlogPost } from '@/lib/blog';
-import { isNamedPerson, organizationAuthorJsonLd, personJsonLd } from '@/seo/eeat';
-import { breadcrumbJsonLd, OG_IMAGE, SITE_NAME, SITE_URL } from '@/seo/site';
+import { isNamedPerson, organizationAuthorJsonLd, personJsonLd, publicAuthorName } from '@/seo/eeat';
+import { breadcrumbJsonLd, OG_IMAGE, SITE_URL } from '@/seo/site';
 
 export default function BlogPostPage() {
   const { slug } = useParams();
@@ -26,6 +26,7 @@ export default function BlogPostPage() {
   }, [slug]);
 
   const html = useMemo(() => (post ? renderMarkdown(post.content) : ''), [post]);
+  const authorName = publicAuthorName(post?.author_name);
   const path = `/blog/${slug}`;
   const crumbs = [
     { name: 'Home', path: '/' },
@@ -52,9 +53,9 @@ export default function BlogPostPage() {
             image: post.cover_image_url || OG_IMAGE,
             datePublished: post.published_at,
             dateModified: post.updated_at,
-            author: isNamedPerson(post.author_name)
-              ? personJsonLd(post.author_name!, { credential: post.author_credential, url: `${SITE_URL}/about` })
-              : organizationAuthorJsonLd(post.author_name || SITE_NAME, SITE_URL),
+            author: isNamedPerson(authorName)
+              ? personJsonLd(authorName, { credential: post.author_credential, url: `${SITE_URL}/about` })
+              : organizationAuthorJsonLd(authorName, SITE_URL),
             ...(isNamedPerson(post.reviewer_name)
               ? { reviewedBy: personJsonLd(post.reviewer_name!, { credential: post.reviewer_credential }) }
               : {}),
@@ -85,13 +86,13 @@ export default function BlogPostPage() {
         <header className="mb-8">
           <p className="text-sm text-muted-foreground">
             <time dateTime={post.published_at ?? undefined}>{formatDate(post.published_at)}</time> · {readingMinutes(post.content)} min read
-            {isNamedPerson(post.author_name) ? (
+            {isNamedPerson(authorName) ? (
               <>
                 {' · '}
-                <span itemProp="author">{post.author_name}{post.author_credential ? `, ${post.author_credential}` : ''}</span>
+                <span itemProp="author">{authorName}{post.author_credential ? `, ${post.author_credential}` : ''}</span>
               </>
             ) : (
-              <> · {post.author_name || 'Predictiv'}</>
+              <> · {authorName}</>
             )}
           </p>
           {isNamedPerson(post.reviewer_name) && (

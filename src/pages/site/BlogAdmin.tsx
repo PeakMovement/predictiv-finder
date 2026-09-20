@@ -12,6 +12,7 @@ import { renderMarkdown } from '@/lib/markdown';
 import {
   BLOG_ADMIN_EMAILS, KEYWORD_IDEAS, analyseSeo, blogTable, slugify, wordCount, type BlogPost, type BlogPostInput,
 } from '@/lib/blog';
+import { publicAuthorName } from '@/seo/eeat';
 
 const EMPTY: BlogPostInput = {
   slug: '',
@@ -132,7 +133,7 @@ export default function BlogAdmin() {
     setForm({
       slug: p.slug, title: p.title, meta_title: p.meta_title ?? '', meta_description: p.meta_description ?? '',
       target_keyword: p.target_keyword ?? '', excerpt: p.excerpt ?? '', content: p.content, cover_image_url: p.cover_image_url ?? '',
-      author_name: p.author_name ?? 'Predictiv',
+      author_name: publicAuthorName(p.author_name),
       author_credential: p.author_credential ?? '',
       reviewer_name: p.reviewer_name ?? '',
       reviewer_credential: p.reviewer_credential ?? '',
@@ -156,7 +157,7 @@ export default function BlogAdmin() {
       target_keyword: form.target_keyword || null,
       excerpt: form.excerpt || null,
       cover_image_url: form.cover_image_url || null,
-      author_name: form.author_name || 'Predictiv',
+      author_name: publicAuthorName(form.author_name),
       author_credential: form.author_credential || null,
       reviewer_name: form.reviewer_name || null,
       reviewer_credential: form.reviewer_credential || null,

@@ -4,11 +4,25 @@
  * Do not invent clinician names or credentials. Person schema and a
  * "reviewed by" byline are emitted only when the CMS fields are filled
  * with a real named person (not the Predictiv organisation default).
+ *
+ * A previously named person author was withdrawn; that display name must
+ * never appear in bylines or schema. Map it back to the organisation.
  */
 export const ORG_AUTHOR_NAMES = ['predictiv', 'predictiv pty', 'predictiv pty ltd'];
 
-export function isNamedPerson(name?: string | null): boolean {
+const WITHDRAWN_AUTHOR_NAMES = ['justin muller'];
+
+/** Public byline / JSON-LD name. Organisation default, never a withdrawn person. */
+export function publicAuthorName(name?: string | null): string {
   const n = (name || '').trim();
+  if (!n || ORG_AUTHOR_NAMES.includes(n.toLowerCase()) || WITHDRAWN_AUTHOR_NAMES.includes(n.toLowerCase())) {
+    return 'Predictiv';
+  }
+  return n;
+}
+
+export function isNamedPerson(name?: string | null): boolean {
+  const n = publicAuthorName(name);
   if (!n) return false;
   return !ORG_AUTHOR_NAMES.includes(n.toLowerCase());
 }

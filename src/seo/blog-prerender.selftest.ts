@@ -24,6 +24,15 @@ if (route.h1 !== post.title) throw new Error(route.h1);
 if (route.description !== post.meta_description) throw new Error(route.description);
 if (route.ogType !== 'article') throw new Error(String(route.ogType));
 if (!route.articleHtml?.includes('<h2>Who they help</h2>')) throw new Error(String(route.articleHtml));
+if (route.authorName !== 'Predictiv') throw new Error(`org CMS author should stay Predictiv, got ${route.authorName}`);
+if (route.authorCredential) throw new Error('must not invent an author credential');
+
+const withdrawn = blogPostToRoute({ ...post, author_name: 'Justin Muller' });
+if (!withdrawn) throw new Error('expected a route for withdrawn-author fixture');
+if (withdrawn.authorName !== 'Predictiv') {
+  throw new Error(`withdrawn person author must prerender as Predictiv, got ${withdrawn.authorName}`);
+}
+
 if (blogCanonical(post.slug) !== `${SITE_URL}/blog/${post.slug}`) throw new Error('canonical');
 if (blogPageTitle(post).includes('Find a Physio')) throw new Error('title leaked homepage copy');
 if (blogPageDescription(post).includes('Find trusted physiotherapists')) throw new Error('description leaked homepage copy');

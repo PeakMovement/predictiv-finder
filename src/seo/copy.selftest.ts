@@ -1,5 +1,5 @@
 import { directoryFaqs, findProfession, findSuburb, professionDescription, phrasePlural, phraseSingular } from './site';
-import { isNamedPerson } from './eeat';
+import { isNamedPerson, organizationAuthorJsonLd, publicAuthorName } from './eeat';
 
 const gps = findProfession('gps')!;
 if (phraseSingular(gps) !== 'GP') throw new Error(`GP singular was ${phraseSingular(gps)}`);
@@ -27,5 +27,17 @@ if (!suburbFaqs.some((f) => f.a.includes('/practitioners/physiotherapists'))) {
 if (isNamedPerson('Predictiv')) throw new Error('Predictiv must not be treated as a Person');
 if (isNamedPerson('')) throw new Error('empty name is not a Person');
 if (!isNamedPerson('Jane Clinician')) throw new Error('named author should be a Person');
+if (isNamedPerson('Justin Muller')) throw new Error('withdrawn person author must not be treated as a Person');
+if (isNamedPerson('  justin muller  ')) throw new Error('withdrawn person author (case/space) must not be a Person');
+if (publicAuthorName(null) !== 'Predictiv') throw new Error('null CMS author should be Predictiv');
+if (publicAuthorName('') !== 'Predictiv') throw new Error('empty CMS author should be Predictiv');
+if (publicAuthorName('Predictiv') !== 'Predictiv') throw new Error('org default should stay Predictiv');
+if (publicAuthorName('Justin Muller') !== 'Predictiv') throw new Error('withdrawn person author must display as Predictiv');
+if (publicAuthorName('Jane Clinician') !== 'Jane Clinician') throw new Error('explicit named author must be kept');
+
+const orgLd = organizationAuthorJsonLd(publicAuthorName('Justin Muller'), 'https://predictiv.co.za');
+if (orgLd['@type'] !== 'Organization') throw new Error(`expected Organization author, got ${JSON.stringify(orgLd)}`);
+if (orgLd.name !== 'Predictiv') throw new Error(`expected name Predictiv, got ${JSON.stringify(orgLd)}`);
+if ('jobTitle' in orgLd) throw new Error('organisation author must not have jobTitle');
 
 console.log('copy / FAQ / E-E-A-T unit checks passed');
