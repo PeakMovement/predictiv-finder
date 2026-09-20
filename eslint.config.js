@@ -5,7 +5,17 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", "web/**", "supabase/functions/**"] },
+  {
+    ignores: [
+      "dist",
+      "web/**",
+      "supabase/functions/**",
+      // Unrouted plan-generator / CSV product — see src/legacy/README.md
+      "src/utils/planGenerator/**",
+      "src/components/enhanced-error-handling/GlobalErrorDisplay.tsx",
+      "src/services/health-plans-service.ts",
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
@@ -23,7 +33,15 @@ export default tseslint.config(
         "warn",
         { allowConstantExport: true },
       ],
+      // Lovable-era codebase: keep lint useful on public paths without
+      // boiling the ocean on pre-existing `any` usage.
       "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-empty-object-type": "off",
+      "@typescript-eslint/no-require-imports": "off",
+      "no-useless-escape": "off",
+      "prefer-const": "warn",
+      "no-case-declarations": "warn",
     },
   }
 );

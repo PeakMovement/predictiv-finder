@@ -21,7 +21,6 @@ export function useListings(professionDb: string, suburbName?: string) {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let q = (supabase as any)
       .from('professionals')
       .select(LISTING_SELECT)
