@@ -6,18 +6,29 @@
  * a readable HTML fallback inside #root (replaced by React on load). Crawlers
  * and AI answer engines that do not run JavaScript still get real content.
  *
+ * Published blog posts live in Supabase, not in allRoutes(), so they are
+ * fetched here at build time and written to dist/blog/<slug>/index.html.
+ * Without that step, Lovable's SPA fallback serves the homepage shell for
+ * every /blog/:slug URL (homepage title + canonical https://predictiv.co.za/).
+ *
  * It also generates sitemap.xml, llms.txt and llms-full.txt from the same data.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Plugin } from 'vite';
+import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../src/integrations/supabase/client';
 import {
-  HOME_FAQS, PROFESSIONS, SITE_URL, allRoutes, breadcrumbJsonLd, faqJsonLd, findProfession, findSuburb,
+  assertPrerenderedBlogHtml,
+  blogPostToRoute,
+  escapeHtml,
+  type PublishedBlogPost,
+} from '../src/seo/blog-prerender';
+import {
+  HOME_FAQS, PROFESSIONS, SITE_NAME, SITE_URL, allRoutes, breadcrumbJsonLd, faqJsonLd, findProfession, findSuburb,
   organizationJsonLd, type RouteSeo,
 } from '../src/seo/site';
 
-const esc = (s: string) =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const esc = escapeHtml;
 
 function setTag(html: string, re: RegExp, replacement: string) {
   return re.test(html) ? html.replace(re, replacement) : html.replace('</head>', `    ${replacement}\n  </head>`);
@@ -32,10 +43,35 @@ function crumbsFor(r: RouteSeo) {
     if (p) crumbs.push({ name: p.plural, path: `/practitioners/${p.slug}` });
     const s = findSuburb(parts[2]);
     if (p && s) crumbs.push({ name: s.name, path: r.path });
+  } else if (parts[0] === 'blog' && parts[1]) {
+    crumbs.push({ name: 'Blog', path: '/blog' });
+    crumbs.push({ name: r.h1, path: r.path });
   } else if (parts[0]) {
     crumbs.push({ name: r.h1, path: r.path });
   }
   return crumbs;
+}
+
+function blogPostingJsonLd(r: RouteSeo) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: r.h1,
+    description: r.description,
+    image: r.image || `${SITE_URL}/og-image.png`,
+    datePublished: r.datePublished,
+    dateModified: r.dateModified || r.datePublished,
+    author: { '@type': 'Organization', name: r.authorName || SITE_NAME, url: SITE_URL },
+    publisher: {
+      '@id': `${SITE_URL}/#organization`,
+      '@type': 'Organization',
+      name: SITE_NAME,
+      logo: { '@type': 'ImageObject', url: `${SITE_URL}/icon-512.png` },
+    },
+    mainEntityOfPage: `${SITE_URL}${r.path}`,
+    keywords: r.keywords,
+    inLanguage: 'en-ZA',
+  };
 }
 
 function jsonLdFor(r: RouteSeo) {
@@ -43,6 +79,10 @@ function jsonLdFor(r: RouteSeo) {
   const parts = r.path.split('/').filter(Boolean);
   if (r.path === '/') blocks.push(faqJsonLd(HOME_FAQS));
   else blocks.push(breadcrumbJsonLd(crumbsFor(r)));
+  if (r.articleHtml) {
+    blocks.push(blogPostingJsonLd(r));
+    return blocks;
+  }
   const p = parts[0] === 'practitioners' ? findProfession(parts[1]) : undefined;
   if (p) blocks.push(faqJsonLd(p.faqs));
   if (r.path === '/about') blocks.push({ '@context': 'https://schema.org', '@type': 'AboutPage', url: `${SITE_URL}/about`, mainEntity: organizationJsonLd() });
@@ -55,6 +95,18 @@ function fallbackBody(r: RouteSeo, routes: RouteSeo[]) {
   const faqs = r.path === '/' ? HOME_FAQS : p?.faqs ?? [];
   let body = `<main style="max-width:860px;margin:0 auto;padding:24px;font-family:system-ui,sans-serif">`;
   body += `<h1>${esc(r.h1)}</h1><p>${esc(r.intro)}</p>`;
+  if (r.articleHtml) {
+    body += r.articleHtml;
+    body += `<nav aria-label="Related"><p><a href="/blog">All guides</a> · <a href="/practitioners">Find a practitioner</a> · <a href="/assistant">Name your problem</a></p></nav>`;
+    body += `<p><small>Predictiv gives directional guidance only, not medical advice. In an emergency call an ambulance.</small></p></main>`;
+    return body;
+  }
+  if (r.path === '/blog') {
+    const posts = routes.filter((x) => x.path.startsWith('/blog/') && x.path !== '/blog');
+    if (posts.length) {
+      body += `<h2>Latest guides</h2><ul>${posts.map((post) => `<li><a href="${post.path}">${esc(post.h1)}</a> — ${esc(post.description)}</li>`).join('')}</ul>`;
+    }
+  }
   if (p) {
     body += `<h2>What does a ${esc(p.singular.toLowerCase())} treat?</h2><ul>${p.treats.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>`;
     body += `<h2>When should I see a ${esc(p.singular.toLowerCase())}?</h2><p>${esc(p.whenToSee)}</p>`;
@@ -66,7 +118,7 @@ function fallbackBody(r: RouteSeo, routes: RouteSeo[]) {
     body += `<h2>Frequently asked questions</h2>${faqs.map((f) => `<h3>${esc(f.q)}</h3><p>${esc(f.a)}</p>`).join('')}`;
   }
   body += `<nav aria-label="Site"><h2>Explore Predictiv</h2><ul>${routes
-    .filter((x) => x.path !== r.path)
+    .filter((x) => x.path !== r.path && !x.articleHtml)
     .map((x) => `<li><a href="${x.path}">${esc(x.h1)}</a></li>`)
     .join('')}</ul></nav>`;
   body += `<p><small>Predictiv gives directional guidance only, not medical advice. In an emergency call an ambulance.</small></p></main>`;
@@ -75,15 +127,22 @@ function fallbackBody(r: RouteSeo, routes: RouteSeo[]) {
 
 function renderRoute(template: string, r: RouteSeo, routes: RouteSeo[]) {
   const url = `${SITE_URL}${r.path}`;
+  const image = r.image || `${SITE_URL}/og-image.png`;
   let html = template;
   html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(r.title)}</title>`);
   html = setTag(html, /<meta name="description"[^>]*>/, `<meta name="description" content="${esc(r.description)}" />`);
   html = setTag(html, /<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${url}" />`);
   html = setTag(html, /<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${url}" />`);
+  html = setTag(html, /<meta property="og:type"[^>]*>/, `<meta property="og:type" content="${r.ogType || 'website'}" />`);
   html = setTag(html, /<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${esc(r.title)}" />`);
   html = setTag(html, /<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${esc(r.description)}" />`);
+  html = setTag(html, /<meta property="og:image"[^>]*>/, `<meta property="og:image" content="${esc(image)}" />`);
   html = setTag(html, /<meta name="twitter:title"[^>]*>/, `<meta name="twitter:title" content="${esc(r.title)}" />`);
   html = setTag(html, /<meta name="twitter:description"[^>]*>/, `<meta name="twitter:description" content="${esc(r.description)}" />`);
+  html = setTag(html, /<meta name="twitter:image"[^>]*>/, `<meta name="twitter:image" content="${esc(image)}" />`);
+  if (r.datePublished) {
+    html = setTag(html, /<meta property="article:published_time"[^>]*>/, `<meta property="article:published_time" content="${esc(r.datePublished)}" />`);
+  }
   const ld = jsonLdFor(r)
     .map((b) => `<script type="application/ld+json" data-prerendered>${JSON.stringify(b).replace(/</g, '\\u003c')}</script>`)
     .join('\n    ');
@@ -100,6 +159,7 @@ function sitemap(routes: RouteSeo[], lastmod: string) {
 }
 
 function llmsTxt(routes: RouteSeo[]) {
+  const blogPosts = routes.filter((r) => r.path.startsWith('/blog/') && r.path !== '/blog');
   const lines = [
     '# Predictiv',
     '',
@@ -108,10 +168,13 @@ function llmsTxt(routes: RouteSeo[]) {
     'Coverage: Rondebosch, Claremont, Newlands, Pinelands, Kenilworth, Wynberg and Plumstead in the Southern Suburbs of Cape Town. Listings link to each practice\'s own website; people book directly with the practice. Contact: predictivpty@gmail.com.',
     '',
     '## Key pages',
-    ...routes.filter((r) => r.path.split('/').length <= 3).map((r) => `- [${r.h1}](${SITE_URL}${r.path}): ${r.description}`),
+    ...routes.filter((r) => r.path.split('/').length <= 3 && !r.articleHtml).map((r) => `- [${r.h1}](${SITE_URL}${r.path}): ${r.description}`),
     '',
     '## Practitioners by suburb',
     ...routes.filter((r) => r.path.split('/').length === 4).map((r) => `- [${r.h1}](${SITE_URL}${r.path})`),
+    '',
+    '## Blog',
+    ...blogPosts.map((r) => `- [${r.h1}](${SITE_URL}${r.path}): ${r.description}`),
     '',
     '## Optional',
     `- [Full plain text guide](${SITE_URL}/llms-full.txt)`,
@@ -135,30 +198,94 @@ function llmsFull() {
   return out.join('\n');
 }
 
+async function fetchPublishedBlogPosts(): Promise<PublishedBlogPost[]> {
+  const select = [
+    'slug',
+    'title',
+    'meta_title',
+    'meta_description',
+    'excerpt',
+    'content',
+    'cover_image_url',
+    'author_name',
+    'published_at',
+    'updated_at',
+    'target_keyword',
+  ].join(',');
+  const url = `${SUPABASE_URL}/rest/v1/blog_posts?select=${select}&status=eq.published&order=published_at.desc`;
+  const res = await fetch(url, {
+    headers: {
+      apikey: SUPABASE_PUBLISHABLE_KEY,
+      Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`[seo] blog_posts fetch failed: ${res.status} ${await res.text()}`);
+  }
+  return res.json();
+}
+
 export function seoPrerender(): Plugin {
   let outDir = 'dist';
   return {
     name: 'predictiv-seo-prerender',
-    apply: 'build',
     configResolved(cfg) {
       outDir = path.resolve(cfg.root, cfg.build.outDir);
     },
-    closeBundle() {
+    // Vite preview's SPA fallback serves dist/index.html for extensionless
+    // URLs even when dist/<route>/index.html exists. Lovable (and Netlify)
+    // resolve those to the nested file, which is why /blog and /practitioners/...
+    // already work in production. Rewrite here so `vite preview` matches that.
+    configurePreviewServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        const [rawPath, search = ''] = (req.url ?? '').split('?');
+        const pathname = decodeURIComponent(rawPath).replace(/\/+$/, '') || '/';
+        if (pathname === '/' || path.extname(pathname)) {
+          next();
+          return;
+        }
+        const indexFile = path.join(outDir, pathname.replace(/^\//, ''), 'index.html');
+        if (fs.existsSync(indexFile)) {
+          req.url = `${pathname}/index.html${search ? `?${search}` : ''}`;
+        }
+        next();
+      });
+    },
+    async closeBundle() {
       const indexPath = path.join(outDir, 'index.html');
       if (!fs.existsSync(indexPath)) return;
       const template = fs.readFileSync(indexPath, 'utf8');
-      const routes = allRoutes();
+      const posts = await fetchPublishedBlogPosts();
+      const blogRoutes: RouteSeo[] = [];
+      const skipped: string[] = [];
+      for (const post of posts) {
+        const route = blogPostToRoute(post);
+        if (!route) {
+          skipped.push(post.slug);
+          continue;
+        }
+        blogRoutes.push(route);
+      }
+      if (skipped.length) {
+        console.warn(`[seo] skipped blog slugs that are not safe path segments: ${skipped.join(', ')}`);
+      }
+      const routes = [...allRoutes(), ...blogRoutes];
       for (const r of routes) {
         const html = renderRoute(template, r, routes);
         const file = r.path === '/' ? indexPath : path.join(outDir, r.path, 'index.html');
         fs.mkdirSync(path.dirname(file), { recursive: true });
         fs.writeFileSync(file, html);
       }
+      for (const post of posts) {
+        if (!blogRoutes.some((r) => r.path === `/blog/${post.slug}`)) continue;
+        const html = fs.readFileSync(path.join(outDir, 'blog', post.slug, 'index.html'), 'utf8');
+        assertPrerenderedBlogHtml(html, post);
+      }
       const today = new Date().toISOString().slice(0, 10);
       fs.writeFileSync(path.join(outDir, 'sitemap.xml'), sitemap(routes, today));
       fs.writeFileSync(path.join(outDir, 'llms.txt'), llmsTxt(routes));
       fs.writeFileSync(path.join(outDir, 'llms-full.txt'), llmsFull());
-      console.log(`[seo] prerendered ${routes.length} routes, wrote sitemap.xml, llms.txt, llms-full.txt`);
+      console.log(`[seo] prerendered ${routes.length} routes (${blogRoutes.length} blog posts), wrote sitemap.xml, llms.txt, llms-full.txt`);
     },
   };
 }
