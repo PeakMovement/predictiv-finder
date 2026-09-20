@@ -9,8 +9,12 @@ verify_jwt = true
 [functions.symptom-severity-evaluator]
 verify_jwt = true
 
+# Gateway JWT check accepts the public anon key, so this function enforces
+# admin JWT (is_blog_admin) or PRACTITIONER_INVITE_TOKEN itself.
 [functions.create-practitioner]
 verify_jwt = false
 
+# Public directional assistant. Auth is consent_version + origin allow-list
+# + per-isolate rate limit in the function (not a substitute for gateway quotas).
 [functions.analyze-health-concern]
 verify_jwt = false

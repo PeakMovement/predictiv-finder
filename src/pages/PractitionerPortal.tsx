@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { ProfessionalService } from '@/services/professional-service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -196,26 +196,20 @@ export default function PractitionerPortal() {
     setLoading(true);
 
     try {
-      const createRes = await fetch(`${SUPABASE_URL}/functions/v1/create-practitioner`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_PUBLISHABLE_KEY,
-          'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({ email, password }),
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: name } },
       });
+      if (signUpError) throw signUpError;
 
-      const createData = await createRes.json();
-      if (!createRes.ok) {
-        throw new Error(createData.error || 'Failed to create account. This email might already be in use.');
-      }
-
-      const userId = createData.userId;
+      const userId = signUpData.user?.id;
       if (!userId) throw new Error('Account creation failed. No user ID returned.');
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) throw signInError;
+      if (!signUpData.session) {
+        toast.success('Check your email to confirm your account, then sign in to finish your listing.');
+        return;
+      }
 
       let photoUrl = null;
       if (photoFile) {

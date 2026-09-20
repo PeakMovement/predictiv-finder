@@ -1,19 +1,25 @@
 // deno-lint-ignore-file no-explicit-any
-import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { corsHeadersFor, isAllowedOrigin } from '../_shared/cors.ts';
+import { allowRequest, clientKey } from '../_shared/rateLimit.ts';
 
 const CURRENT_CONSENT_VERSION = '2026-05-v1';
 const LOVABLE_AI_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions';
 const MODEL = 'google/gemini-3-flash-preview';
+// Per-isolate caps. Not a global quota — see ARCHITECTURE.md.
+const PER_IP_LIMIT = 8;
+const PER_IP_WINDOW_MS = 60_000;
+const GLOBAL_LIMIT = 60;
+const GLOBAL_WINDOW_MS = 60_000;
 
 interface AnalyzeRequest {
   message: string;
   consent_version: string;
 }
 
-function json(status: number, body: unknown) {
+function json(req: Request, status: number, body: unknown) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' },
   });
 }
 
@@ -108,28 +114,40 @@ const TOOL = {
 };
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  if (req.method !== 'POST') return json(405, { error: 'method_not_allowed' });
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeadersFor(req) });
+  }
+  if (req.method !== 'POST') return json(req, 405, { error: 'method_not_allowed' });
+
+  const origin = req.headers.get('Origin');
+  if (origin && !isAllowedOrigin(origin)) {
+    return json(req, 403, { error: 'origin_not_allowed' });
+  }
+
+  if (!allowRequest(`ip:${clientKey(req)}`, PER_IP_LIMIT, PER_IP_WINDOW_MS)
+    || !allowRequest('global', GLOBAL_LIMIT, GLOBAL_WINDOW_MS)) {
+    return json(req, 429, { error: 'rate_limited' });
+  }
 
   let body: unknown;
   try {
     body = await req.json();
   } catch {
-    return json(400, { error: 'invalid_json' });
+    return json(req, 400, { error: 'invalid_json' });
   }
 
   const parsed = validate(body);
-  if (!parsed.ok) return json(400, { error: parsed.error });
+  if (!parsed.ok) return json(req, 400, { error: parsed.error });
   const { message, consent_version } = parsed.value;
 
   if (consent_version !== CURRENT_CONSENT_VERSION) {
-    return json(403, { error: 'consent_required', current_version: CURRENT_CONSENT_VERSION });
+    return json(req, 403, { error: 'consent_required', current_version: CURRENT_CONSENT_VERSION });
   }
 
   const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
   if (!LOVABLE_API_KEY) {
     console.error('LOVABLE_API_KEY missing');
-    return json(500, { error: 'ai_not_configured' });
+    return json(req, 500, { error: 'ai_not_configured' });
   }
 
   const sanitised = stripIdentifiers(message);
@@ -154,36 +172,36 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error('gateway fetch failed', err);
-    return json(502, { error: 'ai_unreachable' });
+    return json(req, 502, { error: 'ai_unreachable' });
   }
 
-  if (aiResp.status === 429) return json(429, { error: 'rate_limited' });
-  if (aiResp.status === 402) return json(402, { error: 'credits_exhausted' });
+  if (aiResp.status === 429) return json(req, 429, { error: 'rate_limited' });
+  if (aiResp.status === 402) return json(req, 402, { error: 'credits_exhausted' });
   if (!aiResp.ok) {
     const text = await aiResp.text().catch(() => '');
     console.error('gateway error', aiResp.status, text);
-    return json(502, { error: 'ai_error' });
+    return json(req, 502, { error: 'ai_error' });
   }
 
   let payload: any;
   try {
     payload = await aiResp.json();
   } catch {
-    return json(502, { error: 'ai_invalid_json' });
+    return json(req, 502, { error: 'ai_invalid_json' });
   }
 
   const toolCall = payload?.choices?.[0]?.message?.tool_calls?.[0];
   const argsStr = toolCall?.function?.arguments;
   if (!argsStr) {
     console.error('no tool call in response', JSON.stringify(payload).slice(0, 500));
-    return json(502, { error: 'ai_no_structured_output' });
+    return json(req, 502, { error: 'ai_no_structured_output' });
   }
 
   let analysis: any;
   try {
     analysis = JSON.parse(argsStr);
   } catch {
-    return json(502, { error: 'ai_invalid_tool_args' });
+    return json(req, 502, { error: 'ai_invalid_tool_args' });
   }
 
   // Defensive clamp: the model is instructed to only return one of the four
@@ -195,5 +213,5 @@ Deno.serve(async (req) => {
     analysis.suggested_specialty = 'General Practitioner';
   }
 
-  return json(200, { analysis });
+  return json(req, 200, { analysis });
 });
