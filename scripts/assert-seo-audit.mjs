@@ -67,6 +67,8 @@ if (!fs.existsSync(gpsFile)) {
 const about = read(path.join(dist, 'about/index.html'));
 if (!about.includes('Why we built it') || !about.includes('predictivpty@gmail.com')) {
   failed += fail('/about missing full body copy');
+} else if (!about.includes('Justin Muller')) {
+  failed += fail('/about missing blog author display name Justin Muller');
 } else console.log('ok  /about full body');
 
 const privacy = read(path.join(dist, 'privacy/index.html'));
@@ -100,6 +102,10 @@ for (const slug of slugs) {
   if (!title || title === HOME_TITLE) failed += fail(`/blog/${slug} title is homepage`);
   if (canonical !== expected) failed += fail(`/blog/${slug} canonical ${canonical}`);
   if (ogUrl !== expected) failed += fail(`/blog/${slug} og:url ${ogUrl}`);
+  if (!html.includes('Justin Muller')) failed += fail(`/blog/${slug} missing visible author Justin Muller`);
+  if (!html.includes('"@type":"Person"') || !/"name":"Justin Muller"/.test(html)) {
+    failed += fail(`/blog/${slug} missing BlogPosting Person author Justin Muller`);
+  }
 }
 
 if (failed) {

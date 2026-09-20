@@ -4,6 +4,7 @@
  * build plugin can import it from Node.
  */
 import { renderMarkdown } from '../lib/markdown';
+import { resolvedAuthorName } from './eeat';
 import { SITE_NAME, SITE_URL, type RouteSeo } from './site';
 
 /** Reject anything that could escape dist/blog/<slug>/ when writing HTML. */
@@ -60,7 +61,7 @@ export function blogPostToRoute(post: PublishedBlogPost): RouteSeo | null {
     articleHtml: renderMarkdown(post.content || ''),
     datePublished: post.published_at ?? undefined,
     dateModified: post.updated_at,
-    authorName: post.author_name || SITE_NAME,
+    authorName: resolvedAuthorName(post.author_name),
     authorCredential: post.author_credential?.trim() || undefined,
     reviewerName: post.reviewer_name?.trim() || undefined,
     reviewerCredential: post.reviewer_credential?.trim() || undefined,
