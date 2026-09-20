@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { PublicLayout } from '@/components/site/PublicLayout';
 import { useSeo } from '@/lib/seo';
 import { breadcrumbJsonLd, organizationJsonLd, routeSeo, SITE_URL } from '@/seo/site';
+import { DEFAULT_AUTHOR_NAME } from '@/seo/eeat';
 
 const route = routeSeo('/about')!;
 const crumbs = [
@@ -27,6 +28,8 @@ export default function About() {
           Predictiv exists to connect more people with the right practitioners in their area, and to make it easier to understand
           who you actually need to see.
         </p>
+        <h2>Blog author</h2>
+        <p>{DEFAULT_AUTHOR_NAME}</p>
         <h2>Why we built it</h2>
         <p>
           When something hurts or does not feel right, the first question is often the hardest one: who do I see? A physiotherapist,

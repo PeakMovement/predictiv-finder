@@ -23,7 +23,7 @@ import {
   escapeHtml,
   type PublishedBlogPost,
 } from '../src/seo/blog-prerender';
-import { isNamedPerson, organizationAuthorJsonLd, personJsonLd } from '../src/seo/eeat';
+import { blogAuthorJsonLd, isNamedPerson, personJsonLd } from '../src/seo/eeat';
 import {
   LISTING_SELECT,
   assertPrerenderedDirectoryHtml,
@@ -62,13 +62,6 @@ function crumbsFor(r: RouteSeo) {
   return crumbs;
 }
 
-function blogAuthorJsonLd(r: RouteSeo) {
-  if (isNamedPerson(r.authorName)) {
-    return personJsonLd(r.authorName!, { credential: r.authorCredential, url: `${SITE_URL}/about` });
-  }
-  return organizationAuthorJsonLd(r.authorName || SITE_NAME, SITE_URL);
-}
-
 function blogPostingJsonLd(r: RouteSeo) {
   const node: Record<string, unknown> = {
     '@context': 'https://schema.org',
@@ -78,7 +71,7 @@ function blogPostingJsonLd(r: RouteSeo) {
     image: r.image || `${SITE_URL}/og-image.png`,
     datePublished: r.datePublished,
     dateModified: r.dateModified || r.datePublished,
-    author: blogAuthorJsonLd(r),
+    author: blogAuthorJsonLd(r.authorName, r.authorCredential, `${SITE_URL}/about`),
     publisher: {
       '@id': `${SITE_URL}/#organization`,
       '@type': 'Organization',
