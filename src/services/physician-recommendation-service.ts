@@ -1,3 +1,9 @@
+/**
+ * LEGACY CSV specialty detector + physician ranking.
+ * Public launch uses analyze-health-concern + professionals in Supabase.
+ * Do not wire findRecommendedPhysicians into a public route.
+ * See src/legacy/README.md.
+ */
 import Papa from 'papaparse';
 
 export interface Physician {
