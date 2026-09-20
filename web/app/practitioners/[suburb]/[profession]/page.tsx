@@ -39,8 +39,8 @@ export async function generateMetadata({
   const { suburb, profession } = await params;
   const suburbName = titleCase(suburb);
   const professionName = titleCase(profession);
-  const title = `${professionName}s in ${suburbName} | Reviewed & Ranked`;
-  const description = `Compare ${professionName.toLowerCase()}s in ${suburbName}, ranked by real reviews and distance. See pricing, specialities and book directly.`;
+  const title = `${professionName}s in ${suburbName}`;
+  const description = `Compare ${professionName.toLowerCase()}s in ${suburbName}. See practice details and book directly with the practice.`;
   return {
     title,
     description,
@@ -77,7 +77,7 @@ export default async function SuburbProfessionPage({
   const faqLd = faqJsonLd([
     {
       question: `How do I choose a ${professionName.toLowerCase()} in ${suburbName}?`,
-      answer: `Compare real patient reviews, proximity to home or work, and specific specialities relevant to your issue. All practitioners listed here are approved and verified before appearing.`,
+      answer: `Compare proximity to home or work and any specialities listed. Predictiv compiles public practice information; listings are not independently verified medical credentials.`,
     },
     {
       question: `Can I book directly?`,
@@ -100,7 +100,7 @@ export default async function SuburbProfessionPage({
         {professionName}s in {suburbName}
       </h1>
       <p className="mt-2 text-marble/70">
-        Ranked by real reviews and distance. Every practitioner below is approved and verified.
+        Directory listings for {suburbName}. Book directly with the practice. Unclaimed cards were compiled from public practice websites.
       </p>
 
       <div className="mt-8 space-y-4">

@@ -49,7 +49,7 @@ export function SiteFooter() {
             <li><Link to="/blog" className="text-muted-foreground hover:text-foreground">Blog</Link></li>
             <li><Link to="/about" className="text-muted-foreground hover:text-foreground">About</Link></li>
             <li><Link to="/privacy" className="text-muted-foreground hover:text-foreground">Privacy</Link></li>
-            <li><a href="mailto:predictivpty@gmail.com" className="text-muted-foreground hover:text-foreground">Practitioners: get listed</a></li>
+            <li><Link to="/join" className="text-muted-foreground hover:text-foreground">Practitioners: get listed</Link></li>
           </ul>
         </div>
       </div>

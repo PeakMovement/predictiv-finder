@@ -32,7 +32,7 @@ import {
   listingsJsonLd,
   type Listing,
 } from '../src/seo/listings';
-import { aboutFallbackHtml, practitionersIndexFallbackHtml, privacyFallbackHtml } from '../src/seo/static-pages';
+import { aboutFallbackHtml, joinFallbackHtml, practitionersIndexFallbackHtml, privacyFallbackHtml } from '../src/seo/static-pages';
 import {
   CITY, HOME_FAQS, PROFESSIONS, SITE_NAME, SITE_URL, allRoutes, breadcrumbJsonLd, directoryFaqs,
   faqJsonLd, findProfession, findSuburb, organizationJsonLd, phraseSingular, type RouteSeo,
@@ -157,6 +157,7 @@ function fallbackBody(r: RouteSeo, routes: RouteSeo[], listings: Listing[]) {
     }
   }
   if (r.path === '/about') body += aboutFallbackHtml();
+  if (r.path === '/join') body += joinFallbackHtml();
   if (r.path === '/privacy') body += privacyFallbackHtml();
   if (r.path === '/practitioners') body += practitionersIndexFallbackHtml();
   if (p && listings.length) {

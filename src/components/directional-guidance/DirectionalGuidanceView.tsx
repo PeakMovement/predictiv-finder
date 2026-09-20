@@ -41,7 +41,7 @@ const buildPlanSteps = (specialty: string | null): string[] => {
 
 const FINDER_BASE_URL =
   (import.meta.env.VITE_FINDER_URL as string | undefined) ??
-  'https://predictiv.co.za/find-a-practitioner';
+  'https://predictiv.co.za/practitioners';
 
 const summariseConcern = (prompt: string): string => {
   const trimmed = prompt.trim().replace(/\s+/g, ' ');

@@ -110,7 +110,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
               </CardHeader>
               <CardContent>
                 <CardDescription>
-                  Connect with verified healthcare professionals and wellness experts in your area.
+                  Connect with healthcare practitioners listed in your area.
                 </CardDescription>
               </CardContent>
             </Card>

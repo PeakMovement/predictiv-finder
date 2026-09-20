@@ -5,7 +5,7 @@ import { FindAPractitionerClient } from "./FindAPractitionerClient";
 export const metadata: Metadata = {
   title: "Find a Practitioner",
   description:
-    "Search trusted physiotherapists, biokineticists, chiropractors and GPs near you, ranked by real reviews and distance.",
+    "Search physiotherapists, biokineticists, chiropractors and GPs near you by specialty and suburb.",
   alternates: { canonical: "/find-a-practitioner" },
 };
 

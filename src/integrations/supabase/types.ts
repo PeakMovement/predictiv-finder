@@ -253,6 +253,7 @@ export type Database = {
           id: string
           institution: string | null
           is_approved: boolean
+          is_claimed: boolean
           is_featured: boolean
           languages: string[]
           latitude: number | null
@@ -287,6 +288,7 @@ export type Database = {
           id?: string
           institution?: string | null
           is_approved?: boolean
+          is_claimed?: boolean
           is_featured?: boolean
           languages?: string[]
           latitude?: number | null
@@ -321,6 +323,7 @@ export type Database = {
           id?: string
           institution?: string | null
           is_approved?: boolean
+          is_claimed?: boolean
           is_featured?: boolean
           languages?: string[]
           latitude?: number | null

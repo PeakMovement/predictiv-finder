@@ -47,7 +47,8 @@ export default function About() {
         <h2>For practitioners</h2>
         <p>
           Predictiv is free while it is in testing. Listings are compiled from practices' own public websites and any practice can ask
-          to update or remove its listing at any time. To get listed, update your details or be removed, email{' '}
+          to update or remove its listing at any time. To get listed, update your details or be removed, visit{' '}
+          <Link to="/join">List your practice</Link> or email{' '}
           <a href="mailto:predictivpty@gmail.com">predictivpty@gmail.com</a>.
         </p>
       </article>

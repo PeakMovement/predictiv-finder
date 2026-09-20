@@ -22,7 +22,19 @@ export function aboutFallbackHtml(): string {
     '<h2>Built with clinical input</h2>',
     '<p>Predictiv is built with input from registered healthcare practitioners in Cape Town. Its guidance is directional only and is never a diagnosis. In an emergency, call an ambulance or go to your nearest emergency unit.</p>',
     '<h2>For practitioners</h2>',
-    '<p>Predictiv is free while it is in testing. Listings are compiled from practices\' own public websites and any practice can ask to update or remove its listing at any time. To get listed, update your details or be removed, email <a href="mailto:predictivpty@gmail.com">predictivpty@gmail.com</a>.</p>',
+    '<p>Predictiv is free while it is in testing. Listings are compiled from practices\' own public websites and any practice can ask to update or remove its listing at any time. To get listed, update your details or be removed, visit <a href="/join">List your practice</a> or email <a href="mailto:predictivpty@gmail.com">predictivpty@gmail.com</a>.</p>',
+  ].join('');
+}
+
+export function joinFallbackHtml(): string {
+  return [
+    '<p>Predictiv is in testing in Cape Town. Practitioner sign-up is not self-serve yet. Directory cards marked as unclaimed were compiled from the practice\'s own public website — they are not claimed or managed by the practitioner until we hear from you.</p>',
+    '<ul>',
+    '<li>Ask to be listed, or to update a listing we already compiled</li>',
+    '<li>Claim a listing so you can manage your own profile later</li>',
+    '<li>Ask us to remove a listing at any time</li>',
+    '</ul>',
+    '<p>Email <a href="mailto:predictivpty@gmail.com">predictivpty@gmail.com</a> with your practice name, suburb, and what you would like us to do.</p>',
   ].join('');
 }
 

@@ -24,6 +24,7 @@ export type Professional = {
   review_count: number;
   is_featured: boolean;
   is_approved: boolean;
+  is_claimed: boolean;
   slug: string | null;
   practice_name: string | null;
   bio: string | null;

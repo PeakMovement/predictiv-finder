@@ -22,6 +22,20 @@ export interface Listing {
   slug?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  is_claimed?: boolean | null;
+  is_featured?: boolean | null;
+}
+
+export const UNCLAIMED_NOTICE =
+  'Listing compiled from public practice website — not claimed';
+
+export function isUnclaimedListing(l: Pick<Listing, 'is_claimed'>): boolean {
+  return l.is_claimed === false;
+}
+
+/** Stars/JSON-LD only when a real review count exists. */
+export function hasPublicRating(l: Pick<Listing, 'rating' | 'review_count'>): boolean {
+  return l.rating != null && (l.review_count ?? 0) > 0;
 }
 
 export const LISTING_SELECT = [
@@ -40,6 +54,8 @@ export const LISTING_SELECT = [
   'slug',
   'latitude',
   'longitude',
+  'is_claimed',
+  'is_featured',
 ].join(',');
 
 export function listingDisplayName(l: Listing): string {
@@ -79,7 +95,10 @@ export function listingsFallbackHtml(listings: Listing[]): string {
       const website = l.calendly_url
         ? `<p><a href="${esc(l.calendly_url)}" rel="noopener nofollow">Visit practice website</a></p>`
         : '';
-      return `<li><h3>${esc(name)}</h3>${person}${meta.length ? `<p>${meta.join(' · ')}</p>` : ''}${website}</li>`;
+      const unclaimed = isUnclaimedListing(l)
+        ? `<p>${esc(UNCLAIMED_NOTICE)}</p>`
+        : '';
+      return `<li><h3>${esc(name)}</h3>${person}${meta.length ? `<p>${meta.join(' · ')}</p>` : ''}${unclaimed}${website}</li>`;
     })
     .join('');
   return `<ul>${items}</ul>`;
@@ -114,7 +133,7 @@ export function listingsJsonLd(listings: Listing[], pagePath: string) {
           longitude: l.longitude,
         };
       }
-      if (l.rating != null && l.review_count) {
+      if (hasPublicRating(l)) {
         item.aggregateRating = {
           '@type': 'AggregateRating',
           ratingValue: l.rating,

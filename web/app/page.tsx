@@ -22,7 +22,7 @@ export default function Home() {
         >
           <h2 className="text-xl font-semibold">Find a Practitioner</h2>
           <p className="mt-2 text-sm text-marble/70">
-            Search by location and specialty, ranked by real reviews and distance.
+            Search by location and specialty. Book directly with the practice.
           </p>
         </Link>
         <Link

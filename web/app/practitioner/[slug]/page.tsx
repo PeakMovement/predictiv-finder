@@ -61,9 +61,15 @@ export default async function PractitionerProfilePage({
         {p.location ? ` · ${p.location}` : ""}
       </p>
 
-      {p.rating != null && (
+      {p.rating != null && (p.review_count ?? 0) > 0 && (
         <p className="mt-2 text-sm text-marble/80">
           ★ {p.rating.toFixed(1)} ({p.review_count} reviews)
+        </p>
+      )}
+
+      {p.is_claimed === false && (
+        <p className="mt-2 text-sm text-marble/50">
+          Listing compiled from public practice website — not claimed
         </p>
       )}
 

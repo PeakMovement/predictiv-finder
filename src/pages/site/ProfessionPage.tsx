@@ -11,7 +11,7 @@ import {
 export default function ProfessionPage() {
   const { profession } = useParams();
   const p = findProfession(profession);
-  const { listings, loading } = useListings(p?.db ?? '', undefined);
+  const { listings, loading, error } = useListings(p?.db ?? '', undefined);
   const path = `/practitioners/${profession}`;
   const crumbs = [
     { name: 'Home', path: '/' },
@@ -23,8 +23,8 @@ export default function ProfessionPage() {
     description: p ? professionDescription(p) : '',
     path,
     noindex: !p,
-    keepPrerenderedJsonLd: loading,
-    jsonLd: p && !loading ? [breadcrumbJsonLd(crumbs), faqJsonLd(p.faqs), listingsJsonLd(listings, path)] : undefined,
+    keepPrerenderedJsonLd: loading || !!error,
+    jsonLd: p && !loading && !error ? [breadcrumbJsonLd(crumbs), faqJsonLd(p.faqs), listingsJsonLd(listings, path)] : undefined,
   });
   if (!p) return <Navigate to="/practitioners" replace />;
 
@@ -46,7 +46,7 @@ export default function ProfessionPage() {
       <div className="mt-10 grid gap-8 lg:grid-cols-3">
         <section className="lg:col-span-2">
           <h2 className="text-2xl font-bold mb-4">{p.plural} near you</h2>
-          <DirectoryList listings={listings} loading={loading} emptyText={`We are still adding ${phrasePlural(p)} in ${CITY}.`} />
+          <DirectoryList listings={listings} loading={loading} error={error} emptyText={`We are still adding ${phrasePlural(p)} in ${CITY}.`} />
         </section>
         <aside className="space-y-6">
           <section className="rounded-2xl border border-border bg-card/50 p-5">
