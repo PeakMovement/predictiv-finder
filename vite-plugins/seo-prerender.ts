@@ -296,7 +296,8 @@ async function fetchPublishedBlogPosts(): Promise<PublishedBlogPost[]> {
       `blog_posts?select=${[...core, ...eeat].join(',')}&status=eq.published&order=published_at.desc`,
     );
   } catch (err) {
-    console.warn('[seo] blog_posts E-E-A-T columns unavailable, fetching without them:', err);
+    const detail = err instanceof Error ? err.message.split('\n')[0] : String(err);
+    console.warn(`[seo] blog_posts E-E-A-T columns unavailable yet (${detail}); fetching without them`);
     return supabaseGet<PublishedBlogPost[]>(
       `blog_posts?select=${core.join(',')}&status=eq.published&order=published_at.desc`,
     );
