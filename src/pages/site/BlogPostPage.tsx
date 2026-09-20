@@ -4,7 +4,8 @@ import { PublicLayout } from '@/components/site/PublicLayout';
 import { useSeo } from '@/lib/seo';
 import { renderMarkdown } from '@/lib/markdown';
 import { blogTable, formatDate, readingMinutes, type BlogPost } from '@/lib/blog';
-import { breadcrumbJsonLd, OG_IMAGE, SITE_URL } from '@/seo/site';
+import { isNamedPerson, organizationAuthorJsonLd, personJsonLd } from '@/seo/eeat';
+import { breadcrumbJsonLd, OG_IMAGE, SITE_NAME, SITE_URL } from '@/seo/site';
 
 export default function BlogPostPage() {
   const { slug } = useParams();
@@ -39,6 +40,7 @@ export default function BlogPostPage() {
     type: 'article',
     image: post?.cover_image_url || undefined,
     noindex: state === 'missing',
+    keepPrerenderedJsonLd: state === 'loading',
     jsonLd: post
       ? [
           breadcrumbJsonLd(crumbs),
@@ -50,7 +52,12 @@ export default function BlogPostPage() {
             image: post.cover_image_url || OG_IMAGE,
             datePublished: post.published_at,
             dateModified: post.updated_at,
-            author: { '@type': 'Organization', name: post.author_name || 'Predictiv', url: SITE_URL },
+            author: isNamedPerson(post.author_name)
+              ? personJsonLd(post.author_name!, { credential: post.author_credential, url: `${SITE_URL}/about` })
+              : organizationAuthorJsonLd(post.author_name || SITE_NAME, SITE_URL),
+            ...(isNamedPerson(post.reviewer_name)
+              ? { reviewedBy: personJsonLd(post.reviewer_name!, { credential: post.reviewer_credential }) }
+              : {}),
             publisher: { '@id': `${SITE_URL}/#organization`, '@type': 'Organization', name: 'Predictiv', logo: { '@type': 'ImageObject', url: `${SITE_URL}/icon-512.png` } },
             mainEntityOfPage: `${SITE_URL}${path}`,
             keywords: post.target_keyword || undefined,
@@ -77,8 +84,21 @@ export default function BlogPostPage() {
       <article className="max-w-3xl mx-auto">
         <header className="mb-8">
           <p className="text-sm text-muted-foreground">
-            <time dateTime={post.published_at ?? undefined}>{formatDate(post.published_at)}</time> · {readingMinutes(post.content)} min read · {post.author_name || 'Predictiv'}
+            <time dateTime={post.published_at ?? undefined}>{formatDate(post.published_at)}</time> · {readingMinutes(post.content)} min read
+            {isNamedPerson(post.author_name) ? (
+              <>
+                {' · '}
+                <span itemProp="author">{post.author_name}{post.author_credential ? `, ${post.author_credential}` : ''}</span>
+              </>
+            ) : (
+              <> · {post.author_name || 'Predictiv'}</>
+            )}
           </p>
+          {isNamedPerson(post.reviewer_name) && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Reviewed by {post.reviewer_name}{post.reviewer_credential ? `, ${post.reviewer_credential}` : ''}
+            </p>
+          )}
           <h1 className="mt-3 text-3xl md:text-5xl font-extrabold tracking-tight leading-tight">{post.title}</h1>
           {post.excerpt && <p className="mt-4 text-lg text-muted-foreground">{post.excerpt}</p>}
         </header>

@@ -16,6 +16,12 @@ export interface SeoOptions {
   type?: 'website' | 'article';
   noindex?: boolean;
   jsonLd?: JsonLd | JsonLd[];
+  /**
+   * Keep build-time JSON-LD in the document until the client has real data
+   * (directory listings, blog posts). Default is to replace prerendered
+   * scripts so hydration does not leave duplicates.
+   */
+  keepPrerenderedJsonLd?: boolean;
 }
 
 function setMeta(attr: 'name' | 'property', key: string, content: string) {
@@ -63,17 +69,21 @@ export function useSeo(opts: SeoOptions) {
     setMeta('name', 'twitter:image', image);
     setCanonical(url);
 
-    // The build prerenders static JSON-LD for the first page load; once React
-    // takes over, this hook owns structured data, so drop those to avoid duplicates.
-    document.querySelectorAll('script[data-prerendered]').forEach((el) => el.remove());
-    const id = 'page-jsonld';
-    document.getElementById(id)?.remove();
-    if (opts.jsonLd) {
-      const script = document.createElement('script');
-      script.type = 'application/ld+json';
-      script.id = id;
-      script.text = JSON.stringify(opts.jsonLd);
-      document.head.appendChild(script);
+    // The build prerenders static JSON-LD for the first page load. Drop it
+    // once React has replacement data so crawlers that run JS do not see
+    // duplicates. While listings/posts are still loading, keep the
+    // prerendered block so the first HTML is not replaced with an empty list.
+    if (!opts.keepPrerenderedJsonLd) {
+      document.querySelectorAll('script[data-prerendered]').forEach((el) => el.remove());
+      const id = 'page-jsonld';
+      document.getElementById(id)?.remove();
+      if (opts.jsonLd) {
+        const script = document.createElement('script');
+        script.type = 'application/ld+json';
+        script.id = id;
+        script.text = JSON.stringify(opts.jsonLd);
+        document.head.appendChild(script);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);

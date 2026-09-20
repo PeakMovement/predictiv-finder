@@ -1,22 +1,10 @@
 import { useEffect, useState } from 'react';
 import { ExternalLink, MapPin, Phone, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { SITE_URL } from '@/seo/site';
+import { LISTING_SELECT, listingsJsonLd, type Listing } from '@/seo/listings';
 
-export interface Listing {
-  id: string;
-  name: string;
-  profession: string;
-  practice_name: string | null;
-  location: string | null;
-  suburb: string | null;
-  calendly_url: string | null;
-  contact_number: string | null;
-  bio: string | null;
-  rating: number | null;
-  review_count: number | null;
-  google_reviews_url: string | null;
-}
+export type { Listing };
+export { listingsJsonLd };
 
 export function useListings(professionDb: string, suburbName?: string) {
   const [listings, setListings] = useState<Listing[]>([]);
@@ -26,7 +14,7 @@ export function useListings(professionDb: string, suburbName?: string) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let q = (supabase as any)
       .from('professionals')
-      .select('id,name,profession,practice_name,location,suburb,calendly_url,contact_number,bio,rating,review_count,google_reviews_url')
+      .select(LISTING_SELECT)
       .eq('is_approved', true)
       .eq('profession', professionDb)
       .not('suburb', 'is', null)
@@ -43,31 +31,6 @@ export function useListings(professionDb: string, suburbName?: string) {
     };
   }, [professionDb, suburbName]);
   return { listings, loading };
-}
-
-export function listingsJsonLd(listings: Listing[], pagePath: string) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    url: `${SITE_URL}${pagePath}`,
-    numberOfItems: listings.length,
-    itemListElement: listings.map((l, i) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      item: {
-        '@type': l.profession === 'General Practitioner' ? 'MedicalClinic' : 'MedicalBusiness',
-        name: l.practice_name || l.name,
-        ...(l.calendly_url ? { url: l.calendly_url } : {}),
-        ...(l.contact_number ? { telephone: l.contact_number } : {}),
-        address: {
-          '@type': 'PostalAddress',
-          addressLocality: l.suburb || undefined,
-          addressRegion: 'Western Cape',
-          addressCountry: 'ZA',
-        },
-      },
-    })),
-  };
 }
 
 export function DirectoryList({ listings, loading, emptyText }: { listings: Listing[]; loading: boolean; emptyText: string }) {

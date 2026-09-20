@@ -12,6 +12,9 @@ export interface BlogPost {
   content: string;
   cover_image_url: string | null;
   author_name: string | null;
+  author_credential?: string | null;
+  reviewer_name?: string | null;
+  reviewer_credential?: string | null;
   status: 'draft' | 'published';
   published_at: string | null;
   created_at: string;

@@ -30,21 +30,24 @@ export default function BlogIndex() {
     title: route.title,
     description: route.description,
     path: route.path,
-    jsonLd: [
-      breadcrumbJsonLd(crumbs),
-      {
-        '@context': 'https://schema.org',
-        '@type': 'Blog',
-        url: `${SITE_URL}/blog`,
-        name: 'The Predictiv blog',
-        blogPost: posts.map((p) => ({
-          '@type': 'BlogPosting',
-          headline: p.title,
-          url: `${SITE_URL}/blog/${p.slug}`,
-          datePublished: p.published_at,
-        })),
-      },
-    ],
+    keepPrerenderedJsonLd: loading,
+    jsonLd: loading
+      ? undefined
+      : [
+          breadcrumbJsonLd(crumbs),
+          {
+            '@context': 'https://schema.org',
+            '@type': 'Blog',
+            url: `${SITE_URL}/blog`,
+            name: 'The Predictiv blog',
+            blogPost: posts.map((p) => ({
+              '@type': 'BlogPosting',
+              headline: p.title,
+              url: `${SITE_URL}/blog/${p.slug}`,
+              datePublished: p.published_at,
+            })),
+          },
+        ],
   });
 
   return (

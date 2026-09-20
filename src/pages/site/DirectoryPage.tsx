@@ -4,8 +4,8 @@ import { FaqSection } from '@/components/site/FaqSection';
 import { DirectoryList, listingsJsonLd, useListings } from '@/components/site/DirectoryList';
 import { useSeo } from '@/lib/seo';
 import {
-  CITY, DIRECTORY_PAGES, PROFESSIONS, breadcrumbJsonLd, directoryDescription, directoryTitle, faqJsonLd,
-  findProfession, findSuburb, hasDirectoryPage,
+  CITY, DIRECTORY_PAGES, PROFESSIONS, breadcrumbJsonLd, directoryDescription, directoryFaqs, directoryTitle,
+  faqJsonLd, findProfession, findSuburb, hasDirectoryPage, phrasePlural, phraseSingular,
 } from '@/seo/site';
 
 export default function DirectoryPage() {
@@ -26,7 +26,8 @@ export default function DirectoryPage() {
     description: valid ? directoryDescription(p!, s!) : '',
     path,
     noindex: !valid,
-    jsonLd: valid ? [breadcrumbJsonLd(crumbs), listingsJsonLd(listings, path), faqJsonLd(p!.faqs)] : undefined,
+    keepPrerenderedJsonLd: loading,
+    jsonLd: valid && !loading ? [breadcrumbJsonLd(crumbs), listingsJsonLd(listings, path), faqJsonLd(directoryFaqs(p!, s!))] : undefined,
   });
   if (!valid) return <Navigate to={p ? `/practitioners/${p.slug}` : '/practitioners'} replace />;
 
@@ -37,26 +38,33 @@ export default function DirectoryPage() {
     <PublicLayout crumbs={crumbs}>
       <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">{p!.plural} in {s!.name}</h1>
       <p className="mt-4 max-w-3xl text-lg text-muted-foreground">
-        Looking for a {p!.singular.toLowerCase()} in {s!.name}, {CITY}? {p!.intro} Below are {p!.plural.toLowerCase()} practising in and
+        Looking for a {phraseSingular(p!)} in {s!.name}, {CITY}? {p!.intro} Below are {phrasePlural(p!)} practising in and
         around {s!.name}. Book directly with the practice.
       </p>
 
       <section className="mt-10">
         <h2 className="text-2xl font-bold mb-4">{p!.plural} in {s!.name}</h2>
-        <DirectoryList listings={listings} loading={loading} emptyText={`We are still adding ${p!.plural.toLowerCase()} in ${s!.name}.`} />
+        <DirectoryList listings={listings} loading={loading} emptyText={`We are still adding ${phrasePlural(p!)} in ${s!.name}.`} />
       </section>
 
       <section className="mt-12 grid gap-6 md:grid-cols-2">
         <div className="rounded-2xl border border-border bg-card/50 p-5">
-          <h2 className="font-bold mb-2">What a {p!.singular.toLowerCase()} in {s!.name} can help with</h2>
+          <h2 className="font-bold mb-2">What a {phraseSingular(p!)} in {s!.name} can help with</h2>
           <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
             {p!.treats.map((t) => <li key={t}>{t}</li>)}
           </ul>
         </div>
         <div className="rounded-2xl border border-border bg-card/50 p-5">
-          <h2 className="font-bold mb-2">Not sure a {p!.singular.toLowerCase()} is right for you?</h2>
+          <h2 className="font-bold mb-2">Not sure a {phraseSingular(p!)} is right for you?</h2>
           <p className="text-sm text-muted-foreground">{p!.whenToSee}</p>
           <Link to="/assistant" className="inline-block mt-3 text-sm text-primary underline underline-offset-4">Describe your problem and see who fits best</Link>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Questions about what a {phraseSingular(p!)} treats, referrals and medical aid:{' '}
+            <Link to={`/practitioners/${p!.slug}`} className="text-primary underline underline-offset-4">
+              {p!.plural} in {CITY}
+            </Link>
+            .
+          </p>
         </div>
       </section>
 
@@ -82,7 +90,7 @@ export default function DirectoryPage() {
         </section>
       )}
 
-      <FaqSection faqs={p!.faqs} />
+      <FaqSection faqs={directoryFaqs(p!, s!)} title={`${p!.plural} in ${s!.name}: booking and listings`} />
     </PublicLayout>
   );
 }

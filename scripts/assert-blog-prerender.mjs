@@ -43,10 +43,12 @@ for (const slug of slugs) {
   const canonical = tag(html, /<link rel="canonical" href="([^"]*)"/);
   const description = tag(html, /<meta name="description" content="([^"]*)"/);
   const h1 = tag(html, /<h1>([\s\S]*?)<\/h1>/);
+  const ogUrl = tag(html, /<meta property="og:url" content="([^"]*)"/);
   const expectedCanonical = `${SITE}/blog/${slug}`;
   const problems = [];
   if (!title || title === HOME_TITLE) problems.push(`title is homepage or missing (${JSON.stringify(title)})`);
   if (canonical !== expectedCanonical) problems.push(`canonical ${JSON.stringify(canonical)} !== ${expectedCanonical}`);
+  if (ogUrl !== expectedCanonical) problems.push(`og:url ${JSON.stringify(ogUrl)} !== ${expectedCanonical}`);
   if (!description || description.includes('Find trusted physiotherapists, chiropractors, biokineticists and GPs')) {
     problems.push(`description looks like the homepage (${JSON.stringify(description)?.slice(0, 80)})`);
   }
