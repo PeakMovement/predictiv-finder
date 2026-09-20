@@ -67,8 +67,8 @@ if (!fs.existsSync(gpsFile)) {
 const about = read(path.join(dist, 'about/index.html'));
 if (!about.includes('Why we built it') || !about.includes('predictivpty@gmail.com')) {
   failed += fail('/about missing full body copy');
-} else if (!about.includes('Justin Muller')) {
-  failed += fail('/about missing blog author display name Justin Muller');
+} else if (about.includes('Justin Muller') || /Blog author/i.test(about)) {
+  failed += fail('/about still names a person blog author');
 } else console.log('ok  /about full body');
 
 const privacy = read(path.join(dist, 'privacy/index.html'));
@@ -102,11 +102,26 @@ for (const slug of slugs) {
   if (!title || title === HOME_TITLE) failed += fail(`/blog/${slug} title is homepage`);
   if (canonical !== expected) failed += fail(`/blog/${slug} canonical ${canonical}`);
   if (ogUrl !== expected) failed += fail(`/blog/${slug} og:url ${ogUrl}`);
-  if (!html.includes('Justin Muller')) failed += fail(`/blog/${slug} missing visible author Justin Muller`);
-  if (!html.includes('"@type":"Person"') || !/"name":"Justin Muller"/.test(html)) {
-    failed += fail(`/blog/${slug} missing BlogPosting Person author Justin Muller`);
+  if (html.includes('Justin Muller')) failed += fail(`/blog/${slug} still names Justin Muller`);
+  if (/"@type":"Person"/.test(html) && /"name":"Justin Muller"/.test(html)) {
+    failed += fail(`/blog/${slug} still has Person author Justin Muller`);
   }
 }
+
+function walkHtml(dir) {
+  for (const name of fs.readdirSync(dir)) {
+    const full = path.join(dir, name);
+    const stat = fs.statSync(full);
+    if (stat.isDirectory()) walkHtml(full);
+    else if (name.endsWith('.html')) {
+      const html = read(full);
+      if (html.includes('Justin Muller')) {
+        failed += fail(`${path.relative(dist, full)} still contains Justin Muller`);
+      }
+    }
+  }
+}
+walkHtml(dist);
 
 if (failed) {
   console.error(`\n${failed} SEO audit check(s) failed`);

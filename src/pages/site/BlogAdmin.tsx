@@ -12,7 +12,7 @@ import { renderMarkdown } from '@/lib/markdown';
 import {
   BLOG_ADMIN_EMAILS, KEYWORD_IDEAS, analyseSeo, blogTable, slugify, wordCount, type BlogPost, type BlogPostInput,
 } from '@/lib/blog';
-import { DEFAULT_AUTHOR_NAME, resolvedAuthorName } from '@/seo/eeat';
+import { publicAuthorName } from '@/seo/eeat';
 
 const EMPTY: BlogPostInput = {
   slug: '',
@@ -24,7 +24,7 @@ const EMPTY: BlogPostInput = {
   content:
     'Start with a short intro that uses your keyword in the first sentence or two.\n\n## First section heading\n\nWrite helpful, specific information here.\n\n## Second section heading\n\nMore detail. Link to [find a practitioner](/assistant).\n\n## When to see a practitioner\n\nExplain who to see and when.',
   cover_image_url: '',
-  author_name: DEFAULT_AUTHOR_NAME,
+  author_name: 'Predictiv',
   author_credential: '',
   reviewer_name: '',
   reviewer_credential: '',
@@ -133,7 +133,7 @@ export default function BlogAdmin() {
     setForm({
       slug: p.slug, title: p.title, meta_title: p.meta_title ?? '', meta_description: p.meta_description ?? '',
       target_keyword: p.target_keyword ?? '', excerpt: p.excerpt ?? '', content: p.content, cover_image_url: p.cover_image_url ?? '',
-      author_name: resolvedAuthorName(p.author_name),
+      author_name: publicAuthorName(p.author_name),
       author_credential: p.author_credential ?? '',
       reviewer_name: p.reviewer_name ?? '',
       reviewer_credential: p.reviewer_credential ?? '',
@@ -157,7 +157,7 @@ export default function BlogAdmin() {
       target_keyword: form.target_keyword || null,
       excerpt: form.excerpt || null,
       cover_image_url: form.cover_image_url || null,
-      author_name: resolvedAuthorName(form.author_name),
+      author_name: publicAuthorName(form.author_name),
       author_credential: form.author_credential || null,
       reviewer_name: form.reviewer_name || null,
       reviewer_credential: form.reviewer_credential || null,
@@ -304,12 +304,12 @@ export default function BlogAdmin() {
               <div className="grid md:grid-cols-2 gap-4">
                 <Field
                   label="Author name"
-                  hint="Defaults to Justin Muller (consented display name). Leave credential blank unless a real credential is supplied — do not invent titles or HPCSA numbers."
+                  hint="Defaults to Predictiv (organisation). Only put a real person's name here if they have agreed to be named. Do not invent a clinician."
                 >
-                  <Input value={form.author_name ?? ''} onChange={(e) => set('author_name', e.target.value)} placeholder={DEFAULT_AUTHOR_NAME} />
+                  <Input value={form.author_name ?? ''} onChange={(e) => set('author_name', e.target.value)} placeholder="Predictiv" />
                 </Field>
-                <Field label="Author credential" hint="Leave blank. Do not invent credentials, titles, or registration numbers.">
-                  <Input value={form.author_credential ?? ''} onChange={(e) => set('author_credential', e.target.value || null)} placeholder="Leave blank" />
+                <Field label="Author credential" hint="Optional. Only if the author is a named person, e.g. HPCSA-registered physiotherapist.">
+                  <Input value={form.author_credential ?? ''} onChange={(e) => set('author_credential', e.target.value || null)} placeholder="Leave blank unless a real author is named" />
                 </Field>
                 <Field
                   label="Reviewer name"

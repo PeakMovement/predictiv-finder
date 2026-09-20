@@ -4,7 +4,7 @@ import { PublicLayout } from '@/components/site/PublicLayout';
 import { useSeo } from '@/lib/seo';
 import { renderMarkdown } from '@/lib/markdown';
 import { blogTable, formatDate, readingMinutes, type BlogPost } from '@/lib/blog';
-import { blogAuthorJsonLd, isNamedPerson, personJsonLd, resolvedAuthorName } from '@/seo/eeat';
+import { isNamedPerson, organizationAuthorJsonLd, personJsonLd, publicAuthorName } from '@/seo/eeat';
 import { breadcrumbJsonLd, OG_IMAGE, SITE_URL } from '@/seo/site';
 
 export default function BlogPostPage() {
@@ -26,7 +26,7 @@ export default function BlogPostPage() {
   }, [slug]);
 
   const html = useMemo(() => (post ? renderMarkdown(post.content) : ''), [post]);
-  const authorName = resolvedAuthorName(post?.author_name);
+  const authorName = publicAuthorName(post?.author_name);
   const path = `/blog/${slug}`;
   const crumbs = [
     { name: 'Home', path: '/' },
@@ -53,7 +53,9 @@ export default function BlogPostPage() {
             image: post.cover_image_url || OG_IMAGE,
             datePublished: post.published_at,
             dateModified: post.updated_at,
-            author: blogAuthorJsonLd(post.author_name, post.author_credential, `${SITE_URL}/about`),
+            author: isNamedPerson(authorName)
+              ? personJsonLd(authorName, { credential: post.author_credential, url: `${SITE_URL}/about` })
+              : organizationAuthorJsonLd(authorName, SITE_URL),
             ...(isNamedPerson(post.reviewer_name)
               ? { reviewedBy: personJsonLd(post.reviewer_name!, { credential: post.reviewer_credential }) }
               : {}),
