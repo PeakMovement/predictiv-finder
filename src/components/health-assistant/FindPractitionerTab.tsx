@@ -232,7 +232,7 @@ function PractitionerCard({ p, d }: { p: Professional; d: number | null }) {
             Featured
           </span>
         )}
-        {p.rating != null && (
+        {p.rating != null && (p.review_count ?? 0) > 0 && (
           <span className="absolute top-2 right-2 flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-black/70 text-white">
             <Star className="h-3 w-3 fill-current text-amber-400" />
             {p.rating.toFixed(1)}
@@ -252,6 +252,9 @@ function PractitionerCard({ p, d }: { p: Professional; d: number | null }) {
 
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
           {p.location && <span className="truncate">{p.location}</span>}
+          {p.is_claimed === false && (
+            <span>Listing compiled from public practice website — not claimed</span>
+          )}
           {d != null && <span>{d.toFixed(1)} km</span>}
           {p.price_min != null && (
             <span>

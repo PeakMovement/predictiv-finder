@@ -1,73 +1,61 @@
-# Welcome to your Lovable project
+# Predictiv Finder
 
-## Project info
+Public practitioner directory and directional “who to see” assistant for Cape
+Town (Rondebosch / Southern Suburbs first). **Not medical advice.** Bookings
+happen on the practice’s own website.
 
-**URL**: https://lovable.dev/projects/79c57fbe-1cd8-4976-9c6d-91ad84b209e5
+**Live site:** https://predictiv.co.za  
+**Canonical app:** Vite + React at the repo root. See [ARCHITECTURE.md](./ARCHITECTURE.md).
 
-## How can I edit this code?
+The `web/` Next.js app is **frozen** and is not deployed to predictiv.co.za.
 
-There are several ways of editing your application.
+Peak Movement marketing (peakmovement.co.za) is a different product and is
+not this repository.
 
-**Use Lovable**
+## Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/79c57fbe-1cd8-4976-9c6d-91ad84b209e5) and start prompting.
+- Vite 5, React 18, React Router, Tailwind, shadcn/ui
+- Supabase (Postgres + Auth + Edge Functions)
+- Public assistant: `analyze-health-concern` → Lovable AI Gateway / Gemini
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Run locally
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+npm install          # uses package-lock.json (CI does too)
+cp .env.example .env.local   # optional; see comments in that file
+npm run dev          # http://localhost:8080
 ```
 
-**Edit a file directly in GitHub**
+```sh
+npm run build
+npm run test:seo     # requires dist/ from the Vite build; hits live anon Supabase during prerender
+npm run lint
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Environment
 
-**Use GitHub Codespaces**
+Client env vars are listed in `.env.example`. The Lovable-generated Supabase
+**anon** URL and key currently live in `src/integrations/supabase/client.ts`
+(public by design). Never put the **service role** key in the client.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Edge function secrets (already on the project, not in git):
 
-## What technologies are used for this project?
+- `SUPABASE_SERVICE_ROLE_KEY` — used only by admin paths such as `create-practitioner`
+- `LOVABLE_API_KEY` — AI gateway
+- `PRACTITIONER_INVITE_TOKEN` — optional; if set (16+ chars), allows
+  `create-practitioner` with a matching `invite_token` in the JSON body
 
-This project is built with:
+Apply new SQL with the usual Supabase workflow (`supabase db push` / dashboard).
+Migration `20260920180000_lock_moderation_and_availability.sql` must be applied
+for moderation triggers and the busy/free availability view.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Publish
 
-## How can I deploy this project?
+Production is published from Lovable Cloud (root Vite app). GitHub Actions
+runs lint, build, and SEO selftests on pull requests; it does not deploy.
 
-Simply open [Lovable](https://lovable.dev/projects/79c57fbe-1cd8-4976-9c6d-91ad84b209e5) and click on Share -> Publish.
+## Practitioner listings
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Unclaimed cards were compiled from public practice websites. To list, claim,
+update, or remove a listing, use https://predictiv.co.za/join
+(`predictivpty@gmail.com`).

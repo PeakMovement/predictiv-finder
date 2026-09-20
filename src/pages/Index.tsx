@@ -1,4 +1,9 @@
 
+/**
+ * LEGACY — not mounted on any public route.
+ * Full health-plan / CSV-physician wizard. See src/legacy/README.md.
+ * Do not add this component back to App.tsx.
+ */
 import React from "react";
 import AppContent from "@/components/AppContent";
 import ErrorBoundary from "@/components/ErrorBoundary";

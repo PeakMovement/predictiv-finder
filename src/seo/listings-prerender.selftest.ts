@@ -14,6 +14,7 @@ const sample: Listing[] = [
     rating: null,
     review_count: null,
     google_reviews_url: null,
+    is_claimed: false,
   },
 ];
 
@@ -22,6 +23,7 @@ if (!html.includes('Marcela Cawood Physiotherapy')) throw new Error('missing pra
 if (!html.includes('Rondebosch')) throw new Error('missing suburb');
 if (!html.includes('074 420 2000')) throw new Error('missing phone');
 if (!html.includes('https://www.cwphysio.co.za/')) throw new Error('missing website href');
+if (!html.includes('not claimed')) throw new Error('unclaimed listings must be labelled in prerender HTML');
 if (html.includes('Loading practitioners')) throw new Error('must not be JS loading shell');
 
 const ld = JSON.stringify(listingsJsonLd(sample, '/practitioners/physiotherapists/rondebosch'));

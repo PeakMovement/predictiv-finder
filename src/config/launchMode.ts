@@ -1,10 +1,11 @@
 /**
  * Public Launch Mode flag.
  *
- * When `true`, the app exposes only the directional health assistant.
- * Booking, practitioner directory, user auth/dashboard, and practitioner
- * signup are hidden from end users (code remains in place for later phases).
+ * When `true`, booking, practitioner dashboard, and the gated portal at
+ * `/join/predictiv-practitioners` redirect home. The public directory, blog,
+ * about, privacy, `/join` (contact/claim), and `/assistant` stay live.
  *
- * Flip to `false` locally to re-enable the full experience.
+ * Flip to `false` locally only after create-practitioner is admin/invite-only
+ * (already the case) and moderation columns are trigger-protected.
  */
 export const PUBLIC_LAUNCH_MODE = true;

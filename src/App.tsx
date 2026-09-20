@@ -15,7 +15,8 @@ import { routeSeo } from "./seo/site";
 
 // Route-level code splitting: only the homepage ships in the first bundle.
 const AIHealthAssistant = lazy(() => import("./pages/AIHealthAssistant"));
-const Index = lazy(() => import("./pages/Index"));
+// LEGACY: src/pages/Index.tsx (plan-generator / CSV physicians) is intentionally
+// not routed. Do not mount it. See src/legacy/README.md.
 const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 const Services = lazy(() => import("./pages/Services"));
 const Professionals = lazy(() => import("./pages/Professionals"));
@@ -32,6 +33,7 @@ const BlogIndex = lazy(() => import("./pages/site/BlogIndex"));
 const BlogPostPage = lazy(() => import("./pages/site/BlogPostPage"));
 const BlogAdmin = lazy(() => import("./pages/site/BlogAdmin"));
 const About = lazy(() => import("./pages/site/About"));
+const Join = lazy(() => import("./pages/site/Join"));
 
 const assistantSeo = routeSeo("/assistant")!;
 const privacySeo = routeSeo("/privacy")!;
@@ -77,6 +79,7 @@ function App() {
               <Route path="/blog/:slug" element={<BlogPostPage />} />
               <Route path="/admin/blog" element={<BlogAdmin />} />
               <Route path="/about" element={<About />} />
+              <Route path="/join" element={<Join />} />
               <Route path="/find-a-practitioner" element={<Navigate to="/practitioners" replace />} />
               <Route path="/explore" element={<Navigate to="/" replace />} />
               <Route path="/how-it-works" element={gate(<HowItWorks />)} />

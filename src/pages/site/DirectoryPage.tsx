@@ -13,7 +13,7 @@ export default function DirectoryPage() {
   const p = findProfession(profession);
   const s = findSuburb(suburb);
   const valid = !!p && !!s && hasDirectoryPage(p.slug, s.slug);
-  const { listings, loading } = useListings(p?.db ?? '', s?.name);
+  const { listings, loading, error } = useListings(p?.db ?? '', s?.name);
   const path = `/practitioners/${profession}/${suburb}`;
   const crumbs = [
     { name: 'Home', path: '/' },
@@ -26,8 +26,8 @@ export default function DirectoryPage() {
     description: valid ? directoryDescription(p!, s!) : '',
     path,
     noindex: !valid,
-    keepPrerenderedJsonLd: loading,
-    jsonLd: valid && !loading ? [breadcrumbJsonLd(crumbs), listingsJsonLd(listings, path), faqJsonLd(directoryFaqs(p!, s!))] : undefined,
+    keepPrerenderedJsonLd: loading || !!error,
+    jsonLd: valid && !loading && !error ? [breadcrumbJsonLd(crumbs), listingsJsonLd(listings, path), faqJsonLd(directoryFaqs(p!, s!))] : undefined,
   });
   if (!valid) return <Navigate to={p ? `/practitioners/${p.slug}` : '/practitioners'} replace />;
 
@@ -44,7 +44,7 @@ export default function DirectoryPage() {
 
       <section className="mt-10">
         <h2 className="text-2xl font-bold mb-4">{p!.plural} in {s!.name}</h2>
-        <DirectoryList listings={listings} loading={loading} emptyText={`We are still adding ${phrasePlural(p!)} in ${s!.name}.`} />
+        <DirectoryList listings={listings} loading={loading} error={error} emptyText={`We are still adding ${phrasePlural(p!)} in ${s!.name}.`} />
       </section>
 
       <section className="mt-12 grid gap-6 md:grid-cols-2">

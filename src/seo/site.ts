@@ -352,6 +352,16 @@ export function allRoutes(): RouteSeo[] {
       changefreq: 'monthly',
     },
     {
+      path: '/join',
+      title: `List your practice | ${SITE_NAME}`,
+      description:
+        'Ask to list, update, or remove a Predictiv directory listing in Cape Town. Unclaimed listings were compiled from public practice websites.',
+      h1: 'List your practice',
+      intro: 'Practitioner sign-up is not self-serve yet. Email us to list, claim, update or remove a listing.',
+      priority: 0.4,
+      changefreq: 'monthly',
+    },
+    {
       path: '/privacy',
       title: `Privacy Policy | ${SITE_NAME}`,
       description: 'How Predictiv collects, uses and protects your information under POPIA.',

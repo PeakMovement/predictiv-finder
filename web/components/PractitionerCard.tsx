@@ -29,7 +29,7 @@ export function PractitionerCard({
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-marble/80">
-        {p.rating != null && (
+        {p.rating != null && (p.review_count ?? 0) > 0 && (
           <span>
             ★ {p.rating.toFixed(1)} ({p.review_count} review{p.review_count === 1 ? "" : "s"})
           </span>
@@ -43,6 +43,12 @@ export function PractitionerCard({
           </span>
         )}
       </div>
+
+      {p.is_claimed === false && (
+        <p className="mt-2 text-xs text-marble/50">
+          Listing compiled from public practice website — not claimed
+        </p>
+      )}
 
       {p.specialities?.length > 0 && (
         <p className="mt-2 text-sm text-marble/60">{p.specialities.slice(0, 3).join(", ")}</p>
