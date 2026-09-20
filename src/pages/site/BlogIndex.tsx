@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { PublicLayout } from '@/components/site/PublicLayout';
 import { useSeo } from '@/lib/seo';
 import { blogTable, formatDate, readingMinutes, type BlogPost } from '@/lib/blog';
-import { blogAuthorJsonLd } from '@/seo/eeat';
 import { breadcrumbJsonLd, routeSeo, SITE_URL } from '@/seo/site';
 
 const route = routeSeo('/blog')!;
@@ -46,7 +45,6 @@ export default function BlogIndex() {
               headline: p.title,
               url: `${SITE_URL}/blog/${p.slug}`,
               datePublished: p.published_at,
-              author: blogAuthorJsonLd(p.author_name, undefined, `${SITE_URL}/about`),
             })),
           },
         ],

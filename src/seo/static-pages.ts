@@ -5,15 +5,12 @@
  */
 import { CURRENT_CONSENT_VERSION } from '../config/popia';
 import { escapeHtml } from './blog-prerender';
-import { DEFAULT_AUTHOR_NAME } from './eeat';
 import { CITY, DIRECTORY_PAGES, PROFESSIONS, SUBURBS, findSuburb } from './site';
 
 const esc = escapeHtml;
 
 export function aboutFallbackHtml(): string {
   return [
-    '<h2>Blog author</h2>',
-    `<p>${DEFAULT_AUTHOR_NAME}</p>`,
     '<h2>Why we built it</h2>',
     '<p>When something hurts or does not feel right, the first question is often the hardest one: who do I see? A physiotherapist, a chiropractor, a biokineticist or a GP? Predictiv answers that in plain language and then helps you find a trusted practice nearby, starting in Rondebosch and the Southern Suburbs of Cape Town.</p>',
     '<h2>How it works</h2>',
