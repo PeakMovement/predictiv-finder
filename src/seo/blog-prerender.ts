@@ -18,6 +18,9 @@ export type PublishedBlogPost = {
   content: string;
   cover_image_url: string | null;
   author_name: string | null;
+  author_credential?: string | null;
+  reviewer_name?: string | null;
+  reviewer_credential?: string | null;
   published_at: string | null;
   updated_at: string;
   target_keyword: string | null;
@@ -58,6 +61,9 @@ export function blogPostToRoute(post: PublishedBlogPost): RouteSeo | null {
     datePublished: post.published_at ?? undefined,
     dateModified: post.updated_at,
     authorName: post.author_name || SITE_NAME,
+    authorCredential: post.author_credential?.trim() || undefined,
+    reviewerName: post.reviewer_name?.trim() || undefined,
+    reviewerCredential: post.reviewer_credential?.trim() || undefined,
     keywords: post.target_keyword || undefined,
   };
 }
@@ -83,6 +89,10 @@ export function assertPrerenderedBlogHtml(html: string, post: PublishedBlogPost)
   }
   if (canonical === homepageCanonical || canonical === SITE_URL) {
     throw new Error(`blog ${post.slug}: canonical still points at the homepage`);
+  }
+  const ogUrl = html.match(/<meta property="og:url" content="([^"]*)"/)?.[1];
+  if (ogUrl !== expectedCanonical) {
+    throw new Error(`blog ${post.slug}: og:url was ${JSON.stringify(ogUrl)}, expected ${JSON.stringify(expectedCanonical)}`);
   }
   if (description !== expectedDescription) {
     throw new Error(`blog ${post.slug}: description was ${JSON.stringify(description)}`);

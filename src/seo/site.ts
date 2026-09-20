@@ -217,15 +217,60 @@ export interface RouteSeo {
   datePublished?: string;
   dateModified?: string;
   authorName?: string;
+  authorCredential?: string;
+  reviewerName?: string;
+  reviewerCredential?: string;
   keywords?: string;
+}
+
+/** Lowercase common nouns, but keep acronyms such as GP / GPs. */
+export function phraseSingular(p: Profession): string {
+  return p.singular === 'GP' ? 'GP' : p.singular.toLowerCase();
+}
+
+export function phrasePlural(p: Profession): string {
+  return p.plural === 'GPs' ? 'GPs' : p.plural.toLowerCase();
 }
 
 export const professionTitle = (p: Profession) => `${p.plural} in ${CITY} | Find a ${p.singular} Near You | ${SITE_NAME}`;
 export const professionDescription = (p: Profession) =>
-  `Find ${p.plural.toLowerCase()} in Rondebosch, Claremont, Newlands and the Southern Suburbs. See what a ${p.singular.toLowerCase()} treats, when to see one, and book directly.`;
+  `Find ${phrasePlural(p)} in Rondebosch, Claremont, Newlands and the Southern Suburbs. See what a ${phraseSingular(p)} treats, when to see one, and book directly.`;
 export const directoryTitle = (p: Profession, s: Suburb) => `${p.plural} in ${s.name}, ${CITY} | ${SITE_NAME}`;
 export const directoryDescription = (p: Profession, s: Suburb) =>
-  `Looking for a ${p.singular.toLowerCase()} in ${s.name}? Compare local ${p.plural.toLowerCase()} in ${s.name}, ${CITY}, see what they treat and book directly with the practice.`;
+  `Looking for a ${phraseSingular(p)} in ${s.name}? Compare local ${phrasePlural(p)} in ${s.name}, ${CITY}, see what they treat and book directly with the practice.`;
+
+/**
+ * Suburb-page FAQs that are about the local directory, not a copy of the
+ * city-level profession FAQs. Shared clinical FAQs live on /practitioners/{slug}.
+ */
+export function directoryFaqs(p: Profession, s: Suburb): Faq[] {
+  const nearbyNames = DIRECTORY_PAGES.filter((d) => d.profession === p.slug && d.suburb !== s.slug)
+    .map((d) => findSuburb(d.suburb)?.name)
+    .filter((n): n is string => !!n);
+  const cityUrl = `${SITE_URL}/practitioners/${p.slug}`;
+  const faqs: Faq[] = [
+    {
+      q: `How do I find a ${phraseSingular(p)} in ${s.name}?`,
+      a: `Predictiv lists ${phrasePlural(p)} practising in and around ${s.name}, ${CITY}. Each listing shows the practice name, suburb, a phone number where the practice has published one, and a link to the practice's own website so you can book with them directly.`,
+    },
+    {
+      q: `Can I book a ${phraseSingular(p)} in ${s.name} through Predictiv?`,
+      a: `No. Predictiv is free and does not take bookings or a cut of your appointment. Use the practice website link on this page and book directly with the ${s.name} practice.`,
+    },
+  ];
+  if (nearbyNames.length) {
+    faqs.push({
+      q: `Which nearby suburbs also have ${phrasePlural(p)} listed?`,
+      a: `Besides ${s.name}, Predictiv currently lists ${phrasePlural(p)} in ${nearbyNames.join(', ')}. Questions about what a ${phraseSingular(p)} treats, referrals and medical aid are answered on the ${p.plural} in ${CITY} page (${cityUrl}), not duplicated here.`,
+    });
+  } else {
+    faqs.push({
+      q: `Where can I read more about seeing a ${phraseSingular(p)}?`,
+      a: `This page is the ${s.name} practice list. For what a ${phraseSingular(p)} treats and when to see one, use the ${p.plural} in ${CITY} guide at ${cityUrl}.`,
+    });
+  }
+  return faqs;
+}
 
 export function allRoutes(): RouteSeo[] {
   const routes: RouteSeo[] = [

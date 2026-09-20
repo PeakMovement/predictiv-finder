@@ -23,9 +23,19 @@ import {
   escapeHtml,
   type PublishedBlogPost,
 } from '../src/seo/blog-prerender';
+import { isNamedPerson, organizationAuthorJsonLd, personJsonLd } from '../src/seo/eeat';
 import {
-  HOME_FAQS, PROFESSIONS, SITE_NAME, SITE_URL, allRoutes, breadcrumbJsonLd, faqJsonLd, findProfession, findSuburb,
-  organizationJsonLd, type RouteSeo,
+  LISTING_SELECT,
+  assertPrerenderedDirectoryHtml,
+  listingsFallbackHtml,
+  listingsFor,
+  listingsJsonLd,
+  type Listing,
+} from '../src/seo/listings';
+import { aboutFallbackHtml, practitionersIndexFallbackHtml, privacyFallbackHtml } from '../src/seo/static-pages';
+import {
+  CITY, HOME_FAQS, PROFESSIONS, SITE_NAME, SITE_URL, allRoutes, breadcrumbJsonLd, directoryFaqs,
+  faqJsonLd, findProfession, findSuburb, organizationJsonLd, phraseSingular, type RouteSeo,
 } from '../src/seo/site';
 
 const esc = escapeHtml;
@@ -52,8 +62,15 @@ function crumbsFor(r: RouteSeo) {
   return crumbs;
 }
 
+function blogAuthorJsonLd(r: RouteSeo) {
+  if (isNamedPerson(r.authorName)) {
+    return personJsonLd(r.authorName!, { credential: r.authorCredential, url: `${SITE_URL}/about` });
+  }
+  return organizationAuthorJsonLd(r.authorName || SITE_NAME, SITE_URL);
+}
+
 function blogPostingJsonLd(r: RouteSeo) {
-  return {
+  const node: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     headline: r.h1,
@@ -61,7 +78,7 @@ function blogPostingJsonLd(r: RouteSeo) {
     image: r.image || `${SITE_URL}/og-image.png`,
     datePublished: r.datePublished,
     dateModified: r.dateModified || r.datePublished,
-    author: { '@type': 'Organization', name: r.authorName || SITE_NAME, url: SITE_URL },
+    author: blogAuthorJsonLd(r),
     publisher: {
       '@id': `${SITE_URL}/#organization`,
       '@type': 'Organization',
@@ -72,9 +89,22 @@ function blogPostingJsonLd(r: RouteSeo) {
     keywords: r.keywords,
     inLanguage: 'en-ZA',
   };
+  if (isNamedPerson(r.reviewerName)) {
+    node.reviewedBy = personJsonLd(r.reviewerName!, { credential: r.reviewerCredential });
+  }
+  return node;
 }
 
-function jsonLdFor(r: RouteSeo) {
+function listingsForRoute(r: RouteSeo, listings: Listing[]): Listing[] {
+  const parts = r.path.split('/').filter(Boolean);
+  if (parts[0] !== 'practitioners' || !parts[1]) return [];
+  const p = findProfession(parts[1]);
+  if (!p) return [];
+  const s = parts[2] ? findSuburb(parts[2]) : undefined;
+  return listingsFor(listings, p.db, s?.name);
+}
+
+function jsonLdFor(r: RouteSeo, listings: Listing[]) {
   const blocks: unknown[] = [];
   const parts = r.path.split('/').filter(Boolean);
   if (r.path === '/') blocks.push(faqJsonLd(HOME_FAQS));
@@ -84,18 +114,37 @@ function jsonLdFor(r: RouteSeo) {
     return blocks;
   }
   const p = parts[0] === 'practitioners' ? findProfession(parts[1]) : undefined;
-  if (p) blocks.push(faqJsonLd(p.faqs));
+  const s = parts[2] ? findSuburb(parts[2]) : undefined;
+  if (listings.length) blocks.push(listingsJsonLd(listings, r.path));
+  // City profession pages keep the shared clinical FAQs. Suburb pages use
+  // locally distinct directory FAQs and point at the city page instead of
+  // duplicating the same FAQPage JSON-LD.
+  if (p && s) blocks.push(faqJsonLd(directoryFaqs(p, s)));
+  else if (p) blocks.push(faqJsonLd(p.faqs));
   if (r.path === '/about') blocks.push({ '@context': 'https://schema.org', '@type': 'AboutPage', url: `${SITE_URL}/about`, mainEntity: organizationJsonLd() });
   return blocks;
 }
 
-function fallbackBody(r: RouteSeo, routes: RouteSeo[]) {
+function fallbackBody(r: RouteSeo, routes: RouteSeo[], listings: Listing[]) {
   const parts = r.path.split('/').filter(Boolean);
   const p = parts[0] === 'practitioners' ? findProfession(parts[1]) : undefined;
-  const faqs = r.path === '/' ? HOME_FAQS : p?.faqs ?? [];
+  const s = parts[2] ? findSuburb(parts[2]) : undefined;
+  let faqs = r.path === '/' ? HOME_FAQS : [];
+  if (p && s) faqs = directoryFaqs(p, s);
+  else if (p) faqs = p.faqs;
   let body = `<main style="max-width:860px;margin:0 auto;padding:24px;font-family:system-ui,sans-serif">`;
   body += `<h1>${esc(r.h1)}</h1><p>${esc(r.intro)}</p>`;
   if (r.articleHtml) {
+    if (isNamedPerson(r.authorName) || isNamedPerson(r.reviewerName)) {
+      const bits: string[] = [];
+      if (isNamedPerson(r.authorName)) {
+        bits.push(`By ${esc(r.authorName!)}${r.authorCredential ? `, ${esc(r.authorCredential)}` : ''}`);
+      }
+      if (isNamedPerson(r.reviewerName)) {
+        bits.push(`Reviewed by ${esc(r.reviewerName!)}${r.reviewerCredential ? `, ${esc(r.reviewerCredential)}` : ''}`);
+      }
+      body += `<p>${bits.join(' · ')}</p>`;
+    }
     body += r.articleHtml;
     body += `<nav aria-label="Related"><p><a href="/blog">All guides</a> · <a href="/practitioners">Find a practitioner</a> · <a href="/assistant">Name your problem</a></p></nav>`;
     body += `<p><small>Predictiv gives directional guidance only, not medical advice. In an emergency call an ambulance.</small></p></main>`;
@@ -107,9 +156,21 @@ function fallbackBody(r: RouteSeo, routes: RouteSeo[]) {
       body += `<h2>Latest guides</h2><ul>${posts.map((post) => `<li><a href="${post.path}">${esc(post.h1)}</a> — ${esc(post.description)}</li>`).join('')}</ul>`;
     }
   }
+  if (r.path === '/about') body += aboutFallbackHtml();
+  if (r.path === '/privacy') body += privacyFallbackHtml();
+  if (r.path === '/practitioners') body += practitionersIndexFallbackHtml();
+  if (p && listings.length) {
+    body += `<h2>${esc(s ? `${p.plural} in ${s.name}` : `${p.plural} near you`)}</h2>`;
+    body += listingsFallbackHtml(listings);
+  } else if (p && !listings.length) {
+    body += `<p>We are still adding ${esc(p.plural === 'GPs' ? 'GPs' : p.plural.toLowerCase())} in ${esc(s?.name ?? CITY)}.</p>`;
+  }
   if (p) {
-    body += `<h2>What does a ${esc(p.singular.toLowerCase())} treat?</h2><ul>${p.treats.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>`;
-    body += `<h2>When should I see a ${esc(p.singular.toLowerCase())}?</h2><p>${esc(p.whenToSee)}</p>`;
+    body += `<h2>What does a ${esc(phraseSingular(p))} treat?</h2><ul>${p.treats.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>`;
+    body += `<h2>When should I see a ${esc(phraseSingular(p))}?</h2><p>${esc(p.whenToSee)}</p>`;
+    if (s) {
+      body += `<p>Shared questions about what a ${esc(phraseSingular(p))} treats are on <a href="/practitioners/${p.slug}">${esc(p.plural)} in ${esc(CITY)}</a>.</p>`;
+    }
   }
   if (r.path === '/') {
     body += `<h2>Which practitioner do I need?</h2><ul>${PROFESSIONS.map((x) => `<li><a href="/practitioners/${x.slug}">${esc(x.plural)} in Cape Town</a>: ${esc(x.whenToSee)}</li>`).join('')}</ul>`;
@@ -125,7 +186,7 @@ function fallbackBody(r: RouteSeo, routes: RouteSeo[]) {
   return body;
 }
 
-function renderRoute(template: string, r: RouteSeo, routes: RouteSeo[]) {
+function renderRoute(template: string, r: RouteSeo, routes: RouteSeo[], listings: Listing[]) {
   const url = `${SITE_URL}${r.path}`;
   const image = r.image || `${SITE_URL}/og-image.png`;
   let html = template;
@@ -143,17 +204,20 @@ function renderRoute(template: string, r: RouteSeo, routes: RouteSeo[]) {
   if (r.datePublished) {
     html = setTag(html, /<meta property="article:published_time"[^>]*>/, `<meta property="article:published_time" content="${esc(r.datePublished)}" />`);
   }
-  const ld = jsonLdFor(r)
+  const ld = jsonLdFor(r, listings)
     .map((b) => `<script type="application/ld+json" data-prerendered>${JSON.stringify(b).replace(/</g, '\\u003c')}</script>`)
     .join('\n    ');
   html = html.replace('</head>', `    ${ld}\n  </head>`);
-  html = html.replace('<div id="root"></div>', `<div id="root">${fallbackBody(r, routes)}</div>`);
+  html = html.replace('<div id="root"></div>', `<div id="root">${fallbackBody(r, routes, listings)}</div>`);
   return html;
 }
 
 function sitemap(routes: RouteSeo[], lastmod: string) {
   const urls = routes
-    .map((r) => `  <url><loc>${SITE_URL}${r.path}</loc><lastmod>${lastmod}</lastmod><changefreq>${r.changefreq}</changefreq><priority>${r.priority.toFixed(1)}</priority></url>`)
+    .map((r) => {
+      const mod = (r.dateModified || r.datePublished || lastmod).slice(0, 10);
+      return `  <url><loc>${SITE_URL}${r.path}</loc><lastmod>${mod}</lastmod><changefreq>${r.changefreq}</changefreq><priority>${r.priority.toFixed(1)}</priority></url>`;
+    })
     .join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
 }
@@ -198,8 +262,22 @@ function llmsFull() {
   return out.join('\n');
 }
 
+async function supabaseGet<T>(restPath: string): Promise<T> {
+  const url = `${SUPABASE_URL}/rest/v1/${restPath}`;
+  const res = await fetch(url, {
+    headers: {
+      apikey: SUPABASE_PUBLISHABLE_KEY,
+      Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`[seo] ${restPath} fetch failed: ${res.status} ${await res.text()}`);
+  }
+  return res.json();
+}
+
 async function fetchPublishedBlogPosts(): Promise<PublishedBlogPost[]> {
-  const select = [
+  const core = [
     'slug',
     'title',
     'meta_title',
@@ -211,18 +289,25 @@ async function fetchPublishedBlogPosts(): Promise<PublishedBlogPost[]> {
     'published_at',
     'updated_at',
     'target_keyword',
-  ].join(',');
-  const url = `${SUPABASE_URL}/rest/v1/blog_posts?select=${select}&status=eq.published&order=published_at.desc`;
-  const res = await fetch(url, {
-    headers: {
-      apikey: SUPABASE_PUBLISHABLE_KEY,
-      Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-    },
-  });
-  if (!res.ok) {
-    throw new Error(`[seo] blog_posts fetch failed: ${res.status} ${await res.text()}`);
+  ];
+  const eeat = ['author_credential', 'reviewer_name', 'reviewer_credential'];
+  try {
+    return await supabaseGet<PublishedBlogPost[]>(
+      `blog_posts?select=${[...core, ...eeat].join(',')}&status=eq.published&order=published_at.desc`,
+    );
+  } catch (err) {
+    const detail = err instanceof Error ? err.message.split('\n')[0] : String(err);
+    console.warn(`[seo] blog_posts E-E-A-T columns unavailable yet (${detail}); fetching without them`);
+    return supabaseGet<PublishedBlogPost[]>(
+      `blog_posts?select=${core.join(',')}&status=eq.published&order=published_at.desc`,
+    );
   }
-  return res.json();
+}
+
+async function fetchApprovedListings(): Promise<Listing[]> {
+  return supabaseGet<Listing[]>(
+    `professionals?select=${LISTING_SELECT}&is_approved=eq.true&suburb=not.is.null&order=is_featured.desc,name.asc`,
+  );
 }
 
 export function seoPrerender(): Plugin {
@@ -256,6 +341,7 @@ export function seoPrerender(): Plugin {
       if (!fs.existsSync(indexPath)) return;
       const template = fs.readFileSync(indexPath, 'utf8');
       const posts = await fetchPublishedBlogPosts();
+      const listings = await fetchApprovedListings();
       const blogRoutes: RouteSeo[] = [];
       const skipped: string[] = [];
       for (const post of posts) {
@@ -271,7 +357,8 @@ export function seoPrerender(): Plugin {
       }
       const routes = [...allRoutes(), ...blogRoutes];
       for (const r of routes) {
-        const html = renderRoute(template, r, routes);
+        const pageListings = listingsForRoute(r, listings);
+        const html = renderRoute(template, r, routes, pageListings);
         const file = r.path === '/' ? indexPath : path.join(outDir, r.path, 'index.html');
         fs.mkdirSync(path.dirname(file), { recursive: true });
         fs.writeFileSync(file, html);
@@ -281,11 +368,19 @@ export function seoPrerender(): Plugin {
         const html = fs.readFileSync(path.join(outDir, 'blog', post.slug, 'index.html'), 'utf8');
         assertPrerenderedBlogHtml(html, post);
       }
+      for (const r of routes) {
+        if (!r.path.startsWith('/practitioners/') || r.path.split('/').filter(Boolean).length < 3) continue;
+        const pageListings = listingsForRoute(r, listings);
+        const html = fs.readFileSync(path.join(outDir, r.path, 'index.html'), 'utf8');
+        assertPrerenderedDirectoryHtml(html, pageListings, r.path);
+      }
       const today = new Date().toISOString().slice(0, 10);
       fs.writeFileSync(path.join(outDir, 'sitemap.xml'), sitemap(routes, today));
       fs.writeFileSync(path.join(outDir, 'llms.txt'), llmsTxt(routes));
       fs.writeFileSync(path.join(outDir, 'llms-full.txt'), llmsFull());
-      console.log(`[seo] prerendered ${routes.length} routes (${blogRoutes.length} blog posts), wrote sitemap.xml, llms.txt, llms-full.txt`);
+      console.log(
+        `[seo] prerendered ${routes.length} routes (${blogRoutes.length} blog posts, ${listings.length} listings), wrote sitemap.xml, llms.txt, llms-full.txt`,
+      );
     },
   };
 }

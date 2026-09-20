@@ -24,6 +24,9 @@ const EMPTY: BlogPostInput = {
     'Start with a short intro that uses your keyword in the first sentence or two.\n\n## First section heading\n\nWrite helpful, specific information here.\n\n## Second section heading\n\nMore detail. Link to [find a practitioner](/assistant).\n\n## When to see a practitioner\n\nExplain who to see and when.',
   cover_image_url: '',
   author_name: 'Predictiv',
+  author_credential: '',
+  reviewer_name: '',
+  reviewer_credential: '',
   status: 'draft',
   published_at: null,
 };
@@ -129,7 +132,11 @@ export default function BlogAdmin() {
     setForm({
       slug: p.slug, title: p.title, meta_title: p.meta_title ?? '', meta_description: p.meta_description ?? '',
       target_keyword: p.target_keyword ?? '', excerpt: p.excerpt ?? '', content: p.content, cover_image_url: p.cover_image_url ?? '',
-      author_name: p.author_name ?? 'Predictiv', status: p.status, published_at: p.published_at,
+      author_name: p.author_name ?? 'Predictiv',
+      author_credential: p.author_credential ?? '',
+      reviewer_name: p.reviewer_name ?? '',
+      reviewer_credential: p.reviewer_credential ?? '',
+      status: p.status, published_at: p.published_at,
     });
     setStatus(null);
     setPreview(false);
@@ -149,12 +156,33 @@ export default function BlogAdmin() {
       target_keyword: form.target_keyword || null,
       excerpt: form.excerpt || null,
       cover_image_url: form.cover_image_url || null,
+      author_name: form.author_name || 'Predictiv',
+      author_credential: form.author_credential || null,
+      reviewer_name: form.reviewer_name || null,
+      reviewer_credential: form.reviewer_credential || null,
       status: nextStatus,
       published_at: nextStatus === 'published' ? form.published_at || new Date().toISOString() : form.published_at,
     };
-    const res = editingId
-      ? await blogTable().update(payload).eq('id', editingId).select().single()
-      : await blogTable().insert(payload).select().single();
+    const write = (body: typeof payload | Omit<typeof payload, 'author_credential' | 'reviewer_name' | 'reviewer_credential'>) =>
+      editingId
+        ? blogTable().update(body).eq('id', editingId).select().single()
+        : blogTable().insert(body).select().single();
+    let res = await write(payload);
+    if (res.error && /author_credential|reviewer_name|reviewer_credential/.test(res.error.message)) {
+      const { author_credential: _a, reviewer_name: _r, reviewer_credential: _c, ...core } = payload;
+      res = await write(core);
+      if (!res.error) {
+        setSaving(false);
+        const saved = res.data as BlogPost;
+        setEditingId(saved.id);
+        setForm((f) => ({ ...f, status: saved.status, published_at: saved.published_at, slug: saved.slug }));
+        setStatus(
+          'Saved without reviewer fields. Apply supabase/migrations/20260920000000_blog_eeat_fields.sql before storing named clinicians.',
+        );
+        loadPosts();
+        return;
+      }
+    }
     setSaving(false);
     if (res.error) {
       setStatus(res.error.message);
@@ -272,6 +300,26 @@ export default function BlogAdmin() {
               <Field label="Excerpt" hint="One or two sentences shown on the blog list.">
                 <Textarea rows={2} value={form.excerpt ?? ''} onChange={(e) => set('excerpt', e.target.value)} />
               </Field>
+              <div className="grid md:grid-cols-2 gap-4">
+                <Field
+                  label="Author name"
+                  hint="Defaults to Predictiv (organisation). Only put a real person's name here if they have agreed to be named. Do not invent a clinician."
+                >
+                  <Input value={form.author_name ?? ''} onChange={(e) => set('author_name', e.target.value)} placeholder="Predictiv" />
+                </Field>
+                <Field label="Author credential" hint="Optional. Only if the author is a named person, e.g. HPCSA-registered physiotherapist.">
+                  <Input value={form.author_credential ?? ''} onChange={(e) => set('author_credential', e.target.value || null)} placeholder="Leave blank unless a real author is named" />
+                </Field>
+                <Field
+                  label="Reviewer name"
+                  hint="TODO: fill only after Justin names a real clinician who has consented to review. Leave blank rather than guessing."
+                >
+                  <Input value={form.reviewer_name ?? ''} onChange={(e) => set('reviewer_name', e.target.value || null)} placeholder="Leave blank — do not invent a name" />
+                </Field>
+                <Field label="Reviewer credential" hint="Optional. Only if reviewer name is filled.">
+                  <Input value={form.reviewer_credential ?? ''} onChange={(e) => set('reviewer_credential', e.target.value || null)} placeholder="Leave blank unless a real reviewer is named" />
+                </Field>
+              </div>
               <Field
                 label={`Content (${wordCount(form.content)} words)`}
                 hint="Use ## for section headings, ### for sub headings, - for bullet points, **bold**, and [link text](/assistant) for links."
