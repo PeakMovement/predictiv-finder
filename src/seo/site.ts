@@ -209,6 +209,15 @@ export interface RouteSeo {
   intro: string;
   priority: number;
   changefreq: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  /** Defaults to website. Blog posts are prerendered as articles. */
+  ogType?: 'website' | 'article';
+  image?: string;
+  /** Already-escaped HTML for crawler-visible article body. */
+  articleHtml?: string;
+  datePublished?: string;
+  dateModified?: string;
+  authorName?: string;
+  keywords?: string;
 }
 
 export const professionTitle = (p: Profession) => `${p.plural} in ${CITY} | Find a ${p.singular} Near You | ${SITE_NAME}`;
