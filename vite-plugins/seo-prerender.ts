@@ -274,7 +274,7 @@ async function supabaseGet<T>(restPath: string): Promise<T> {
   if (!res.ok) {
     throw new Error(`[seo] ${restPath} fetch failed: ${res.status} ${await res.text()}`);
   }
-  return res.json();
+  return (await res.json()) as T;
 }
 
 async function fetchPublishedBlogPosts(): Promise<PublishedBlogPost[]> {
