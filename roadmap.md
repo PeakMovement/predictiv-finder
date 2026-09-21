@@ -1,7 +1,8 @@
 # Roadmap
 
 ## Move backend from personal Supabase to Lovable Cloud
-- [ ] 1. Back up everything from the current project (SQL dump + data export) — needs your click in the Supabase dashboard
+- [x] 1a. My own restore copy saved in supabase/backup/ (40 listings, 5 posts, 32 rules, 8 profiles, account list)
+- [ ] 1b. Your own dashboard backup downloaded (belt and braces) — your click
 - [ ] 2. Disconnect the external Supabase and enable Lovable Cloud — needs your click in the Cloud panel
 - [ ] 3. Re-apply all tables, functions, triggers and access rules to Cloud (me)
 - [ ] 4. Restore data: 40 practitioner listings, 5 blog posts, 32 severity rules, 8 profiles (me)
