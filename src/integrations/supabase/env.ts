@@ -15,7 +15,10 @@ export const LINKED_SUPABASE_URL = `https://${LINKED_SUPABASE_PROJECT_REF}.supab
 export const LINKED_SUPABASE_ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZGRscGh0b2VsdXl0cmVqaW9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNzMzMzMsImV4cCI6MjA2Mzk0OTMzM30.jwTdmEafWDvL-k54o9-q-hpeeqvTJPUZDI_Pp2g3nlU';
 
-type PublicEnvName = 'VITE_SUPABASE_URL' | 'VITE_SUPABASE_PUBLISHABLE_KEY';
+type PublicEnvName =
+  | 'VITE_SUPABASE_URL'
+  | 'VITE_SUPABASE_PUBLISHABLE_KEY'
+  | 'VITE_SUPABASE_ANON_KEY';
 
 function readPublicEnv(name: PublicEnvName): string | undefined {
   try {
@@ -33,6 +36,8 @@ function readPublicEnv(name: PublicEnvName): string | undefined {
 
 export const SUPABASE_URL = readPublicEnv('VITE_SUPABASE_URL') ?? LINKED_SUPABASE_URL;
 export const SUPABASE_PUBLISHABLE_KEY =
-  readPublicEnv('VITE_SUPABASE_PUBLISHABLE_KEY') ?? LINKED_SUPABASE_ANON_KEY;
+  readPublicEnv('VITE_SUPABASE_PUBLISHABLE_KEY') ??
+  readPublicEnv('VITE_SUPABASE_ANON_KEY') ??
+  LINKED_SUPABASE_ANON_KEY;
 
 export const BLOG_SITEMAP_URL = `${SUPABASE_URL.replace(/\/$/, '')}/functions/v1/blog-sitemap`;
