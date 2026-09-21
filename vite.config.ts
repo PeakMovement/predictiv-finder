@@ -10,7 +10,8 @@ import { seoPrerender } from './vite-plugins/seo-prerender';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   const supabaseUrl = env.VITE_SUPABASE_URL || LINKED_SUPABASE_URL;
-  const supabaseAnonKey = env.VITE_SUPABASE_PUBLISHABLE_KEY || LINKED_SUPABASE_ANON_KEY;
+  const supabaseAnonKey =
+    env.VITE_SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_ANON_KEY || LINKED_SUPABASE_ANON_KEY;
 
   return {
     plugins: [
