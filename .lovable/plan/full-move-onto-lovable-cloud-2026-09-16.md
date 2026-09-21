@@ -1,6 +1,17 @@
 # Full move onto Lovable Cloud
 
+> **Correction (2026-09-21):** Project `zpddlphtoeluytrejioj` is a **linked
+> supabase.com** backend, not Lovable Cloud. That is why Justin still has a
+> supabase.com bill. Hosting the SPA on Lovable is not the same as Enable Cloud.
+>
+> Do **not** follow the “essentially no risk / only delete dead files” conclusion
+> below for a Cloud cutover. Use
+> [docs/MIGRATION_TO_LOVABLE_CLOUD.md](../../docs/MIGRATION_TO_LOVABLE_CLOUD.md).
+> Do not delete supabase.com or cancel billing until that playbook’s success
+> criteria are green. Peak Movement marketing is out of scope.
+
 ## What the audit found
+
 
 The system is **already ~90% on Lovable Cloud** — nothing breaks:
 

@@ -16,7 +16,14 @@ it for reference; do not add overlapping production routes there.
 
 ## Backend
 
-- Supabase project `zpddlphtoeluytrejioj`
+See [docs/MIGRATION_TO_LOVABLE_CLOUD.md](./docs/MIGRATION_TO_LOVABLE_CLOUD.md) before
+changing the backend.
+
+- Linked supabase.com project (live as of 2026-09-21): `zpddlphtoeluytrejioj`
+- Goal: Lovable Cloud only, so Justin can later cancel supabase.com. **Do not
+  delete or cancel the linked project until Cloud smoke tests pass.**
+- Client URL/anon key: `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY`
+  with fallbacks in `src/integrations/supabase/env.ts`
 - Public listings: `professionals` where `is_approved = true`
 - `is_approved` / `is_featured` can only be changed by service_role, JWT-less
   dashboard/SQL, or `is_blog_admin()` (trigger

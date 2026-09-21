@@ -34,11 +34,13 @@ npm run lint
 
 ## Environment
 
-Client env vars are listed in `.env.example`. The Lovable-generated Supabase
-**anon** URL and key currently live in `src/integrations/supabase/client.ts`
-(public by design). Never put the **service role** key in the client.
+Client env vars are listed in `.env.example`. The public **anon** URL and key
+default to the linked supabase.com project in
+`src/integrations/supabase/env.ts` and can be overridden with
+`VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` (needed for Lovable
+Cloud cutover). Never put the **service role** key in the client.
 
-Edge function secrets (already on the project, not in git):
+Edge function secrets (already on the linked project, not in git):
 
 - `SUPABASE_SERVICE_ROLE_KEY` — used only by admin paths such as `create-practitioner`
 - `LOVABLE_API_KEY` — AI gateway
@@ -48,6 +50,13 @@ Edge function secrets (already on the project, not in git):
 Apply new SQL with the usual Supabase workflow (`supabase db push` / dashboard).
 Migration `20260920180000_lock_moderation_and_availability.sql` must be applied
 for moderation triggers and the busy/free availability view.
+Migration `20260921120000_cloud_cutover_safety.sql` drops the leftover
+`practitioners` view (it leaked unapproved rows) and ensures storage buckets.
+
+Moving off supabase.com onto Lovable Cloud is a **manual** cutover. Follow
+[docs/MIGRATION_TO_LOVABLE_CLOUD.md](./docs/MIGRATION_TO_LOVABLE_CLOUD.md).
+Do not delete the linked project or cancel supabase.com until that playbook’s
+success criteria are green. Peak Movement marketing is out of scope.
 
 ## Publish
 

@@ -16,7 +16,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Plugin } from 'vite';
-import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../src/integrations/supabase/client';
+import { LINKED_SUPABASE_ANON_KEY, LINKED_SUPABASE_URL } from '../src/integrations/supabase/env';
 import {
   assertPrerenderedBlogHtml,
   blogPostToRoute,
@@ -243,7 +243,7 @@ function llmsTxt(routes: RouteSeo[]) {
     '',
     '## Optional',
     `- [Full plain text guide](${SITE_URL}/llms-full.txt)`,
-    `- [Blog sitemap](https://zpddlphtoeluytrejioj.supabase.co/functions/v1/blog-sitemap)`,
+    `- [Blog sitemap](${blogSitemapUrl()})`,
     '',
   ];
   return lines.join('\n');
@@ -263,12 +263,27 @@ function llmsFull() {
   return out.join('\n');
 }
 
+let supabaseUrl = LINKED_SUPABASE_URL;
+let supabaseAnonKey = LINKED_SUPABASE_ANON_KEY;
+
+function blogSitemapUrl() {
+  return `${supabaseUrl.replace(/\/$/, '')}/functions/v1/blog-sitemap`;
+}
+
+function writeRobotsTxt(outDir: string) {
+  const file = path.join(outDir, 'robots.txt');
+  let text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  text = text.replace(/^Sitemap:\s*https:\/\/\S+\/functions\/v1\/blog-sitemap\s*$/m, '').trimEnd();
+  text = `${text}\nSitemap: ${blogSitemapUrl()}\n`;
+  fs.writeFileSync(file, text);
+}
+
 async function supabaseGet<T>(restPath: string): Promise<T> {
-  const url = `${SUPABASE_URL}/rest/v1/${restPath}`;
+  const url = `${supabaseUrl.replace(/\/$/, '')}/rest/v1/${restPath}`;
   const res = await fetch(url, {
     headers: {
-      apikey: SUPABASE_PUBLISHABLE_KEY,
-      Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${supabaseAnonKey}`,
     },
   });
   if (!res.ok) {
@@ -311,7 +326,9 @@ async function fetchApprovedListings(): Promise<Listing[]> {
   );
 }
 
-export function seoPrerender(): Plugin {
+export function seoPrerender(opts?: { supabaseUrl?: string; supabaseAnonKey?: string }): Plugin {
+  supabaseUrl = opts?.supabaseUrl || LINKED_SUPABASE_URL;
+  supabaseAnonKey = opts?.supabaseAnonKey || LINKED_SUPABASE_ANON_KEY;
   let outDir = 'dist';
   return {
     name: 'predictiv-seo-prerender',
@@ -379,8 +396,9 @@ export function seoPrerender(): Plugin {
       fs.writeFileSync(path.join(outDir, 'sitemap.xml'), sitemap(routes, today));
       fs.writeFileSync(path.join(outDir, 'llms.txt'), llmsTxt(routes));
       fs.writeFileSync(path.join(outDir, 'llms-full.txt'), llmsFull());
+      writeRobotsTxt(outDir);
       console.log(
-        `[seo] prerendered ${routes.length} routes (${blogRoutes.length} blog posts, ${listings.length} listings), wrote sitemap.xml, llms.txt, llms-full.txt`,
+        `[seo] prerendered ${routes.length} routes (${blogRoutes.length} blog posts, ${listings.length} listings), wrote sitemap.xml, llms.txt, llms-full.txt, robots.txt`,
       );
     },
   };
