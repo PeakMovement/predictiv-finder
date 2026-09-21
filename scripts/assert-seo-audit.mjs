@@ -91,6 +91,18 @@ if (!sitemap.includes(`${SITE}/blog/what-does-a-biokineticist-do`)) {
   failed += fail('primary sitemap missing blog post URLs');
 } else console.log('ok  sitemap includes blog posts');
 
+const robots = read(path.join(dist, 'robots.txt'));
+if (!robots.includes('/functions/v1/blog-sitemap')) {
+  failed += fail('robots.txt missing blog-sitemap');
+} else if ((robots.match(/^Sitemap:/gm) || []).length < 2) {
+  failed += fail('robots.txt expected site sitemap + blog-sitemap');
+} else console.log('ok  robots.txt blog-sitemap');
+
+const home = read(path.join(dist, 'index.html'));
+if (!/rel="preconnect" href="https:\/\/[^"]+\.supabase\.co"/.test(home)) {
+  failed += fail('homepage missing Supabase preconnect');
+} else console.log('ok  homepage Supabase preconnect');
+
 const blogDir = path.join(dist, 'blog');
 const slugs = fs.readdirSync(blogDir).filter((name) => fs.existsSync(path.join(blogDir, name, 'index.html')));
 for (const slug of slugs) {

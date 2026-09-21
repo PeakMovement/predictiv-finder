@@ -34,4 +34,6 @@ User-agent: Applebot-Extended
 Allow: /
 
 Sitemap: https://predictiv.co.za/sitemap.xml
+# Blog sitemap host is rewritten at Vite build from VITE_SUPABASE_URL.
+# Fallback (linked supabase.com project) until Lovable Cloud cutover:
 Sitemap: https://zpddlphtoeluytrejioj.supabase.co/functions/v1/blog-sitemap
