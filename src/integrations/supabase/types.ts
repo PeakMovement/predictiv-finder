@@ -91,6 +91,57 @@ export type Database = {
           },
         ]
       }
+      blog_posts: {
+        Row: {
+          author_name: string | null
+          content: string
+          cover_image_url: string | null
+          created_at: string
+          excerpt: string | null
+          id: string
+          meta_description: string | null
+          meta_title: string | null
+          published_at: string | null
+          slug: string
+          status: string
+          target_keyword: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_name?: string | null
+          content?: string
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          slug: string
+          status?: string
+          target_keyword?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_name?: string | null
+          content?: string
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          slug?: string
+          status?: string
+          target_keyword?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           appointment_date: string
@@ -273,7 +324,7 @@ export type Database = {
           specialities: string[]
           suburb: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
           years_experience: number | null
         }
         Insert: {
@@ -308,7 +359,7 @@ export type Database = {
           specialities?: string[]
           suburb?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           years_experience?: number | null
         }
         Update: {
@@ -343,7 +394,7 @@ export type Database = {
           specialities?: string[]
           suburb?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           years_experience?: number | null
         }
         Relationships: []
@@ -715,6 +766,30 @@ export type Database = {
       }
     }
     Views: {
+      availability_busy_blocks: {
+        Row: {
+          end_time: string | null
+          id: string | null
+          is_available: boolean | null
+          practitioner_id: string | null
+          start_time: string | null
+        }
+        Insert: {
+          end_time?: string | null
+          id?: string | null
+          is_available?: boolean | null
+          practitioner_id?: string | null
+          start_time?: string | null
+        }
+        Update: {
+          end_time?: string | null
+          id?: string | null
+          is_available?: boolean | null
+          practitioner_id?: string | null
+          start_time?: string | null
+        }
+        Relationships: []
+      }
       practitioners: {
         Row: {
           calendly_url: string | null
@@ -768,6 +843,7 @@ export type Database = {
       }
     }
     Functions: {
+      is_blog_admin: { Args: never; Returns: boolean }
       is_owner: { Args: { _user_id: string }; Returns: boolean }
       max_severity: {
         Args: { severities: Database["public"]["Enums"]["symptom_severity"][] }
