@@ -1,3 +1,8 @@
+-- DO NOT RUN THIS during the Lovable Cloud cutover.
+-- supabase/backup/professionals.sql already contains these listings (and the
+-- later Claremont / Newlands / Pinelands rows). Running this seed after that
+-- import hits the unique slug index or inserts a second copy of each practice.
+--
 -- APPLIED LIVE on 2026-09-16 after Justin's explicit go-ahead in chat. Kept here
 -- for history/reproducibility. (Originally blocked from running automatically by
 -- this session's own safety guardrail, which treats writing real production

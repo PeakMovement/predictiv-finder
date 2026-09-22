@@ -14,7 +14,8 @@ BEGIN
     NEW.email,
     NEW.raw_user_meta_data->>'full_name',
     NEW.raw_user_meta_data->>'avatar_url'
-  );
+  )
+  ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
 $$;
@@ -30,63 +31,49 @@ BEGIN
 END;
 $$;
 
--- 2. Fix calendar_integrations RLS - CRITICAL: Only practitioners can access their own integrations
-DROP POLICY IF EXISTS "Users can manage calendar integrations" ON public.calendar_integrations;
+-- 2–4. Policies for tables that may not exist yet on a blank Cloud database.
+-- calendar_integrations, availability_slots, and user_preferences are created
+-- in 20260419183806, which installs the same policies. On the linked project
+-- those tables already existed when this file first ran. Creating a policy
+-- on a missing relation aborts the whole migration, so skip until the table
+-- is there. search_history is created earlier (20250724104141).
+DO $$
+BEGIN
+  IF to_regclass('public.calendar_integrations') IS NOT NULL THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Users can manage calendar integrations" ON public.calendar_integrations';
+    EXECUTE 'DROP POLICY IF EXISTS "Practitioners can view own integrations" ON public.calendar_integrations';
+    EXECUTE 'CREATE POLICY "Practitioners can view own integrations" ON public.calendar_integrations FOR SELECT USING (auth.uid() = practitioner_id)';
+    EXECUTE 'DROP POLICY IF EXISTS "Practitioners can insert own integrations" ON public.calendar_integrations';
+    EXECUTE 'CREATE POLICY "Practitioners can insert own integrations" ON public.calendar_integrations FOR INSERT WITH CHECK (auth.uid() = practitioner_id)';
+    EXECUTE 'DROP POLICY IF EXISTS "Practitioners can update own integrations" ON public.calendar_integrations';
+    EXECUTE 'CREATE POLICY "Practitioners can update own integrations" ON public.calendar_integrations FOR UPDATE USING (auth.uid() = practitioner_id)';
+    EXECUTE 'DROP POLICY IF EXISTS "Practitioners can delete own integrations" ON public.calendar_integrations';
+    EXECUTE 'CREATE POLICY "Practitioners can delete own integrations" ON public.calendar_integrations FOR DELETE USING (auth.uid() = practitioner_id)';
+  END IF;
 
-CREATE POLICY "Practitioners can view own integrations"
-ON public.calendar_integrations
-FOR SELECT
-USING (auth.uid() = practitioner_id);
+  IF to_regclass('public.availability_slots') IS NOT NULL THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Authenticated users can view availability slots" ON public.availability_slots';
+    EXECUTE 'DROP POLICY IF EXISTS "Practitioners can manage their availability slots" ON public.availability_slots';
+    EXECUTE 'DROP POLICY IF EXISTS "Anyone can view availability slots" ON public.availability_slots';
+    EXECUTE 'CREATE POLICY "Anyone can view availability slots" ON public.availability_slots FOR SELECT USING (true)';
+    EXECUTE 'DROP POLICY IF EXISTS "Practitioners can insert own slots" ON public.availability_slots';
+    EXECUTE 'CREATE POLICY "Practitioners can insert own slots" ON public.availability_slots FOR INSERT WITH CHECK (auth.uid() = practitioner_id)';
+    EXECUTE 'DROP POLICY IF EXISTS "Practitioners can update own slots" ON public.availability_slots';
+    EXECUTE 'CREATE POLICY "Practitioners can update own slots" ON public.availability_slots FOR UPDATE USING (auth.uid() = practitioner_id)';
+    EXECUTE 'DROP POLICY IF EXISTS "Practitioners can delete own slots" ON public.availability_slots';
+    EXECUTE 'CREATE POLICY "Practitioners can delete own slots" ON public.availability_slots FOR DELETE USING (auth.uid() = practitioner_id)';
+  END IF;
 
-CREATE POLICY "Practitioners can insert own integrations"
-ON public.calendar_integrations
-FOR INSERT
-WITH CHECK (auth.uid() = practitioner_id);
+  IF to_regclass('public.search_history') IS NOT NULL THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Users can delete their own search history" ON public.search_history';
+    EXECUTE 'CREATE POLICY "Users can delete their own search history" ON public.search_history FOR DELETE USING (auth.uid() = user_id)';
+  END IF;
 
-CREATE POLICY "Practitioners can update own integrations"
-ON public.calendar_integrations
-FOR UPDATE
-USING (auth.uid() = practitioner_id);
-
-CREATE POLICY "Practitioners can delete own integrations"
-ON public.calendar_integrations
-FOR DELETE
-USING (auth.uid() = practitioner_id);
-
--- 3. Fix availability_slots RLS - CRITICAL: Public can view, only owners can manage
-DROP POLICY IF EXISTS "Authenticated users can view availability slots" ON public.availability_slots;
-DROP POLICY IF EXISTS "Practitioners can manage their availability slots" ON public.availability_slots;
-
-CREATE POLICY "Anyone can view availability slots"
-ON public.availability_slots
-FOR SELECT
-USING (true);
-
-CREATE POLICY "Practitioners can insert own slots"
-ON public.availability_slots
-FOR INSERT
-WITH CHECK (auth.uid() = practitioner_id);
-
-CREATE POLICY "Practitioners can update own slots"
-ON public.availability_slots
-FOR UPDATE
-USING (auth.uid() = practitioner_id);
-
-CREATE POLICY "Practitioners can delete own slots"
-ON public.availability_slots
-FOR DELETE
-USING (auth.uid() = practitioner_id);
-
--- 4. Add missing DELETE policies for user privacy
-CREATE POLICY "Users can delete their own search history"
-ON public.search_history
-FOR DELETE
-USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete their own preferences"
-ON public.user_preferences
-FOR DELETE
-USING (auth.uid() = user_id);
+  IF to_regclass('public.user_preferences') IS NOT NULL THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Users can delete their own preferences" ON public.user_preferences';
+    EXECUTE 'CREATE POLICY "Users can delete their own preferences" ON public.user_preferences FOR DELETE USING (auth.uid() = user_id)';
+  END IF;
+END $$;
 
 -- 5. Create ai_interactions table for audit logging (referenced by edge function)
 CREATE TABLE IF NOT EXISTS public.ai_interactions (

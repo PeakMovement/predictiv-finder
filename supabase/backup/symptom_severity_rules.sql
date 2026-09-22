@@ -1,3 +1,13 @@
+-- backup: symptom_severity_rules (32 rows)
+-- Migrations 20251214205154 and 20251214211118 insert the same 32 rules with
+-- fresh UUIDs. Running this file on top of them would double the table to 64
+-- and the symptom evaluator would match each keyword twice. symptom_entries
+-- and symptom_red_flags were empty at capture, so nothing references these ids.
+-- Replace the seeded rows with this snapshot.
+
+BEGIN;
+DELETE FROM public.symptom_severity_rules;
+
 INSERT INTO public.symptom_severity_rules (id,symptom_keyword,body_region,base_severity,duration_hours_threshold,escalation_severity,red_flag_triggers,is_active) VALUES ('6b988bdd-1689-44be-a899-ffc26723c630','chest pain','chest','severe',1,'critical','{radiating,crushing,"shortness of breath",sweating,nausea}','t');
 INSERT INTO public.symptom_severity_rules (id,symptom_keyword,body_region,base_severity,duration_hours_threshold,escalation_severity,red_flag_triggers,is_active) VALUES ('3d873f6a-5d34-4a68-a786-d77eb755e43c','shortness of breath','chest','moderate',2,'severe','{"sudden onset","at rest","chest pain","blue lips"}','t');
 INSERT INTO public.symptom_severity_rules (id,symptom_keyword,body_region,base_severity,duration_hours_threshold,escalation_severity,red_flag_triggers,is_active) VALUES ('7cf8bd2d-7a7e-4120-a8fc-330a5c07048b','headache','head','mild',72,'moderate','{"worst ever","sudden onset","stiff neck",fever,confusion}','t');
@@ -30,3 +40,5 @@ INSERT INTO public.symptom_severity_rules (id,symptom_keyword,body_region,base_s
 INSERT INTO public.symptom_severity_rules (id,symptom_keyword,body_region,base_severity,duration_hours_threshold,escalation_severity,red_flag_triggers,is_active) VALUES ('f9c4728b-fc6d-4a9a-b5c8-3d3f3d565cb7','high temperature','general','mild',48,'moderate','{convulsions,confusion}','t');
 INSERT INTO public.symptom_severity_rules (id,symptom_keyword,body_region,base_severity,duration_hours_threshold,escalation_severity,red_flag_triggers,is_active) VALUES ('107fa3b7-370c-458e-beb1-c3dfc0b857cf','fatigue','general','mild',336,'moderate','{"sudden onset","weight loss","night sweats"}','t');
 INSERT INTO public.symptom_severity_rules (id,symptom_keyword,body_region,base_severity,duration_hours_threshold,escalation_severity,red_flag_triggers,is_active) VALUES ('bc49436b-1779-463b-bca5-fe2d8a26b648','weakness','general','mild',48,'moderate','{sudden,one-sided,"facial drooping","slurred speech"}','t');
+
+COMMIT;
