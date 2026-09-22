@@ -8,6 +8,34 @@
       "when": 1790074544838,
       "tag": "0000_initial_schema_setup",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790074576873,
+      "tag": "0001_extend_professionals_with_portal_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790074579978,
+      "tag": "0002_portal_columns_not_null_defaults",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790074583685,
+      "tag": "0003_create_popia_consents",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790074586948,
+      "tag": "0004_add_directory_fields",
+      "breakpoints": true
     }
   ]
 }

@@ -219,54 +219,135 @@ export type Database = {
         }
         Relationships: []
       }
-      professionals: {
+      popia_consents: {
         Row: {
-          calendly_url: string
-          created_at: string
-          google_reviews_url: string | null
+          consent_version: string
+          granted_at: string
           id: string
-          is_approved: boolean
-          location: string | null
-          name: string
-          photo_url: string | null
-          price_max: number | null
-          price_min: number | null
-          profession: string
-          specialities: string[]
-          updated_at: string
+          ip_hash: string | null
+          user_agent: string | null
           user_id: string
         }
         Insert: {
-          calendly_url: string
-          created_at?: string
-          google_reviews_url?: string | null
+          consent_version: string
+          granted_at?: string
           id?: string
-          is_approved?: boolean
-          location?: string | null
-          name: string
-          photo_url?: string | null
-          price_max?: number | null
-          price_min?: number | null
-          profession: string
-          specialities?: string[]
-          updated_at?: string
+          ip_hash?: string | null
+          user_agent?: string | null
           user_id: string
         }
         Update: {
-          calendly_url?: string
-          created_at?: string
-          google_reviews_url?: string | null
+          consent_version?: string
+          granted_at?: string
           id?: string
+          ip_hash?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      professionals: {
+        Row: {
+          bio: string | null
+          calendly_url: string
+          consultation_type: string | null
+          contact_number: string | null
+          created_at: string
+          expertise_areas: string[] | null
+          google_reviews_url: string | null
+          governing_body: string | null
+          id: string
+          institution: string | null
+          is_approved: boolean
+          is_featured: boolean
+          languages: string[] | null
+          latitude: number | null
+          location: string | null
+          longitude: number | null
+          name: string
+          photo_url: string | null
+          practice_name: string | null
+          price_max: number | null
+          price_min: number | null
+          profession: string
+          qualification: string | null
+          rating: number | null
+          registration_number: string | null
+          review_count: number | null
+          slug: string | null
+          specialities: string[]
+          suburb: string | null
+          updated_at: string
+          user_id: string
+          years_experience: number | null
+        }
+        Insert: {
+          bio?: string | null
+          calendly_url: string
+          consultation_type?: string | null
+          contact_number?: string | null
+          created_at?: string
+          expertise_areas?: string[] | null
+          google_reviews_url?: string | null
+          governing_body?: string | null
+          id?: string
+          institution?: string | null
           is_approved?: boolean
+          is_featured?: boolean
+          languages?: string[] | null
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
+          name: string
+          photo_url?: string | null
+          practice_name?: string | null
+          price_max?: number | null
+          price_min?: number | null
+          profession: string
+          qualification?: string | null
+          rating?: number | null
+          registration_number?: string | null
+          review_count?: number | null
+          slug?: string | null
+          specialities?: string[]
+          suburb?: string | null
+          updated_at?: string
+          user_id: string
+          years_experience?: number | null
+        }
+        Update: {
+          bio?: string | null
+          calendly_url?: string
+          consultation_type?: string | null
+          contact_number?: string | null
+          created_at?: string
+          expertise_areas?: string[] | null
+          google_reviews_url?: string | null
+          governing_body?: string | null
+          id?: string
+          institution?: string | null
+          is_approved?: boolean
+          is_featured?: boolean
+          languages?: string[] | null
+          latitude?: number | null
+          location?: string | null
+          longitude?: number | null
           name?: string
           photo_url?: string | null
+          practice_name?: string | null
           price_max?: number | null
           price_min?: number | null
           profession?: string
+          qualification?: string | null
+          rating?: number | null
+          registration_number?: string | null
+          review_count?: number | null
+          slug?: string | null
           specialities?: string[]
+          suburb?: string | null
           updated_at?: string
           user_id?: string
+          years_experience?: number | null
         }
         Relationships: []
       }
