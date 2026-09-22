@@ -14,13 +14,394 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_interactions: {
+        Row: {
+          ai_response: string
+          context: Json | null
+          created_at: string | null
+          id: string
+          user_id: string
+          user_message: string
+        }
+        Insert: {
+          ai_response: string
+          context?: Json | null
+          created_at?: string | null
+          id?: string
+          user_id: string
+          user_message: string
+        }
+        Update: {
+          ai_response?: string
+          context?: Json | null
+          created_at?: string | null
+          id?: string
+          user_id?: string
+          user_message?: string
+        }
+        Relationships: []
+      }
+      availability_slots: {
+        Row: {
+          calendar_integration_id: string | null
+          created_at: string
+          end_time: string
+          event_title: string | null
+          external_event_id: string | null
+          id: string
+          is_available: boolean
+          practitioner_id: string
+          start_time: string
+          sync_source: string
+          updated_at: string
+        }
+        Insert: {
+          calendar_integration_id?: string | null
+          created_at?: string
+          end_time: string
+          event_title?: string | null
+          external_event_id?: string | null
+          id?: string
+          is_available?: boolean
+          practitioner_id: string
+          start_time: string
+          sync_source: string
+          updated_at?: string
+        }
+        Update: {
+          calendar_integration_id?: string | null
+          created_at?: string
+          end_time?: string
+          event_title?: string | null
+          external_event_id?: string | null
+          id?: string
+          is_available?: boolean
+          practitioner_id?: string
+          start_time?: string
+          sync_source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_slots_calendar_integration_id_fkey"
+            columns: ["calendar_integration_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bookings: {
+        Row: {
+          appointment_date: string
+          created_at: string
+          id: string
+          notes: string | null
+          plan_id: string | null
+          practitioner_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          appointment_date: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          plan_id?: string | null
+          practitioner_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          appointment_date?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          plan_id?: string | null
+          practitioner_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "health_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_integrations: {
+        Row: {
+          access_token: string | null
+          calendar_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          last_synced_at: string | null
+          practitioner_id: string
+          provider: string
+          refresh_token: string | null
+          token_expiry: string | null
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          calendar_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_synced_at?: string | null
+          practitioner_id: string
+          provider: string
+          refresh_token?: string | null
+          token_expiry?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          calendar_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_synced_at?: string | null
+          practitioner_id?: string
+          provider?: string
+          refresh_token?: string | null
+          token_expiry?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      health_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          plan_type: string
+          services: Json | null
+          time_frame: string | null
+          total_cost: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          plan_type: string
+          services?: Json | null
+          time_frame?: string | null
+          total_cost?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          plan_type?: string
+          services?: Json | null
+          time_frame?: string | null
+          total_cost?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      professionals: {
+        Row: {
+          calendly_url: string
+          created_at: string
+          google_reviews_url: string | null
+          id: string
+          is_approved: boolean
+          location: string | null
+          name: string
+          photo_url: string | null
+          price_max: number | null
+          price_min: number | null
+          profession: string
+          specialities: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calendly_url: string
+          created_at?: string
+          google_reviews_url?: string | null
+          id?: string
+          is_approved?: boolean
+          location?: string | null
+          name: string
+          photo_url?: string | null
+          price_max?: number | null
+          price_min?: number | null
+          profession: string
+          specialities?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calendly_url?: string
+          created_at?: string
+          google_reviews_url?: string | null
+          id?: string
+          is_approved?: boolean
+          location?: string | null
+          name?: string
+          photo_url?: string | null
+          price_max?: number | null
+          price_min?: number | null
+          profession?: string
+          specialities?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      search_history: {
+        Row: {
+          budget: number | null
+          created_at: string
+          health_issue: string
+          id: string
+          location: string | null
+          results_count: number
+          user_id: string
+        }
+        Insert: {
+          budget?: number | null
+          created_at?: string
+          health_issue: string
+          id?: string
+          location?: string | null
+          results_count?: number
+          user_id: string
+        }
+        Update: {
+          budget?: number | null
+          created_at?: string
+          health_issue?: string
+          id?: string
+          location?: string | null
+          results_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_physician_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          last_selected_at: string
+          physician_location: string
+          physician_name: string
+          physician_title: string
+          selection_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_selected_at?: string
+          physician_location: string
+          physician_name: string
+          physician_title: string
+          selection_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_selected_at?: string
+          physician_location?: string
+          physician_name?: string
+          physician_title?: string
+          selection_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          budget_range: string | null
+          created_at: string
+          id: string
+          notification_settings: Json | null
+          preferred_location: string | null
+          preferred_professions: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budget_range?: string | null
+          created_at?: string
+          id?: string
+          notification_settings?: Json | null
+          preferred_location?: string | null
+          preferred_professions?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budget_range?: string | null
+          created_at?: string
+          id?: string
+          notification_settings?: Json | null
+          preferred_location?: string | null
+          preferred_professions?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_owner: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
