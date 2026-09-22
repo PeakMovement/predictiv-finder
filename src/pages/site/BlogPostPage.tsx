@@ -40,7 +40,9 @@ export default function BlogPostPage() {
     path,
     type: 'article',
     image: post?.cover_image_url || undefined,
-    noindex: state === 'missing',
+    // Never emit noindex here. Google renders this page with JavaScript, and if
+    // the post fetch is slow or blocked its crawler would otherwise see
+    // "noindex" and drop a perfectly good post from the index.
     keepPrerenderedJsonLd: state === 'loading',
     jsonLd: post
       ? [
