@@ -198,6 +198,7 @@ export type Database = {
       calendar_integrations: {
         Row: {
           access_token: string | null
+          api_credentials: Json | null
           calendar_id: string | null
           created_at: string
           id: string
@@ -214,6 +215,7 @@ export type Database = {
         }
         Insert: {
           access_token?: string | null
+          api_credentials?: Json | null
           calendar_id?: string | null
           created_at?: string
           id?: string
@@ -230,6 +232,7 @@ export type Database = {
         }
         Update: {
           access_token?: string | null
+          api_credentials?: Json | null
           calendar_id?: string | null
           created_at?: string
           id?: string
