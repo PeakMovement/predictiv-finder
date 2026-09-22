@@ -22,7 +22,10 @@ type PublicEnvName =
 
 function readPublicEnv(name: PublicEnvName): string | undefined {
   try {
-    const fromVite = import.meta.env?.[name];
+    // Typed locally so this module also compiles in Node-based contexts
+    // (SEO prerender) where vite/client ambient types are not loaded.
+    const meta = import.meta as { env?: Record<string, string | undefined> };
+    const fromVite = meta.env?.[name];
     if (typeof fromVite === 'string' && fromVite.length > 0) return fromVite;
   } catch {
     /* import.meta.env is not always defined when this module is loaded from Node */
