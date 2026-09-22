@@ -127,6 +127,13 @@
       "when": 1790088912011,
       "tag": "0017_bind_storage_writes_to_owner",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790088925675,
+      "tag": "0018_bind_storage_reads_to_owner",
+      "breakpoints": true
     }
   ]
 }
