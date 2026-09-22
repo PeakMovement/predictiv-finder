@@ -36,6 +36,13 @@
       "when": 1790074586948,
       "tag": "0004_add_directory_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790074610040,
+      "tag": "0005_allow_directory_only_listings",
+      "breakpoints": true
     }
   ]
 }

@@ -259,6 +259,7 @@ export type Database = {
           id: string
           institution: string | null
           is_approved: boolean
+          is_claimed: boolean
           is_featured: boolean
           languages: string[] | null
           latitude: number | null
@@ -278,7 +279,7 @@ export type Database = {
           specialities: string[]
           suburb: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
           years_experience: number | null
         }
         Insert: {
@@ -293,6 +294,7 @@ export type Database = {
           id?: string
           institution?: string | null
           is_approved?: boolean
+          is_claimed?: boolean
           is_featured?: boolean
           languages?: string[] | null
           latitude?: number | null
@@ -312,7 +314,7 @@ export type Database = {
           specialities?: string[]
           suburb?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           years_experience?: number | null
         }
         Update: {
@@ -327,6 +329,7 @@ export type Database = {
           id?: string
           institution?: string | null
           is_approved?: boolean
+          is_claimed?: boolean
           is_featured?: boolean
           languages?: string[] | null
           latitude?: number | null
@@ -346,7 +349,7 @@ export type Database = {
           specialities?: string[]
           suburb?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           years_experience?: number | null
         }
         Relationships: []
