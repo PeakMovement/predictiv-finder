@@ -106,6 +106,13 @@
       "when": 1790074720682,
       "tag": "0014_calendar_api_credentials_column",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1790074739901,
+      "tag": "0015_calendar_provider_default",
+      "breakpoints": true
     }
   ]
 }

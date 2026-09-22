@@ -223,7 +223,7 @@ export type Database = {
           is_active?: boolean | null
           last_synced_at?: string | null
           practitioner_id: string
-          provider: string
+          provider?: string
           refresh_token?: string | null
           sync_enabled?: boolean
           token_expiry?: string | null
