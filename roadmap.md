@@ -1,6 +1,10 @@
 # Roadmap
 
 ## Move backend from personal Supabase to Lovable Cloud
+### Decisions (confirmed 2026-09-22)
+- Do NOT create predictivpty@gmail.com on the new backend (user chose not to). Note: `is_blog_admin()` checks for it, so blog admin access will need another route later.
+- Restore ALL 40 practitioner listings including the three test rows (Samuel Stout, Aladdin Jacobson, unapproved "Justin").
+- Six mailinator test accounts will not be recreated as sign-ins.
 - [x] 1a. My own restore copy saved in supabase/backup/ (40 listings, 5 posts, 32 rules, 8 profiles, account list)
 - [ ] 1b. Your own dashboard backup downloaded (belt and braces) — your click
 - [ ] 2. Disconnect the external Supabase and enable Lovable Cloud — needs your click in the Cloud panel
