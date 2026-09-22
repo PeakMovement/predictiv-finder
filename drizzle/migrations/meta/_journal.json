@@ -113,6 +113,27 @@
       "when": 1790074739901,
       "tag": "0015_calendar_provider_default",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1790088861189,
+      "tag": "0016_lock_severity_rules_and_storage_reads",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1790088912011,
+      "tag": "0017_bind_storage_writes_to_owner",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790088925675,
+      "tag": "0018_bind_storage_reads_to_owner",
+      "breakpoints": true
     }
   ]
 }
