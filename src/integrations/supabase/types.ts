@@ -91,57 +91,6 @@ export type Database = {
           },
         ]
       }
-      blog_posts: {
-        Row: {
-          author_name: string | null
-          content: string
-          cover_image_url: string | null
-          created_at: string
-          excerpt: string | null
-          id: string
-          meta_description: string | null
-          meta_title: string | null
-          published_at: string | null
-          slug: string
-          status: string
-          target_keyword: string | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          author_name?: string | null
-          content?: string
-          cover_image_url?: string | null
-          created_at?: string
-          excerpt?: string | null
-          id?: string
-          meta_description?: string | null
-          meta_title?: string | null
-          published_at?: string | null
-          slug: string
-          status?: string
-          target_keyword?: string | null
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          author_name?: string | null
-          content?: string
-          cover_image_url?: string | null
-          created_at?: string
-          excerpt?: string | null
-          id?: string
-          meta_description?: string | null
-          meta_title?: string | null
-          published_at?: string | null
-          slug?: string
-          status?: string
-          target_keyword?: string | null
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       bookings: {
         Row: {
           appointment_date: string
@@ -149,8 +98,7 @@ export type Database = {
           id: string
           notes: string | null
           plan_id: string | null
-          practitioner_name: string
-          service_type: string
+          practitioner_id: string
           status: string
           updated_at: string
           user_id: string
@@ -161,8 +109,7 @@ export type Database = {
           id?: string
           notes?: string | null
           plan_id?: string | null
-          practitioner_name: string
-          service_type: string
+          practitioner_id: string
           status?: string
           updated_at?: string
           user_id: string
@@ -173,8 +120,7 @@ export type Database = {
           id?: string
           notes?: string | null
           plan_id?: string | null
-          practitioner_name?: string
-          service_type?: string
+          practitioner_id?: string
           status?: string
           updated_at?: string
           user_id?: string
@@ -191,37 +137,46 @@ export type Database = {
       }
       calendar_integrations: {
         Row: {
-          api_credentials: Json
+          access_token: string | null
           calendar_id: string | null
           created_at: string
           id: string
-          integration_type: string
-          last_sync_at: string | null
+          is_active: boolean | null
+          last_synced_at: string | null
           practitioner_id: string
-          sync_enabled: boolean
+          provider: string
+          refresh_token: string | null
+          token_expiry: string | null
           updated_at: string
+          webhook_url: string | null
         }
         Insert: {
-          api_credentials: Json
+          access_token?: string | null
           calendar_id?: string | null
           created_at?: string
           id?: string
-          integration_type: string
-          last_sync_at?: string | null
+          is_active?: boolean | null
+          last_synced_at?: string | null
           practitioner_id: string
-          sync_enabled?: boolean
+          provider: string
+          refresh_token?: string | null
+          token_expiry?: string | null
           updated_at?: string
+          webhook_url?: string | null
         }
         Update: {
-          api_credentials?: Json
+          access_token?: string | null
           calendar_id?: string | null
           created_at?: string
           id?: string
-          integration_type?: string
-          last_sync_at?: string | null
+          is_active?: boolean | null
+          last_synced_at?: string | null
           practitioner_id?: string
-          sync_enabled?: boolean
+          provider?: string
+          refresh_token?: string | null
+          token_expiry?: string | null
           updated_at?: string
+          webhook_url?: string | null
         }
         Relationships: []
       }
@@ -298,15 +253,14 @@ export type Database = {
           consultation_type: string | null
           contact_number: string | null
           created_at: string
-          expertise_areas: string[]
+          expertise_areas: string[] | null
           google_reviews_url: string | null
           governing_body: string | null
           id: string
           institution: string | null
           is_approved: boolean
-          is_claimed: boolean
           is_featured: boolean
-          languages: string[]
+          languages: string[] | null
           latitude: number | null
           location: string | null
           longitude: number | null
@@ -324,7 +278,7 @@ export type Database = {
           specialities: string[]
           suburb: string | null
           updated_at: string
-          user_id: string | null
+          user_id: string
           years_experience: number | null
         }
         Insert: {
@@ -333,15 +287,14 @@ export type Database = {
           consultation_type?: string | null
           contact_number?: string | null
           created_at?: string
-          expertise_areas?: string[]
+          expertise_areas?: string[] | null
           google_reviews_url?: string | null
           governing_body?: string | null
           id?: string
           institution?: string | null
           is_approved?: boolean
-          is_claimed?: boolean
           is_featured?: boolean
-          languages?: string[]
+          languages?: string[] | null
           latitude?: number | null
           location?: string | null
           longitude?: number | null
@@ -359,7 +312,7 @@ export type Database = {
           specialities?: string[]
           suburb?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id: string
           years_experience?: number | null
         }
         Update: {
@@ -368,15 +321,14 @@ export type Database = {
           consultation_type?: string | null
           contact_number?: string | null
           created_at?: string
-          expertise_areas?: string[]
+          expertise_areas?: string[] | null
           google_reviews_url?: string | null
           governing_body?: string | null
           id?: string
           institution?: string | null
           is_approved?: boolean
-          is_claimed?: boolean
           is_featured?: boolean
-          languages?: string[]
+          languages?: string[] | null
           latitude?: number | null
           location?: string | null
           longitude?: number | null
@@ -394,7 +346,7 @@ export type Database = {
           specialities?: string[]
           suburb?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
           years_experience?: number | null
         }
         Relationships: []
@@ -456,245 +408,6 @@ export type Database = {
         }
         Relationships: []
       }
-      symptom_checks: {
-        Row: {
-          associated_symptoms: string[] | null
-          completed_at: string | null
-          created_at: string | null
-          id: string
-          interpretation_ready: boolean | null
-          medical_history_flags: string[] | null
-          overall_severity:
-            | Database["public"]["Enums"]["symptom_severity"]
-            | null
-          primary_complaint: string | null
-          red_flag_reasons: string[] | null
-          red_flag_status: Database["public"]["Enums"]["red_flag_status"] | null
-          session_status: string
-          symptom_duration_hours: number | null
-          symptom_onset: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          associated_symptoms?: string[] | null
-          completed_at?: string | null
-          created_at?: string | null
-          id?: string
-          interpretation_ready?: boolean | null
-          medical_history_flags?: string[] | null
-          overall_severity?:
-            | Database["public"]["Enums"]["symptom_severity"]
-            | null
-          primary_complaint?: string | null
-          red_flag_reasons?: string[] | null
-          red_flag_status?:
-            | Database["public"]["Enums"]["red_flag_status"]
-            | null
-          session_status?: string
-          symptom_duration_hours?: number | null
-          symptom_onset?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          associated_symptoms?: string[] | null
-          completed_at?: string | null
-          created_at?: string | null
-          id?: string
-          interpretation_ready?: boolean | null
-          medical_history_flags?: string[] | null
-          overall_severity?:
-            | Database["public"]["Enums"]["symptom_severity"]
-            | null
-          primary_complaint?: string | null
-          red_flag_reasons?: string[] | null
-          red_flag_status?:
-            | Database["public"]["Enums"]["red_flag_status"]
-            | null
-          session_status?: string
-          symptom_duration_hours?: number | null
-          symptom_onset?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      symptom_entries: {
-        Row: {
-          associated_symptoms: string[] | null
-          body_region: string | null
-          created_at: string | null
-          duration_hours: number | null
-          frequency: string | null
-          id: string
-          is_primary: boolean | null
-          matched_rule_id: string | null
-          relieving_factors: string[] | null
-          severity: Database["public"]["Enums"]["symptom_severity"]
-          severity_score: number | null
-          symptom_check_id: string
-          symptom_text: string
-          triggers: string[] | null
-          user_id: string
-        }
-        Insert: {
-          associated_symptoms?: string[] | null
-          body_region?: string | null
-          created_at?: string | null
-          duration_hours?: number | null
-          frequency?: string | null
-          id?: string
-          is_primary?: boolean | null
-          matched_rule_id?: string | null
-          relieving_factors?: string[] | null
-          severity?: Database["public"]["Enums"]["symptom_severity"]
-          severity_score?: number | null
-          symptom_check_id: string
-          symptom_text: string
-          triggers?: string[] | null
-          user_id: string
-        }
-        Update: {
-          associated_symptoms?: string[] | null
-          body_region?: string | null
-          created_at?: string | null
-          duration_hours?: number | null
-          frequency?: string | null
-          id?: string
-          is_primary?: boolean | null
-          matched_rule_id?: string | null
-          relieving_factors?: string[] | null
-          severity?: Database["public"]["Enums"]["symptom_severity"]
-          severity_score?: number | null
-          symptom_check_id?: string
-          symptom_text?: string
-          triggers?: string[] | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "symptom_entries_matched_rule_id_fkey"
-            columns: ["matched_rule_id"]
-            isOneToOne: false
-            referencedRelation: "symptom_severity_rules"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "symptom_entries_symptom_check_id_fkey"
-            columns: ["symptom_check_id"]
-            isOneToOne: false
-            referencedRelation: "symptom_checks"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      symptom_red_flags: {
-        Row: {
-          created_at: string | null
-          flag_reason: string
-          flag_type: string
-          id: string
-          recommendation: string | null
-          severity_level: Database["public"]["Enums"]["red_flag_status"]
-          symptom_check_id: string
-          triggered_by_rule_id: string | null
-          triggered_by_symptom_id: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          flag_reason: string
-          flag_type: string
-          id?: string
-          recommendation?: string | null
-          severity_level: Database["public"]["Enums"]["red_flag_status"]
-          symptom_check_id: string
-          triggered_by_rule_id?: string | null
-          triggered_by_symptom_id?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          flag_reason?: string
-          flag_type?: string
-          id?: string
-          recommendation?: string | null
-          severity_level?: Database["public"]["Enums"]["red_flag_status"]
-          symptom_check_id?: string
-          triggered_by_rule_id?: string | null
-          triggered_by_symptom_id?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "symptom_red_flags_symptom_check_id_fkey"
-            columns: ["symptom_check_id"]
-            isOneToOne: false
-            referencedRelation: "symptom_checks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "symptom_red_flags_triggered_by_rule_id_fkey"
-            columns: ["triggered_by_rule_id"]
-            isOneToOne: false
-            referencedRelation: "symptom_severity_rules"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "symptom_red_flags_triggered_by_symptom_id_fkey"
-            columns: ["triggered_by_symptom_id"]
-            isOneToOne: false
-            referencedRelation: "symptom_entries"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      symptom_severity_rules: {
-        Row: {
-          base_severity: Database["public"]["Enums"]["symptom_severity"]
-          body_region: string | null
-          created_at: string | null
-          duration_hours_threshold: number | null
-          escalation_severity:
-            | Database["public"]["Enums"]["symptom_severity"]
-            | null
-          id: string
-          is_active: boolean | null
-          red_flag_triggers: string[] | null
-          symptom_keyword: string
-          updated_at: string | null
-        }
-        Insert: {
-          base_severity?: Database["public"]["Enums"]["symptom_severity"]
-          body_region?: string | null
-          created_at?: string | null
-          duration_hours_threshold?: number | null
-          escalation_severity?:
-            | Database["public"]["Enums"]["symptom_severity"]
-            | null
-          id?: string
-          is_active?: boolean | null
-          red_flag_triggers?: string[] | null
-          symptom_keyword: string
-          updated_at?: string | null
-        }
-        Update: {
-          base_severity?: Database["public"]["Enums"]["symptom_severity"]
-          body_region?: string | null
-          created_at?: string | null
-          duration_hours_threshold?: number | null
-          escalation_severity?:
-            | Database["public"]["Enums"]["symptom_severity"]
-            | null
-          id?: string
-          is_active?: boolean | null
-          red_flag_triggers?: string[] | null
-          symptom_keyword?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       user_physician_preferences: {
         Row: {
           created_at: string
@@ -734,31 +447,31 @@ export type Database = {
       user_preferences: {
         Row: {
           budget_range: string | null
-          communication_preferences: Json | null
           created_at: string
           id: string
+          notification_settings: Json | null
           preferred_location: string | null
-          service_categories: string[] | null
+          preferred_professions: string[] | null
           updated_at: string
           user_id: string
         }
         Insert: {
           budget_range?: string | null
-          communication_preferences?: Json | null
           created_at?: string
           id?: string
+          notification_settings?: Json | null
           preferred_location?: string | null
-          service_categories?: string[] | null
+          preferred_professions?: string[] | null
           updated_at?: string
           user_id: string
         }
         Update: {
           budget_range?: string | null
-          communication_preferences?: Json | null
           created_at?: string
           id?: string
+          notification_settings?: Json | null
           preferred_location?: string | null
-          service_categories?: string[] | null
+          preferred_professions?: string[] | null
           updated_at?: string
           user_id?: string
         }
@@ -766,97 +479,13 @@ export type Database = {
       }
     }
     Views: {
-      availability_busy_blocks: {
-        Row: {
-          end_time: string | null
-          id: string | null
-          is_available: boolean | null
-          practitioner_id: string | null
-          start_time: string | null
-        }
-        Insert: {
-          end_time?: string | null
-          id?: string | null
-          is_available?: boolean | null
-          practitioner_id?: string | null
-          start_time?: string | null
-        }
-        Update: {
-          end_time?: string | null
-          id?: string | null
-          is_available?: boolean | null
-          practitioner_id?: string | null
-          start_time?: string | null
-        }
-        Relationships: []
-      }
-      practitioners: {
-        Row: {
-          calendly_url: string | null
-          created_at: string | null
-          google_reviews_url: string | null
-          id: string | null
-          is_approved: boolean | null
-          location: string | null
-          name: string | null
-          photo_url: string | null
-          price_max: number | null
-          price_min: number | null
-          profession: string | null
-          specialities: string[] | null
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          calendly_url?: string | null
-          created_at?: string | null
-          google_reviews_url?: string | null
-          id?: string | null
-          is_approved?: boolean | null
-          location?: string | null
-          name?: string | null
-          photo_url?: string | null
-          price_max?: number | null
-          price_min?: number | null
-          profession?: string | null
-          specialities?: string[] | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          calendly_url?: string | null
-          created_at?: string | null
-          google_reviews_url?: string | null
-          id?: string | null
-          is_approved?: boolean | null
-          location?: string | null
-          name?: string | null
-          photo_url?: string | null
-          price_max?: number | null
-          price_min?: number | null
-          profession?: string | null
-          specialities?: string[] | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
-      is_blog_admin: { Args: never; Returns: boolean }
       is_owner: { Args: { _user_id: string }; Returns: boolean }
-      max_severity: {
-        Args: { severities: Database["public"]["Enums"]["symptom_severity"][] }
-        Returns: Database["public"]["Enums"]["symptom_severity"]
-      }
-      score_to_severity: {
-        Args: { score: number }
-        Returns: Database["public"]["Enums"]["symptom_severity"]
-      }
     }
     Enums: {
-      red_flag_status: "none" | "monitor" | "urgent" | "emergency"
-      symptom_severity: "mild" | "moderate" | "severe" | "critical"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -983,9 +612,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      red_flag_status: ["none", "monitor", "urgent", "emergency"],
-      symptom_severity: ["mild", "moderate", "severe", "critical"],
-    },
+    Enums: {},
   },
 } as const
