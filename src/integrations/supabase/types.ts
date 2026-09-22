@@ -201,11 +201,13 @@ export type Database = {
           calendar_id: string | null
           created_at: string
           id: string
+          integration_type: string | null
           is_active: boolean | null
           last_synced_at: string | null
           practitioner_id: string
           provider: string
           refresh_token: string | null
+          sync_enabled: boolean
           token_expiry: string | null
           updated_at: string
           webhook_url: string | null
@@ -215,11 +217,13 @@ export type Database = {
           calendar_id?: string | null
           created_at?: string
           id?: string
+          integration_type?: string | null
           is_active?: boolean | null
           last_synced_at?: string | null
           practitioner_id: string
           provider: string
           refresh_token?: string | null
+          sync_enabled?: boolean
           token_expiry?: string | null
           updated_at?: string
           webhook_url?: string | null
@@ -229,11 +233,13 @@ export type Database = {
           calendar_id?: string | null
           created_at?: string
           id?: string
+          integration_type?: string | null
           is_active?: boolean | null
           last_synced_at?: string | null
           practitioner_id?: string
           provider?: string
           refresh_token?: string | null
+          sync_enabled?: boolean
           token_expiry?: string | null
           updated_at?: string
           webhook_url?: string | null
