@@ -57,12 +57,30 @@ export function DirectoryList({
   loading,
   error,
   emptyText,
+  profession,
+  suburb,
 }: {
   listings: Listing[];
   loading: boolean;
   error?: string | null;
   emptyText: string;
+  profession?: string;
+  suburb?: string;
 }) {
+  const shownKey = `${profession ?? ''}|${suburb ?? ''}`;
+  const lastShown = useRef<string | null>(null);
+  useEffect(() => {
+    if (loading || error) return;
+    if (lastShown.current === shownKey) return;
+    lastShown.current = shownKey;
+    track({
+      event_type: 'results_shown',
+      profession: profession ?? null,
+      suburb: suburb ?? null,
+      result_count: listings.length,
+    });
+  }, [loading, error, shownKey, listings.length, profession, suburb]);
+
   if (loading) return <p className="text-muted-foreground">Loading practitioners…</p>;
   if (error) {
     return (
@@ -72,6 +90,7 @@ export function DirectoryList({
     );
   }
   if (!listings.length) return <p className="text-muted-foreground">{emptyText}</p>;
+
   return (
     <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {listings.map((l) => (
