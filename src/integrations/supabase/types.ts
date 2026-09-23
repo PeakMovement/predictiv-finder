@@ -249,6 +249,62 @@ export type Database = {
         }
         Relationships: []
       }
+      directory_events: {
+        Row: {
+          created_at: string
+          device: string | null
+          event_type: string
+          id: string
+          link_type: string | null
+          page_path: string | null
+          profession: string | null
+          professional_id: string | null
+          query: string | null
+          referrer: string | null
+          result_count: number | null
+          session_id: string
+          suburb: string | null
+        }
+        Insert: {
+          created_at?: string
+          device?: string | null
+          event_type: string
+          id?: string
+          link_type?: string | null
+          page_path?: string | null
+          profession?: string | null
+          professional_id?: string | null
+          query?: string | null
+          referrer?: string | null
+          result_count?: number | null
+          session_id: string
+          suburb?: string | null
+        }
+        Update: {
+          created_at?: string
+          device?: string | null
+          event_type?: string
+          id?: string
+          link_type?: string | null
+          page_path?: string | null
+          profession?: string | null
+          professional_id?: string | null
+          query?: string | null
+          referrer?: string | null
+          result_count?: number | null
+          session_id?: string
+          suburb?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "directory_events_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       health_plans: {
         Row: {
           created_at: string
