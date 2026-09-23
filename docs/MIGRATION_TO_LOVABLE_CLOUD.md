@@ -392,3 +392,24 @@ Rollback window: keep DNS and the old project. Republish with the fallback URL i
 - This playbook
 
 Nothing in this PR deletes the linked project, rotations of service role, or Peak Movement.
+
+---
+
+## 2026-09-23 status check
+
+Verified against the deployed bundle on predictiv.co.za:
+
+- Production is **not** on Lovable Cloud yet. The only backend URL in the built
+  bundle is `https://zpddlphtoeluytrejioj.supabase.co`, reached through the
+  fallback in `src/integrations/supabase/env.ts`. Cloud is enabled in the project
+  (`supabase/config.toml` project_id `mmhpdnueuzjtfxrtjqkg`) but its credentials
+  are not being baked into the published build.
+- Earlier the same day the site was fully broken: Lovable had regenerated
+  `client.ts` to read `import.meta.env.VITE_SUPABASE_URL` directly, which is
+  undefined in the published build, so `createClient` threw "supabaseUrl is
+  required" at module load. React never mounted and every route served only its
+  prerendered HTML shell. Fixed in `a80b990` by resolving through `./env` again.
+- Old project still holds the data: 40 professionals (37 approved), 5 published
+  blog posts. Do not delete it until Cloud is confirmed serving production.
+- The blog sitemap submitted to Search Console points at the old project's edge
+  function and will need reswapping after a real cutover.
