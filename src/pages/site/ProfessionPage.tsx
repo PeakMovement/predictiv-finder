@@ -1,8 +1,11 @@
+import { useEffect } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { PublicLayout } from '@/components/site/PublicLayout';
 import { FaqSection } from '@/components/site/FaqSection';
 import { DirectoryList, listingsJsonLd, useListings } from '@/components/site/DirectoryList';
 import { useSeo } from '@/lib/seo';
+import { track } from '@/lib/track';
+
 import {
   CITY, DIRECTORY_PAGES, SUBURBS, breadcrumbJsonLd, faqJsonLd, findProfession, phrasePlural, phraseSingular,
   professionDescription, professionTitle,
@@ -26,7 +29,12 @@ export default function ProfessionPage() {
     keepPrerenderedJsonLd: loading || !!error,
     jsonLd: p && !loading && !error ? [breadcrumbJsonLd(crumbs), faqJsonLd(p.faqs), listingsJsonLd(listings, path)] : undefined,
   });
+  useEffect(() => {
+    if (!p) return;
+    track({ event_type: 'search', profession: p.slug, suburb: null });
+  }, [p?.slug]);
   if (!p) return <Navigate to="/practitioners" replace />;
+
 
   const suburbs = DIRECTORY_PAGES.filter((d) => d.profession === p.slug).map((d) => SUBURBS.find((s) => s.slug === d.suburb)!);
 
@@ -46,7 +54,7 @@ export default function ProfessionPage() {
       <div className="mt-10 grid gap-8 lg:grid-cols-3">
         <section className="lg:col-span-2">
           <h2 className="text-2xl font-bold mb-4">{p.plural} near you</h2>
-          <DirectoryList listings={listings} loading={loading} error={error} emptyText={`We are still adding ${phrasePlural(p)} in ${CITY}.`} />
+          <DirectoryList listings={listings} loading={loading} error={error} profession={p.slug} emptyText={`We are still adding ${phrasePlural(p)} in ${CITY}.`} />
         </section>
         <aside className="space-y-6">
           <section className="rounded-2xl border border-border bg-card/50 p-5">

@@ -10,6 +10,8 @@ import { PUBLIC_LAUNCH_MODE } from '@/config/launchMode';
 import { CURRENT_CONSENT_VERSION } from '@/config/popia';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { track } from '@/lib/track';
+
 import type { HealthQuery } from '@/services/physician-recommendation-service';
 import type { AiAnalysis } from '@/types/ai-analysis';
 
@@ -30,7 +32,9 @@ export default function AIHealthAssistant() {
   const handleProceedToRecommendations = async (query: HealthQuery) => {
     setIsLoading(true);
     setAiAnalysis(null);
+    track({ event_type: 'problem_described', query: query.prompt });
     try {
+
       console.log('[AIHealthAssistant] Analysing concern via edge function');
       const { data, error } = await supabase.functions.invoke(
         'analyze-health-concern',
