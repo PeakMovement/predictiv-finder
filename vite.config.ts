@@ -20,7 +20,9 @@ export default defineConfig(({ mode }) => {
       {
         name: 'supabase-preconnect',
         transformIndexHtml(html: string) {
-          return html.replaceAll('https://zpddlphtoeluytrejioj.supabase.co', supabaseUrl);
+          return html
+            .replaceAll('https://zpddlphtoeluytrejioj.supabase.co', supabaseUrl)
+            .replaceAll('https://mmhpdnueuzjtfxrtjqkg.supabase.co', supabaseUrl);
         },
       },
       seoPrerender({ supabaseUrl, supabaseAnonKey }),

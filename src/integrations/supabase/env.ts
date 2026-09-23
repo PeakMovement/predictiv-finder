@@ -10,10 +10,11 @@
  * See docs/MIGRATION_TO_LOVABLE_CLOUD.md.
  */
 
-export const LINKED_SUPABASE_PROJECT_REF = 'zpddlphtoeluytrejioj';
+// Lovable Cloud project (live since 2026-09-22). The old linked project
+// zpddlphtoeluytrejioj is retired — never fall back to it again.
+export const LINKED_SUPABASE_PROJECT_REF = 'mmhpdnueuzjtfxrtjqkg';
 export const LINKED_SUPABASE_URL = `https://${LINKED_SUPABASE_PROJECT_REF}.supabase.co`;
-export const LINKED_SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZGRscGh0b2VsdXl0cmVqaW9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNzMzMzMsImV4cCI6MjA2Mzk0OTMzM30.jwTdmEafWDvL-k54o9-q-hpeeqvTJPUZDI_Pp2g3nlU';
+export const LINKED_SUPABASE_ANON_KEY = 'sb_publishable_9cflY_VM1oeaDtOo-hf_Zg_WuasopMI';
 
 type PublicEnvName =
   | 'VITE_SUPABASE_URL'
