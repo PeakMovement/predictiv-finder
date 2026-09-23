@@ -1,8 +1,11 @@
+import { useEffect } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { PublicLayout } from '@/components/site/PublicLayout';
 import { FaqSection } from '@/components/site/FaqSection';
 import { DirectoryList, listingsJsonLd, useListings } from '@/components/site/DirectoryList';
 import { useSeo } from '@/lib/seo';
+import { track } from '@/lib/track';
+
 import {
   CITY, DIRECTORY_PAGES, PROFESSIONS, breadcrumbJsonLd, directoryDescription, directoryFaqs, directoryTitle,
   faqJsonLd, findProfession, findSuburb, hasDirectoryPage, phrasePlural, phraseSingular,
@@ -29,7 +32,12 @@ export default function DirectoryPage() {
     keepPrerenderedJsonLd: loading || !!error,
     jsonLd: valid && !loading && !error ? [breadcrumbJsonLd(crumbs), listingsJsonLd(listings, path), faqJsonLd(directoryFaqs(p!, s!))] : undefined,
   });
+  useEffect(() => {
+    if (!valid) return;
+    track({ event_type: 'search', profession: p!.slug, suburb: s!.slug });
+  }, [valid, p?.slug, s?.slug]);
   if (!valid) return <Navigate to={p ? `/practitioners/${p.slug}` : '/practitioners'} replace />;
+
 
   const otherTypes = PROFESSIONS.filter((o) => o.slug !== p!.slug && hasDirectoryPage(o.slug, s!.slug));
   const nearby = DIRECTORY_PAGES.filter((d) => d.profession === p!.slug && d.suburb !== s!.slug).map((d) => findSuburb(d.suburb)!);
@@ -44,7 +52,7 @@ export default function DirectoryPage() {
 
       <section className="mt-10">
         <h2 className="text-2xl font-bold mb-4">{p!.plural} in {s!.name}</h2>
-        <DirectoryList listings={listings} loading={loading} error={error} emptyText={`We are still adding ${phrasePlural(p!)} in ${s!.name}.`} />
+        <DirectoryList listings={listings} loading={loading} error={error} profession={p!.slug} suburb={s!.slug} emptyText={`We are still adding ${phrasePlural(p!)} in ${s!.name}.`} />
       </section>
 
       <section className="mt-12 grid gap-6 md:grid-cols-2">
