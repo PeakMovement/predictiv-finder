@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ExternalLink, MapPin, Phone, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { track } from '@/lib/track';
+
 import {
   LISTING_SELECT,
   UNCLAIMED_NOTICE,
@@ -109,9 +111,14 @@ export function DirectoryList({
               <span className="inline-flex items-center gap-1"><Star className="h-3 w-3 text-amber-400" aria-hidden />{l.rating!.toFixed(1)} ({l.review_count})</span>
             )}
             {l.contact_number && (
-              <a href={`tel:${l.contact_number.replace(/\s+/g, '')}`} className="inline-flex items-center gap-1 hover:text-foreground">
+              <a
+                href={`tel:${l.contact_number.replace(/\s+/g, '')}`}
+                className="inline-flex items-center gap-1 hover:text-foreground"
+                onClick={() => track({ event_type: 'outbound_click', professional_id: l.id, link_type: 'phone' })}
+              >
                 <Phone className="h-3 w-3" aria-hidden />{l.contact_number}
               </a>
+
             )}
           </div>
           {isUnclaimedListing(l) && (
@@ -122,11 +129,19 @@ export function DirectoryList({
               href={l.calendly_url}
               target="_blank"
               rel="noopener nofollow"
+              onClick={() =>
+                track({
+                  event_type: 'outbound_click',
+                  professional_id: l.id,
+                  link_type: /calendly|book/i.test(l.calendly_url ?? '') ? 'booking' : 'website',
+                })
+              }
               className="mt-auto inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
             >
               Visit practice website <ExternalLink className="h-3.5 w-3.5" aria-hidden />
             </a>
           )}
+
         </li>
       ))}
     </ul>
