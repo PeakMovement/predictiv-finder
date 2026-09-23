@@ -134,6 +134,13 @@
       "when": 1790088925675,
       "tag": "0018_bind_storage_reads_to_owner",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790169035946,
+      "tag": "0019_create_directory_events",
+      "breakpoints": true
     }
   ]
 }
