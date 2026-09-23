@@ -261,9 +261,15 @@ export type Database = {
           professional_id: string | null
           query: string | null
           referrer: string | null
+          referrer_host: string | null
           result_count: number | null
           session_id: string
+          source: string | null
           suburb: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          visit_id: string | null
         }
         Insert: {
           created_at?: string
@@ -276,9 +282,15 @@ export type Database = {
           professional_id?: string | null
           query?: string | null
           referrer?: string | null
+          referrer_host?: string | null
           result_count?: number | null
           session_id: string
+          source?: string | null
           suburb?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          visit_id?: string | null
         }
         Update: {
           created_at?: string
@@ -291,11 +303,24 @@ export type Database = {
           professional_id?: string | null
           query?: string | null
           referrer?: string | null
+          referrer_host?: string | null
           result_count?: number | null
           session_id?: string
+          source?: string | null
           suburb?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          visit_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "directory_events_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "analytics_practitioner_clicks"
+            referencedColumns: ["professional_id"]
+          },
           {
             foreignKeyName: "directory_events_professional_id_fkey"
             columns: ["professional_id"]
@@ -846,6 +871,72 @@ export type Database = {
       }
     }
     Views: {
+      analytics_daily_traffic: {
+        Row: {
+          day: string | null
+          outbound_clicks: number | null
+          page_views: number | null
+          searches: number | null
+          visitors: number | null
+          visits: number | null
+        }
+        Relationships: []
+      }
+      analytics_practitioner_clicks: {
+        Row: {
+          booking_clicks: number | null
+          clicks: number | null
+          clicks_30d: number | null
+          distinct_visits: number | null
+          last_click: string | null
+          phone_clicks: number | null
+          practice: string | null
+          profession: string | null
+          professional_id: string | null
+          suburb: string | null
+          website_clicks: number | null
+        }
+        Relationships: []
+      }
+      analytics_sources: {
+        Row: {
+          first_seen: string | null
+          last_seen: string | null
+          referrer_host: string | null
+          source: string | null
+          utm_campaign: string | null
+          utm_source: string | null
+          visits: number | null
+        }
+        Relationships: []
+      }
+      analytics_top_pages: {
+        Row: {
+          last_seen: string | null
+          page_path: string | null
+          page_views: number | null
+          visits: number | null
+        }
+        Relationships: []
+      }
+      analytics_top_searches: {
+        Row: {
+          event_type: string | null
+          last_seen: string | null
+          searches: number | null
+          term: string | null
+        }
+        Relationships: []
+      }
+      analytics_zero_results: {
+        Row: {
+          last_seen: string | null
+          profession: string | null
+          suburb: string | null
+          times: number | null
+        }
+        Relationships: []
+      }
       availability_busy_blocks: {
         Row: {
           end_time: string | null
