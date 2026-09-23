@@ -882,6 +882,24 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_engagement: {
+        Row: {
+          engaged: number | null
+          engaged_pct: number | null
+          page_path: string | null
+          views: number | null
+        }
+        Relationships: []
+      }
+      analytics_missing_pages: {
+        Row: {
+          last_seen: string | null
+          misses: number | null
+          page_path: string | null
+          visits: number | null
+        }
+        Relationships: []
+      }
       analytics_practitioner_clicks: {
         Row: {
           booking_clicks: number | null
@@ -969,6 +987,7 @@ export type Database = {
         Args: { severities: Database["public"]["Enums"]["symptom_severity"][] }
         Returns: Database["public"]["Enums"]["symptom_severity"]
       }
+      prune_directory_events: { Args: { keep_days?: number }; Returns: number }
       score_to_severity: {
         Args: { score: number }
         Returns: Database["public"]["Enums"]["symptom_severity"]
