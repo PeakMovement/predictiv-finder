@@ -34,6 +34,17 @@ interface PageRow {
   page_views: number;
   visits: number;
 }
+interface MissingRow {
+  page_path: string;
+  misses: number;
+  visits: number;
+}
+interface EngagementRow {
+  page_path: string;
+  views: number;
+  engaged: number;
+  engaged_pct: number | null;
+}
 interface SourceRow {
   source: string;
   referrer_host: string | null;
@@ -163,6 +174,10 @@ export default function InsightsAdmin() {
   // The reporting views arrive with the 20260923 migration. Until it has been
   // applied the traffic section stays hidden rather than erroring the page.
   const [viewsReady, setViewsReady] = useState(true);
+  const [missing, setMissing] = useState<MissingRow[]>([]);
+  const [engagement, setEngagement] = useState<EngagementRow[]>([]);
+  // Missing pages and engagement arrive with the second 20260923 migration.
+  const [extraReady, setExtraReady] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -230,11 +245,27 @@ export default function InsightsAdmin() {
         .limit(25),
     ]);
 
-    const missing = !!d.error || !!pg.error || !!sr.error;
-    setViewsReady(!missing);
+    const viewsMissing = !!d.error || !!pg.error || !!sr.error;
+    setViewsReady(!viewsMissing);
     setDaily((d.data ?? []) as DailyRow[]);
     setPages((pg.data ?? []) as PageRow[]);
     setSources((sr.data ?? []) as SourceRow[]);
+
+    const [mp, en] = await Promise.all([
+      (supabase as any)
+        .from('analytics_missing_pages')
+        .select('page_path,misses,visits')
+        .order('misses', { ascending: false })
+        .limit(25),
+      (supabase as any)
+        .from('analytics_engagement')
+        .select('page_path,views,engaged,engaged_pct')
+        .order('views', { ascending: false })
+        .limit(25),
+    ]);
+    setExtraReady(!mp.error && !en.error);
+    setMissing((mp.data ?? []) as MissingRow[]);
+    setEngagement((en.data ?? []) as EngagementRow[]);
 
     setLoading(false);
   }, []);
@@ -400,6 +431,28 @@ export default function InsightsAdmin() {
           rows={stats.zeroResults.map(([k, v]) => [k, v])}
           empty="No empty result pages in this period."
         />
+
+        {extraReady && (
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Table
+              title="Pages people asked for that do not exist"
+              headers={['Path', 'Misses', 'Visits']}
+              rows={missing.map((r) => [r.page_path, r.misses ?? 0, r.visits ?? 0])}
+              empty="No missing pages recorded yet."
+            />
+            <Table
+              title="Read or bounced"
+              headers={['Page', 'Views', 'Engaged', 'Engaged %']}
+              rows={engagement.map((r) => [
+                r.page_path,
+                r.views ?? 0,
+                r.engaged ?? 0,
+                r.engaged_pct == null ? '' : `${r.engaged_pct}%`,
+              ])}
+              empty="No engagement recorded yet."
+            />
+          </div>
+        )}
 
         <Table
           title="Outbound clicks per practitioner"

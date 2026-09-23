@@ -2,6 +2,7 @@ import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { track } from "@/lib/track";
 
 const NotFound = () => {
   const location = useLocation();
@@ -11,6 +12,10 @@ const NotFound = () => {
       "404 Error: User attempted to access non-existent route:",
       location.pathname
     );
+    // A miss is demand for a page that does not exist yet. Someone looking for
+    // /practitioners/physiotherapists/claremont before that page is built is
+    // the clearest possible signal of which page to build next.
+    track({ event_type: "not_found", page_path: location.pathname });
   }, [location.pathname]);
 
   return (

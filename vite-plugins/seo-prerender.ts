@@ -32,6 +32,13 @@ import {
   listingsJsonLd,
   type Listing,
 } from '../src/seo/listings';
+import {
+  assertPrerenderedPractitionerHtml,
+  practitionerCrumbs,
+  practitionerFallbackHtml,
+  practitionerJsonLd,
+  practitionerRoute,
+} from '../src/seo/practitioners';
 import { aboutFallbackHtml, joinFallbackHtml, practitionersIndexFallbackHtml, privacyFallbackHtml } from '../src/seo/static-pages';
 import {
   CITY, HOME_FAQS, PROFESSIONS, SITE_NAME, SITE_URL, allRoutes, breadcrumbJsonLd, directoryFaqs,
@@ -213,6 +220,20 @@ function renderRoute(template: string, r: RouteSeo, routes: RouteSeo[], listings
   return html;
 }
 
+function renderPractitionerRoute(template: string, r: RouteSeo, l: Listing) {
+  let html = renderRoute(template, r, [], []);
+  const ld = [breadcrumbJsonLd(practitionerCrumbs(l)), practitionerJsonLd(l, r.path)]
+    .map((b) => `<script type="application/ld+json" data-prerendered>${JSON.stringify(b)}</script>`)
+    .join('\n    ');
+  html = html.replace(/<script type="application\/ld\+json" data-prerendered>[\s\S]*?<\/script>/g, '');
+  html = html.replace('</head>', `  ${ld}\n  </head>`);
+  html = html.replace(
+    /<div id="root">[\s\S]*?<\/div>/,
+    `<div id="root">${practitionerFallbackHtml(l)}</div>`,
+  );
+  return html;
+}
+
 function sitemap(routes: RouteSeo[], lastmod: string) {
   const urls = routes
     .map((r) => {
@@ -320,6 +341,23 @@ async function fetchPublishedBlogPosts(): Promise<PublishedBlogPost[]> {
   }
 }
 
+/**
+ * A transient network blip at build time used to fail the whole publish. The
+ * prerender is an enhancement, not a correctness requirement: the SPA still
+ * renders every page client side. So degrade loudly and carry on.
+ */
+let degraded = false;
+
+async function safely<T>(label: string, fn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    degraded = true;
+    console.warn(`[seo] ${label} unavailable, prerendering without it: ${(err as Error).message}`);
+    return fallback;
+  }
+}
+
 async function fetchApprovedListings(): Promise<Listing[]> {
   return supabaseGet<Listing[]>(
     `professionals?select=${LISTING_SELECT}&is_approved=eq.true&suburb=not.is.null&order=is_featured.desc,name.asc`,
@@ -358,8 +396,9 @@ export function seoPrerender(opts?: { supabaseUrl?: string; supabaseAnonKey?: st
       const indexPath = path.join(outDir, 'index.html');
       if (!fs.existsSync(indexPath)) return;
       const template = fs.readFileSync(indexPath, 'utf8');
-      const posts = await fetchPublishedBlogPosts();
-      const listings = await fetchApprovedListings();
+      degraded = false;
+      const posts = await safely('blog posts', fetchPublishedBlogPosts, []);
+      const listings = await safely('practitioner listings', fetchApprovedListings, []);
       const blogRoutes: RouteSeo[] = [];
       const skipped: string[] = [];
       for (const post of posts) {
@@ -373,32 +412,54 @@ export function seoPrerender(opts?: { supabaseUrl?: string; supabaseAnonKey?: st
       if (skipped.length) {
         console.warn(`[seo] skipped blog slugs that are not safe path segments: ${skipped.join(', ')}`);
       }
-      const routes = [...allRoutes(), ...blogRoutes];
+      // One page per approved practice. Practice name searches already rank,
+      // so give each one a page that is actually about that practice.
+      const practitionerRoutes: RouteSeo[] = [];
+      const byPath = new Map<string, Listing>();
+      for (const l of listings) {
+        const route = practitionerRoute(l);
+        if (!route || byPath.has(route.path)) continue;
+        byPath.set(route.path, l);
+        practitionerRoutes.push(route);
+      }
+
+      const routes = [...allRoutes(), ...blogRoutes, ...practitionerRoutes];
       for (const r of routes) {
-        const pageListings = listingsForRoute(r, listings);
-        const html = renderRoute(template, r, routes, pageListings);
+        const profile = byPath.get(r.path);
+        const pageListings = profile ? [] : listingsForRoute(r, listings);
+        const html = profile
+          ? renderPractitionerRoute(template, r, profile)
+          : renderRoute(template, r, routes, pageListings);
         const file = r.path === '/' ? indexPath : path.join(outDir, r.path, 'index.html');
         fs.mkdirSync(path.dirname(file), { recursive: true });
         fs.writeFileSync(file, html);
       }
-      for (const post of posts) {
+      for (const post of degraded ? [] : posts) {
         if (!blogRoutes.some((r) => r.path === `/blog/${post.slug}`)) continue;
         const html = fs.readFileSync(path.join(outDir, 'blog', post.slug, 'index.html'), 'utf8');
         assertPrerenderedBlogHtml(html, post);
       }
-      for (const r of routes) {
+      for (const r of degraded ? [] : routes) {
         if (!r.path.startsWith('/practitioners/') || r.path.split('/').filter(Boolean).length < 3) continue;
         const pageListings = listingsForRoute(r, listings);
         const html = fs.readFileSync(path.join(outDir, r.path, 'index.html'), 'utf8');
         assertPrerenderedDirectoryHtml(html, pageListings, r.path);
       }
+      if (!degraded) {
+        for (const r of practitionerRoutes) {
+          const l = byPath.get(r.path)!;
+          const html = fs.readFileSync(path.join(outDir, r.path, 'index.html'), 'utf8');
+          assertPrerenderedPractitionerHtml(html, l, r.path);
+        }
+      }
+
       const today = new Date().toISOString().slice(0, 10);
       fs.writeFileSync(path.join(outDir, 'sitemap.xml'), sitemap(routes, today));
       fs.writeFileSync(path.join(outDir, 'llms.txt'), llmsTxt(routes));
       fs.writeFileSync(path.join(outDir, 'llms-full.txt'), llmsFull());
       writeRobotsTxt(outDir);
       console.log(
-        `[seo] prerendered ${routes.length} routes (${blogRoutes.length} blog posts, ${listings.length} listings), wrote sitemap.xml, llms.txt, llms-full.txt, robots.txt`,
+        `[seo] prerendered ${routes.length} routes (${blogRoutes.length} blog posts, ${practitionerRoutes.length} practitioner profiles, ${listings.length} listings)${degraded ? ' [DEGRADED: live data was unreachable]' : ''}, wrote sitemap.xml, llms.txt, llms-full.txt, robots.txt`,
       );
     },
   };

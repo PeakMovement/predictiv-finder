@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:seo": "npx tsx src/seo/blog-prerender.selftest.ts && npx tsx src/seo/listings-prerender.selftest.ts && npx tsx src/seo/copy.selftest.ts && node scripts/assert-blog-prerender.mjs && node scripts/assert-seo-audit.mjs"
+    "test:seo": "npx tsx src/seo/blog-prerender.selftest.ts && npx tsx src/seo/listings-prerender.selftest.ts && npx tsx src/seo/practitioners.selftest.ts && npx tsx src/seo/copy.selftest.ts && node scripts/assert-blog-prerender.mjs && node scripts/assert-seo-audit.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

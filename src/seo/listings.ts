@@ -26,6 +26,34 @@ export interface Listing {
   is_featured?: boolean | null;
 }
 
+/** Matches src/lib/blog.ts slugify. Kept here so Node-side prerender can use it. */
+export function slugifyName(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[^\w\s-]/g, '')
+    .trim()
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+}
+
+/** A slug is usable as a path segment only if it survives slugifying unchanged. */
+export function isSafeSlug(slug: string | null | undefined): slug is string {
+  return !!slug && slug.length > 0 && slugifyName(slug) === slug;
+}
+
+export function practitionerSlug(l: Listing): string | null {
+  if (isSafeSlug(l.slug)) return l.slug;
+  const derived = slugifyName(listingDisplayName(l));
+  return derived.length ? derived : null;
+}
+
+export function practitionerPath(l: Listing): string | null {
+  const slug = practitionerSlug(l);
+  return slug ? `/practitioner/${slug}` : null;
+}
+
 export const UNCLAIMED_NOTICE =
   'Listing compiled from public practice website — not claimed';
 
@@ -98,7 +126,11 @@ export function listingsFallbackHtml(listings: Listing[]): string {
       const unclaimed = isUnclaimedListing(l)
         ? `<p>${esc(UNCLAIMED_NOTICE)}</p>`
         : '';
-      return `<li><h3>${esc(name)}</h3>${person}${meta.length ? `<p>${meta.join(' · ')}</p>` : ''}${unclaimed}${website}</li>`;
+      const profile = practitionerPath(l);
+      const heading = profile
+        ? `<h3><a href="${esc(profile)}">${esc(name)}</a></h3>`
+        : `<h3>${esc(name)}</h3>`;
+      return `<li>${heading}${person}${meta.length ? `<p>${meta.join(' · ')}</p>` : ''}${unclaimed}${website}</li>`;
     })
     .join('');
   return `<ul>${items}</ul>`;

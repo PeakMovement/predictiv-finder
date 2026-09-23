@@ -22,6 +22,8 @@ const LEGACY_SID_KEY = 'predictiv_sid';
 
 export type DirectoryEventType =
   | 'page_view'
+  | 'not_found'
+  | 'engaged'
   | 'search'
   | 'problem_described'
   | 'results_shown'
@@ -263,4 +265,52 @@ export function track(payload: TrackPayload): void {
 /** Fires one page_view per path change. */
 export function trackPageView(path: string): void {
   track({ event_type: 'page_view', page_path: path });
+}
+
+const ENGAGED_AFTER_MS = 15000;
+
+/**
+ * Fires once per page when someone is still there after fifteen seconds or has
+ * scrolled halfway down. Page views alone cannot tell a reader from a bounce,
+ * which matters most for the blog guides.
+ *
+ * Returns a cleanup function for the caller's effect.
+ */
+export function trackEngagement(path: string): () => void {
+  let done = false;
+  const fire = () => {
+    if (done) return;
+    done = true;
+    track({ event_type: 'engaged', page_path: path });
+    cleanup();
+  };
+
+  const onScroll = () => {
+    try {
+      const scrolled = window.scrollY + window.innerHeight;
+      const height = document.documentElement.scrollHeight;
+      if (height > 0 && scrolled / height >= 0.5) fire();
+    } catch {
+      /* ignore */
+    }
+  };
+
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const cleanup = () => {
+    if (timer) clearTimeout(timer);
+    try {
+      window.removeEventListener('scroll', onScroll);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  try {
+    timer = setTimeout(fire, ENGAGED_AFTER_MS);
+    window.addEventListener('scroll', onScroll, { passive: true });
+  } catch {
+    /* ignore */
+  }
+
+  return cleanup;
 }

@@ -30,6 +30,7 @@ const Privacy = lazy(() => import("./pages/Privacy"));
 const PractitionersIndex = lazy(() => import("./pages/site/PractitionersIndex"));
 const ProfessionPage = lazy(() => import("./pages/site/ProfessionPage"));
 const DirectoryPage = lazy(() => import("./pages/site/DirectoryPage"));
+const PractitionerPage = lazy(() => import("./pages/site/PractitionerPage"));
 const BlogIndex = lazy(() => import("./pages/site/BlogIndex"));
 const BlogPostPage = lazy(() => import("./pages/site/BlogPostPage"));
 const BlogAdmin = lazy(() => import("./pages/site/BlogAdmin"));
@@ -79,6 +80,7 @@ function App() {
               <Route path="/practitioners" element={<PractitionersIndex />} />
               <Route path="/practitioners/:profession" element={<ProfessionPage />} />
               <Route path="/practitioners/:profession/:suburb" element={<DirectoryPage />} />
+              <Route path="/practitioner/:slug" element={<PractitionerPage />} />
               <Route path="/blog" element={<BlogIndex />} />
               <Route path="/blog/:slug" element={<BlogPostPage />} />
               <Route path="/admin/blog" element={<BlogAdmin />} />

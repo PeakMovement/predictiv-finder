@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { trackPageView } from '@/lib/track';
+import { trackEngagement, trackPageView } from '@/lib/track';
 
 /**
  * Fires one page_view per path change. Mounted once, inside the router.
@@ -18,6 +18,9 @@ export function RouteTracker() {
     last.current = pathname;
     trackPageView(pathname);
   }, [pathname]);
+
+  // Restarted per path so each page gets its own engagement window.
+  useEffect(() => trackEngagement(pathname), [pathname]);
 
   return null;
 }

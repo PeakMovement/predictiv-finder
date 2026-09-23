@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ExternalLink, MapPin, Phone, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { track } from '@/lib/track';
@@ -11,6 +12,7 @@ import {
   listingsJsonLd,
   type Listing,
 } from '@/seo/listings';
+import { practitionerPath } from '@/seo/practitioners';
 
 export type { Listing };
 export { listingsJsonLd };
@@ -98,7 +100,15 @@ export function DirectoryList({
       {listings.map((l) => (
         <li key={l.id} className="rounded-2xl border border-border bg-card/50 p-5 flex flex-col gap-3">
           <div>
-            <h3 className="font-semibold leading-tight">{l.practice_name || l.name}</h3>
+            <h3 className="font-semibold leading-tight">
+              {practitionerPath(l) ? (
+                <Link to={practitionerPath(l)!} className="hover:text-primary">
+                  {l.practice_name || l.name}
+                </Link>
+              ) : (
+                l.practice_name || l.name
+              )}
+            </h3>
             {l.practice_name && l.practice_name !== l.name && (
               <p className="text-sm text-muted-foreground">{l.name}</p>
             )}
