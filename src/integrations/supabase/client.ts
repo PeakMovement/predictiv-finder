@@ -2,9 +2,18 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { brokeredPreviewStorage } from './previewAuthStorage';
+import {
+  SUPABASE_URL as RESOLVED_SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY as RESOLVED_SUPABASE_PUBLISHABLE_KEY,
+} from './env';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+// Resolved through ./env, which reads VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY
+// and falls back to a known good project when the build has no env vars baked in.
+// Reading import.meta.env directly here crashed every page in production on
+// 2026-09-22: createClient throws "supabaseUrl is required" at module load, React
+// never mounts, and the whole site degrades to its prerendered HTML shell.
+const SUPABASE_URL = RESOLVED_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = RESOLVED_SUPABASE_PUBLISHABLE_KEY;
 
 
 function isNewSupabaseApiKey(value: string): boolean {
