@@ -32,6 +32,8 @@ const DirectoryPage = lazy(() => import("./pages/site/DirectoryPage"));
 const BlogIndex = lazy(() => import("./pages/site/BlogIndex"));
 const BlogPostPage = lazy(() => import("./pages/site/BlogPostPage"));
 const BlogAdmin = lazy(() => import("./pages/site/BlogAdmin"));
+const InsightsAdmin = lazy(() => import("./pages/site/InsightsAdmin"));
+
 const About = lazy(() => import("./pages/site/About"));
 const Join = lazy(() => import("./pages/site/Join"));
 
@@ -78,6 +80,8 @@ function App() {
               <Route path="/blog" element={<BlogIndex />} />
               <Route path="/blog/:slug" element={<BlogPostPage />} />
               <Route path="/admin/blog" element={<BlogAdmin />} />
+              <Route path="/admin/insights" element={<InsightsAdmin />} />
+
               <Route path="/about" element={<About />} />
               <Route path="/join" element={<Join />} />
               <Route path="/find-a-practitioner" element={<Navigate to="/practitioners" replace />} />
