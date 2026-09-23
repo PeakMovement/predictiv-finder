@@ -11,6 +11,7 @@ import { ThemeProvider } from "./components/ThemeProvider";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { PUBLIC_LAUNCH_MODE } from "./config/launchMode";
 import { Seo } from "./lib/seo";
+import { RouteTracker } from "./components/site/RouteTracker";
 import { routeSeo } from "./seo/site";
 
 // Route-level code splitting: only the homepage ships in the first bundle.
@@ -67,6 +68,7 @@ function App() {
     <ThemeProvider defaultTheme="dark">
       <ToastProvider>
         <div className="app fixed inset-0 z-0 flex flex-col overflow-y-auto bg-background text-foreground transition-colors duration-300">
+          <RouteTracker />
           <ThemeToggle />
           <EnhancedErrorBoundary key={errorKey} resetKeys={[resetKeys]} fallback={PlanGenerationErrorFallbackAdapter}>
             <Suspense fallback={<div className="min-h-screen" aria-busy="true" />}>

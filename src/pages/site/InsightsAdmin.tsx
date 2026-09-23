@@ -21,6 +21,27 @@ interface EventRow {
 
 const DAYS = 30;
 
+interface DailyRow {
+  day: string;
+  page_views: number;
+  visits: number;
+  visitors: number;
+  outbound_clicks: number;
+  searches: number;
+}
+interface PageRow {
+  page_path: string;
+  page_views: number;
+  visits: number;
+}
+interface SourceRow {
+  source: string;
+  referrer_host: string | null;
+  utm_source: string | null;
+  utm_campaign: string | null;
+  visits: number;
+}
+
 function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -136,6 +157,12 @@ export default function InsightsAdmin() {
   const [names, setNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [daily, setDaily] = useState<DailyRow[]>([]);
+  const [pages, setPages] = useState<PageRow[]>([]);
+  const [sources, setSources] = useState<SourceRow[]>([]);
+  // The reporting views arrive with the 20260923 migration. Until it has been
+  // applied the traffic section stays hidden rather than erroring the page.
+  const [viewsReady, setViewsReady] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -182,6 +209,33 @@ export default function InsightsAdmin() {
     } else {
       setNames({});
     }
+    // Traffic comes from the reporting views so the browser never has to
+    // aggregate tens of thousands of rows.
+    const sinceDay = since.slice(0, 10);
+    const [d, pg, sr] = await Promise.all([
+      (supabase as any)
+        .from('analytics_daily_traffic')
+        .select('day,page_views,visits,visitors,outbound_clicks,searches')
+        .gte('day', sinceDay)
+        .order('day', { ascending: false }),
+      (supabase as any)
+        .from('analytics_top_pages')
+        .select('page_path,page_views,visits')
+        .order('page_views', { ascending: false })
+        .limit(25),
+      (supabase as any)
+        .from('analytics_sources')
+        .select('source,referrer_host,utm_source,utm_campaign,visits')
+        .order('visits', { ascending: false })
+        .limit(25),
+    ]);
+
+    const missing = !!d.error || !!pg.error || !!sr.error;
+    setViewsReady(!missing);
+    setDaily((d.data ?? []) as DailyRow[]);
+    setPages((pg.data ?? []) as PageRow[]);
+    setSources((sr.data ?? []) as SourceRow[]);
+
     setLoading(false);
   }, []);
 
@@ -259,6 +313,58 @@ export default function InsightsAdmin() {
           {loading && <p className="text-sm text-muted-foreground mt-1">Loading events…</p>}
           {error && <p className="text-sm text-muted-foreground mt-1" role="alert">{error}</p>}
         </div>
+
+        {viewsReady && (
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Card label="Page views" value={daily.reduce((a, r) => a + (r.page_views ?? 0), 0)} />
+            <Card label="Visits" value={daily.reduce((a, r) => a + (r.visits ?? 0), 0)} />
+            <Card label="People" value={daily.reduce((a, r) => a + (r.visitors ?? 0), 0)} />
+          </div>
+        )}
+
+        {!viewsReady && (
+          <p className="text-sm text-muted-foreground rounded-2xl border border-border bg-card/50 p-4">
+            Traffic reporting is waiting on the 20260923 migration. Searches and clicks below are live.
+          </p>
+        )}
+
+        {viewsReady && (
+          <>
+            <Table
+              title={`Traffic by day, last ${DAYS} days`}
+              headers={['Day', 'Page views', 'Visits', 'People', 'Searches', 'Outbound clicks']}
+              rows={daily.map((r) => [
+                r.day,
+                r.page_views ?? 0,
+                r.visits ?? 0,
+                r.visitors ?? 0,
+                r.searches ?? 0,
+                r.outbound_clicks ?? 0,
+              ])}
+              empty="No traffic recorded yet."
+            />
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Table
+                title="Most visited pages"
+                headers={['Page', 'Views', 'Visits']}
+                rows={pages.map((r) => [r.page_path, r.page_views ?? 0, r.visits ?? 0])}
+                empty="No page views recorded yet."
+              />
+              <Table
+                title="Where visits come from"
+                headers={['Source', 'Referrer', 'Campaign', 'Visits']}
+                rows={sources.map((r) => [
+                  r.source,
+                  r.referrer_host ?? '',
+                  r.utm_campaign ?? r.utm_source ?? '',
+                  r.visits ?? 0,
+                ])}
+                empty="No sources recorded yet."
+              />
+            </div>
+          </>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-3">
           <Card label="Searches" value={stats.totalSearches} />

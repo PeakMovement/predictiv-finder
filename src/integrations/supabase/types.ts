@@ -254,6 +254,12 @@ export type Database = {
           created_at: string
           device: string | null
           event_type: string
+          referrer_host: string | null
+          source: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          visit_id: string | null
           id: string
           link_type: string | null
           page_path: string | null
@@ -269,6 +275,12 @@ export type Database = {
           created_at?: string
           device?: string | null
           event_type: string
+          referrer_host?: string | null
+          source?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          visit_id?: string | null
           id?: string
           link_type?: string | null
           page_path?: string | null
@@ -284,6 +296,12 @@ export type Database = {
           created_at?: string
           device?: string | null
           event_type?: string
+          referrer_host?: string | null
+          source?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          visit_id?: string | null
           id?: string
           link_type?: string | null
           page_path?: string | null
