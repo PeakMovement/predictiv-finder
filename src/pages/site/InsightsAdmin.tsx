@@ -17,6 +17,8 @@ interface EventRow {
   result_count: number | null;
   professional_id: string | null;
   link_type: string | null;
+  visit_id: string | null;
+  page_path: string | null;
 }
 
 const DAYS = 30;
@@ -196,7 +198,7 @@ export default function InsightsAdmin() {
     const since = new Date(Date.now() - DAYS * 24 * 60 * 60 * 1000).toISOString();
     const { data, error: qErr } = await (supabase as any)
       .from('directory_events')
-      .select('created_at,event_type,query,profession,suburb,result_count,professional_id,link_type')
+      .select('created_at,event_type,query,profession,suburb,result_count,professional_id,link_type,visit_id,page_path')
       .gte('created_at', since)
       .order('created_at', { ascending: false })
       .limit(50000);
@@ -304,7 +306,33 @@ export default function InsightsAdmin() {
       perPro.set(e.professional_id, cur);
     }
 
+    // The AI finder funnel. Opening /assistant is not the same as using it,
+    // and using it is not the same as it working, so all three are counted.
+    const FINDER_PATH = '/assistant';
+    const opened = new Set(
+      events
+        .filter((e) => e.event_type === 'page_view' && e.page_path === FINDER_PATH)
+        .map((e) => e.visit_id ?? ''),
+    );
+    opened.delete('');
+
+    const describedVisits = new Set(problems.map((e) => e.visit_id ?? ''));
+    describedVisits.delete('');
+
+    const clickedVisits = new Set(clicks.map((e) => e.visit_id ?? ''));
+    clickedVisits.delete('');
+
+    const finderThenClicked = [...describedVisits].filter((v) => clickedVisits.has(v)).length;
+
     return {
+      finder: {
+        opened: opened.size,
+        used: problems.length,
+        usedByVisits: describedVisits.size,
+        thenClicked: finderThenClicked,
+        phrases: topCounts(problems.map((e) => e.query), 20),
+        lastUsed: problems.length ? problems[0].created_at.slice(0, 16).replace('T', ' ') : null,
+      },
       totalSearches: searches.length,
       totalClicks: clicks.length,
       totalProblems: problems.length,
@@ -397,26 +425,54 @@ export default function InsightsAdmin() {
           </>
         )}
 
+        <section className="rounded-2xl border border-border bg-card/50 p-5 space-y-4">
+          <div>
+            <h2 className="font-bold text-lg">AI finder</h2>
+            <p className="text-sm text-muted-foreground">
+              The "name your problem" tool at /assistant. Opening it, using it, and whether using it
+              led anywhere are three different things, so all three are counted separately.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-4">
+            <Card label="Opened it" value={stats.finder.opened} />
+            <Card label="Times used" value={stats.finder.used} />
+            <Card label="People who used it" value={stats.finder.usedByVisits} />
+            <Card label="Then clicked a practice" value={stats.finder.thenClicked} />
+          </div>
+
+          {stats.finder.lastUsed && (
+            <p className="text-xs text-muted-foreground">Last used {stats.finder.lastUsed}</p>
+          )}
+
+          {stats.finder.used === 0 && stats.finder.opened === 0 && (
+            <p className="text-sm text-muted-foreground">
+              Nobody has opened the AI finder in this period. It lives on its own page, one click from
+              the homepage, so low usage here usually means a placement problem rather than a demand
+              problem.
+            </p>
+          )}
+
+          <Table
+            title="What people asked the AI finder"
+            headers={['In their own words', 'Times']}
+            rows={stats.finder.phrases.map(([k, v]) => [k, v])}
+            empty="No problem descriptions recorded yet."
+          />
+        </section>
+
         <div className="grid gap-4 sm:grid-cols-3">
           <Card label="Searches" value={stats.totalSearches} />
           <Card label="Outbound clicks" value={stats.totalClicks} />
           <Card label="Problems described" value={stats.totalProblems} />
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Table
-            title="Top 20 searches by profession"
-            headers={['Profession', 'Searches']}
-            rows={stats.topSearchTerms.map(([k, v]) => [k, v])}
-            empty="No searches recorded yet."
-          />
-          <Table
-            title="Top 20 problem descriptions"
-            headers={['What people typed', 'Times']}
-            rows={stats.topProblems.map(([k, v]) => [k, v])}
-            empty="No problem descriptions recorded yet."
-          />
-        </div>
+        <Table
+          title="Top 20 searches by profession"
+          headers={['Profession', 'Searches']}
+          rows={stats.topSearchTerms.map(([k, v]) => [k, v])}
+          empty="No searches recorded yet."
+        />
 
         <Table
           title="Most searched profession and suburb combinations"
